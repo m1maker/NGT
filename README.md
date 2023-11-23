@@ -11,7 +11,7 @@ Also, "BGT" is no longer supported, which caused difficulties in the development
 
 Enjoy!New open source game toolkit
 
-#start
+# start
 To start developing a game using "NGT", you need to know the C++ programming language. If so, you can move on to the next step.
 Install Visual Studio Build Tools for NGT Game Development
 
@@ -22,5 +22,5 @@ https://visualstudio.microsoft.com/downloads/?q=build+tools
 4. Check only "Desktop development with C++".
 5. Click "Install" and wait for the installation to complete.
 Congratulations! You have successfully installed Visual Studio Build Tools for NGT development and created a new project.
-#Next;
+# Next;
 
