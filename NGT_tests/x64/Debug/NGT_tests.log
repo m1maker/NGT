@@ -1,0 +1,15 @@
+﻿  dlg.cpp
+  main.cpp
+  ngt.cpp
+D:\NGT\NGT_tests\ngt.cpp(35,15): warning C4244: 'return': conversion from 'double' to 'float', possible loss of data
+D:\NGT\NGT_tests\ngt.cpp(264,57): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+D:\NGT\NGT_tests\ngt.cpp(282,12): warning C4244: 'return': conversion from 'QWORD' to 'double', possible loss of data
+D:\NGT\NGT_tests\ngt.cpp(287,12): warning C4244: 'return': conversion from 'QWORD' to 'double', possible loss of data
+D:\NGT\NGT_tests\ngt.cpp(300,124): warning C4244: 'return': conversion from '_Rep' to 'int', possible loss of data
+          with
+          [
+              _Rep=__int64
+          ]
+  Generating Code...
+MSVCRTD.lib(exe_main.obj) : error LNK2019: unresolved external symbol main referenced in function "int __cdecl invoke_main(void)" (?invoke_main@@YAHXZ)
+D:\NGT\NGT_tests\x64\Debug\NGT_tests.exe : fatal error LNK1120: 1 unresolved externals

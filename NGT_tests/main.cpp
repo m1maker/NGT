@@ -1,27 +1,45 @@
 #include "ngt.h"
 #include "dlg.h"
+key_hold spacebar(VK_SPACE, 300, 20);
 sound test;
 int WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
 	sound_system_init();
-	test.load(L"C:\\windows\\media\\tada.wav");
-	test.play();
-	alert(L"BGT alert", L"This func demo of the BGT alert");
-	show_game_window(L"Game window test");
+	test.load_looped(L"asset/NGTTest.wav");
+	show_game_window(L"Sound player");
 	wait(1000);//screen reader is speaking title
-	dlg(L"Hello. This is dlg, ported dlg.bgt file to c++ on ngt. press enter to start.");
-	speak(L"press down, up or all arrow keys. See! And press Alt+F4 or escape to exit.");
-	wait(500);
+	dlg(L"Press up and down to change music volume. Press Right or Left to change music pan. Press PageDown or PageUp to change music pitch. Press Space to pause or play music. Press Enter to start.");
+	test.play();
 	while (true) {
 		update_game_window();
 		if (key_down(VK_DOWN)) {
-			speak(L"Down arrow is downed");
+			float musvol = test.get_volume();
+			test.set_volume(musvol-=0.01);
 		}
-		if (key_pressed(VK_RIGHT)) {
-			speak(L"Right arrow is pressed");
+		if (key_down(VK_UP)) {
+			float musvol = test.get_volume();
+			test.set_volume(musvol+=0.01);
 		}
-		if (key_released(VK_UP) or key_released(VK_LEFT)) {
-			speak(L"Arrow is released");
+		if (key_down(VK_RIGHT)) {
+			float muspan = test.get_pan();
+			test.set_pan(muspan+=0.01);
 		}
+		if (key_down(VK_LEFT)) {
+			float muspan = test.get_pan();
+			test.set_pan(muspan-=0.01);
+		}
+		if (key_down(VK_NEXT)) {
+			int muspitch = test.get_pitch();
+			test.set_pitch(muspitch -= 20);
+		}
+		if (key_down(VK_PRIOR)) {
+			int muspitch = test.get_pitch();
+			test.set_pitch(muspitch += 20);
+		}
+
+		if (spacebar.pressing()) {
+			if (!test.is_paused())test.pause();
+			else BASS_ChannelPlay(test.handle_, false);
+}
 		if (key_down(VK_ESCAPE)) { return 0; }
 	}
 	return 0;

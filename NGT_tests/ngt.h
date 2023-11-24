@@ -28,8 +28,10 @@ public:
 	HSTREAM handle_;
 
 	bool load(std::wstring filename, bool hrtf=false);
+	bool load_looped(std::wstring filename, bool hrtf = false);
+
 	bool play();
-	bool play_looped();
+//	bool play_looped();
 	bool pause();
 	bool play_wait();
 	bool stop();

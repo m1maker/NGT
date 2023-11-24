@@ -183,20 +183,30 @@ bool sound::load(std::wstring filename, bool hrtf) {
     else {
         handle_ = BASS_StreamCreateFile(false, filename.c_str(), 0, 0, BASS_SAMPLE_MONO| BASS_SAMPLE_3D);
     }
-    BASS_ChannelSetFX(handle_, BASS_FX_DX8_COMPRESSOR, 0);
 
     return handle_ != 0;
 }
+bool sound::load_looped(std::wstring filename, bool hrtf) {
+    if (!hrtf) {
+        handle_ = BASS_StreamCreateFile(false, filename.c_str(), 0, 0, BASS_SAMPLE_LOOP);
+    }
+    else {
+        handle_ = BASS_StreamCreateFile(false, filename.c_str(), 0, 0, BASS_SAMPLE_LOOP|BASS_SAMPLE_MONO | BASS_SAMPLE_3D);
+    }
+
+    return handle_ != 0;
+}
+
 
 bool sound::play() {
     
 return BASS_ChannelPlay(handle_, true);
 }
-
+/*
 bool sound::play_looped() {
     return BASS_ChannelPlay(handle_, TRUE);
 }
-
+*/
 bool sound::pause() {
     return BASS_ChannelPause(handle_);
 }
