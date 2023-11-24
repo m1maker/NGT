@@ -1,0 +1,26 @@
+﻿  ngt.cpp
+D:\NGT\NGTScript\ngt.cpp(35,15): warning C4244: 'return': conversion from 'double' to 'float', possible loss of data
+D:\NGT\NGTScript\ngt.cpp(264,57): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+D:\NGT\NGTScript\ngt.cpp(282,12): warning C4244: 'return': conversion from 'QWORD' to 'double', possible loss of data
+D:\NGT\NGTScript\ngt.cpp(287,12): warning C4244: 'return': conversion from 'QWORD' to 'double', possible loss of data
+D:\NGT\NGTScript\ngt.cpp(300,124): warning C4244: 'return': conversion from '_Rep' to 'int', possible loss of data
+          with
+          [
+              _Rep=__int64
+          ]
+  ngtreg.cpp
+D:\NGT\NGTScript\ngtreg.cpp(43,60): error C2440: 'type cast': cannot convert from 'overloaded-function' to 'void (__cdecl timer::* )(void)'
+D:\NGT\NGTScript\ngtreg.cpp(43,60): message : None of the functions with this name in scope match the target type
+D:\NGT\NGTScript\ngtreg.cpp(43,60): error C2672: 'asSMethodPtr<8>::Convert': no matching overloaded function found
+D:\NGT\NGTScript\angelscript.h(1281,20): message : could be 'asSFuncPtr asSMethodPtr<8>::Convert(M)'
+D:\NGT\NGTScript\ngtreg.cpp(43,11): error C2660: 'asIScriptEngine::RegisterObjectMethod': function does not take 3 arguments
+D:\NGT\NGTScript\angelscript.h(691,25): message : see declaration of 'asIScriptEngine::RegisterObjectMethod'
+D:\NGT\NGTScript\ngtreg.cpp(43,11): message : while trying to match the argument list '(const char [6], const char [14], asECallConvTypes)'
+D:\NGT\NGTScript\ngtreg.cpp(44,64): error C2440: 'type cast': cannot convert from 'overloaded-function' to 'void (__cdecl timer::* )(void)'
+D:\NGT\NGTScript\ngtreg.cpp(44,64): message : None of the functions with this name in scope match the target type
+D:\NGT\NGTScript\ngtreg.cpp(44,64): error C2672: 'asSMethodPtr<8>::Convert': no matching overloaded function found
+D:\NGT\NGTScript\angelscript.h(1281,20): message : could be 'asSFuncPtr asSMethodPtr<8>::Convert(M)'
+D:\NGT\NGTScript\ngtreg.cpp(44,11): error C2660: 'asIScriptEngine::RegisterObjectMethod': function does not take 3 arguments
+D:\NGT\NGTScript\angelscript.h(691,25): message : see declaration of 'asIScriptEngine::RegisterObjectMethod'
+D:\NGT\NGTScript\ngtreg.cpp(44,11): message : while trying to match the argument list '(const char [6], const char [18], asECallConvTypes)'
+  Generating Code...
