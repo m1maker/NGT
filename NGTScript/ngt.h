@@ -9,29 +9,30 @@
 #include<chrono>
 #include <string>
 #include "bass.h"
-#include <Windows.h>
-void sound_system_init();
+#include<SDL.h>
+void init_engine();
 float random(long min, long max);
 
-void speak(std::wstring text, bool stop = true);
+void speak(std::wstring	 text, bool stop = true);
 void stop_speech();
-bool show_game_window(std::wstring title);
+bool show_game_window(std::string title,int width=640, int height=480);
 void update_game_window();
-bool key_pressed(int key_code);
-	bool key_released(int key_code);
-bool key_down(int key_code);
-bool alert(std::wstring title, std::wstring text);
+void quit();
+bool key_pressed(SDL_Keycode key_code);
+bool key_released(SDL_Keycode key_code);
+bool key_down(SDL_Keycode key_code);
+bool alert(std::string	 title, std::string	 text);
 void set_listener_position(float l_x, float l_y, float l_z);
 void wait(int time);
+void delay(int ms);
 class sound {
 public:
 	HSTREAM handle_;
 
-	bool load(std::wstring filename, bool hrtf=false);
-	bool load_looped(std::wstring filename, bool hrtf = false);
+	bool load(std::string	 filename, bool hrtf=false);
 
 	bool play();
-//	bool play_looped();
+	bool play_looped();
 	bool pause();
 	bool play_wait();
 	bool stop();
@@ -65,7 +66,7 @@ public:
 	}
 
 	int elapsed();
-//	void elapsed(int amount);
+	void elapsed(int amount);
 	void restart();
 	void pause();
 	void resume();

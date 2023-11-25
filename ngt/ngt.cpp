@@ -8,16 +8,16 @@
 #include <chrono>
 #include "bass.h"
 #include <string>
-#include <windows.h>
+#include<SDL.h>
 #include <commctrl.h>
+#include<map>
 #include <stdio.h>
 #include "NGT.H"
 HWND hwnd;
-bool keys[256];
-bool keys2[256];
-bool down[256];
+std::map<SDL_Keycode,bool> keys;
 bool keyhook = false;
-void sound_system_init() {
+void init_engine() {
+    SDL_Init(SDL_INIT_EVERYTHING);
     BASS_Init(-1, 44100, 0, 0, NULL);
     BASS_Apply3D();
     BASS_SetConfig(BASS_CONFIG_3DALGORITHM, BASS_3DALG_OFF);
@@ -25,11 +25,11 @@ void sound_system_init() {
 
 const int JAWS = 1;
 const int NVDA = 2;
+std::random_device rd;
+std::mt19937 gen(rd());
 float random(long min, long max) {
     static_assert(std::is_arithmetic<double>::value, "T must be an arithmetic type");
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
     std::uniform_real_distribution<double> dis(min, max+1);
 
     return dis(gen);
@@ -39,130 +39,79 @@ void speak(std::wstring text, bool stop) {
     if (stop == true){
         nvdaController_cancelSpeech();
     }
-//    SetWindowTextW(hwnd, text.c_str());
     nvdaController_speakText(text.c_str());
 }
 void stop_speech() {
     nvdaController_cancelSpeech();
 }
-
-LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+SDL_Window* win=NULL;
+SDL_Event e;
+bool show_game_window(std::string title,int width, int height)
 {
-    switch (msg)
+win=SDL_CreateWindow(title.c_str(),SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,width,height,SDL_WINDOW_SHOWN);
+if (win!=NULL)
+{
+return true;
+}
+return false;
+}
+void update_game_window()
+{
+SDL_PollEvent(&e);
+if (e.type==SDL_QUIT)
+{
+quit();
+}
+else if (e.type==SDL_KEYDOWN)
+{
+keys[e.key.keysym.sym]=true;
+}
+else if (e.type==SDL_KEYUP)
+{
+keys[e.key.keysym.sym]=false;
+}
+}
+void quit()
+{
+SDL_DestroyWindow(win);
+win=NULL;
+BASS_Free();
+SDL_Quit();
+exit(0);
+}
+bool key_pressed(SDL_Keycode key_code)
+{
+if (e.type==SDL_KEYDOWN)
+{
+if (e.key.keysym.sym==key_code && e.key.repeat==0)
+{
+return true;
+}
+return false;
+}
+}
+bool key_released(SDL_Keycode key_code)
+{
+    if (e.type == SDL_KEYUP)
     {
-    case WM_KEYDOWN:
-        down[wParam] = true;
-        if(keys[wParam]==false and keys2[wParam]==true and down[wParam]==true) {
-            keys[wParam] = true;
-            keys2[wParam] = false;
-            return 1;
+        if (e.key.keysym.sym == key_code)
+        {
+            return true;
         }
-        else if (keys2[wParam] == false) {
-            keys[wParam] = false;
-            }
-    break;
-    case WM_KEYUP:
-        down[wParam] = false;
-        keys[wParam] = false;
-        keys2[wParam] = true;
-
-        break;
-    case WM_KILLFOCUS:
-
-        BASS_Pause();
-        break;
-    case WM_CREATE:
-        break;
-    case WM_SETFOCUS:
-
-        BASS_Start();
-        break;
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        exit(0);
-        break;
-    default:
-        return DefWindowProc(hwnd, msg, wParam, lParam);
+        return false;
     }
-
-    return 1;
 }
-bool show_game_window(std::wstring title)
+bool key_down(SDL_Keycode key_code)
 {
-    HINSTANCE hInstance = GetModuleHandle(NULL);
-
-    WNDCLASSEXW wc;
-    wc.cbSize = sizeof(WNDCLASSEXW);
-    wc.style = 0;
-    wc.lpfnWndProc = WndProc;
-    wc.cbClsExtra = 0;
-    wc.cbWndExtra = 0;
-    wc.hInstance = hInstance;
-    wc.hIcon = NULL;
-    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    wc.lpszMenuName = NULL;
-    wc.lpszClassName = L"ngtgame";
-    wc.hIconSm = NULL;
-
-    if (!RegisterClassExW(&wc))
-    {
-        return false;
-    }
-
-    hwnd = CreateWindowExW(256, L"ngtgame", title.c_str(), WS_VISIBLE | WS_CAPTION | WS_OVERLAPPED, CW_USEDEFAULT, CW_USEDEFAULT, 800, 600, NULL, NULL, hInstance, NULL);
-    if (!hwnd)
-    {
-        return false;
-    }
-
-    ShowWindow(hwnd, SW_SHOW);
-    UpdateWindow(hwnd);
-    return true;
+if (keys.find(key_code)!=keys.end())
+return keys[key_code];
+return false;
 }
-void update_game_window(){ 
-    Sleep(5);
-    MSG msg;
-    if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-    {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-}
-    bool key_pressed(int key_code) {
-    if (keys[key_code] == true && keys2[key_code] == false ) {
-        keys[key_code] = false;
-        return true;
-    }
-    else {
-        return false;
-    }
-}
-
-bool key_released(int key_code) {
-    if (keys[key_code] == false && keys2[key_code] == true) {
-        keys2[key_code] = keys[key_code];
-        return true;
-    }
-    else {
-        return false;
-    }
-}
-bool key_down(int key_code) {
-    return down[key_code];
-}
-bool alert(std::wstring title, std::wstring text)
+bool alert(std::string title, std::string text)
 {
-    if (MessageBoxW(0, text.c_str(), title.c_str(), MB_OK) == IDOK)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,title.c_str(),text.c_str(),NULL);
+return true;
 }
-
 void set_listener_position(float l_x, float l_y, float l_z) {
     BASS_3DVECTOR l_pos{ l_x, l_y, l_z };
     BASS_Set3DPosition(&l_pos, 0, 0, 0);
@@ -176,7 +125,11 @@ void wait(int time) {
         el = waittimer.elapsed();
     }
 }
-bool sound::load(std::wstring filename, bool hrtf) {
+void delay(int ms)
+{
+SDL_Delay(ms);
+}
+bool sound::load(std::string filename, bool hrtf) {
     if (!hrtf) {
         handle_ = BASS_StreamCreateFile(false, filename.c_str(), 0, 0, 0);
     }
@@ -186,27 +139,15 @@ bool sound::load(std::wstring filename, bool hrtf) {
 
     return handle_ != 0;
 }
-bool sound::load_looped(std::wstring filename, bool hrtf) {
-    if (!hrtf) {
-        handle_ = BASS_StreamCreateFile(false, filename.c_str(), 0, 0, BASS_SAMPLE_LOOP);
-    }
-    else {
-        handle_ = BASS_StreamCreateFile(false, filename.c_str(), 0, 0, BASS_SAMPLE_LOOP|BASS_SAMPLE_MONO | BASS_SAMPLE_3D);
-    }
-
-    return handle_ != 0;
-}
-
 
 bool sound::play() {
-    
-return BASS_ChannelPlay(handle_, true);
+    BASS_ChannelFlags(handle_,BASS_SAMPLE_LOOP,0);
+    return BASS_ChannelPlay(handle_, true);
 }
-/*
 bool sound::play_looped() {
+    BASS_ChannelFlags(handle_,BASS_SAMPLE_LOOP,BASS_SAMPLE_LOOP);
     return BASS_ChannelPlay(handle_, TRUE);
 }
-*/
 bool sound::pause() {
     return BASS_ChannelPause(handle_);
 }
@@ -215,6 +156,7 @@ bool sound::play_wait() {
     BASS_ChannelPlay(handle_, true);
     while (true) {
         update_game_window();
+        delay(5);
         bool ac = sound::is_playing();
         if (ac == false) {
             break;

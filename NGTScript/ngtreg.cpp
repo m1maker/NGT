@@ -9,22 +9,24 @@
 using namespace std;
 void RegisterFunctions(asIScriptEngine* engine)
 {
-    engine->RegisterGlobalFunction("void sound_system_init()", asFUNCTION(sound_system_init), asCALL_CDECL);
+    engine->RegisterGlobalFunction("void init_engine()", asFUNCTION(init_engine), asCALL_CDECL);
     engine->RegisterGlobalFunction("float random(int, int)", asFUNCTION(random), asCALL_CDECL);
     engine->RegisterGlobalFunction("void speak(string, bool)", asFUNCTION(speak), asCALL_CDECL);
     engine->RegisterGlobalFunction("void stop_speech()", asFUNCTION(stop_speech), asCALL_CDECL);
-    engine->RegisterGlobalFunction("bool show_game_window(string)", asFUNCTION(show_game_window), asCALL_CDECL);
+    engine->RegisterGlobalFunction("bool show_game_window(string,int,int)", asFUNCTION(show_game_window), asCALL_CDECL);
     engine->RegisterGlobalFunction("void update_game_window()", asFUNCTION(update_game_window), asCALL_CDECL);
+    engine->RegisterGlobalFunction("void quit()",asFUNCTION("quit"),asCALL_CDECL);
     engine->RegisterGlobalFunction("bool key_pressed(int)", asFUNCTION(key_pressed), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool key_released(int)", asFUNCTION(key_released), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool key_down(int)", asFUNCTION(key_down), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool alert(string, string)", asFUNCTION(alert), asCALL_CDECL);
     engine->RegisterGlobalFunction("void set_listener_position(float, float, float)", asFUNCTION(set_listener_position), asCALL_CDECL);
     engine->RegisterGlobalFunction("void wait(int)", asFUNCTION(wait), asCALL_CDECL);
+    engine->RegisterGlobalFunction("void delay(int)",asFUNCTION(delay),asCALL_CDECL);
     engine->RegisterObjectType("sound", sizeof(sound), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_ALLINTS | asGetTypeTraits<sound>());
     engine->RegisterObjectMethod("sound", "bool load(string, bool)", asMETHOD(sound, load), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "bool load_looped(string, bool)", asMETHOD(sound, load_looped), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool play()", asMETHOD(sound, play), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "bool play_looped()", asMETHOD(sound, play_looped), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool pause()", asMETHOD(sound, pause), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool play_wait()", asMETHOD(sound, play_wait), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool stop()", asMETHOD(sound, stop), asCALL_THISCALL);
