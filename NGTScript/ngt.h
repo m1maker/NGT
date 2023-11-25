@@ -66,7 +66,7 @@ public:
 	}
 
 	int elapsed();
-	void elapsed(int amount);
+//	void elapsed(int amount);
 	void restart();
 	void pause();
 	void resume();

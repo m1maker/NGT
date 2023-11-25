@@ -242,7 +242,7 @@ double sound::get_sample_rate() const {
             return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - inittime).count();
         }
     }
-
+/*
     void timer::elapsed(int amount) {
         if (paused == 0) {
             inittime = std::chrono::steady_clock::now() - std::chrono::milliseconds(amount);
@@ -251,7 +251,7 @@ double sound::get_sample_rate() const {
             paused = amount;
         }
     }
-
+    */
     void timer::restart() {
         inittime = std::chrono::steady_clock::now();
         paused = 0;

@@ -1,0 +1,3 @@
+void main(){
+alert("so", "this is just message");
+}
