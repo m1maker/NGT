@@ -27,12 +27,18 @@
     <ClInclude Include="nvdaController.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="scriptstdstring\scriptstdstring.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ngt.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ngtreg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scriptstdstring\scriptstdstring.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

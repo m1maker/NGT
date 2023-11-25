@@ -1,26 +1,15 @@
-﻿  ngt.cpp
-D:\NGT\NGTScript\ngt.cpp(35,15): warning C4244: 'return': conversion from 'double' to 'float', possible loss of data
-D:\NGT\NGTScript\ngt.cpp(264,57): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
-D:\NGT\NGTScript\ngt.cpp(282,12): warning C4244: 'return': conversion from 'QWORD' to 'double', possible loss of data
-D:\NGT\NGTScript\ngt.cpp(287,12): warning C4244: 'return': conversion from 'QWORD' to 'double', possible loss of data
-D:\NGT\NGTScript\ngt.cpp(300,124): warning C4244: 'return': conversion from '_Rep' to 'int', possible loss of data
-          with
-          [
-              _Rep=__int64
-          ]
-  ngtreg.cpp
-D:\NGT\NGTScript\ngtreg.cpp(43,60): error C2440: 'type cast': cannot convert from 'overloaded-function' to 'void (__cdecl timer::* )(void)'
-D:\NGT\NGTScript\ngtreg.cpp(43,60): message : None of the functions with this name in scope match the target type
-D:\NGT\NGTScript\ngtreg.cpp(43,60): error C2672: 'asSMethodPtr<8>::Convert': no matching overloaded function found
-D:\NGT\NGTScript\angelscript.h(1281,20): message : could be 'asSFuncPtr asSMethodPtr<8>::Convert(M)'
-D:\NGT\NGTScript\ngtreg.cpp(43,11): error C2660: 'asIScriptEngine::RegisterObjectMethod': function does not take 3 arguments
-D:\NGT\NGTScript\angelscript.h(691,25): message : see declaration of 'asIScriptEngine::RegisterObjectMethod'
-D:\NGT\NGTScript\ngtreg.cpp(43,11): message : while trying to match the argument list '(const char [6], const char [14], asECallConvTypes)'
-D:\NGT\NGTScript\ngtreg.cpp(44,64): error C2440: 'type cast': cannot convert from 'overloaded-function' to 'void (__cdecl timer::* )(void)'
-D:\NGT\NGTScript\ngtreg.cpp(44,64): message : None of the functions with this name in scope match the target type
-D:\NGT\NGTScript\ngtreg.cpp(44,64): error C2672: 'asSMethodPtr<8>::Convert': no matching overloaded function found
-D:\NGT\NGTScript\angelscript.h(1281,20): message : could be 'asSFuncPtr asSMethodPtr<8>::Convert(M)'
-D:\NGT\NGTScript\ngtreg.cpp(44,11): error C2660: 'asIScriptEngine::RegisterObjectMethod': function does not take 3 arguments
-D:\NGT\NGTScript\angelscript.h(691,25): message : see declaration of 'asIScriptEngine::RegisterObjectMethod'
-D:\NGT\NGTScript\ngtreg.cpp(44,11): message : while trying to match the argument list '(const char [6], const char [18], asECallConvTypes)'
+﻿  ngtreg.cpp
+  scriptstdstring.cpp
   Generating Code...
+ngtreg.obj : error LNK2019: unresolved external symbol "void __cdecl init_engine(void)" (?init_engine@@YAXXZ) referenced in function "void __cdecl RegisterFunctions(class asIScriptEngine *)" (?RegisterFunctions@@YAXPEAVasIScriptEngine@@@Z)
+ngtreg.obj : error LNK2019: unresolved external symbol "bool __cdecl show_game_window(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >,int,int)" (?show_game_window@@YA_NV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@HH@Z) referenced in function "void __cdecl RegisterFunctions(class asIScriptEngine *)" (?RegisterFunctions@@YAXPEAVasIScriptEngine@@@Z)
+    Hint on symbols that are defined and could potentially match:
+      "bool __cdecl show_game_window(class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> >)" (?show_game_window@@YA_NV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@@Z)
+ngtreg.obj : error LNK2019: unresolved external symbol "bool __cdecl alert(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >,class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >)" (?alert@@YA_NV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@0@Z) referenced in function "void __cdecl RegisterFunctions(class asIScriptEngine *)" (?RegisterFunctions@@YAXPEAVasIScriptEngine@@@Z)
+    Hint on symbols that are defined and could potentially match:
+      "bool __cdecl alert(class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> >,class std::basic_string<wchar_t,struct std::char_traits<wchar_t>,class std::allocator<wchar_t> >)" (?alert@@YA_NV?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@0@Z)
+ngtreg.obj : error LNK2019: unresolved external symbol "void __cdecl delay(int)" (?delay@@YAXH@Z) referenced in function "void __cdecl RegisterFunctions(class asIScriptEngine *)" (?RegisterFunctions@@YAXPEAVasIScriptEngine@@@Z)
+ngtreg.obj : error LNK2019: unresolved external symbol "public: bool __cdecl sound::load(class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >,bool)" (?load@sound@@QEAA_NV?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@_N@Z) referenced in function "void __cdecl RegisterFunctions(class asIScriptEngine *)" (?RegisterFunctions@@YAXPEAVasIScriptEngine@@@Z)
+ngtreg.obj : error LNK2019: unresolved external symbol "public: bool __cdecl sound::play_looped(void)" (?play_looped@sound@@QEAA_NXZ) referenced in function "void __cdecl RegisterFunctions(class asIScriptEngine *)" (?RegisterFunctions@@YAXPEAVasIScriptEngine@@@Z)
+MSVCRTD.lib(exe_main.obj) : error LNK2019: unresolved external symbol main referenced in function "int __cdecl invoke_main(void)" (?invoke_main@@YAHXZ)
+D:\NGT\NGTScript\x64\Debug\NGTScript.exe : fatal error LNK1120: 7 unresolved externals

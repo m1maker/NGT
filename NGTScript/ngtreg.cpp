@@ -1,5 +1,5 @@
 #pragma comment(lib, "angelscript64.lib")
-
+#include "scriptstdstring/scriptstdstring.h"
 #include <fstream>
 #include <cstdlib>
 
@@ -10,24 +10,33 @@
 #include "angelscript.h"
 #include "ngt.h"
 using namespace std;
+void MessageCallback(const asSMessageInfo* msg, void* param)
+{
+    const char* type = "ERR ";
+    if (msg->type == asMSGTYPE_WARNING)
+        type = "WARN";
+    else if (msg->type == asMSGTYPE_INFORMATION)
+        type = "INFO";
+    printf("%s (%d, %d) : %s : %s\n", msg->section, msg->row, msg->col, type, msg->message);
+}
 void RegisterFunctions(asIScriptEngine* engine)
 {
     engine->RegisterGlobalFunction("void init_engine()", asFUNCTION(init_engine), asCALL_CDECL);
     engine->RegisterGlobalFunction("float random(int, int)", asFUNCTION(random), asCALL_CDECL);
-    engine->RegisterGlobalFunction("void speak(string, bool)", asFUNCTION(speak), asCALL_CDECL);
+    engine->RegisterGlobalFunction("void speak(string &in, bool)", asFUNCTION(speak), asCALL_CDECL);
     engine->RegisterGlobalFunction("void stop_speech()", asFUNCTION(stop_speech), asCALL_CDECL);
-    engine->RegisterGlobalFunction("bool show_game_window(string,int,int)", asFUNCTION(show_game_window), asCALL_CDECL);
+    engine->RegisterGlobalFunction("bool show_game_window(string &in,int,int)", asFUNCTION(show_game_window), asCALL_CDECL);
     engine->RegisterGlobalFunction("void update_game_window()", asFUNCTION(update_game_window), asCALL_CDECL);
-    engine->RegisterGlobalFunction("void quit()",asFUNCTION("quit"),asCALL_CDECL);
+    engine->RegisterGlobalFunction("void quit()",asFUNCTION(quit),asCALL_CDECL);
     engine->RegisterGlobalFunction("bool key_pressed(int)", asFUNCTION(key_pressed), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool key_released(int)", asFUNCTION(key_released), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool key_down(int)", asFUNCTION(key_down), asCALL_CDECL);
-    engine->RegisterGlobalFunction("bool alert(string, string)", asFUNCTION(alert), asCALL_CDECL);
+    engine->RegisterGlobalFunction("bool alert(string &in, string &in)", asFUNCTION(alert), asCALL_CDECL);
     engine->RegisterGlobalFunction("void set_listener_position(float, float, float)", asFUNCTION(set_listener_position), asCALL_CDECL);
     engine->RegisterGlobalFunction("void wait(int)", asFUNCTION(wait), asCALL_CDECL);
     engine->RegisterGlobalFunction("void delay(int)",asFUNCTION(delay),asCALL_CDECL);
     engine->RegisterObjectType("sound", sizeof(sound), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_ALLINTS | asGetTypeTraits<sound>());
-    engine->RegisterObjectMethod("sound", "bool load(string, bool)", asMETHOD(sound, load), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "bool load(string &in, bool)", asMETHOD(sound, load), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool play()", asMETHOD(sound, play), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool play_looped()", asMETHOD(sound, play_looped), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool pause()", asMETHOD(sound, pause), asCALL_THISCALL);
@@ -56,13 +65,13 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectMethod("timer", "void restart()", asMETHOD(timer, restart), asCALL_THISCALL);
     engine->RegisterObjectMethod("timer", "void pause()", asMETHOD(timer, pause), asCALL_THISCALL);
     engine->RegisterObjectMethod("timer", "void resume()", asMETHOD(timer, resume), asCALL_THISCALL);
-    engine->RegisterObjectType("key_hold", sizeof(key_hold), asOBJ_VALUE | asOBJ_APP_CLASS_ALLINTS | asGetTypeTraits<key_hold>());
-    engine->RegisterObjectMethod("key_hold", "bool pressing()", asMETHOD(key_hold, pressing), asCALL_THISCALL);
+//    engine->RegisterObjectType("key_hold", sizeof(key_hold), asOBJ_VALUE | asOBJ_APP_CLASS_ALLINTS | asGetTypeTraits<key_hold>());
+//    engine->RegisterObjectMethod("key_hold", "bool pressing()", asMETHOD(key_hold, pressing), asCALL_THISCALL);
 }
 
 int main(int argc, char* argv[]) {
     if (argc != 3) {
-        std::cerr << "Usage: " << argv[0] << " <filename.as> [-c/-d]" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <filename.ngt> [-c/-d]" << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -91,10 +100,12 @@ int main(int argc, char* argv[]) {
 
         // Register any necessary functions and types
         // ...
+        RegisterStdString(engine);
         RegisterFunctions(engine);
         // Compile the script
+        engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
         asIScriptModule* module = engine->GetModule("MyModule", asGM_ALWAYS_CREATE);
-        int result = module->AddScriptSection("MyScript", script.c_str());
+        int result = module->AddScriptSection("NGTGAME", script.c_str());
         if (result < 0) {
             std::cerr << "Failed to add script section: " << result << std::endl;
             return 1;

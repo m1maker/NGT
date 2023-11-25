@@ -1,3 +1,10 @@
+sound test;
 void main(){
-alert("so", "this is just message");
+init_engine();
+show_game_window("test", 400, 600);
+test.load("C:\\windows\\media\\tada.wav", false);
+test.play();
+while(true){
+update_game_window();
+}
 }
