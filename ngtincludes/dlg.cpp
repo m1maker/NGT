@@ -1,5 +1,5 @@
 #include "dlg.h"
-#include<SDL.h>
+#include"ngt.h"
 void dlg(std::wstring message){
 	speak(message, false);
 	while(true){

@@ -8,7 +8,7 @@
 #include <chrono>
 #include "bass.h"
 #include <string>
-#include<SDL.h>
+#include"sdl/SDL.h"
 #include <commctrl.h>
 #include<map>
 #include <stdio.h>
