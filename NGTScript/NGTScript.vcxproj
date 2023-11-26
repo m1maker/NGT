@@ -132,11 +132,13 @@
     <ClInclude Include="bass.h" />
     <ClInclude Include="ngt.h" />
     <ClInclude Include="nvdaController.h" />
+    <ClInclude Include="scriptbuilder\scriptbuilder.h" />
     <ClInclude Include="scriptstdstring\scriptstdstring.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ngt.cpp" />
     <ClCompile Include="ngtreg.cpp" />
+    <ClCompile Include="scriptbuilder\scriptbuilder.cpp" />
     <ClCompile Include="scriptstdstring\scriptstdstring.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -13,7 +13,7 @@
 void init_engine();
 float random(long min, long max);
 
-void speak(std::wstring	 text, bool stop = true);
+void speak(std::string	 text, bool stop = true);
 void stop_speech();
 bool show_game_window(std::string title,int width=640, int height=480);
 void update_game_window();

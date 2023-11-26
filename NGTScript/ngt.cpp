@@ -13,6 +13,15 @@
 #include<map>
 #include <stdio.h>
 #include "NGT.H"
+#include <locale>
+#include <codecvt>
+
+std::wstring wstr(const std::string& utf8String)
+{
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+    return converter.from_bytes(utf8String);
+}
+
 HWND hwnd;
 std::map<SDL_Keycode,bool> keys;
 bool keyhook = false;
@@ -35,11 +44,12 @@ float random(long min, long max) {
     return dis(gen);
 }
 
-void speak(std::wstring text, bool stop) {
+void speak(std::string text, bool stop) {
     if (stop == true){
         nvdaController_cancelSpeech();
     }
-    nvdaController_speakText(text.c_str());
+    std::wstring textstr = wstr(text);
+    nvdaController_speakText(textstr.c_str());
 }
 void stop_speech() {
     nvdaController_cancelSpeech();
