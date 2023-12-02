@@ -1,0 +1,17 @@
+void main(){
+init_engine();
+show_game_window("test");
+while(true){
+update_game_window();
+if(key_down(SDLK_SPACE)){
+speak("down");
+}
+if(key_pressed(SDLK_TAB)){
+speak("Press");
+}
+if(key_released(SDLK_TAB)){
+speak("Unpress");
+}
+}
+quit();
+}

@@ -91,14 +91,14 @@ exit(0);
 }
 bool key_pressed(SDL_Keycode key_code)
 {
-if (e.type==SDL_KEYDOWN)
-{
-if (e.key.keysym.sym==key_code && e.key.repeat==0)
-{
-return true;
-}
+    if (e.type == SDL_KEYDOWN)
+    {
+        if (e.key.keysym.sym == key_code && e.key.repeat == 0)
+        {
+            return true;
+        }
+    }
 return false;
-}
 }
 bool key_released(SDL_Keycode key_code)
 {
@@ -108,13 +108,14 @@ bool key_released(SDL_Keycode key_code)
         {
             return true;
         }
-        return false;
     }
+    return false;
 }
 bool key_down(SDL_Keycode key_code)
 {
-if (keys.find(key_code)!=keys.end())
-return keys[key_code];
+    if (keys.find(key_code) != keys.end()) {
+        return keys[key_code];
+    }
 return false;
 }
 bool alert(std::string title, std::string text)
