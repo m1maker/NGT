@@ -33,6 +33,12 @@
     <ClInclude Include="scriptbuilder\scriptbuilder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ngtreg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ByteCode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ngt.cpp">
@@ -45,6 +51,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="scriptbuilder\scriptbuilder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ByteCode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

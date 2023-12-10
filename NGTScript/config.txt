@@ -1,5 +1,0 @@
-;!@Install@!UTF-8!
-InstallPath="%Temp%\\%%M NGTGame"
-RunProgram="\"NGTScript.exe obj.ngtb -d\""
-Delete="%%T"
-;!@InstallEnd@!

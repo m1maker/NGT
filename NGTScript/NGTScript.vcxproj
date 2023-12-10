@@ -120,7 +120,7 @@
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -130,12 +130,16 @@
   <ItemGroup>
     <ClInclude Include="angelscript.h" />
     <ClInclude Include="bass.h" />
+    <ClInclude Include="ByteCode.h" />
     <ClInclude Include="ngt.h" />
+    <ClInclude Include="ngtreg.h" />
     <ClInclude Include="nvdaController.h" />
     <ClInclude Include="scriptbuilder\scriptbuilder.h" />
     <ClInclude Include="scriptstdstring\scriptstdstring.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ByteCode.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="ngt.cpp" />
     <ClCompile Include="ngtreg.cpp" />
     <ClCompile Include="scriptbuilder\scriptbuilder.cpp" />
