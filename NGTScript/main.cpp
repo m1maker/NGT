@@ -10,6 +10,20 @@
 #include "ByteCode.h"
 #include "angelscript.h"
 #include "ngt.h"
+#include "scriptarray/scriptarray.h"
+#include "scriptdictionary/scriptdictionary.h"
+#include "scriptfile/scriptfile.h"
+#include "scriptfile/scriptfilesystem.h"
+#include "scripthelper/scripthelper.h"
+#include "contextmgr/contextmgr.h"
+#include "datetime/datetime.h"
+BOOL FileExists(LPCTSTR szPath)
+{
+    DWORD dwAttrib = GetFileAttributes(szPath);
+
+    return (dwAttrib != INVALID_FILE_ATTRIBUTES &&
+        !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+}
 class CBytecodeStream : public asIBinaryStream
 {
 public:
@@ -99,23 +113,35 @@ int Load(asIScriptEngine* engine, const char* inputFile)
 }
 
 
+std::string filename;
+std::string flag;
 
 int main(int argc, char* argv[]) {
-    if (argc != 3) {
-        std::cerr << "Usage: " << argv[0] << " <filename.ngt> [-c/-d]" << std::endl;
-        return EXIT_FAILURE;
+
+    if (FileExists(L"game_object.ngtb")) {
+        filename = "game_object.ngtb";
+        flag = "-b";
+//        alert("DebugInfo", filename);
     }
-
-    std::string filename = argv[1];
-    std::string flag = argv[2];
-
-    if (flag == "-c") {
+    else {
+    filename = argv[1];
+    flag = argv[2];
+    }
+        if (flag == "-c") {
         asIScriptEngine* engine = asCreateScriptEngine();
 
         // Register any necessary functions and types
         // ...
         RegisterStdString(engine);
         RegisterFunctions(engine);
+        RegisterScriptArray(engine, false);
+        RegisterStdStringUtils(engine);
+        RegisterScriptDictionary(engine);
+        RegisterScriptDateTime(engine);
+        RegisterScriptFile(engine);
+        RegisterScriptFileSystem(engine);
+        RegisterExceptionRoutines(engine);
+
         // Compile the script
         engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
         asIScriptModule* module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
@@ -136,9 +162,16 @@ int main(int argc, char* argv[]) {
 
 
         // Call compiler to create executable file
-        system("7za a -t7z a.7z *.exe *.dll *.ngtb");
-        system("copy /b exec.bin + a.7z + config.txt a.exe");
-    }
+        CreateDirectory(L"Release", 0);
+        CopyFile(L"NGTScript.exe", L"Release/run.exe", false);
+        CopyFile(L"angelscript64.dll", L"Release/angelscript64.dll", false);
+        CopyFile(L"bass.dll", L"Release/bass.dll", false);
+        CopyFile(L"nvdaControllerClient64.dll", L"Release/nvdaControllerClient64.dll", false);
+        CopyFile(L"SDL2.dll", L"Release/SDL2.dll", false);
+        CopyFile(L"game_object.ngtb", L"Release/game_object.ngtb", false);
+        DeleteFile(L"game_object.ngtb");
+        alert("NGTInfo", "Executable file was created successfully!");
+        }
     else if (flag == "-d") {
         asIScriptEngine* engine = asCreateScriptEngine();
 
@@ -146,6 +179,14 @@ int main(int argc, char* argv[]) {
         // ...
         RegisterStdString(engine);
         RegisterFunctions(engine);
+        RegisterScriptArray(engine, false);
+        RegisterStdStringUtils(engine);
+        RegisterScriptDictionary(engine);
+        RegisterScriptDateTime(engine);
+        RegisterScriptFile(engine);
+        RegisterScriptFileSystem(engine);
+        RegisterExceptionRoutines(engine);
+
         // Compile the script
         engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
         asIScriptModule* module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
@@ -218,6 +259,14 @@ int main(int argc, char* argv[]) {
 
         RegisterStdString(engine);
         RegisterFunctions(engine);
+        RegisterScriptArray(engine, false);
+        RegisterStdStringUtils(engine);
+        RegisterScriptDictionary(engine);
+        RegisterScriptDateTime(engine);
+        RegisterScriptFile(engine);
+        RegisterScriptFileSystem(engine);
+        RegisterExceptionRoutines(engine);
+
         engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
         asIScriptModule* module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
         int result;

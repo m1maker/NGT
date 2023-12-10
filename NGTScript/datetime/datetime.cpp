@@ -1,3 +1,4 @@
+#pragma warning(disable : 4996) //_CRT_SECURE_NO_WARNINGS
 #include "datetime.h"
 #include "../autowrapper/aswrappedcall.h"
 #include <string.h>
