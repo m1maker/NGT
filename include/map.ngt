@@ -1,0 +1,33 @@
+/*
+This is a really simple map class.
+Author:
+Twitter: @NicklasMCHD
+AudioGames Forum Name: NicklasMCHD
+*/
+
+
+// this map uses dictionaries
+dictionary map;
+
+// spawn a set of tiles.
+void spawn_tile(int lx, int rx, int miny, int maxy, int minz, int maxz, string tile="air")
+{
+for(int i=lx; i<=rx; i++)
+{
+for(int i2=miny; i2<=maxy; i2++)
+{
+for(int i3=minz; i3<=maxz; i3++)
+{
+map.set(i+":"+i2+":"+i3, tile);
+}
+}
+}
+}
+
+// Get a tile at a specific location.
+string get_tile_at(int x, int y, int z)
+{
+string tile;
+map.get(x+":"+y+":"+z, tile);
+return tile;
+}

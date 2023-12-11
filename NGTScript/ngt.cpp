@@ -36,7 +36,7 @@ const int JAWS = 1;
 const int NVDA = 2;
 std::random_device rd;
 std::mt19937 gen(rd());
-float random(long min, long max) {
+long random(long min, long max) {
     static_assert(std::is_arithmetic<double>::value, "T must be an arithmetic type");
 
     std::uniform_real_distribution<double> dis(min, max+1);
@@ -118,6 +118,18 @@ bool key_down(SDL_Keycode key_code)
     }
 return false;
 }
+bool key_repeat(SDL_Keycode key_code)
+{
+    if (e.type == SDL_KEYDOWN)
+    {
+        if (e.key.keysym.sym == key_code)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool alert(std::string title, std::string text)
 {
 SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,title.c_str(),text.c_str(),NULL);

@@ -11,7 +11,7 @@
 #include "bass.h"
 #include"sdl/SDL.h"
 void init_engine();
-float random(long min, long max);
+long random(long min, long max);
 
 void speak(std::string	 text, bool stop = true);
 void stop_speech();
@@ -21,6 +21,7 @@ void quit();
 bool key_pressed(SDL_Keycode key_code);
 bool key_released(SDL_Keycode key_code);
 bool key_down(SDL_Keycode key_code);
+bool key_repeat(SDL_Keycode key_code);
 bool alert(std::string	 title, std::string	 text);
 void set_listener_position(float l_x, float l_y, float l_z);
 void wait(int time);

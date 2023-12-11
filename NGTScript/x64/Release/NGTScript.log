@@ -1,0 +1,18 @@
+﻿  main.cpp
+  ngt.cpp
+D:\NGT\NGTScript\ngt.cpp(44,15): warning C4244: 'return': conversion from 'double' to 'long', possible loss of data
+D:\NGT\NGTScript\ngt.cpp(229,57): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+D:\NGT\NGTScript\ngt.cpp(247,12): warning C4244: 'return': conversion from 'QWORD' to 'double', possible loss of data
+D:\NGT\NGTScript\ngt.cpp(252,12): warning C4244: 'return': conversion from 'QWORD' to 'double', possible loss of data
+D:\NGT\NGTScript\ngt.cpp(265,124): warning C4244: 'return': conversion from '_Rep' to 'int', possible loss of data
+          with
+          [
+              _Rep=__int64
+          ]
+  ngtreg.cpp
+  Generating code
+  3 of 2098 functions ( 0.1%) were compiled, the rest were copied from previous compilation.
+    2 functions were new in current compilation
+    6 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+  NGTScript.vcxproj -> D:\NGT\NGTScript\x64\Release\NGTScript.exe

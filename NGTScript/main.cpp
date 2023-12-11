@@ -134,7 +134,7 @@ int main(int argc, char* argv[]) {
         // ...
         RegisterStdString(engine);
         RegisterFunctions(engine);
-        RegisterScriptArray(engine, false);
+        RegisterScriptArray(engine, true);
         RegisterStdStringUtils(engine);
         RegisterScriptDictionary(engine);
         RegisterScriptDateTime(engine);
@@ -179,7 +179,7 @@ int main(int argc, char* argv[]) {
         // ...
         RegisterStdString(engine);
         RegisterFunctions(engine);
-        RegisterScriptArray(engine, false);
+        RegisterScriptArray(engine, true);
         RegisterStdStringUtils(engine);
         RegisterScriptDictionary(engine);
         RegisterScriptDateTime(engine);
@@ -244,7 +244,8 @@ int main(int argc, char* argv[]) {
         // Execute the function
         result = ctx->Execute();
         if (result != asEXECUTION_FINISHED) {
-            alert("NGTRuntimeError", "Script execution failed: ");
+            std::string output = GetExceptionInfo(ctx, true);
+            alert("NGTRuntimeError", "Info: " + output);
             return 1;
         }
 
@@ -259,7 +260,7 @@ int main(int argc, char* argv[]) {
 
         RegisterStdString(engine);
         RegisterFunctions(engine);
-        RegisterScriptArray(engine, false);
+        RegisterScriptArray(engine, true);
         RegisterStdStringUtils(engine);
         RegisterScriptDictionary(engine);
         RegisterScriptDateTime(engine);
@@ -318,7 +319,8 @@ int main(int argc, char* argv[]) {
         // Execute the function
         result = ctx->Execute();
         if (result != asEXECUTION_FINISHED) {
-            alert("NGTRuntimeError", "Script execution failed: ");
+            std::string output = GetExceptionInfo(ctx, true);
+            alert("NGTRuntimeError", "Info: "+ output);
             return 1;
         }
 
