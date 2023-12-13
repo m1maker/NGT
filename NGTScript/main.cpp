@@ -166,6 +166,8 @@ int main(int argc, char* argv[]) {
         CopyFile(L"NGTScript.exe", L"Release/run.exe", false);
         CopyFile(L"angelscript64.dll", L"Release/angelscript64.dll", false);
         CopyFile(L"bass.dll", L"Release/bass.dll", false);
+        CopyFile(L"phonon.dll", L"Release/phonon.dll", false);
+
         CopyFile(L"nvdaControllerClient64.dll", L"Release/nvdaControllerClient64.dll", false);
         CopyFile(L"SDL2.dll", L"Release/SDL2.dll", false);
         CopyFile(L"game_object.ngtb", L"Release/game_object.ngtb", false);

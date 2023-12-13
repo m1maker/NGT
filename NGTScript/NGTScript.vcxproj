@@ -124,7 +124,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);bass.lib;nvdacontrollerclient64.lib;SDL2.lib;SDL2main.lib;angelscript64.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);bass.lib;nvdacontrollerclient64.lib;SDL2.lib;SDL2main.lib;angelscript64.lib;phonon.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -137,6 +137,9 @@
     <ClInclude Include="ngt.h" />
     <ClInclude Include="ngtreg.h" />
     <ClInclude Include="nvdaController.h" />
+    <ClInclude Include="phonon.h" />
+    <ClInclude Include="phonon_interfaces.h" />
+    <ClInclude Include="phonon_version.h" />
     <ClInclude Include="scriptany\scriptany.h" />
     <ClInclude Include="scriptarray\scriptarray.h" />
     <ClInclude Include="scriptbuilder\scriptbuilder.h" />

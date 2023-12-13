@@ -33,8 +33,15 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterGlobalFunction("void speak(string &in, bool=true)", asFUNCTION(speak), asCALL_CDECL);
     engine->RegisterGlobalFunction("void stop_speech()", asFUNCTION(stop_speech), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool show_game_window(string &in,int=640,int=480)", asFUNCTION(show_game_window), asCALL_CDECL);
+    engine->RegisterGlobalFunction("void hide_game_window()", asFUNCTION(hide_game_window), asCALL_CDECL);
+    engine->RegisterGlobalFunction("void set_game_window_title(string &in)", asFUNCTION(set_game_window_title), asCALL_CDECL);
+
     engine->RegisterGlobalFunction("void update_game_window()", asFUNCTION(update_game_window), asCALL_CDECL);
     engine->RegisterGlobalFunction("void quit()",asFUNCTION(quit),asCALL_CDECL);
+    engine->RegisterGlobalFunction("bool clipboard_copy_text(string &in)", asFUNCTION(clipboard_copy_text), asCALL_CDECL);
+    engine->RegisterGlobalFunction("string clipboard_read_text()", asFUNCTION(clipboard_read_text), asCALL_CDECL);
+    engine->RegisterGlobalFunction("string get_input()", asFUNCTION(get_input), asCALL_CDECL);
+
     engine->RegisterGlobalFunction("bool key_pressed(int)", asFUNCTION(key_pressed), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool key_released(int)", asFUNCTION(key_released), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool key_down(int)", asFUNCTION(key_down), asCALL_CDECL);

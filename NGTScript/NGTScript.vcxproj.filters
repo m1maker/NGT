@@ -81,6 +81,15 @@
     <ClInclude Include="autowrapper\aswrappedcall.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="phonon_interfaces.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="phonon_version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="phonon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ngt.cpp">

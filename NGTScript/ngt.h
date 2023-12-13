@@ -9,6 +9,7 @@
 #include<chrono>
 #include <string>
 #include "bass.h"
+#include "phonon.h"
 #include"sdl/SDL.h"
 void init_engine();
 long random(long min, long max);
@@ -16,8 +17,13 @@ long random(long min, long max);
 void speak(std::string	 text, bool stop = true);
 void stop_speech();
 bool show_game_window(std::string title,int width=640, int height=480);
+void hide_game_window();
+void set_game_window_title(std::string new_title);
 void update_game_window();
 void quit();
+bool clipboard_copy_text(std::string text);
+std::string clipboard_read_text();
+std::string get_input();
 bool key_pressed(SDL_Keycode key_code);
 bool key_released(SDL_Keycode key_code);
 bool key_down(SDL_Keycode key_code);

@@ -1,6 +1,8 @@
 ﻿#include <random>
 #include <type_traits>
 #pragma comment(lib, "bass.lib")
+#pragma comment(lib, "phonon.lib")
+
 #pragma comment(lib, "nvdaControllerClient64.lib")
 #include <thread>
 #include "nvdaController.h"
@@ -25,13 +27,13 @@ std::wstring wstr(const std::string& utf8String)
 HWND hwnd;
 std::map<SDL_Keycode,bool> keys;
 bool keyhook = false;
+std::string inputtext;
 void init_engine() {
     SDL_Init(SDL_INIT_EVERYTHING);
     BASS_Init(-1, 44100, 0, 0, NULL);
     BASS_Apply3D();
     BASS_SetConfig(BASS_CONFIG_3DALGORITHM, BASS_3DALG_OFF);
 }
-
 const int JAWS = 1;
 const int NVDA = 2;
 std::random_device rd;
@@ -59,11 +61,20 @@ SDL_Event e;
 bool show_game_window(std::string title,int width, int height)
 {
 win=SDL_CreateWindow(title.c_str(),SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,width,height,SDL_WINDOW_SHOWN);
+SDL_StartTextInput();
 if (win!=NULL)
 {
 return true;
 }
 return false;
+}
+void hide_game_window() {
+    SDL_StopTextInput();
+
+    SDL_DestroyWindow(win);
+}
+void set_game_window_title(std::string new_title) {
+    SDL_SetWindowTitle(win, new_title.c_str());
 }
 void update_game_window()
 {
@@ -72,6 +83,9 @@ if (e.type==SDL_QUIT)
 {
 quit();
 }
+else if (e.type == SDL_TEXTINPUT)
+inputtext = e.text.text;
+
 else if (e.type==SDL_KEYDOWN)
 {
 keys[e.key.keysym.sym]=true;
@@ -83,11 +97,22 @@ keys[e.key.keysym.sym]=false;
 }
 void quit()
 {
-SDL_DestroyWindow(win);
+    SDL_StopTextInput();
+    SDL_DestroyWindow(win);
 win=NULL;
 BASS_Free();
 SDL_Quit();
 exit(0);
+}
+bool clipboard_copy_text(std::string text) {
+    SDL_SetClipboardText(text.c_str());
+    return true;
+}
+std::string clipboard_read_text() {
+    return SDL_GetClipboardText();
+}
+std::string get_input() {
+    return inputtext;
 }
 bool key_pressed(SDL_Keycode key_code)
 {
