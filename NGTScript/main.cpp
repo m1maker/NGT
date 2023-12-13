@@ -167,6 +167,8 @@ int main(int argc, char* argv[]) {
         CopyFile(L"angelscript64.dll", L"Release/angelscript64.dll", false);
         CopyFile(L"bass.dll", L"Release/bass.dll", false);
         CopyFile(L"phonon.dll", L"Release/phonon.dll", false);
+        CopyFile(L"tolk.dll", L"Release/tolk.dll", false);
+        CopyFile(L"SAAPI64.dll", L"Release/SAAPI64.dll", false);
 
         CopyFile(L"nvdaControllerClient64.dll", L"Release/nvdaControllerClient64.dll", false);
         CopyFile(L"SDL2.dll", L"Release/SDL2.dll", false);

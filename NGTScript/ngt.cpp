@@ -2,11 +2,12 @@
 #include <type_traits>
 #pragma comment(lib, "bass.lib")
 #pragma comment(lib, "phonon.lib")
+#pragma comment(lib, "tolk.lib")
 
 #pragma comment(lib, "nvdaControllerClient64.lib")
 #include <thread>
 #include "nvdaController.h"
-
+#include "Tolk.h"
 #include <chrono>
 #include "bass.h"
 #include <string>
@@ -33,8 +34,15 @@ void init_engine() {
     BASS_Init(-1, 44100, 0, 0, NULL);
     BASS_Apply3D();
     BASS_SetConfig(BASS_CONFIG_3DALGORITHM, BASS_3DALG_OFF);
+    Tolk_TrySAPI(true);
+
+    Tolk_Load();
+    Tolk_DetectScreenReader();
+    if (!Tolk_HasSpeech()) {
+        Tolk_PreferSAPI(true);
 }
-const int JAWS = 1;
+}
+        const int JAWS = 1;
 const int NVDA = 2;
 std::random_device rd;
 std::mt19937 gen(rd());
@@ -47,15 +55,12 @@ long random(long min, long max) {
 }
 
 void speak(std::string text, bool stop) {
-    if (stop == true){
-        nvdaController_cancelSpeech();
-    }
     std::wstring textstr = wstr(text);
-    nvdaController_speakText(textstr.c_str());
+    Tolk_Speak(textstr.c_str(), stop);
 }
-void stop_speech() {
-    nvdaController_cancelSpeech();
-}
+    void stop_speech() {
+        Tolk_Silence();
+    }
 SDL_Window* win=NULL;
 SDL_Event e;
 bool show_game_window(std::string title,int width, int height)
