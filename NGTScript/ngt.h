@@ -15,6 +15,7 @@ void init_engine();
 long random(long min, long max);
 
 void speak(std::string	 text, bool stop = true);
+void speak_wait(std::string	 text, bool stop = true);
 void stop_speech();
 bool show_game_window(std::string title,int width=640, int height=480);
 void hide_game_window();

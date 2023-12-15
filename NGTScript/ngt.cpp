@@ -42,8 +42,6 @@ void init_engine() {
         Tolk_PreferSAPI(true);
 }
 }
-        const int JAWS = 1;
-const int NVDA = 2;
 std::random_device rd;
 std::mt19937 gen(rd());
 long random(long min, long max) {
@@ -53,12 +51,19 @@ long random(long min, long max) {
 
     return dis(gen);
 }
-
 void speak(std::string text, bool stop) {
     std::wstring textstr = wstr(text);
     Tolk_Speak(textstr.c_str(), stop);
 }
-    void stop_speech() {
+void speak_wait(std::string text, bool stop) {
+    std::wstring textstr = wstr(text);
+    Tolk_Speak(textstr.c_str(), stop);
+    while (Tolk_IsSpeaking()) {
+        update_game_window();
+    }
+}
+
+void stop_speech() {
         Tolk_Silence();
     }
 SDL_Window* win=NULL;
@@ -89,7 +94,7 @@ if (e.type==SDL_QUIT)
 quit();
 }
 else if (e.type == SDL_TEXTINPUT)
-inputtext = e.text.text;
+inputtext += e.text.text;
 
 else if (e.type==SDL_KEYDOWN)
 {
@@ -106,6 +111,7 @@ void quit()
     SDL_DestroyWindow(win);
 win=NULL;
 BASS_Free();
+Tolk_Unload();
 SDL_Quit();
 exit(0);
 }
