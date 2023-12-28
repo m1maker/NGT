@@ -17,6 +17,7 @@
 #include "scripthelper/scripthelper.h"
 #include "contextmgr/contextmgr.h"
 #include "datetime/datetime.h"
+#include "scriptmath/scriptmath.h"
 BOOL FileExists(LPCTSTR szPath)
 {
     DWORD dwAttrib = GetFileAttributes(szPath);
@@ -115,9 +116,7 @@ int Load(asIScriptEngine* engine, const char* inputFile)
 
 std::string filename;
 std::string flag;
-
 int main(int argc, char* argv[]) {
-
     if (FileExists(L"game_object.ngtb")) {
         filename = "game_object.ngtb";
         flag = "-b";
@@ -141,7 +140,7 @@ int main(int argc, char* argv[]) {
         RegisterScriptFile(engine);
         RegisterScriptFileSystem(engine);
         RegisterExceptionRoutines(engine);
-
+        RegisterScriptMath(engine);
         // Compile the script
         engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
         asIScriptModule* module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
@@ -172,6 +171,8 @@ int main(int argc, char* argv[]) {
 
         CopyFile(L"nvdaControllerClient64.dll", L"Release/nvdaControllerClient64.dll", false);
         CopyFile(L"SDL2.dll", L"Release/SDL2.dll", false);
+        CopyFile(L"SDL2_net.dll", L"Release/SDL2_net.dll", false);
+
         CopyFile(L"game_object.ngtb", L"Release/game_object.ngtb", false);
         DeleteFile(L"game_object.ngtb");
         alert("NGTInfo", "Executable file was created successfully!");
@@ -190,6 +191,7 @@ int main(int argc, char* argv[]) {
         RegisterScriptFile(engine);
         RegisterScriptFileSystem(engine);
         RegisterExceptionRoutines(engine);
+        RegisterScriptMath(engine);
 
         // Compile the script
         engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
@@ -271,6 +273,7 @@ int main(int argc, char* argv[]) {
         RegisterScriptFile(engine);
         RegisterScriptFileSystem(engine);
         RegisterExceptionRoutines(engine);
+        RegisterScriptMath(engine);
 
         engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
         asIScriptModule* module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);

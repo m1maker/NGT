@@ -1,0 +1,64 @@
+void dlg(string message, bool in_game=false,string dlgalert="",string dlgdismiss="")
+{
+//if(dlgalert!="") p.play_stationary(dlgalert,false);
+speak(message);
+while(true)
+{
+update_game_window();
+//if(in_game) tk_loop();
+//if(speed_stop_is_hacking(200)==true)
+//killbitch();
+if (key_pressed(SDLK_LEFT) or key_pressed(SDLK_RIGHT) or key_pressed(SDLK_UP) or key_pressed(SDLK_DOWN))
+{
+speak(message);
+}
+if (key_pressed(SDLK_RETURN) or key_pressed(SDLK_ESCAPE))
+{
+break;
+}
+}
+//if(dlgdismiss!="") p.play_stationary(dlgdismiss,false);
+}
+/*
+void dlg_send(string message, string return_packet="dlg_reply",bool in_game=false)
+{
+speak(message);
+while(true)
+{
+if(in_game) tk_loop();
+if(speed_stop_is_hacking(200)==true)
+killbitch();
+if (key_pressed(KEY_LEFT) or key_pressed(KEY_RIGHT) or key_pressed(KEY_UP) or key_pressed(KEY_DOWN))
+{
+speak(message);
+}
+if (key_pressed(KEY_RETURN) or key_pressed(KEY_ESCAPE)or key_pressed(KEY_NUMPADENTER))
+{
+send_reliable(0,return_packet+" "+keys_pressed()[0],0);
+break;
+}
+}
+}
+
+void dlg_wait(string message, int waittime)
+{
+speak(message);
+timer d;
+speed_stop_reset(true);
+while(true)
+{
+e=n.request();
+if(speed_stop_is_hacking(200)==true)
+killbitch();
+if (key_pressed(KEY_LEFT) or key_pressed(KEY_RIGHT) or key_pressed(KEY_UP) or key_pressed(KEY_DOWN))
+{
+speak(message);
+}
+if(d.elapsed>=waittime)
+{
+break;
+}
+wait(5);
+}
+}
+*/

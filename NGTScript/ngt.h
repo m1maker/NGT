@@ -1,6 +1,4 @@
 #pragma once
-#ifndef BGT_H
-#define BGT_H
 
 
 #include <random>
@@ -11,9 +9,10 @@
 #include "bass.h"
 #include "phonon.h"
 #include"sdl/SDL.h"
+#include "SDL_net.h"
 void init_engine();
 long random(long min, long max);
-
+int get_last_error();
 void speak(std::string	 text, bool stop = true);
 void speak_wait(std::string	 text, bool stop = true);
 void stop_speech();
@@ -33,9 +32,31 @@ bool alert(std::string	 title, std::string	 text);
 void set_listener_position(float l_x, float l_y, float l_z);
 void wait(int time);
 void delay(int ms);
+void set_sound_storage(std::string path);
+std::string get_sound_storage();
+void set_master_volume(float volume);
+float get_master_volume();
+class reverb {
+public:
+	BASS_DX8_REVERB r;
+	void construct();
+	void destruct();
+
+
+	void set_input_gain(float input_gain);
+	void set_reverb_mix(float reverb_mix);
+	void  set_reverb_time(float reverb_time);
+	float get_input_gain();
+	float get_reverb_mix();
+	float  get_reverb_time();
+
+};
 class sound {
 public:
 	HSTREAM handle_;
+	HFX rev;
+	void construct();
+	void destruct();
 
 	bool load(std::string	 filename, bool hrtf=false);
 
@@ -46,6 +67,8 @@ public:
 	bool stop();
 	bool close();
 	void set_sound_position(float s_x, float s_y, float s_z);
+	void set_sound_reverb(float input_gain, float reverb_mix, float reverb_time);
+	void cancel_reverb();
 	float get_pan() const;
 	void set_pan(float pan);
 	float get_volume() const;
@@ -72,6 +95,8 @@ public:
 		inittime = std::chrono::steady_clock::now();
 		paused = 0;
 	}
+	void construct();
+	void destruct();
 
 	int elapsed();
 //	void elapsed(int amount);
@@ -100,4 +125,74 @@ public:
 
 	bool pressing();
 };
-#endif
+class NetworkEvent {
+public:
+    const int EVENT_NONE = 0;
+    const int EVENT_CONNECT = 1;
+    const int EVENT_RECEIVE = 2;
+    const int EVENT_DISCONNECT = 3;
+
+    int get_type() const {
+        return m_type;
+    }
+
+unsigned    int get_peer_id() const {
+        return m_peerId;
+    }
+
+unsigned    int get_channel() const {
+        return m_channel;
+    }
+
+    std::string get_message() const {
+        return m_message;
+    }
+
+private:
+    int m_type;
+unsigned    int m_peerId;
+    int m_channel;
+    std::string m_message;
+};
+
+class network {
+public:
+unsigned    int connect(std::string host, int port);
+    bool destroy();
+    bool disconnect_peer(unsigned int peerId);
+    bool disconnect_peer_forcefully(unsigned int peerId);
+    bool disconnect_peer_softly(unsigned int peerId);
+    std::string get_peer_address(unsigned int peerId);
+    double get_peer_average_round_trip_time(unsigned int peerId);
+    std	::vector<unsigned int> get_peer_list();
+    NetworkEvent request();
+    bool send_reliable(unsigned int peerId, std::string packet, int channel);
+    bool send_unreliable(unsigned int peerId, std::string packet, int channel);
+    bool set_bandwidth_limits(double incomingBandwidth, double outgoingBandwidth);
+    bool setup_client(int channels, int maxPeers);
+    bool setup_server(int listeningPort, int channels, int maxPeers);
+
+    int get_connected_peers() const {
+        return m_connectedPeers;
+    }
+
+    double get_bytes_sent() const {
+        return m_bytesSent;
+    }
+
+    double get_bytes_received() const {
+        return m_bytesReceived;
+    }
+
+    bool is_active() const {
+        return m_active;
+    }
+
+private:
+    int m_connectedPeers;
+    double m_bytesSent;
+    double m_bytesReceived;
+    bool m_active;
+};
+
+

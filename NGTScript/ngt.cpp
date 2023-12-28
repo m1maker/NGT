@@ -24,6 +24,7 @@ std::wstring wstr(const std::string& utf8String)
     std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
     return converter.from_bytes(utf8String);
 }
+std::string sound_path;
 
 HWND hwnd;
 std::map<SDL_Keycode,bool> keys;
@@ -31,6 +32,7 @@ bool keyhook = false;
 std::string inputtext;
 void init_engine() {
     SDL_Init(SDL_INIT_EVERYTHING);
+    SDLNet_Init();
     BASS_Init(-1, 44100, 0, 0, NULL);
     BASS_Apply3D();
     BASS_SetConfig(BASS_CONFIG_3DALGORITHM, BASS_3DALG_OFF);
@@ -50,6 +52,9 @@ long random(long min, long max) {
     std::uniform_real_distribution<double> dis(min, max+1);
 
     return dis(gen);
+}
+int get_last_error() {
+    return BASS_ErrorGetCode();
 }
 void speak(std::string text, bool stop) {
     std::wstring textstr = wstr(text);
@@ -111,8 +116,9 @@ void quit()
     SDL_DestroyWindow(win);
 win=NULL;
 BASS_Free();
-Tolk_Unload();
-SDL_Quit();
+        Tolk_Unload();
+        SDL_Quit();
+        SDLNet_Quit();
 exit(0);
 }
 bool clipboard_copy_text(std::string text) {
@@ -188,12 +194,38 @@ void delay(int ms)
 {
 SDL_Delay(ms);
 }
+void set_sound_storage(std::string path) {
+    sound_path = path;
+}
+std::string get_sound_storage() {
+    return sound_path;
+}
+void set_master_volume(float volume) {
+    BASS_SetVolume(volume);
+}
+float get_master_volume() {
+    return BASS_GetVolume();
+}
+void sound::construct() {
+}
+
+void sound::destruct() {
+}
+
+
 bool sound::load(std::string filename, bool hrtf) {
+    std::string result;
+    if (sound_path != "") {
+         result = sound_path + "/" + filename.c_str();
+
+    }
+    else
+        result = filename;
     if (!hrtf) {
-        handle_ = BASS_StreamCreateFile(false, filename.c_str(), 0, 0, 0);
+        handle_ = BASS_StreamCreateFile(false, result.c_str(), 0, 0, 0);
     }
     else {
-        handle_ = BASS_StreamCreateFile(false, filename.c_str(), 0, 0, BASS_SAMPLE_MONO| BASS_SAMPLE_3D);
+        handle_ = BASS_StreamCreateFile(false, result.c_str(), 0, 0, BASS_SAMPLE_MONO| BASS_SAMPLE_3D);
     }
 
     return handle_ != 0;
@@ -234,6 +266,18 @@ void sound::set_sound_position(float s_x, float s_y, float s_z) {
     BASS_3DVECTOR s_pos{ s_x, s_y, s_z };
     BASS_ChannelSet3DPosition(handle_, &s_pos, 0, 0);
     BASS_Apply3D();
+}
+void sound::set_sound_reverb(float input_gain, float reverb_mix, float reverb_time){
+    reverb r;
+    r.set_input_gain(input_gain);
+    r.set_reverb_mix(reverb_mix);
+    r.set_reverb_time(reverb_time);
+
+    rev = BASS_ChannelSetFX(handle_, BASS_FX_DX8_REVERB, 2);
+    BASS_FXSetParameters(rev, &r.r);
+}
+void sound::cancel_reverb() {
+    BASS_ChannelRemoveFX(handle_, rev);
 }
 float sound::get_pan() const {
     float pan;
@@ -293,7 +337,15 @@ double sound::get_sample_rate() const {
     BASS_ChannelGetAttribute(handle_, BASS_ATTRIB_FREQ, &rate);
     return rate;
 }
-    int timer::elapsed() {
+void timer::construct() {
+}
+
+void timer::destruct() {
+}
+
+
+
+int timer::elapsed() {
         if (paused != 0) {
             return paused;
         }
@@ -354,4 +406,30 @@ double sound::get_sample_rate() const {
                 return true;
             }
             return false;
+        }
+        void reverb::construct() {
+        }
+
+        void reverb::destruct() {
+        }
+
+
+
+        void reverb::set_input_gain(float input_gain) {
+            r.fInGain = input_gain;
+        }
+        void reverb::set_reverb_mix(float reverb_mix) {
+            r.fReverbMix = reverb_mix;
+        }       
+        void reverb::set_reverb_time(float reverb_time) {
+            r.fReverbTime = reverb_time;
+        }
+        float reverb::get_input_gain() {
+            return r.fInGain;
+        }
+        float reverb::get_reverb_mix() {
+            return r.fReverbMix;
+        }
+        float reverb::get_reverb_time() {
+            return r.fReverbTime;
         }

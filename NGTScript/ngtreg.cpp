@@ -1,4 +1,4 @@
-#pragma comment(lib, "angelscript64.lib")
+    #pragma comment(lib, "angelscript64.lib")
 #include "scriptbuilder/scriptbuilder.h"
 #include "scriptstdstring/scriptstdstring.h"
 #include <fstream>
@@ -11,11 +11,15 @@
 #include "angelscript.h"
 #include "ngt.h"
 using namespace std;
+sound* fsound() { return new sound; }
+reverb* freverb() { return new reverb; }
+timer* ftimer() { return new timer; }
+
 void MessageCallback(const asSMessageInfo* msg, void* param)
 {
     const char* type = "ERR ";
     if (msg->type == asMSGTYPE_WARNING)
-        type = "WARN";
+    return;
     else if (msg->type == asMSGTYPE_INFORMATION)
         type = "INFO";
     char rowStr[10], colStr[10];
@@ -30,6 +34,8 @@ void RegisterFunctions(asIScriptEngine* engine)
 {
     engine->RegisterGlobalFunction("void init_engine()", asFUNCTION(init_engine), asCALL_CDECL);
     engine->RegisterGlobalFunction("int random(int, int)", asFUNCTION(random), asCALL_CDECL);
+    engine->RegisterGlobalFunction("int get_last_error()", asFUNCTION(get_last_error), asCALL_CDECL);
+
     engine->RegisterGlobalFunction("void speak(string &in, bool=true)", asFUNCTION(speak), asCALL_CDECL);
     engine->RegisterGlobalFunction("void speak_wait(string &in, bool=true)", asFUNCTION(speak_wait), asCALL_CDECL);
 
@@ -53,7 +59,26 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterGlobalFunction("void set_listener_position(float, float, float)", asFUNCTION(set_listener_position), asCALL_CDECL);
     engine->RegisterGlobalFunction("void wait(int)", asFUNCTION(wait), asCALL_CDECL);
     engine->RegisterGlobalFunction("void delay(int)",asFUNCTION(delay),asCALL_CDECL);
-    engine->RegisterObjectType("sound", sizeof(sound), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_ALLINTS | asGetTypeTraits<sound>());
+    engine->RegisterGlobalFunction("void set_sound_storage(string &in)", asFUNCTION(set_sound_storage), asCALL_CDECL);
+
+    engine->RegisterGlobalFunction("string get_sound_storage()", asFUNCTION(get_sound_storage), asCALL_CDECL);
+    engine->RegisterGlobalFunction("void set_master_volume(float)", asFUNCTION(set_master_volume), asCALL_CDECL);
+    engine->RegisterGlobalFunction("float get_master_volume()", asFUNCTION(get_master_volume), asCALL_CDECL);
+    engine->RegisterObjectType("reverb", sizeof(reverb), asOBJ_REF);
+    engine->RegisterObjectBehaviour("reverb", asBEHAVE_FACTORY, "reverb@ f()", asFUNCTION(freverb), asCALL_CDECL);
+    engine->RegisterObjectBehaviour("reverb", asBEHAVE_ADDREF, "void f()", asMETHOD(reverb, construct), asCALL_THISCALL);
+    engine->RegisterObjectBehaviour("reverb", asBEHAVE_RELEASE, "void f()", asMETHOD(reverb, destruct), asCALL_THISCALL);
+    engine->RegisterObjectMethod("reverb", "void set_reverb_mix(float)", asMETHOD(reverb, set_reverb_mix), asCALL_THISCALL);
+    engine->RegisterObjectMethod("reverb", "void set_reverb_time(float)", asMETHOD(reverb, set_reverb_time), asCALL_THISCALL);
+    engine->RegisterObjectMethod("reverb", "float get_input_gain()", asMETHOD(reverb, get_input_gain), asCALL_THISCALL);
+    engine->RegisterObjectMethod("reverb", "float get_reverb_mix()", asMETHOD(reverb, get_reverb_mix), asCALL_THISCALL);
+    engine->RegisterObjectMethod("reverb", "float get_reverb_time   ()", asMETHOD(reverb, get_reverb_time), asCALL_THISCALL);
+
+
+    engine->RegisterObjectType("sound", sizeof(sound), asOBJ_REF);
+    engine->RegisterObjectBehaviour("sound", asBEHAVE_FACTORY, "sound@ f()", asFUNCTION(fsound), asCALL_CDECL);
+    engine->RegisterObjectBehaviour("sound", asBEHAVE_ADDREF, "void f()", asMETHOD(sound, construct), asCALL_THISCALL);
+    engine->RegisterObjectBehaviour("sound", asBEHAVE_RELEASE, "void f()", asMETHOD(sound, destruct), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool load(string &in, bool=false)", asMETHOD(sound, load), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool play()", asMETHOD(sound, play), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool play_looped()", asMETHOD(sound, play_looped), asCALL_THISCALL);
@@ -62,6 +87,9 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectMethod("sound", "bool stop()", asMETHOD(sound, stop), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool close()", asMETHOD(sound, close), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "void set_sound_position(float, float, float)", asMETHOD(sound, set_sound_position), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void set_sound_reverb(float, float, float)", asMETHOD(sound, set_sound_reverb), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void cancel_reverb()", asMETHOD(sound, cancel_reverb), asCALL_THISCALL);
+
     engine->RegisterObjectMethod("sound", "float get_pan() const", asMETHOD(sound, get_pan), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "void set_pan(float)", asMETHOD(sound, set_pan), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "float get_volume() const", asMETHOD(sound, get_volume), asCALL_THISCALL);
@@ -77,7 +105,10 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectMethod("sound", "double get_sample_rate() const", asMETHOD(sound, get_sample_rate), asCALL_THISCALL);
 //    engine->RegisterObjectMethod("sound", "double get_channels() const", asMETHOD(sound, get_channels), asCALL_THISCALL);
 //    engine->RegisterObjectMethod("sound", "double get_bits() const", asMETHOD(sound, get_bits), asCALL_THISCALL);
-    engine->RegisterObjectType("timer", sizeof(timer), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_ALLINTS | asGetTypeTraits<timer>());
+    engine->RegisterObjectType("timer", sizeof(timer), asOBJ_REF);
+    engine->RegisterObjectBehaviour("timer", asBEHAVE_FACTORY, "timer@ f()", asFUNCTION(ftimer), asCALL_CDECL);
+    engine->RegisterObjectBehaviour("timer", asBEHAVE_ADDREF, "void f()", asMETHOD(timer, construct), asCALL_THISCALL);
+    engine->RegisterObjectBehaviour("timer", asBEHAVE_RELEASE, "void f()", asMETHOD(timer, destruct), asCALL_THISCALL);
     engine->RegisterObjectMethod("timer", "int elapsed()", asMETHOD(timer, elapsed), asCALL_THISCALL);
 //    engine->RegisterObjectMethod("timer", "void elapsed(int)", asMETHOD(timer, elapsed), asCALL_THISCALL);
     engine->RegisterObjectMethod("timer", "void restart()", asMETHOD(timer, restart), asCALL_THISCALL);
