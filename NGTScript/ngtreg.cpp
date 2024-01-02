@@ -1,4 +1,4 @@
-    #pragma comment(lib, "angelscript64.lib")
+﻿    #pragma comment(lib, "angelscript64.lib")
 #include "scriptbuilder/scriptbuilder.h"
 #include "scriptstdstring/scriptstdstring.h"
 #include <fstream>
@@ -10,8 +10,154 @@
 
 #include "angelscript.h"
 #include "ngt.h"
+HWND g_hwndEdit;
+
+HWND hwnd;
+HWND buttonc;
+WNDPROC originalEditProc;
+
+LRESULT CALLBACK EditSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    if (uMsg == WM_KEYDOWN && wParam == VK_TAB )
+    {
+        // Handle tab key press event
+            SetFocus(buttonc); // Set focus to the next control
+        return 0; // Return 0 to indicate that the keypress has been handled
+    }
+    if (uMsg== WM_KEYDOWN && wParam == VK_ESCAPE or (wParam == VK_RETURN) and(GetFocus()==g_hwndEdit))
+    {
+        PostMessage(hwnd, WM_CLOSE, 0, 0);
+    }
+
+    // Call the original edit control procedure for default handling
+    return CallWindowProc(originalEditProc, hWnd, uMsg, wParam, lParam);
+}
+
+ std::wstring ouou;
+int currentLine;
+int currentLineUp;
+std::wstring result_message;
 using namespace std;
-sound* fsound() { return new sound; }
+int nCmdShow;
+HINSTANCE hInstance;
+LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+void show_message()
+{
+    const wchar_t CLASS_NAME[] = L"NGTTextbox";
+
+    WNDCLASS wc = {};
+
+    wc.lpfnWndProc = WndProc;
+    wc.hInstance = hInstance;
+    wc.lpszClassName = CLASS_NAME;
+
+    RegisterClass(&wc);
+
+    hwnd = CreateWindowEx(
+        0,
+        CLASS_NAME,
+        L"Compilation error",
+        WS_OVERLAPPEDWINDOW,
+        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+        NULL,
+        NULL,
+        hInstance,
+        NULL
+    );
+
+    if (hwnd == NULL)
+    {
+        return;
+    }
+
+    g_hwndEdit = CreateWindowEx(
+        WS_EX_CLIENTEDGE,
+        L"EDIT",
+        L"",
+        WS_CHILD | WS_VISIBLE | ES_READONLY | ES_MULTILINE | WS_TABSTOP | ES_NOHIDESEL | ES_AUTOHSCROLL | ES_AUTOVSCROLL | WS_HSCROLL | WS_VSCROLL | WS_BORDER,
+        10, 10, 400, 200,
+        hwnd,
+        NULL,
+        hInstance,
+        NULL
+    );
+
+    buttonc=CreateWindow(
+        L"BUTTON",
+        L"Close",
+        WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | WS_TABSTOP,
+        10, 220, 100, 30,
+        hwnd,
+        (HMENU)1,
+        hInstance,
+        NULL
+    );
+    ShowWindow(hwnd, SW_SHOW);
+    UpdateWindow(hwnd);
+    SetFocus(g_hwndEdit);
+    originalEditProc = (WNDPROC)SetWindowLongPtr(g_hwndEdit, GWLP_WNDPROC, (LONG_PTR)EditSubclassProc);
+
+    MSG messagege;
+    std::wstring oo;
+    while (GetMessage(&messagege, NULL, 0, 0))
+    {
+        if (!IsDialogMessage(hwnd, &messagege))
+        {
+            TranslateMessage(&messagege);
+            DispatchMessage(&messagege);
+            SendMessage(g_hwndEdit, WM_SETTEXT, TRUE, (LPARAM)result_message.c_str());
+
+
+        }
+
+    }
+
+}
+LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    static int lineCount = 0;
+
+    switch (msg)
+    {
+    case WM_CREATE:
+
+        break;
+
+
+    case WM_COMMAND:
+        if (LOWORD(wParam) == 1)
+        {
+            PostMessage(hwnd, WM_CLOSE, 0, 0);
+        }
+        break;
+
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        break;
+
+    default:
+        return DefWindowProc(hwnd, msg, wParam, lParam);
+    }
+
+    return 0;
+}
+
+void add_text(std::wstring text)
+{
+    SetWindowText(g_hwndEdit, L"RRRRRRRRRRR");
+    int len = GetWindowTextLength(g_hwndEdit);
+    SendMessage(g_hwndEdit, EM_SETSEL, len, len);
+    SendMessage(g_hwndEdit, EM_REPLACESEL, FALSE, (LPARAM)text.c_str());
+    InvalidateRect(g_hwndEdit, NULL, TRUE);
+    UpdateWindow(g_hwndEdit);
+}
+
+
+
+    
+
+    sound* fsound() { return new sound; }
 reverb* freverb() { return new reverb; }
 timer* ftimer() { return new timer; }
 
@@ -27,8 +173,8 @@ void MessageCallback(const asSMessageInfo* msg, void* param)
     _itoa_s(msg->col, colStr, 10);
     std::string messageStr(msg->message);
     std::string output = std::string(msg->section) + " (" + rowStr + ", " + colStr + ") : " + type + " : " + messageStr;
-
-    alert("NGTInfo", output);
+    ouou = wstr(output);
+    result_message  += ouou+L"\r\n";
 }
 void RegisterFunctions(asIScriptEngine* engine)
 {
@@ -64,6 +210,8 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterGlobalFunction("string get_sound_storage()", asFUNCTION(get_sound_storage), asCALL_CDECL);
     engine->RegisterGlobalFunction("void set_master_volume(float)", asFUNCTION(set_master_volume), asCALL_CDECL);
     engine->RegisterGlobalFunction("float get_master_volume()", asFUNCTION(get_master_volume), asCALL_CDECL);
+    engine->RegisterGlobalFunction("void switch_audio_system(int)", asFUNCTION(switch_audio_system), asCALL_CDECL);
+
     engine->RegisterObjectType("reverb", sizeof(reverb), asOBJ_REF);
     engine->RegisterObjectBehaviour("reverb", asBEHAVE_FACTORY, "reverb@ f()", asFUNCTION(freverb), asCALL_CDECL);
     engine->RegisterObjectBehaviour("reverb", asBEHAVE_ADDREF, "void f()", asMETHOD(reverb, construct), asCALL_THISCALL);
@@ -80,6 +228,8 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectBehaviour("sound", asBEHAVE_ADDREF, "void f()", asMETHOD(sound, construct), asCALL_THISCALL);
     engine->RegisterObjectBehaviour("sound", asBEHAVE_RELEASE, "void f()", asMETHOD(sound, destruct), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool load(string &in, bool=false)", asMETHOD(sound, load), asCALL_THISCALL);
+//    engine->RegisterObjectMethod("sound", "bool load_from_memory(string &in, bool=false)", asMETHOD(sound, load), asCALL_THISCALL);
+
     engine->RegisterObjectMethod("sound", "bool play()", asMETHOD(sound, play), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool play_looped()", asMETHOD(sound, play_looped), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool pause()", asMETHOD(sound, pause), asCALL_THISCALL);

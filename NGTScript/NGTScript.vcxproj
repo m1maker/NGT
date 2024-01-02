@@ -125,6 +125,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);bass.lib;SDL2.lib;SDL2main.lib;angelscript64.lib;phonon.lib;tolk.lib;SDL2_net.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

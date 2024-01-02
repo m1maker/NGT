@@ -10,6 +10,8 @@
 #include "phonon.h"
 #include"sdl/SDL.h"
 #include "SDL_net.h"
+std::wstring wstr(const std::string& utf8String);
+
 void init_engine();
 long random(long min, long max);
 int get_last_error();
@@ -36,6 +38,7 @@ void set_sound_storage(std::string path);
 std::string get_sound_storage();
 void set_master_volume(float volume);
 float get_master_volume();
+void switch_audio_system(short system);
 class reverb {
 public:
 	BASS_DX8_REVERB r;
@@ -58,8 +61,8 @@ public:
 	void construct();
 	void destruct();
 
-	bool load(std::string	 filename, bool hrtf=false);
-
+	bool load(std::string	 filename, bool set3d=false);
+	bool load_from_memory(std::string data, bool set3d = false);
 	bool play();
 	bool play_looped();
 	bool pause();

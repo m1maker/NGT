@@ -1,5 +1,6 @@
-#include "ngtreg.h"
+﻿#include "ngtreg.h"
 #include "scriptbuilder/scriptbuilder.h"
+#include "contextmgr/contextmgr.h"
 #include "scriptstdstring/scriptstdstring.h"
 #include <fstream>
 #include <cstdlib>
@@ -18,6 +19,8 @@
 #include "contextmgr/contextmgr.h"
 #include "datetime/datetime.h"
 #include "scriptmath/scriptmath.h"
+#include <thread>
+
 BOOL FileExists(LPCTSTR szPath)
 {
     DWORD dwAttrib = GetFileAttributes(szPath);
@@ -63,6 +66,9 @@ int Compile(asIScriptEngine* engine, const char* outputFile)
     if (r < 0)
     {
         engine->WriteMessage(outputFile, 0, 0, asMSGTYPE_ERROR, "Failed to open output file for writing");
+
+        std::thread t(show_message);
+        t.join();
         return -1;
     }
 
@@ -70,6 +76,10 @@ int Compile(asIScriptEngine* engine, const char* outputFile)
     if (mod == 0)
     {
         engine->WriteMessage(outputFile, 0, 0, asMSGTYPE_ERROR, "Failed to retrieve the compiled bytecode");
+
+        std::thread t(show_message);
+        t.join();
+
         return -1;
     }
 
@@ -77,10 +87,17 @@ int Compile(asIScriptEngine* engine, const char* outputFile)
     if (r < 0)
     {
         engine->WriteMessage(outputFile, 0, 0, asMSGTYPE_ERROR, "Failed to write the bytecode");
+
+        std::thread t(show_message);
+        t.join();
+
         return -1;
     }
-
     engine->WriteMessage(outputFile, 0, 0, asMSGTYPE_INFORMATION, "Script was compiled successfully");
+
+    std::thread t(show_message);
+    t.join();
+
 
     return 0;
 }
@@ -92,6 +109,10 @@ int Load(asIScriptEngine* engine, const char* inputFile)
     if (r < 0)
     {
         engine->WriteMessage(inputFile, 0, 0, asMSGTYPE_ERROR, "Failed to open output file for writing");
+
+        std::thread t(show_message);
+        t.join();
+
         return -1;
     }
 
@@ -99,6 +120,10 @@ int Load(asIScriptEngine* engine, const char* inputFile)
     if (mod == 0)
     {
         engine->WriteMessage(inputFile, 0, 0, asMSGTYPE_ERROR, "Failed to retrieve the compiled bytecode");
+
+        std::thread t(show_message);
+        t.join();
+
         return -1;
     }
 
@@ -106,6 +131,10 @@ int Load(asIScriptEngine* engine, const char* inputFile)
     if (r < 0)
     {
         engine->WriteMessage(inputFile, 0, 0, asMSGTYPE_ERROR, "Failed to write the bytecode");
+
+        std::thread t(show_message);
+        t.join();
+
         return -1;
     }
 
@@ -116,6 +145,7 @@ int Load(asIScriptEngine* engine, const char* inputFile)
 
 std::string filename;
 std::string flag;
+
 int main(int argc, char* argv[]) {
     if (FileExists(L"game_object.ngtb")) {
         filename = "game_object.ngtb";
@@ -150,7 +180,9 @@ int main(int argc, char* argv[]) {
         result = builder.BuildModule();
 
         if (result < 0) {
-            alert("NGTBuilderError", "Failed to build script module: ");
+            std::thread t(show_message);
+            t.join();
+
             return 1;
         }
         module = engine->GetModule("ngtgame");
@@ -175,7 +207,6 @@ int main(int argc, char* argv[]) {
 
         CopyFile(L"game_object.ngtb", L"Release/game_object.ngtb", false);
         DeleteFile(L"game_object.ngtb");
-        alert("NGTInfo", "Executable file was created successfully!");
         }
     else if (flag == "-d") {
         asIScriptEngine* engine = asCreateScriptEngine();
@@ -201,9 +232,11 @@ int main(int argc, char* argv[]) {
         result = builder.BuildModule();
 
         if (result < 0) {
+            std::thread t(show_message);
+            t.join();
 
-            alert("NGTBuilderError", "Failed to build script module: ");
-            return 1;
+
+                        return 1;
             }
         int r;
         // Execute the script

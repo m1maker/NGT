@@ -18,24 +18,70 @@
 #include "NGT.H"
 #include <locale>
 #include <codecvt>
-
+#include<fstream>
+const short PAN_AUDIO = 0;
+const short HRTF_AUDIO = 1;
 std::wstring wstr(const std::string& utf8String)
 {
     std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
     return converter.from_bytes(utf8String);
 }
 std::string sound_path;
+//IPLContextSettings contextSettings{};
+//IPLContext context = nullptr;
+//IPLAudioBuffer buffer;
+//IPLAudioSettings audioSettings{};
+//IPLHRTFSettings hrtfSettings{};
+//IPLBinauralEffectSettings effectSettings{};
+//IPLAudioBuffer inBuffer;
 
-HWND hwnd;
+//IPLAudioBuffer outBuffer;
 std::map<SDL_Keycode,bool> keys;
 bool keyhook = false;
 std::string inputtext;
+short audio_system = PAN_AUDIO;
+std::vector<float> phonon_load(const std::string filename)
+{
+    std::ifstream file(filename.c_str(), std::ios::binary);
+
+    file.seekg(0, std::ios::end);
+    auto filesize = file.tellg();
+    auto numsamples = static_cast<int>(filesize / sizeof(float));
+
+    std::vector<float> inputaudio(numsamples);
+    file.seekg(0, std::ios::beg);
+    file.read(reinterpret_cast<char*>(inputaudio.data()), filesize);
+
+    return inputaudio;
+}
+
 void init_engine() {
     SDL_Init(SDL_INIT_EVERYTHING);
     SDLNet_Init();
     BASS_Init(-1, 44100, 0, 0, NULL);
+    BASS_Set3DFactors(5, 6, -1);
     BASS_Apply3D();
     BASS_SetConfig(BASS_CONFIG_3DALGORITHM, BASS_3DALG_OFF);
+//    contextSettings.version = STEAMAUDIO_VERSION;
+//    IPLerror errorCode = iplContextCreate(&contextSettings, &context);
+//    buffer.numChannels = 2;
+//    buffer.numSamples = 512;
+//    float leftChannel[512];
+//    float rightChannel[512];
+//    float* channels[2] = { leftChannel, rightChannel };
+
+
+//    buffer.data = channels;
+//    audioSettings.samplingRate = 44100;
+//    audioSettings.frameSize = 1024; // the size of audio buffers we intend to process
+//    hrtfSettings.type = IPL_HRTFTYPE_DEFAULT;
+
+//    IPLHRTF hrtf = nullptr;
+//    iplHRTFCreate(context, &audioSettings, &hrtfSettings, &hrtf);
+//    effectSettings.hrtf = hrtf;
+
+//    IPLBinauralEffect effect = nullptr;
+//    iplBinauralEffectCreate(context, &audioSettings, &effectSettings, &effect);
     Tolk_TrySAPI(true);
 
     Tolk_Load();
@@ -116,7 +162,9 @@ void quit()
     SDL_DestroyWindow(win);
 win=NULL;
 BASS_Free();
-        Tolk_Unload();
+//iplAudioBufferFree(context, &outBuffer);
+//iplContextRelease(&context);
+Tolk_Unload();
         SDL_Quit();
         SDLNet_Quit();
 exit(0);
@@ -171,7 +219,6 @@ bool key_repeat(SDL_Keycode key_code)
     }
     return false;
 }
-
 bool alert(std::string title, std::string text)
 {
 SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,title.c_str(),text.c_str(),NULL);
@@ -211,9 +258,12 @@ void sound::construct() {
 
 void sound::destruct() {
 }
+void switch_audio_system(short system) {
+if(system==PAN_AUDIO or system==HRTF_AUDIO)
+    audio_system = system;
+}
 
-
-bool sound::load(std::string filename, bool hrtf) {
+bool sound::load(std::string filename, bool set3d) {
     std::string result;
     if (sound_path != "") {
          result = sound_path + "/" + filename.c_str();
@@ -221,14 +271,33 @@ bool sound::load(std::string filename, bool hrtf) {
     }
     else
         result = filename;
-    if (!hrtf) {
+    if (!set3d) {
         handle_ = BASS_StreamCreateFile(false, result.c_str(), 0, 0, 0);
     }
     else {
-        handle_ = BASS_StreamCreateFile(false, result.c_str(), 0, 0, BASS_SAMPLE_MONO| BASS_SAMPLE_3D);
+            handle_ = BASS_StreamCreateFile(false, result.c_str(), 0, 0, BASS_SAMPLE_MONO | BASS_SAMPLE_3D);
+        if (audio_system == HRTF_AUDIO)
+            phonon_load(result);
     }
 
     return handle_ != 0;
+}
+bool sound::load_from_memory(std::string data, bool set3d) {
+    /*
+        long size = data.size();
+        if (!set3d) {
+            handle_ = BASS_StreamCreateFile(true, data.c_str(), size, size, 0);
+        }
+        else {
+            handle_ = BASS_StreamCreateFile(true, data.c_str(), size, size, BASS_SAMPLE_MONO | BASS_SAMPLE_3D);
+
+            if (audio_system == HRTF_AUDIO)
+                phonon_load(result);
+
+                }
+
+        return handle_ != 0;
+    */
 }
 
 bool sound::play() {
