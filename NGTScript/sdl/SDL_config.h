@@ -18,11 +18,9 @@
      misrepresented as being the original software.
   3. This notice may not be removed or altered from any source distribution.
 */
-
 #ifndef SDL_config_windows_h_
 #define SDL_config_windows_h_
 #define SDL_config_h_
-
 #include "SDL_platform.h"
 
 /* winsdkver.h defines _WIN32_MAXVER for SDK version detection. It is present since at least the Windows 7 SDK,
@@ -77,6 +75,7 @@ typedef unsigned int uintptr_t;
 #endif /* !_STDINT_H_ && !HAVE_STDINT_H */
 
 #ifdef _WIN64
+#define HAVE_LIBC 1
 # define SIZEOF_VOIDP 8
 #else
 # define SIZEOF_VOIDP 4

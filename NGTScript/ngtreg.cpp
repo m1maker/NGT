@@ -7,7 +7,7 @@
 #include <iostream>
 
 #include <assert.h>  // assert()
-
+#include<Windows.h>
 #include "angelscript.h"
 #include "ngt.h"
 HWND g_hwndEdit;
@@ -240,10 +240,10 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectMethod("sound", "void set_sound_reverb(float, float, float)", asMETHOD(sound, set_sound_reverb), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "void cancel_reverb()", asMETHOD(sound, cancel_reverb), asCALL_THISCALL);
 
-    engine->RegisterObjectMethod("sound", "float get_pan() const", asMETHOD(sound, get_pan), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "void set_pan(float)", asMETHOD(sound, set_pan), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "float get_volume() const", asMETHOD(sound, get_volume), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "void set_volume(float)", asMETHOD(sound, set_volume), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "double get_pan() const", asMETHOD(sound, get_pan), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void set_pan(double)", asMETHOD(sound, set_pan), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "double get_volume() const", asMETHOD(sound, get_volume), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void set_volume(double)", asMETHOD(sound, set_volume), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "double get_pitch() const", asMETHOD(sound, get_pitch), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "void set_pitch(double)", asMETHOD(sound, set_pitch), asCALL_THISCALL);
 //    engine->RegisterObjectMethod("sound", "double get_pitch_lower_limit() const", asMETHOD(sound, get_pitch_lower_limit), asCALL_THISCALL);

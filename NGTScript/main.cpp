@@ -1,6 +1,6 @@
-﻿#include "ngtreg.h"
+﻿#include <Windows.h>
+#include "ngtreg.h"
 #include "scriptbuilder/scriptbuilder.h"
-#include "contextmgr/contextmgr.h"
 #include "scriptstdstring/scriptstdstring.h"
 #include <fstream>
 #include <cstdlib>
@@ -8,7 +8,6 @@
 #include <iostream>
 
 #include <assert.h>  // assert()
-#include "ByteCode.h"
 #include "angelscript.h"
 #include "ngt.h"
 #include "scriptarray/scriptarray.h"
@@ -16,7 +15,6 @@
 #include "scriptfile/scriptfile.h"
 #include "scriptfile/scriptfilesystem.h"
 #include "scripthelper/scripthelper.h"
-#include "contextmgr/contextmgr.h"
 #include "datetime/datetime.h"
 #include "scriptmath/scriptmath.h"
 #include <thread>

@@ -1,15 +1,12 @@
-﻿#include <random>
+﻿#define DLLCALL   __declspec( dllimport )
+#include <random>
 #include <type_traits>
-#pragma comment(lib, "bass.lib")
-#pragma comment(lib, "phonon.lib")
-#pragma comment(lib, "tolk.lib")
-
-#pragma comment(lib, "nvdaControllerClient64.lib")
+#include <Windows.h>
 #include <thread>
-#include "nvdaController.h"
 #include "Tolk.h"
+#include"synthizer.h"
+#include "synthizer_constants.h"
 #include <chrono>
-#include "bass.h"
 #include <string>
 #include"sdl/SDL.h"
 #include <commctrl.h>
@@ -19,6 +16,8 @@
 #include <locale>
 #include <codecvt>
 #include<fstream>
+SDL_Window* win = NULL;
+HMODULE bass;
 const short PAN_AUDIO = 0;
 const short HRTF_AUDIO = 1;
 std::wstring wstr(const std::string& utf8String)
@@ -27,61 +26,19 @@ std::wstring wstr(const std::string& utf8String)
     return converter.from_bytes(utf8String);
 }
 std::string sound_path;
-//IPLContextSettings contextSettings{};
-//IPLContext context = nullptr;
-//IPLAudioBuffer buffer;
-//IPLAudioSettings audioSettings{};
-//IPLHRTFSettings hrtfSettings{};
-//IPLBinauralEffectSettings effectSettings{};
-//IPLAudioBuffer inBuffer;
-
-//IPLAudioBuffer outBuffer;
 std::map<SDL_Keycode,bool> keys;
 bool keyhook = false;
 std::string inputtext;
 short audio_system = PAN_AUDIO;
-std::vector<float> phonon_load(const std::string filename)
-{
-    std::ifstream file(filename.c_str(), std::ios::binary);
-
-    file.seekg(0, std::ios::end);
-    auto filesize = file.tellg();
-    auto numsamples = static_cast<int>(filesize / sizeof(float));
-
-    std::vector<float> inputaudio(numsamples);
-    file.seekg(0, std::ios::beg);
-    file.read(reinterpret_cast<char*>(inputaudio.data()), filesize);
-
-    return inputaudio;
-}
-
+struct syz_LibraryConfig library_config;
 void init_engine() {
+    syz_libraryConfigSetDefaults(&library_config);
+    library_config.log_level = SYZ_LOG_LEVEL_DEBUG;
+    library_config.logging_backend = SYZ_LOGGING_BACKEND_STDERR;
+    syz_initializeWithConfig(&library_config);
+
     SDL_Init(SDL_INIT_EVERYTHING);
     SDLNet_Init();
-    BASS_Init(-1, 44100, 0, 0, NULL);
-    BASS_Set3DFactors(5, 6, -1);
-    BASS_Apply3D();
-    BASS_SetConfig(BASS_CONFIG_3DALGORITHM, BASS_3DALG_OFF);
-//    contextSettings.version = STEAMAUDIO_VERSION;
-//    IPLerror errorCode = iplContextCreate(&contextSettings, &context);
-//    buffer.numChannels = 2;
-//    buffer.numSamples = 512;
-//    float leftChannel[512];
-//    float rightChannel[512];
-//    float* channels[2] = { leftChannel, rightChannel };
-
-
-//    buffer.data = channels;
-//    audioSettings.samplingRate = 44100;
-//    audioSettings.frameSize = 1024; // the size of audio buffers we intend to process
-//    hrtfSettings.type = IPL_HRTFTYPE_DEFAULT;
-
-//    IPLHRTF hrtf = nullptr;
-//    iplHRTFCreate(context, &audioSettings, &hrtfSettings, &hrtf);
-//    effectSettings.hrtf = hrtf;
-
-//    IPLBinauralEffect effect = nullptr;
-//    iplBinauralEffectCreate(context, &audioSettings, &effectSettings, &effect);
     Tolk_TrySAPI(true);
 
     Tolk_Load();
@@ -99,8 +56,7 @@ long random(long min, long max) {
 
     return dis(gen);
 }
-int get_last_error() {
-    return BASS_ErrorGetCode();
+int get_last_error() {return 0; 
 }
 void speak(std::string text, bool stop) {
     std::wstring textstr = wstr(text);
@@ -117,11 +73,13 @@ void speak_wait(std::string text, bool stop) {
 void stop_speech() {
         Tolk_Silence();
     }
-SDL_Window* win=NULL;
 SDL_Event e;
 bool show_game_window(std::string title,int width, int height)
 {
-win=SDL_CreateWindow(title.c_str(),SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,width,height,SDL_WINDOW_SHOWN);
+    SDL_RegisterApp("NGTWindow", 0, win);
+
+    win=SDL_CreateWindow(title.c_str(),SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,width,height,SDL_WINDOW_SHOWN);
+
 SDL_StartTextInput();
 if (win!=NULL)
 {
@@ -158,14 +116,15 @@ keys[e.key.keysym.sym]=false;
 }
 void quit()
 {
+
+    syz_shutdown();
+
     SDL_StopTextInput();
     SDL_DestroyWindow(win);
 win=NULL;
-BASS_Free();
-//iplAudioBufferFree(context, &outBuffer);
-//iplContextRelease(&context);
+SDL_UnregisterApp();
 Tolk_Unload();
-        SDL_Quit();
+SDL_Quit();
         SDLNet_Quit();
 exit(0);
 }
@@ -219,15 +178,12 @@ bool key_repeat(SDL_Keycode key_code)
     }
     return false;
 }
-bool alert(std::string title, std::string text)
+bool alert(std::string title, std::string text, unsigned int flag)
 {
-SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,title.c_str(),text.c_str(),NULL);
+    SDL_ShowSimpleMessageBox(flag , title.c_str(), text.c_str(), NULL);
 return true;
 }
 void set_listener_position(float l_x, float l_y, float l_z) {
-    BASS_3DVECTOR l_pos{ l_x, l_y, l_z };
-    BASS_Set3DPosition(&l_pos, 0, 0, 0);
-    BASS_Apply3D();
 }
 void wait(int time) {
     timer waittimer;
@@ -248,10 +204,9 @@ std::string get_sound_storage() {
     return sound_path;
 }
 void set_master_volume(float volume) {
-    BASS_SetVolume(volume);
 }
 float get_master_volume() {
-    return BASS_GetVolume();
+    return 0.0;
 }
 void sound::construct() {
 }
@@ -271,49 +226,41 @@ bool sound::load(std::string filename, bool set3d) {
     }
     else
         result = filename;
-    if (!set3d) {
-        handle_ = BASS_StreamCreateFile(false, result.c_str(), 0, 0, 0);
-    }
-    else {
-            handle_ = BASS_StreamCreateFile(false, result.c_str(), 0, 0, BASS_SAMPLE_MONO | BASS_SAMPLE_3D);
-        if (audio_system == HRTF_AUDIO)
-            phonon_load(result);
-    }
+    syz_createContext(&handle_, NULL, NULL);
+    syz_createBufferGenerator(&generator, handle_, NULL, NULL, NULL);
+if(!set3d)
+    syz_createDirectSource(&source, handle_, NULL, NULL, NULL);
+else
+syz_createScalarPannedSource(&source, handle_, SYZ_PANNER_STRATEGY_HRTF, 0.0, NULL, NULL, NULL);
 
-    return handle_ != 0;
+syz_sourceAddGenerator(source, generator);
+
+    syz_createStreamHandleFromStreamParams(&stream, "file", result.c_str(), NULL, NULL, NULL);
+    syz_createBufferFromStreamHandle(&buffer, stream, NULL, NULL);
+
 }
 bool sound::load_from_memory(std::string data, bool set3d) {
-    /*
-        long size = data.size();
-        if (!set3d) {
-            handle_ = BASS_StreamCreateFile(true, data.c_str(), size, size, 0);
-        }
-        else {
-            handle_ = BASS_StreamCreateFile(true, data.c_str(), size, size, BASS_SAMPLE_MONO | BASS_SAMPLE_3D);
-
-            if (audio_system == HRTF_AUDIO)
-                phonon_load(result);
-
-                }
-
-        return handle_ != 0;
-    */
+    return false;
 }
 
 bool sound::play() {
-    BASS_ChannelFlags(handle_,BASS_SAMPLE_LOOP,0);
-    return BASS_ChannelPlay(handle_, true);
+    syz_setI(generator, SYZ_P_LOOPING, 0);
+
+    return syz_setO(generator, SYZ_P_BUFFER, buffer);
+
 }
 bool sound::play_looped() {
-    BASS_ChannelFlags(handle_,BASS_SAMPLE_LOOP,BASS_SAMPLE_LOOP);
-    return BASS_ChannelPlay(handle_, TRUE);
+    syz_setI(generator, SYZ_P_LOOPING, 1);
+    return syz_setO(generator, SYZ_P_BUFFER, buffer);
 }
 bool sound::pause() {
-    return BASS_ChannelPause(handle_);
+    return syz_pause(generator);
 }
 
 bool sound::play_wait() {
-    BASS_ChannelPlay(handle_, true);
+    syz_setI(generator, SYZ_P_LOOPING, 0);
+
+    syz_setO(generator, SYZ_P_BUFFER, buffer);
     while (true) {
         update_game_window();
         delay(5);
@@ -325,85 +272,76 @@ bool sound::play_wait() {
     return true;
 }
     bool sound::stop() {
-    return BASS_ChannelStop(handle_);
-}
+        return syz_handleDecRef(buffer);
+    }
 
-bool sound::close() {
-    return BASS_StreamFree(handle_);
-}
+    bool sound::close() {
+        syz_handleDecRef(handle_);
+        syz_handleDecRef(generator);
+        syz_handleDecRef(buffer);
+        syz_handleDecRef(source);
+        return true;
+    }
 void sound::set_sound_position(float s_x, float s_y, float s_z) {
-    BASS_3DVECTOR s_pos{ s_x, s_y, s_z };
-    BASS_ChannelSet3DPosition(handle_, &s_pos, 0, 0);
-    BASS_Apply3D();
+
 }
 void sound::set_sound_reverb(float input_gain, float reverb_mix, float reverb_time){
-    reverb r;
-    r.set_input_gain(input_gain);
-    r.set_reverb_mix(reverb_mix);
-    r.set_reverb_time(reverb_time);
-
-    rev = BASS_ChannelSetFX(handle_, BASS_FX_DX8_REVERB, 2);
-    BASS_FXSetParameters(rev, &r.r);
 }
 void sound::cancel_reverb() {
-    BASS_ChannelRemoveFX(handle_, rev);
 }
-float sound::get_pan() const {
-    float pan;
-    BASS_ChannelGetAttribute(handle_, BASS_ATTRIB_PAN, &pan);
+double sound::get_pan() const {
+    double pan;
+    syz_getD(&pan, source, SYZ_P_PANNING_SCALAR);
+
     return pan;
 }
 
-void sound::set_pan(float pan) {
-    BASS_ChannelSetAttribute(handle_, BASS_ATTRIB_PAN, pan);
+void sound::set_pan(double pan) {
+    syz_setD(source, SYZ_P_PANNING_SCALAR, pan);
+
 }
 
-float sound::get_volume() const {
-    float volume;
-    BASS_ChannelGetAttribute(handle_, BASS_ATTRIB_VOL, &volume);
+double sound::get_volume() const {
+    double volume=0;
     return volume;
 }
 
-void sound::set_volume(float volume) {
-    BASS_ChannelSetAttribute(handle_, BASS_ATTRIB_VOL, volume);
+void sound::set_volume(double volume) {
 }
 
 double sound::get_pitch() const {
-    float pitch;
-    BASS_ChannelGetAttribute(handle_, BASS_ATTRIB_FREQ, &pitch);
+    float pitch=0;
     return pitch;
 }
 
 void sound::set_pitch(double pitch) {
-    BASS_ChannelSetAttribute(handle_, BASS_ATTRIB_FREQ, pitch);
 }
 
 bool sound::is_active() const {
-    return BASS_ChannelIsActive(handle_) == BASS_ACTIVE_PLAYING;
+    return false;
 }
 
 bool sound::is_playing() const 
+
 {
-    return BASS_ChannelIsActive(handle_) == BASS_ACTIVE_PLAYING;
+    return false;
 }
 
 bool sound::is_paused() const {
-    return BASS_ChannelIsActive(handle_) == BASS_ACTIVE_PAUSED;
+    return false;
 }
 
 double sound::get_position() const {
-    QWORD pos = BASS_ChannelGetPosition(handle_, BASS_POS_BYTE);
-    return pos;
+    return 2;
 }
 
 double sound::get_length() const {
-    QWORD length = BASS_ChannelGetLength(handle_, BASS_POS_BYTE);
-    return length;
+    return 2;
+
 }
 
 double sound::get_sample_rate() const {
-    float rate;
-    BASS_ChannelGetAttribute(handle_, BASS_ATTRIB_FREQ, &rate);
+    float rate=0;
     return rate;
 }
 void timer::construct() {
@@ -485,20 +423,17 @@ int timer::elapsed() {
 
 
         void reverb::set_input_gain(float input_gain) {
-            r.fInGain = input_gain;
         }
         void reverb::set_reverb_mix(float reverb_mix) {
-            r.fReverbMix = reverb_mix;
         }       
         void reverb::set_reverb_time(float reverb_time) {
-            r.fReverbTime = reverb_time;
         }
         float reverb::get_input_gain() {
-            return r.fInGain;
+            return 2;
         }
         float reverb::get_reverb_mix() {
-            return r.fReverbMix;
+            return 2;
         }
         float reverb::get_reverb_time() {
-            return r.fReverbTime;
+            return 2;
         }

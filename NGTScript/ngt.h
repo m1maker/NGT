@@ -3,11 +3,9 @@
 
 #include <random>
 #include <type_traits>
-
+#include "synthizer.h"
 #include<chrono>
 #include <string>
-#include "bass.h"
-#include "phonon.h"
 #include"sdl/SDL.h"
 #include "SDL_net.h"
 std::wstring wstr(const std::string& utf8String);
@@ -30,7 +28,7 @@ bool key_pressed(SDL_Keycode key_code);
 bool key_released(SDL_Keycode key_code);
 bool key_down(SDL_Keycode key_code);
 bool key_repeat(SDL_Keycode key_code);
-bool alert(std::string	 title, std::string	 text);
+bool alert(std::string	 title, std::string	 text, unsigned int flag=0);
 void set_listener_position(float l_x, float l_y, float l_z);
 void wait(int time);
 void delay(int ms);
@@ -41,7 +39,6 @@ float get_master_volume();
 void switch_audio_system(short system);
 class reverb {
 public:
-	BASS_DX8_REVERB r;
 	void construct();
 	void destruct();
 
@@ -56,8 +53,8 @@ public:
 };
 class sound {
 public:
-	HSTREAM handle_;
-	HFX rev;
+	syz_Handle handle_ = 0, generator = 0, source = 0, buffer = 0, stream = 0;
+
 	void construct();
 	void destruct();
 
@@ -72,10 +69,10 @@ public:
 	void set_sound_position(float s_x, float s_y, float s_z);
 	void set_sound_reverb(float input_gain, float reverb_mix, float reverb_time);
 	void cancel_reverb();
-	float get_pan() const;
-	void set_pan(float pan);
-	float get_volume() const;
-	void set_volume(float volume);
+	double get_pan() const;
+	void set_pan(double pan);
+	double get_volume() const;
+	void set_volume(double volume);
 	double get_pitch() const;
 	void set_pitch(double pitch);
 	double get_pitch_lower_limit() const;

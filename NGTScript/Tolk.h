@@ -10,9 +10,9 @@
 #define _TOLK_H_
 
 #ifdef _EXPORTING
-#define TOLK_DLL_DECLSPEC __declspec(dllexport)
+#define  __declspec(dllexport)
 #else
-#define TOLK_DLL_DECLSPEC __declspec(dllimport)
+#define  __declspec(dllimport)
 #endif // _EXPORTING
 #define TOLK_CALL __cdecl
 
@@ -29,7 +29,7 @@ extern "C" {
  *  Parameters:   None.
  *  Returns:      None.
  */
-TOLK_DLL_DECLSPEC void TOLK_CALL Tolk_Load();
+ void TOLK_CALL Tolk_Load();
 
 /**
  *  Name:         Tolk_IsLoaded
@@ -37,7 +37,7 @@ TOLK_DLL_DECLSPEC void TOLK_CALL Tolk_Load();
  *  Parameters:   None.
  *  Returns:      true if Tolk has been initialized, false otherwise.
  */
-TOLK_DLL_DECLSPEC bool TOLK_CALL Tolk_IsLoaded();
+ bool TOLK_CALL Tolk_IsLoaded();
 
 /**
  *  Name:         Tolk_Unload
@@ -45,7 +45,7 @@ TOLK_DLL_DECLSPEC bool TOLK_CALL Tolk_IsLoaded();
  *  Parameters:   None.
  *  Returns:      None.
  */
-TOLK_DLL_DECLSPEC void TOLK_CALL Tolk_Unload();
+ void TOLK_CALL Tolk_Unload();
 
 /**
  *  Name:         Tolk_TrySAPI
@@ -53,7 +53,7 @@ TOLK_DLL_DECLSPEC void TOLK_CALL Tolk_Unload();
  *  Parameters:   trySAPI: whether or not to include SAPI in auto-detection.
  *  Returns:      None.
  */
-TOLK_DLL_DECLSPEC void TOLK_CALL Tolk_TrySAPI(bool trySAPI);
+ void TOLK_CALL Tolk_TrySAPI(bool trySAPI);
 
 /**
  *  Name:         Tolk_PreferSAPI
@@ -61,7 +61,7 @@ TOLK_DLL_DECLSPEC void TOLK_CALL Tolk_TrySAPI(bool trySAPI);
  *  Parameters:   preferSAPI: whether or not to prefer SAPI over screen reader drivers in auto-detection.
  *  Returns:      None.
  */
-TOLK_DLL_DECLSPEC void TOLK_CALL Tolk_PreferSAPI(bool preferSAPI);
+ void TOLK_CALL Tolk_PreferSAPI(bool preferSAPI);
 
 /**
  *  Name:         Tolk_DetectScreenReader
@@ -69,7 +69,7 @@ TOLK_DLL_DECLSPEC void TOLK_CALL Tolk_PreferSAPI(bool preferSAPI);
  *  Parameters:   None.
  *  Returns:      A Unicode string representation of the common name on success, NULL otherwise.
  */
-TOLK_DLL_DECLSPEC const wchar_t * TOLK_CALL Tolk_DetectScreenReader();
+ const wchar_t * TOLK_CALL Tolk_DetectScreenReader();
 
 /**
  *  Name:         Tolk_HasSpeech
@@ -77,7 +77,7 @@ TOLK_DLL_DECLSPEC const wchar_t * TOLK_CALL Tolk_DetectScreenReader();
  *  Parameters:   None.
  *  Returns:      true if the current screen reader driver supports speech, false otherwise.
  */
-TOLK_DLL_DECLSPEC bool TOLK_CALL Tolk_HasSpeech();
+ bool TOLK_CALL Tolk_HasSpeech();
 
 /**
  *  Name:         Tolk_HasBraille
@@ -85,7 +85,7 @@ TOLK_DLL_DECLSPEC bool TOLK_CALL Tolk_HasSpeech();
  *  Parameters:   None.
  *  Returns:      true if the current screen reader driver supports braille, false otherwise.
  */
-TOLK_DLL_DECLSPEC bool TOLK_CALL Tolk_HasBraille();
+ bool TOLK_CALL Tolk_HasBraille();
 
 /**
  *  Name:         Tolk_Output
@@ -95,9 +95,9 @@ TOLK_DLL_DECLSPEC bool TOLK_CALL Tolk_HasBraille();
  *  Returns:      true on success, false otherwise.
  */
 #ifdef __cplusplus
-TOLK_DLL_DECLSPEC bool TOLK_CALL Tolk_Output(const wchar_t *str, bool interrupt = false);
+ bool TOLK_CALL Tolk_Output(const wchar_t *str, bool interrupt = false);
 #else
-TOLK_DLL_DECLSPEC bool TOLK_CALL Tolk_Output(const wchar_t *str, bool interrupt);
+ bool TOLK_CALL Tolk_Output(const wchar_t *str, bool interrupt);
 #endif // __cplusplus
 
 /**
@@ -108,9 +108,9 @@ TOLK_DLL_DECLSPEC bool TOLK_CALL Tolk_Output(const wchar_t *str, bool interrupt)
  *  Returns:      true on success, false otherwise.
  */
 #ifdef __cplusplus
-TOLK_DLL_DECLSPEC bool TOLK_CALL Tolk_Speak(const wchar_t *str, bool interrupt = false);
+ bool TOLK_CALL Tolk_Speak(const wchar_t *str, bool interrupt = false);
 #else
-TOLK_DLL_DECLSPEC bool TOLK_CALL Tolk_Speak(const wchar_t *str, bool interrupt);
+ bool TOLK_CALL Tolk_Speak(const wchar_t *str, bool interrupt);
 #endif // __cplusplus
 
 /**
@@ -119,7 +119,7 @@ TOLK_DLL_DECLSPEC bool TOLK_CALL Tolk_Speak(const wchar_t *str, bool interrupt);
  *  Parameters:   str: text to braille.
  *  Returns:      true on success, false otherwise.
  */
-TOLK_DLL_DECLSPEC bool TOLK_CALL Tolk_Braille(const wchar_t *str);
+ bool TOLK_CALL Tolk_Braille(const wchar_t *str);
 
 /**
  *  Name:         Tolk_IsSpeaking
@@ -127,7 +127,7 @@ TOLK_DLL_DECLSPEC bool TOLK_CALL Tolk_Braille(const wchar_t *str);
  *  Parameters:   None.
  *  Returns:      true if text is being spoken by the screen reader, false otherwise.
  */
-TOLK_DLL_DECLSPEC bool TOLK_CALL Tolk_IsSpeaking();
+ bool TOLK_CALL Tolk_IsSpeaking();
 
 /**
  *  Name:         Tolk_Silence
@@ -135,7 +135,7 @@ TOLK_DLL_DECLSPEC bool TOLK_CALL Tolk_IsSpeaking();
  *  Parameters:   None.
  *  Returns:      true on success, false otherwise.
  */
-TOLK_DLL_DECLSPEC bool TOLK_CALL Tolk_Silence();
+ bool TOLK_CALL Tolk_Silence();
 
 #ifdef __cplusplus
 } // extern "C"
