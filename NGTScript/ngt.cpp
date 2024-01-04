@@ -237,7 +237,7 @@ syz_sourceAddGenerator(source, generator);
 
     syz_createStreamHandleFromStreamParams(&stream, "file", result.c_str(), NULL, NULL, NULL);
     syz_createBufferFromStreamHandle(&buffer, stream, NULL, NULL);
-
+    return false;
 }
 bool sound::load_from_memory(std::string data, bool set3d) {
     return false;
