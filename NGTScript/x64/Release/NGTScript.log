@@ -1,0 +1,221 @@
+﻿  Scanning sources for module dependencies...
+  ngt.cpp
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\sdl\SDL_messagebox.h(45,1): warning C4091: 'typedef ': ignored on left of '<unnamed-enum-SDL_MESSAGEBOX_ERROR>' when no variable is declared
+  (compiling source file 'ngt.cpp')
+  
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(195,31): warning C4244: '=': conversion from 'uint64_t' to 'int', possible loss of data
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(327,39): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(335,39): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(341,62): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(354,43): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(380,15): warning C4101: 'length': unreferenced local variable
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(419,25): warning C4244: '=': conversion from 'uint64_t' to 'int', possible loss of data
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(437,20): warning C4244: 'initializing': conversion from 'uint64_t' to 'int', possible loss of data
+  miniaudio.c
+  stb_vorbis.c
+     Creating library C:\Users\Parker\Documents\GitHub\NGT\NGTScript\x64\Release\NGTScript.lib and object C:\Users\Parker\Documents\GitHub\NGT\NGTScript\x64\Release\NGTScript.exp
+  Generating code
+  Not all modules are compiled with -Gy (function comdat), build without incremental LTCG.
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(382): warning C4715: 'sound::get_length': not all control paths return a value
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\main.cpp(56): warning C4715: 'CBytecodeStream::Read': not all control paths return a value
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\main.cpp(51): warning C4715: 'CBytecodeStream::Write': not all control paths return a value
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(299): warning C4715: 'sound::stop': not all control paths return a value
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(277): warning C4715: 'sound::pause': not all control paths return a value
+  Finished generating code
+SDL2.lib(SDL_dynapi.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_dynapi.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_error.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_error.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_log.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_log.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_string.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_string.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_thread.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_thread.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_rwops.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_rwops.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_windowsevents.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_windowsevents.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_windowsvideo.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_windowsvideo.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_render_d3d.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_render_d3d.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_assert.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_assert.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_spinlock.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_spinlock.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_atomic.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_atomic.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_audio.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_audio.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_wave.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_wave.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_audiocvt.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_audiocvt.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_mixer.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_mixer.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_clipboard.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_clipboard.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_cpuinfo.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_cpuinfo.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_events.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_events.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_sysfilesystem.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_sysfilesystem.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_gamecontroller.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_gamecontroller.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_gesture.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_gesture.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_haptic.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_haptic.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_hints.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_hints.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_joystick.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_joystick.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_keyboard.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_keyboard.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_video.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_video.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_sysloadso.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_sysloadso.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_mouse.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_mouse.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_sysmutex.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_sysmutex.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_syssem.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_syssem.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_syscond_cv.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_syscond_cv.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_pixels.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_pixels.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_power.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_power.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_rect.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_rect.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_render.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_render.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_shape.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_shape.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_malloc.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_malloc.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_getenv.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_getenv.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_qsort.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_qsort.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_stdlib.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_stdlib.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_iconv.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_iconv.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_surface.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_surface.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_bmp.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_bmp.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_fillrect.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_fillrect.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_stretch.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_stretch.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_systhread.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_systhread.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_timer.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_timer.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_systimer.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_systimer.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_touch.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_touch.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_yuv.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_yuv.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_sensor.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_sensor.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_strtokr.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_strtokr.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_locale.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_locale.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_url.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_url.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_crc32.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_crc32.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_render_d3d11.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_render_d3d11.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_hidapi.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_hidapi.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_guid.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_guid.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_render_d3d12.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_render_d3d12.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_crc16.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_crc16.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_systls.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_systls.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_windows.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_windows.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_windowsclipboard.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_windowsclipboard.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_windowskeyboard.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_windowskeyboard.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_windowsmodes.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_windowsmodes.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_windowsmouse.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_windowsmouse.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_windowswindow.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_windowswindow.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_windowsshape.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_windowsshape.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_dropevents.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_dropevents.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_windowevents.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_windowevents.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_windowsopengl.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_windowsopengl.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_windowsframebuffer.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_windowsframebuffer.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_windowsvulkan.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_windowsvulkan.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_d3dmath.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_d3dmath.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_shaders_d3d.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_shaders_d3d.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_dataqueue.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_dataqueue.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_utils.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_utils.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_wasapi.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_wasapi.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_directsound.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_directsound.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_winmm.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_winmm.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_diskaudio.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_diskaudio.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_dummyaudio.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_dummyaudio.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_audiotypecvt.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_audiotypecvt.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_quit.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_quit.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_windowshaptic.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_windowshaptic.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_hidapijoystick.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_hidapijoystick.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_rawinputjoystick.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_rawinputjoystick.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_virtualjoystick.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_virtualjoystick.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_windows_gaming_input.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_windows_gaming_input.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_windowsjoystick.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_windowsjoystick.obj)' or at ''; linking object as if no debug info
+SDL2.lib(controller_type.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(controller_type.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_nullvideo.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_nullvideo.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_displayevents.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_displayevents.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_windowsmessagebox.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_windowsmessagebox.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_syscond.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_syscond.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_blit.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_blit.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_RLEaccel.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_RLEaccel.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_list.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_list.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_syspower.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_syspower.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_render_gl.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_render_gl.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_render_gles2.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_render_gles2.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_render_sw.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_render_sw.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_yuv_sw.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_yuv_sw.obj)' or at ''; linking object as if no debug info
+SDL2.lib(yuv_rgb.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(yuv_rgb.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_windowssensor.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_windowssensor.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_syslocale.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_syslocale.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_sysurl.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_sysurl.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_shaders_d3d11.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_shaders_d3d11.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_shaders_d3d12.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_shaders_d3d12.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_clipboardevents.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_clipboardevents.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_windowsopengles.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_windowsopengles.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_egl.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_egl.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_vulkan_utils.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_vulkan_utils.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_immdevice.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_immdevice.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_wasapi_win32.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_wasapi_win32.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_dinputhaptic.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_dinputhaptic.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_xinputhaptic.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_xinputhaptic.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_hidapi_gamecube.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_hidapi_gamecube.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_hidapi_switch.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_hidapi_switch.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_hidapi_luna.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_hidapi_luna.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_hidapi_ps3.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_hidapi_ps3.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_hidapi_ps4.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_hidapi_ps4.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_hidapi_ps5.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_hidapi_ps5.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_hidapi_shield.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_hidapi_shield.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_hidapi_stadia.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_hidapi_stadia.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_hidapi_steam.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_hidapi_steam.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_hidapi_wii.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_hidapi_wii.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_hidapi_xbox360.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_hidapi_xbox360.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_hidapi_xbox360w.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_hidapi_xbox360w.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_hidapi_xboxone.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_hidapi_xboxone.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_hidapi_rumble.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_hidapi_rumble.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_hidapi_combined.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_hidapi_combined.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_hid.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_hid.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_xinput.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_xinput.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_xinputjoystick.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_xinputjoystick.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_dinputjoystick.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_dinputjoystick.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_nullevents.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_nullevents.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_nullframebuffer.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_nullframebuffer.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_blit_0.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_blit_0.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_blit_1.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_blit_1.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_blit_N.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_blit_N.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_blit_A.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_blit_A.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_blit_copy.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_blit_copy.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_blit_slow.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_blit_slow.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_blit_auto.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_blit_auto.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_shaders_gl.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_shaders_gl.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_shaders_gles2.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_shaders_gles2.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_blendfillrect.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_blendfillrect.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_blendline.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_blendline.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_blendpoint.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_blendpoint.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_drawline.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_drawline.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_drawpoint.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_drawpoint.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_rotate.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_rotate.obj)' or at ''; linking object as if no debug info
+SDL2.lib(SDL_triangle.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_triangle.obj)' or at ''; linking object as if no debug info
+sdl2_net.lib(SDLnet.obj) : warning LNK4099: PDB '' was not found with 'sdl2_net.lib(SDLnet.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_scriptengine.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_scriptengine.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_atomic.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_atomic.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_context.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_context.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_memory.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_memory.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_thread.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_thread.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_typeinfo.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_typeinfo.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_callfunc.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_callfunc.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_string.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_string.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_scriptobject.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_scriptobject.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_builder.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_builder.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_globalproperty.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_globalproperty.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_module.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_module.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_tokenizer.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_tokenizer.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_objecttype.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_objecttype.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_generic.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_generic.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_scriptfunction.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_scriptfunction.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_configgroup.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_configgroup.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_gc.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_gc.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_datatype.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_datatype.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_scriptnode.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_scriptnode.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_callfunc_x64_msvc.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_callfunc_x64_msvc.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_string_util.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_string_util.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_parser.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_parser.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_compiler.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_compiler.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_outputbuffer.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_outputbuffer.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_bytecode.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_bytecode.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_scriptcode.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_scriptcode.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_restore.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_restore.obj)' or at ''; linking object as if no debug info
+angelscript64.lib(as_variablescope.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_variablescope.obj)' or at ''; linking object as if no debug info
+tolk.lib(Tolk.obj) : warning LNK4099: PDB '' was not found with 'tolk.lib(Tolk.obj)' or at ''; linking object as if no debug info
+tolk.lib(ScreenReaderDriverZT.obj) : warning LNK4099: PDB '' was not found with 'tolk.lib(ScreenReaderDriverZT.obj)' or at ''; linking object as if no debug info
+tolk.lib(ScreenReaderDriverSA.obj) : warning LNK4099: PDB '' was not found with 'tolk.lib(ScreenReaderDriverSA.obj)' or at ''; linking object as if no debug info
+tolk.lib(ScreenReaderDriverSAPI.obj) : warning LNK4099: PDB '' was not found with 'tolk.lib(ScreenReaderDriverSAPI.obj)' or at ''; linking object as if no debug info
+tolk.lib(ScreenReaderDriverWE.obj) : warning LNK4099: PDB '' was not found with 'tolk.lib(ScreenReaderDriverWE.obj)' or at ''; linking object as if no debug info
+tolk.lib(ScreenReaderDriverNVDA.obj) : warning LNK4099: PDB '' was not found with 'tolk.lib(ScreenReaderDriverNVDA.obj)' or at ''; linking object as if no debug info
+tolk.lib(ScreenReaderDriverJAWS.obj) : warning LNK4099: PDB '' was not found with 'tolk.lib(ScreenReaderDriverJAWS.obj)' or at ''; linking object as if no debug info
+tolk.lib(zt.obj) : warning LNK4099: PDB '' was not found with 'tolk.lib(zt.obj)' or at ''; linking object as if no debug info
+tolk.lib(wineyes.obj) : warning LNK4099: PDB '' was not found with 'tolk.lib(wineyes.obj)' or at ''; linking object as if no debug info
+tolk.lib(fsapi.obj) : warning LNK4099: PDB '' was not found with 'tolk.lib(fsapi.obj)' or at ''; linking object as if no debug info
+  NGTScript.vcxproj -> C:\Users\Parker\Documents\GitHub\NGT\NGTScript\x64\Release\NGTScript.exe
