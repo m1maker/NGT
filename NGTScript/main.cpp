@@ -193,15 +193,9 @@ int main(int argc, char* argv[]) {
         // Call compiler to create executable file
         CreateDirectory(L"Release", 0);
         CopyFile(L"NGTScript.exe", L"Release/run.exe", false);
-        CopyFile(L"angelscript64.dll", L"Release/angelscript64.dll", false);
-        CopyFile(L"bass.dll", L"Release/bass.dll", false);
-        CopyFile(L"phonon.dll", L"Release/phonon.dll", false);
-        CopyFile(L"tolk.dll", L"Release/tolk.dll", false);
         CopyFile(L"SAAPI64.dll", L"Release/SAAPI64.dll", false);
 
         CopyFile(L"nvdaControllerClient64.dll", L"Release/nvdaControllerClient64.dll", false);
-        CopyFile(L"SDL2.dll", L"Release/SDL2.dll", false);
-        CopyFile(L"SDL2_net.dll", L"Release/SDL2_net.dll", false);
 
         CopyFile(L"game_object.ngtb", L"Release/game_object.ngtb", false);
         DeleteFile(L"game_object.ngtb");
@@ -252,10 +246,10 @@ int main(int argc, char* argv[]) {
         // script the timeOut variable will be set to the time when the script must 
         // stop executing. 
         // Find the func        tion for the function we want to execute.
-        asIScriptFunction* func = engine->GetModule("ngtgame")->GetFunctionByDecl("void main()");
+        asIScriptFunction* func = engine->GetModule("ngtgame")->GetFunctionByName("main");
         if (func == 0)
         {
-            alert("NGTExecutableError", "The function 'void main()' was not found.");
+            alert("NGTExecutableError", "No entry point found (either 'int main()' or 'void main()'.)");
             ctx->Release();
             engine->Release();
             return -1;
@@ -267,6 +261,7 @@ int main(int argc, char* argv[]) {
         // times, it might be a good idea to store the function returned by 
         // GetFunctionByDecl(), so that this relatively slow call can be skipped.
         r = ctx->Prepare(func);
+        init_engine();
         if (r < 0)
         {
             alert("NGTExecutableError", "Failed to prepare the context.");
@@ -328,10 +323,10 @@ int main(int argc, char* argv[]) {
         // script the timeOut variable will be set to the time when the script must 
         // stop executing. 
         // Find the func        tion for the function we want to execute.
-        asIScriptFunction* func = engine->GetModule("ngtgame")->GetFunctionByDecl("void main()");
+        asIScriptFunction* func = engine->GetModule("ngtgame")->GetFunctionByName("main");
         if (func == 0)
         {
-            alert("NGTExecutableError", "The function 'void main()' was not found.");
+            alert("NGTExecutableError", "No entry point found (either 'int main()' or 'void main()'.)");
             ctx->Release();
             engine->Release();
             return -1;
@@ -343,6 +338,7 @@ int main(int argc, char* argv[]) {
         // times, it might be a good idea to store the function returned by 
         // GetFunctionByDecl(), so that this relatively slow call can be skipped.
         int r = ctx->Prepare(func);
+        init_engine();
         if (r < 0)
         {
             alert("NGTExecutableError", "Failed to prepare the context.");

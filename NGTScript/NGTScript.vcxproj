@@ -119,13 +119,15 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <TranslateIncludes>false</TranslateIncludes>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);angelscript64.lib;tolk.lib;SDL2main.lib;SDL2.lib;winmm.lib;imm32.lib;version.lib;setupapi.lib;sdl2_net.lib;libcmt.lib;ws2_32.lib;iphlpapi.lib;synthizer.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);angelscript64.lib;tolk.lib;SDL2main.lib;SDL2.lib;winmm.lib;imm32.lib;version.lib;setupapi.lib;sdl2_net.lib;libcmt.lib;ws2_32.lib;iphlpapi.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>
       </IgnoreAllDefaultLibraries>
@@ -137,8 +139,11 @@
     <ClInclude Include="angelscript.h" />
     <ClInclude Include="autowrapper\aswrappedcall.h" />
     <ClInclude Include="datetime\datetime.h" />
+    <ClInclude Include="miniaudio.h" />
     <ClInclude Include="ngt.h" />
     <ClInclude Include="ngtreg.h" />
+    <ClInclude Include="ogg\ogg.h" />
+    <ClInclude Include="ogg\os_types.h" />
     <ClInclude Include="scriptany\scriptany.h" />
     <ClInclude Include="scriptarray\scriptarray.h" />
     <ClInclude Include="scriptbuilder\scriptbuilder.h" />
@@ -230,13 +235,16 @@
     <ClInclude Include="sdl\SDL_vulkan.h" />
     <ClInclude Include="SDL_net.h" />
     <ClInclude Include="serializer\serializer.h" />
-    <ClInclude Include="synthizer.h" />
-    <ClInclude Include="synthizer_constants.h" />
     <ClInclude Include="Tolk.h" />
+    <ClInclude Include="vorbisfile.h" />
+    <ClInclude Include="vorbis\codec.h" />
+    <ClInclude Include="vorbis\vorbisenc.h" />
+    <ClInclude Include="vorbis\vorbisfile.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="datetime\datetime.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="miniaudio.c" />
     <ClCompile Include="ngt.cpp" />
     <ClCompile Include="ngtreg.cpp" />
     <ClCompile Include="scriptany\scriptany.cpp" />
@@ -253,6 +261,11 @@
     <ClCompile Include="scriptstdstring\scriptstdstring.cpp" />
     <ClCompile Include="scriptstdstring\scriptstdstring_utils.cpp" />
     <ClCompile Include="serializer\serializer.cpp" />
+    <ClCompile Include="stb_vorbis.c" />
+    <ClCompile Include="stb_vorbis.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ogg\config_types.h.in" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

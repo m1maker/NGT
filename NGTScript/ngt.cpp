@@ -1,11 +1,11 @@
 ﻿#define DLLCALL   __declspec( dllimport )
+//#define MA_NO_OPUS      /* Disable the (not yet implemented) built-in Opus decoder to ensure the libopus decoder is picked. */
+#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS 
 #include <random>
 #include <type_traits>
 #include <Windows.h>
 #include <thread>
 #include "Tolk.h"
-#include"synthizer.h"
-#include "synthizer_constants.h"
 #include <chrono>
 #include <string>
 #include"sdl/SDL.h"
@@ -25,31 +25,28 @@ std::wstring wstr(const std::string& utf8String)
     std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
     return converter.from_bytes(utf8String);
 }
+std::wstring reader;
 std::string sound_path;
 std::map<SDL_Keycode,bool> keys;
 bool keyhook = false;
 std::string inputtext;
 short audio_system = PAN_AUDIO;
-struct syz_LibraryConfig library_config;
+ma_engine sound_engine;
 void init_engine() {
-    syz_libraryConfigSetDefaults(&library_config);
-    library_config.log_level = SYZ_LOG_LEVEL_DEBUG;
-    library_config.logging_backend = SYZ_LOGGING_BACKEND_STDERR;
-    syz_initializeWithConfig(&library_config);
-
+    ma_engine_init(NULL, &sound_engine);
     SDL_Init(SDL_INIT_EVERYTHING);
     SDLNet_Init();
     Tolk_TrySAPI(true);
 
     Tolk_Load();
-    Tolk_DetectScreenReader();
+    reader=Tolk_DetectScreenReader();
     if (!Tolk_HasSpeech()) {
         Tolk_PreferSAPI(true);
 }
 }
 std::random_device rd;
 std::mt19937 gen(rd());
-long random(long min, long max) {
+double random(double min, double max) {
     static_assert(std::is_arithmetic<double>::value, "T must be an arithmetic type");
 
     std::uniform_real_distribution<double> dis(min, max+1);
@@ -73,17 +70,22 @@ void speak_wait(std::string text, bool stop) {
 void stop_speech() {
         Tolk_Silence();
     }
+bool window_closable;
 SDL_Event e;
-bool show_game_window(std::string title,int width, int height)
+bool show_game_window(std::string title,int width, int height, bool closable)
 {
-    SDL_RegisterApp("NGTWindow", 0, win);
-
-    win=SDL_CreateWindow(title.c_str(),SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,width,height,SDL_WINDOW_SHOWN);
+if(reader==L"JAWS")
+    win=SDL_CreateWindow(title.c_str(),SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,width,height,SDL_WINDOW_SHOWN | SDL_WINDOW_KEYBOARD_GRABBED);
+else
+win = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
+SDL_RegisterApp("NGTWindow", 0, win);
 
 SDL_StartTextInput();
+window_closable = closable;
 if (win!=NULL)
 {
-return true;
+    update_game_window();
+    return true;
 }
 return false;
 }
@@ -97,27 +99,26 @@ void set_game_window_title(std::string new_title) {
 }
 void update_game_window()
 {
-SDL_PollEvent(&e);
-if (e.type==SDL_QUIT)
-{
-quit();
-}
-else if (e.type == SDL_TEXTINPUT)
-inputtext += e.text.text;
+        SDL_PollEvent(&e);
+        if (e.type == SDL_QUIT and window_closable == true)
+        {
+            quit();
+        }
+        else if (e.type == SDL_TEXTINPUT)
+            inputtext += e.text.text;
 
-else if (e.type==SDL_KEYDOWN)
+        else if (e.type == SDL_KEYDOWN)
+        {
+            keys[e.key.keysym.sym] = true;
+        }
+        else if (e.type == SDL_KEYUP)
+        {
+            keys[e.key.keysym.sym] = false;
+        }
+    }
+     void quit()
 {
-keys[e.key.keysym.sym]=true;
-}
-else if (e.type==SDL_KEYUP)
-{
-keys[e.key.keysym.sym]=false;
-}
-}
-void quit()
-{
-
-    syz_shutdown();
+    ma_engine_uninit(&sound_engine);
 
     SDL_StopTextInput();
     SDL_DestroyWindow(win);
@@ -184,6 +185,7 @@ bool alert(std::string title, std::string text, unsigned int flag)
 return true;
 }
 void set_listener_position(float l_x, float l_y, float l_z) {
+    ma_engine_listener_set_position(&sound_engine, 0, l_x, l_y, l_z);
 }
 void wait(int time) {
     timer waittimer;
@@ -217,130 +219,168 @@ void switch_audio_system(short system) {
 if(system==PAN_AUDIO or system==HRTF_AUDIO)
     audio_system = system;
 }
+BOOL sound_check(LPCTSTR szPath)
+{
+    DWORD dwAttrib = GetFileAttributes(szPath);
+
+    return (dwAttrib != INVALID_FILE_ATTRIBUTES &&
+        !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+}
 
 bool sound::load(std::string filename, bool set3d) {
-    std::string result;
+    if (active == true)
+        return false;
+        std::string result;
     if (sound_path != "") {
-         result = sound_path + "/" + filename.c_str();
-
+        result = sound_path + "/" + filename.c_str();
     }
-    else
+    else {
         result = filename;
-    syz_createContext(&handle_, NULL, NULL);
-    syz_createBufferGenerator(&generator, handle_, NULL, NULL, NULL);
-if(!set3d)
-    syz_createDirectSource(&source, handle_, NULL, NULL, NULL);
-else
-syz_createScalarPannedSource(&source, handle_, SYZ_PANNER_STRATEGY_HRTF, 0.0, NULL, NULL, NULL);
-
-syz_sourceAddGenerator(source, generator);
-
-    syz_createStreamHandleFromStreamParams(&stream, "file", result.c_str(), NULL, NULL, NULL);
-    syz_createBufferFromStreamHandle(&buffer, stream, NULL, NULL);
-    return false;
-}
-bool sound::load_from_memory(std::string data, bool set3d) {
-    return false;
-}
-
-bool sound::play() {
-    syz_setI(generator, SYZ_P_LOOPING, 0);
-
-    return syz_setO(generator, SYZ_P_BUFFER, buffer);
-
-}
-bool sound::play_looped() {
-    syz_setI(generator, SYZ_P_LOOPING, 1);
-    return syz_setO(generator, SYZ_P_BUFFER, buffer);
-}
-bool sound::pause() {
-    return syz_pause(generator);
-}
-
-bool sound::play_wait() {
-    syz_setI(generator, SYZ_P_LOOPING, 0);
-
-    syz_setO(generator, SYZ_P_BUFFER, buffer);
-    while (true) {
-        update_game_window();
-        delay(5);
-        bool ac = sound::is_playing();
-        if (ac == false) {
-            break;
-        }
     }
+    std::wstring filenameW = wstr(result);
+    if (!sound_check(filenameW.c_str())) {
+        active = false;
+        return false;
+    }
+    if (set3d)
+        ma_sound_init_from_file(&sound_engine, result.c_str(), 0, NULL, NULL, &handle_);
+    else
+        ma_sound_init_from_file(&sound_engine, result.c_str(), MA_SOUND_FLAG_NO_SPATIALIZATION, NULL, NULL, &handle_);
+    active = true;
     return true;
-}
-    bool sound::stop() {
-        return syz_handleDecRef(buffer);
     }
 
-    bool sound::close() {
-        syz_handleDecRef(handle_);
-        syz_handleDecRef(generator);
-        syz_handleDecRef(buffer);
-        syz_handleDecRef(source);
+    bool sound::load_from_memory(std::string data, bool set3d) {
+        return false;
+    }
+
+    bool sound::play() {
+        if (!active)return false;
+        stop();
+        ma_sound_set_looping(&handle_, false);
+        ma_sound_start(&handle_);
         return true;
     }
-void sound::set_sound_position(float s_x, float s_y, float s_z) {
 
-}
-void sound::set_sound_reverb(float input_gain, float reverb_mix, float reverb_time){
-}
-void sound::cancel_reverb() {
-}
-double sound::get_pan() const {
-    double pan;
-    syz_getD(&pan, source, SYZ_P_PANNING_SCALAR);
+    bool sound::play_looped() {
+        if (!active)return false;
+        stop();
 
-    return pan;
-}
+        ma_sound_set_looping(&handle_, true);
+        ma_sound_start(&handle_);
+        return true;
+    }
 
-void sound::set_pan(double pan) {
-    syz_setD(source, SYZ_P_PANNING_SCALAR, pan);
+    bool sound::pause() {
+        if (!active)return false;
+        ma_sound_stop(&handle_);
+    }
 
-}
+    bool sound::play_wait() {
+        stop();
+        ma_sound_set_looping(&handle_, false);
+        ma_sound_start(&handle_);
+        if (!active)return false;
+        while (true) {
+            update_game_window();
+            delay(5);
+            bool ac = sound::is_playing();
+            if (ac == false) {
+                break;
+            }
+        }
+        return true;
+    }
 
-double sound::get_volume() const {
-    double volume=0;
-    return volume;
-}
+    bool sound::stop() {
+        if (!active)return false;
+        ma_sound_stop(&handle_);
+        ma_sound_seek_to_pcm_frame(&handle_, 0);
+    }
+    bool sound::close() {
+        if (!active)return false;
+        ma_sound_uninit(&handle_);
+        return true;
+    }
 
-void sound::set_volume(double volume) {
-}
+    void sound::set_sound_position(float s_x, float s_y, float s_z) {
+        if (!active)return;
+        ma_sound_set_position(&handle_, s_x, s_y, s_z);
+    }
+    void sound::set_sound_reverb(float input_gain, float reverb_mix, float reverb_time) {
+        return;
+    }
+    void sound::cancel_reverb() {
+        return;
+    }
 
-double sound::get_pitch() const {
-    float pitch=0;
-    return pitch;
-}
+    double sound::get_pan() const {
+        if (!active)return -17435;
 
-void sound::set_pitch(double pitch) {
-}
+        double pan;
+        pan=ma_sound_get_pan(&handle_);
+        return pan;
+    }
 
-bool sound::is_active() const {
-    return false;
-}
+    void sound::set_pan(double pan) {
+        if (!active)return;
+        ma_sound_set_pan(&handle_, pan);
+    }
 
-bool sound::is_playing() const 
+    double sound::get_volume() const {
+        if (!active)return -17435;
 
-{
-    return false;
-}
+        double volume;
+        volume = ma_sound_get_volume(&handle_);
+        return volume;
+    }
 
-bool sound::is_paused() const {
-    return false;
-}
+    void sound::set_volume(double volume) {
+        if (!active)return;
+        if (volume > 1 or volume < -0)return;
+        ma_sound_set_volume(&handle_, volume);
+    }
 
-double sound::get_position() const {
-    return 2;
-}
+    double sound::get_pitch() const {
+        if (!active)return -17435;
 
-double sound::get_length() const {
-    return 2;
+        double pitch;
+        pitch = ma_sound_get_pitch(&handle_);
+        return pitch;
+    }
 
-}
+    void sound::set_pitch(double pitch) {
+        if (!active)return;
+        ma_sound_set_pitch(&handle_, pitch);
+    }
 
-double sound::get_sample_rate() const {
+    bool sound::is_active() const {
+        return active;
+    }
+
+    bool sound::is_playing() const {
+        return ma_sound_is_playing(&handle_);
+    }
+
+    bool sound::is_paused() const {
+        return paused;
+    }
+
+    double sound::get_position() const {
+        if (!active)return -17435;
+
+        double position;
+        position = ma_sound_get_positioning(&handle_);
+        return position;
+    }
+
+    double sound::get_length() const {
+        if (!active)return-17435;
+
+        float length;
+//        ma_sound_get_length_in_seconds(&handle_, length);
+    }
+        double sound::get_sample_rate() const {
     float rate=0;
     return rate;
 }
@@ -352,7 +392,7 @@ void timer::destruct() {
 
 
 
-int timer::elapsed() {
+uint64_t timer::elapsed() {
         if (paused != 0) {
             return paused;
         }

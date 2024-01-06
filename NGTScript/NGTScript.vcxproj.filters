@@ -18,13 +18,7 @@
     <ClInclude Include="angelscript.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="bass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ngt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="nvdaController.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="scriptstdstring\scriptstdstring.h">
@@ -73,15 +67,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="autowrapper\aswrappedcall.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="phonon_interfaces.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="phonon_version.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="phonon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Tolk.h">
@@ -321,10 +306,25 @@
     <ClInclude Include="sdl\SDL_vulkan.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="synthizer.h">
+    <ClInclude Include="miniaudio.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="synthizer_constants.h">
+    <ClInclude Include="vorbisfile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vorbis\codec.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vorbis\vorbisenc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vorbis\vorbisfile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ogg\ogg.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ogg\os_types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -383,5 +383,19 @@
     <ClCompile Include="scriptstdstring\scriptstdstring_utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="miniaudio.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stb_vorbis.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stb_vorbis.h">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ogg\config_types.h.in">
+      <Filter>Header Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

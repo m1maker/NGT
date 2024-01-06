@@ -251,7 +251,9 @@ const int AS_SDLK_KBDILLUMDOWN = SDLK_KBDILLUMDOWN;
 const int AS_SDLK_KBDILLUMUP = SDLK_KBDILLUMUP;
 const int AS_SDLK_EJECT = SDLK_EJECT;
 const int AS_SDLK_SLEEP = SDLK_SLEEP;
-
+const int AS_MESSAGEBOX_ERROR = SDL_MESSAGEBOX_ERROR;
+const int AS_MESSAGEBOX_WARN = SDL_MESSAGEBOX_WARNING;
+const int AS_MESSAGEBOX_INFO = SDL_MESSAGEBOX_INFORMATION;
 LRESULT CALLBACK EditSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     if (uMsg == WM_KEYDOWN && wParam == VK_TAB )
@@ -414,15 +416,15 @@ void MessageCallback(const asSMessageInfo* msg, void* param)
 }
 void RegisterFunctions(asIScriptEngine* engine)
 {
-    engine->RegisterGlobalFunction("void init_engine()", asFUNCTION(init_engine), asCALL_CDECL);
-    engine->RegisterGlobalFunction("int random(int, int)", asFUNCTION(random), asCALL_CDECL);
+    engine->SetEngineProperty(asEP_ALLOW_MULTILINE_STRINGS, true);
+    engine->RegisterGlobalFunction("double random(double, double)", asFUNCTION(random), asCALL_CDECL);
     engine->RegisterGlobalFunction("int get_last_error()", asFUNCTION(get_last_error), asCALL_CDECL);
 
     engine->RegisterGlobalFunction("void speak(string &in, bool=true)", asFUNCTION(speak), asCALL_CDECL);
     engine->RegisterGlobalFunction("void speak_wait(string &in, bool=true)", asFUNCTION(speak_wait), asCALL_CDECL);
 
     engine->RegisterGlobalFunction("void stop_speech()", asFUNCTION(stop_speech), asCALL_CDECL);
-    engine->RegisterGlobalFunction("bool show_game_window(string &in,int=640,int=480)", asFUNCTION(show_game_window), asCALL_CDECL);
+    engine->RegisterGlobalFunction("void show_game_window(string &in,int=640,int=480, bool=true)", asFUNCTION(show_game_window), asCALL_CDECL);
     engine->RegisterGlobalFunction("void hide_game_window()", asFUNCTION(hide_game_window), asCALL_CDECL);
     engine->RegisterGlobalFunction("void set_game_window_title(string &in)", asFUNCTION(set_game_window_title), asCALL_CDECL);
 
@@ -437,7 +439,7 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterGlobalFunction("bool key_down(int)", asFUNCTION(key_down), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool key_repeat(int)", asFUNCTION(key_repeat), asCALL_CDECL);
 
-    engine->RegisterGlobalFunction("bool alert(string &in, string &in)", asFUNCTION(alert), asCALL_CDECL);
+    engine->RegisterGlobalFunction("bool alert(string &in, string &in, uint=0)", asFUNCTION(alert), asCALL_CDECL);
     engine->RegisterGlobalFunction("void set_listener_position(float, float, float)", asFUNCTION(set_listener_position), asCALL_CDECL);
     engine->RegisterGlobalFunction("void wait(int)", asFUNCTION(wait), asCALL_CDECL);
     engine->RegisterGlobalFunction("void delay(int)",asFUNCTION(delay),asCALL_CDECL);
@@ -495,7 +497,7 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectBehaviour("timer", asBEHAVE_FACTORY, "timer@ f()", asFUNCTION(ftimer), asCALL_CDECL);
     engine->RegisterObjectBehaviour("timer", asBEHAVE_ADDREF, "void f()", asMETHOD(timer, construct), asCALL_THISCALL);
     engine->RegisterObjectBehaviour("timer", asBEHAVE_RELEASE, "void f()", asMETHOD(timer, destruct), asCALL_THISCALL);
-    engine->RegisterObjectMethod("timer", "int elapsed()", asMETHOD(timer, elapsed), asCALL_THISCALL);
+    engine->RegisterObjectMethod("timer", "uint64 elapsed()", asMETHOD(timer, elapsed), asCALL_THISCALL);
 //    engine->RegisterObjectMethod("timer", "void elapsed(int)", asMETHOD(timer, elapsed), asCALL_THISCALL);
     engine->RegisterObjectMethod("timer", "void restart()", asMETHOD(timer, restart), asCALL_THISCALL);
     engine->RegisterObjectMethod("timer", "void pause()", asMETHOD(timer, pause), asCALL_THISCALL);
@@ -738,5 +740,8 @@ engine->RegisterGlobalProperty("const int SDLK_KBDILLUMDOWN", (void*)&AS_SDLK_KB
 engine->RegisterGlobalProperty("const int SDLK_KBDILLUMUP", (void*)&AS_SDLK_KBDILLUMUP);
 engine->RegisterGlobalProperty("const int SDLK_EJECT", (void*)&AS_SDLK_EJECT);
 engine->RegisterGlobalProperty("const int SDLK_SLEEP", (void*)&AS_SDLK_SLEEP);
+engine->RegisterGlobalProperty("const int MESSAGEBOX_ERROR", (void* )& AS_MESSAGEBOX_ERROR);
+engine->RegisterGlobalProperty("const int MESSAGEBOX_WARN", (void*)&AS_MESSAGEBOX_WARN);
+engine->RegisterGlobalProperty("const int MESSAGEBOX_INFO", (void*)&AS_MESSAGEBOX_INFO);
 }
 

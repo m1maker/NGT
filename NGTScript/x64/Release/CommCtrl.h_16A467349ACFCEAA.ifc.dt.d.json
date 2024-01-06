@@ -1,0 +1,27 @@
+{
+    "Version": "1.2",
+    "Data": {
+        "Source": "c:\\program files (x86)\\windows kits\\10\\include\\10.0.22621.0\\um\\commctrl.h",
+        "ProvidedModule": "",
+        "Includes": [
+            "c:\\program files (x86)\\windows kits\\10\\include\\10.0.22621.0\\shared\\winapifamily.h",
+            "c:\\program files (x86)\\windows kits\\10\\include\\10.0.22621.0\\shared\\winpackagefamily.h",
+            "c:\\program files (x86)\\windows kits\\10\\include\\10.0.22621.0\\um\\prsht.h",
+            "c:\\program files (x86)\\windows kits\\10\\include\\10.0.22621.0\\shared\\pshpack8.h",
+            "c:\\program files (x86)\\windows kits\\10\\include\\10.0.22621.0\\shared\\poppack.h",
+            "c:\\program files (x86)\\windows kits\\10\\include\\10.0.22621.0\\shared\\pshpack1.h",
+            "c:\\program files (x86)\\windows kits\\10\\include\\10.0.22621.0\\shared\\poppack.h",
+            "c:\\program files (x86)\\windows kits\\10\\include\\10.0.22621.0\\shared\\pshpack1.h",
+            "c:\\program files (x86)\\windows kits\\10\\include\\10.0.22621.0\\shared\\poppack.h",
+            "c:\\program files (x86)\\windows kits\\10\\include\\10.0.22621.0\\shared\\pshpack1.h",
+            "c:\\program files (x86)\\windows kits\\10\\include\\10.0.22621.0\\shared\\poppack.h",
+            "c:\\program files (x86)\\windows kits\\10\\include\\10.0.22621.0\\shared\\pshpack1.h",
+            "c:\\program files (x86)\\windows kits\\10\\include\\10.0.22621.0\\shared\\poppack.h",
+            "c:\\program files (x86)\\windows kits\\10\\include\\10.0.22621.0\\shared\\pshpack1.h",
+            "c:\\program files (x86)\\windows kits\\10\\include\\10.0.22621.0\\shared\\poppack.h",
+            "c:\\program files (x86)\\windows kits\\10\\include\\10.0.22621.0\\um\\dpa_dsa.h"
+        ],
+        "ImportedModules": [],
+        "ImportedHeaderUnits": []
+    }
+}

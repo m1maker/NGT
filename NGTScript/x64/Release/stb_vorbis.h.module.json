@@ -1,0 +1,22 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "x64\\Release\\stb_vorbis.h.obj",
+            "outputs": [
+                "C:\\Users\\Ecler\\Documents\\ngt\\NGTScript\\x64\\Release\\vc143.pdb",
+                "x64\\Release\\",
+                "C:\\Users\\Ecler\\Documents\\ngt\\NGTScript\\x64\\Release\\stb_vorbis.h.ifc"
+            ],
+            "provides": [
+                {
+                    "logical-name": "stb_vorbis.h",
+                    "source-path": "c:\\users\\ecler\\documents\\ngt\\ngtscript\\stb_vorbis.h",
+                    "lookup-method": "absolute"
+                }
+            ],
+            "requires": []
+        }
+    ]
+}

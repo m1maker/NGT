@@ -1,0 +1,15 @@
+﻿  Scanning sources for module dependencies...
+  ngtreg.cpp
+C:\Users\Ecler\Documents\ngt\NGTScript\sdl\SDL_messagebox.h(45,1): warning C4091: 'typedef ': ignored on left of '<unnamed-enum-SDL_MESSAGEBOX_ERROR>' when no variable is declared
+  (compiling source file 'ngtreg.cpp')
+  
+     Creating library C:\Users\Ecler\Documents\ngt\NGTScript\x64\Release\NGTScript.lib and object C:\Users\Ecler\Documents\ngt\NGTScript\x64\Release\NGTScript.exp
+  Generating code
+  Not all modules are compiled with -Gy (function comdat), build without incremental LTCG.
+C:\Users\Ecler\Documents\ngt\NGTScript\ngt.cpp(382): warning C4715: 'sound::get_length': not all control paths return a value
+C:\Users\Ecler\Documents\ngt\NGTScript\main.cpp(51): warning C4715: 'CBytecodeStream::Write': not all control paths return a value
+C:\Users\Ecler\Documents\ngt\NGTScript\main.cpp(56): warning C4715: 'CBytecodeStream::Read': not all control paths return a value
+C:\Users\Ecler\Documents\ngt\NGTScript\ngt.cpp(277): warning C4715: 'sound::pause': not all control paths return a value
+C:\Users\Ecler\Documents\ngt\NGTScript\ngt.cpp(299): warning C4715: 'sound::stop': not all control paths return a value
+  Finished generating code
+  NGTScript.vcxproj -> C:\Users\Ecler\Documents\ngt\NGTScript\x64\Release\NGTScript.exe

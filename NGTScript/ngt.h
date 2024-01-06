@@ -1,22 +1,28 @@
 #pragma once
+#define MINIAUDIO_IMPLEMENTATION
 
 
+#include "miniaudio.h"
 #include <random>
 #include <type_traits>
-#include "synthizer.h"
 #include<chrono>
 #include <string>
 #include"sdl/SDL.h"
 #include "SDL_net.h"
+#include <iostream>
+#include <fstream>
+#include <vector>
+
+
 std::wstring wstr(const std::string& utf8String);
 
 void init_engine();
-long random(long min, long max);
+ double random(double min, double max);
 int get_last_error();
 void speak(std::string	 text, bool stop = true);
 void speak_wait(std::string	 text, bool stop = true);
 void stop_speech();
-bool show_game_window(std::string title,int width=640, int height=480);
+bool show_game_window(std::string title,int width=640, int height=480, bool closable=true);
 void hide_game_window();
 void set_game_window_title(std::string new_title);
 void update_game_window();
@@ -53,11 +59,10 @@ public:
 };
 class sound {
 public:
-	syz_Handle handle_ = 0, generator = 0, source = 0, buffer = 0, stream = 0;
-
+	ma_sound handle_;
+	bool playing=false, paused=false, active=false;
 	void construct();
 	void destruct();
-
 	bool load(std::string	 filename, bool set3d=false);
 	bool load_from_memory(std::string data, bool set3d = false);
 	bool play();
@@ -98,7 +103,7 @@ public:
 	void construct();
 	void destruct();
 
-	int elapsed();
+	uint64_t elapsed();
 //	void elapsed(int amount);
 	void restart();
 	void pause();
