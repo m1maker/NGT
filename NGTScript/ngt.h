@@ -23,6 +23,7 @@ void speak(std::string	 text, bool stop = true);
 void speak_wait(std::string	 text, bool stop = true);
 void stop_speech();
 bool show_game_window(std::string title,int width=640, int height=480, bool closable=true);
+
 void hide_game_window();
 void set_game_window_title(std::string new_title);
 void update_game_window();
