@@ -319,12 +319,12 @@ bool sound::load(std::string filename, bool set3d) {
 
         double pan;
         pan=ma_sound_get_pan(&handle_);
-        return pan;
+        return pan*100;
     }
 
     void sound::set_pan(double pan) {
         if (!active)return;
-        ma_sound_set_pan(&handle_, pan);
+        ma_sound_set_pan(&handle_, pan/100);
     }
 
     double sound::get_volume() const {
@@ -332,13 +332,13 @@ bool sound::load(std::string filename, bool set3d) {
 
         double volume;
         volume = ma_sound_get_volume(&handle_);
-        return volume;
+        return ma_volume_linear_to_db(volume);
     }
 
     void sound::set_volume(double volume) {
         if (!active)return;
-        if (volume > 1 or volume < -0)return;
-        ma_sound_set_volume(&handle_, volume);
+        if (volume > 0 or volume < -100)return;
+        ma_sound_set_volume(&handle_, ma_volume_db_to_linear(volume));
     }
 
     double sound::get_pitch() const {
@@ -346,12 +346,12 @@ bool sound::load(std::string filename, bool set3d) {
 
         double pitch;
         pitch = ma_sound_get_pitch(&handle_);
-        return pitch;
+        return pitch*100;
     }
 
     void sound::set_pitch(double pitch) {
         if (!active)return;
-        ma_sound_set_pitch(&handle_, pitch);
+        ma_sound_set_pitch(&handle_, pitch/100);
     }
 
     bool sound::is_active() const {
