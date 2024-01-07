@@ -256,22 +256,21 @@ const int AS_MESSAGEBOX_WARN = SDL_MESSAGEBOX_WARNING;
 const int AS_MESSAGEBOX_INFO = SDL_MESSAGEBOX_INFORMATION;
 LRESULT CALLBACK EditSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    if (uMsg == WM_KEYDOWN && wParam == VK_TAB )
-    {
-        // Handle tab key press event
+    switch (uMsg) {
+    case WM_KEYDOWN:
+        if (wParam == VK_TAB)
+        {
             SetFocus(buttonc); // Set focus to the next control
-        return 0; // Return 0 to indicate that the keypress has been handled
+        }
+        else if (wParam == VK_ESCAPE or (wParam == VK_RETURN) and (GetFocus() == g_hwndEdit))
+        {
+            PostMessage(hwnd, WM_CLOSE, 0, 0);
+        }
+        break;
     }
-    if (uMsg== WM_KEYDOWN && wParam == VK_ESCAPE or (wParam == VK_RETURN) and(GetFocus()==g_hwndEdit))
-    {
-        PostMessage(hwnd, WM_CLOSE, 0, 0);
-    }
-
-    // Call the original edit control procedure for default handling
     return CallWindowProc(originalEditProc, hWnd, uMsg, wParam, lParam);
 }
-
- std::wstring ouou;
+        std::wstring ouou;
 int currentLine;
 int currentLineUp;
 std::wstring result_message;
@@ -309,18 +308,6 @@ void show_message()
         return;
     }
 
-    g_hwndEdit = CreateWindowEx(
-        WS_EX_CLIENTEDGE,
-        L"EDIT",
-        L"",
-        WS_CHILD | WS_VISIBLE | ES_READONLY | ES_MULTILINE | WS_TABSTOP | ES_NOHIDESEL | ES_AUTOHSCROLL | ES_AUTOVSCROLL | WS_HSCROLL | WS_VSCROLL | WS_BORDER,
-        10, 10, 400, 200,
-        hwnd,
-        NULL,
-        hInstance,
-        NULL
-    );
-
     buttonc=CreateWindow(
         L"BUTTON",
         L"Close",
@@ -344,7 +331,6 @@ void show_message()
         {
             TranslateMessage(&messagege);
             DispatchMessage(&messagege);
-            SendMessage(g_hwndEdit, WM_SETTEXT, TRUE, (LPARAM)result_message.c_str());
 
 
         }
@@ -359,6 +345,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     switch (msg)
     {
     case WM_CREATE:
+        g_hwndEdit = CreateWindowEx(
+            0, L"EDIT",
+            L"",
+            WS_CHILD | WS_VISIBLE | ES_READONLY | ES_MULTILINE | WS_TABSTOP,
+            10, 10, 400, 200,
+            hwnd,
+            NULL,
+            hInstance,
+            NULL
+        );
+        SendMessage(g_hwndEdit, WM_SETTEXT, false, (LPARAM)result_message.c_str());
 
         break;
 
@@ -378,7 +375,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         return DefWindowProc(hwnd, msg, wParam, lParam);
     }
 
-    return 0;
 }
 
 void add_text(std::wstring text)
