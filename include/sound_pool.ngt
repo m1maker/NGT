@@ -57,7 +57,7 @@ volume_step=0.0;
 behind_pitch_decrease=0.0;
 start_pan=0.0;
 start_volume=0.0;
-start_pitch=100.0;
+start_pitch=1.0;
 left_range=0;
 right_range=0;
 backward_range=0;
@@ -270,7 +270,7 @@ clean_frequency=3;
 
 int play_stationary(string filename, bool looping, bool memory=false, bool persistent=false)
 {
-return play_stationary_extended(filename, looping, 0, 0, 0, 100, memory, persistent);
+return play_stationary_extended(filename, looping, 0, 0, 0, 100.0, memory, persistent);
 }
 
 int play_stationary_extended(string filename, bool looping, double offset, float start_pan, float start_volume, float start_pitch, bool memory=false, bool persistent=false)
@@ -413,7 +413,6 @@ return slot;
 
 int play_2d(string filename, int listener_x, int listener_y, int sound_x, int sound_y, bool looping, bool memory=false, bool persistent=false)
 {
-positions();
 return play_extended_2d(filename, listener_x, listener_y, sound_x, sound_y, 0, 0, 0, 0, looping, 0, 0, 0, 100, memory, persistent);
 }
 
@@ -460,7 +459,6 @@ highest_slot=slot;
 return slot;
 }
 }
-positions();
 if(!memory)
 items[slot].handle.load(items[slot].filename);
 /*
@@ -482,20 +480,14 @@ if(items[slot].start_offset>0)
 last_listener_x=listener_x;
 last_listener_y=listener_y;
 items[slot].update(listener_x, listener_y, 0, 0.0, max_distance);
-positions();
 if(looping==true)
 {
-positions();
 items[slot].handle.play_looped();
-positions();
 }
 else
 {
-positions();
 items[slot].handle.play();
-positions();
 }
-positions();
 if(slot>highest_slot)
 highest_slot=slot;
 return slot;
@@ -603,7 +595,7 @@ if(items[slot].looping==false and @items[slot].handle==null)
 {
 return false;
 }
-if(items[slot].looping==false and items[slot].handle.playing==false)
+if(items[slot].looping==false and items[slot].handle.is_playing()==false)
 {
 return false;
 }
@@ -616,7 +608,7 @@ if(sound_is_active(slot)==false)
 {
 return false;
 }
-return items[slot].handle.playing;
+return items[slot].handle.is_playing();
 }
 
 bool pause_sound(int slot)
@@ -630,7 +622,7 @@ if(items[slot].paused==true)
 return false;
 }
 items[slot].paused=true;
-if(items[slot].handle.playing==true)
+if(items[slot].handle.is_playing()==true)
 items[slot].handle.pause();
 return true;
 }
@@ -653,7 +645,7 @@ items[slot].handle.close();
 return true;
 }
 items[slot].update(last_listener_x, last_listener_y, last_listener_z, last_listener_rotation, max_distance);
-if(items[slot].handle.is_active()==true and items[slot].handle.playing==false)
+if(items[slot].handle.is_active()==true and items[slot].handle.is_playing()==false)
 {
 if(items[slot].looping==true)
 {
@@ -835,7 +827,7 @@ if(current.looping==false and @current.handle==null)
 {
 continue;
 }
-if(current.looping==false and current.handle.playing==false)
+if(current.looping==false and current.handle.is_playing()==false)
 {
 continue;
 }
@@ -868,11 +860,11 @@ if(@current.handle==null)
 {
 continue;
 }
-if(current.handle.active==false)
+if(current.handle.is_active()==false)
 {
 continue;
 }
-if(current.handle.playing==false and current.paused==false)
+if(current.handle.is_playing()==false and current.paused==false)
 {
 if(i==highest_slot)
 killed_highest_slot=true;
@@ -938,12 +930,12 @@ if(@current.handle==null)
 slot=i;
 break;
 }
-if(current.handle.active==false)
+if(current.handle.is_active()==false)
 {
 slot=i;
 break;
 }
-if(current.handle.playing==false)
+if(current.handle.is_playing()==false)
 {
 slot=i;
 break;
