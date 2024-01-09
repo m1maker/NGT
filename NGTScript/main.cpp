@@ -167,6 +167,7 @@ int main(int argc, char* argv[]) {
 
     if (flag == "-c") {
         asIScriptEngine* engine = asCreateScriptEngine();
+        engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
 
         // Register any necessary functions and types
         // ...
@@ -186,7 +187,6 @@ int main(int argc, char* argv[]) {
 
 
         // Compile the script
-        engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
         asIScriptModule* module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
         int result = builder.StartNewModule(engine, "ngtgame");
         result = builder.AddSectionFromFile(argv[1]);
@@ -218,6 +218,7 @@ int main(int argc, char* argv[]) {
         }
     else if (flag == "-d") {
         asIScriptEngine* engine = asCreateScriptEngine();
+        engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
 
         // Register any necessary functions and types
         // ...
@@ -237,7 +238,6 @@ int main(int argc, char* argv[]) {
 
 
         // Compile the script
-        engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
         asIScriptModule* module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
         int result = builder.StartNewModule(engine, "ngtgame");
         result = builder.AddSectionFromFile(argv[1]);
@@ -309,6 +309,7 @@ int main(int argc, char* argv[]) {
     }
     else if (flag == "-b") {
         asIScriptEngine* engine = asCreateScriptEngine();
+        engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
 
         RegisterStdString(engine);
         RegisterFunctions(engine);
@@ -325,7 +326,6 @@ int main(int argc, char* argv[]) {
         engine->RegisterGlobalFunction("int exec(const string &in, string &out)", asFUNCTIONPR(ExecSystemCmd, (const string&, string&), int), asCALL_CDECL);
 
 
-        engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
         asIScriptModule* module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
         int result;
         module = engine->GetModule("ngtgame");

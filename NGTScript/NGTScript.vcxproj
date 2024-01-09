@@ -127,7 +127,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);angelscript64.lib;tolk.lib;SDL2main.lib;SDL2.lib;winmm.lib;imm32.lib;version.lib;setupapi.lib;sdl2_net.lib;libcmt.lib;ws2_32.lib;iphlpapi.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);angelscript64.lib;tolk.lib;SDL2main.lib;SDL2.lib;winmm.lib;imm32.lib;version.lib;setupapi.lib;sdl2_net.lib;libcmt.lib;ws2_32.lib;iphlpapi.lib;libffi.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>
       </IgnoreAllDefaultLibraries>
@@ -139,6 +139,9 @@
     <ClInclude Include="angelscript.h" />
     <ClInclude Include="autowrapper\aswrappedcall.h" />
     <ClInclude Include="datetime\datetime.h" />
+    <ClInclude Include="ffi.h" />
+    <ClInclude Include="ffi_cfi.h" />
+    <ClInclude Include="ffi_common.h" />
     <ClInclude Include="miniaudio.h" />
     <ClInclude Include="ngt.h" />
     <ClInclude Include="ngtreg.h" />

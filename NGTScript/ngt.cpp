@@ -46,13 +46,14 @@ void init_engine() {
 }
 std::random_device rd;
 std::mt19937 gen(rd());
-double random(double min, double max) {
+long random(long min, long max) {
     static_assert(std::is_arithmetic<double>::value, "T must be an arithmetic type");
 
-    std::uniform_real_distribution<double> dis(min, max+1);
+    std::uniform_real_distribution<double> dis(min, max + 1);
 
     return dis(gen);
 }
+
 int get_last_error() {return 0; 
 }
 void speak(std::string text, bool stop) {
@@ -89,7 +90,7 @@ if (win!=NULL)
 }
 return false;
 }
-void hide_game_window() {
+    void hide_game_window() {
     SDL_StopTextInput();
 
     SDL_DestroyWindow(win);
@@ -99,7 +100,7 @@ void set_game_window_title(std::string new_title) {
 }
 void update_game_window()
 {
-        SDL_PollEvent(&e);
+    SDL_PollEvent(&e);
         if (e.type == SDL_QUIT and window_closable == true)
         {
             quit();
@@ -116,7 +117,7 @@ void update_game_window()
             keys[e.key.keysym.sym] = false;
         }
     }
-     void quit()
+void quit()
 {
     ma_engine_uninit(&sound_engine);
 
@@ -191,7 +192,7 @@ void wait(int time) {
     timer waittimer;
     int el = 0;
     while (el < time) {
-        update_game_window();
+//        update_game_window();
         el = waittimer.elapsed();
     }
 }
@@ -226,7 +227,6 @@ BOOL sound_check(LPCTSTR szPath)
     return (dwAttrib != INVALID_FILE_ATTRIBUTES &&
         !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
 }
-
 bool sound::load(std::string filename, bool set3d) {
     if (active == true)
         return false;
@@ -477,3 +477,394 @@ uint64_t timer::elapsed() {
         float reverb::get_reverb_time() {
             return 2;
         }
+        void network_event::construct() {}
+        void network_event::destruct() {}
+
+        void network::construct() {}
+        void network::destruct() {}
+        unsigned int network::connect(std::string host, int port) {
+                    IPaddress ipAddress;
+
+                    if (SDLNet_ResolveHost(&ipAddress, host.c_str(), port) == -1) {
+                        return 0;
+                    }
+
+                    TCPsocket socket = SDLNet_TCP_Open(&ipAddress);
+
+                    if (!socket) {
+                        return 0;
+                    }
+
+                    unsigned int peerId = SDLNet_TCP_GetPeerAddress(socket)->host;
+
+                    m_connectedPeers++;
+                    m_active = true;
+
+                    m_socketSet = SDLNet_AllocSocketSet(1);
+
+                    if (!m_socketSet) {
+                        return 0;
+                    }
+
+                    if (SDLNet_TCP_AddSocket(m_socketSet, socket) == -1) {
+                        return 0;
+                    }
+
+                    m_clientSocket = socket;
+
+                    return peerId;
+                }
+
+                bool network::destroy() {
+                    if (m_serverSocket) {
+                        SDLNet_TCP_Close(m_serverSocket);
+                        m_serverSocket = nullptr;
+                    }
+
+                    if (m_clientSocket) {
+                        SDLNet_TCP_Close(m_clientSocket);
+                        m_clientSocket = nullptr;
+                    }
+
+                    if (m_socketSet) {
+                        SDLNet_FreeSocketSet(m_socketSet);
+                        m_socketSet = nullptr;
+                    }
+
+                    m_connectedPeers = 0;
+                    m_bytesSent = 0.0;
+                    m_bytesReceived = 0.0;
+                    m_active = false;
+
+                    return true;
+                }
+
+                bool network::disconnect_peer(unsigned int peerId) {
+                    if (!m_active) {
+                        std::cerr << "Error: Network is not active." << std::endl;
+                        return false;
+                    }
+
+                    if (m_serverSockets.find(peerId) != m_serverSockets.end()) {
+                        SDLNet_TCP_Close(m_serverSockets[peerId]);
+                        m_serverSockets.erase(peerId);
+                    }
+
+                    if (m_clientSocket && SDLNet_TCP_GetPeerAddress(m_clientSocket)->host == peerId) {
+                        SDLNet_TCP_Close(m_clientSocket);
+                        m_clientSocket = nullptr;
+                    }
+
+                    m_connectedPeers=0;
+
+                    return true;
+                }
+
+                bool network::disconnect_peer_forcefully(unsigned int peerId) {
+                    if (!m_active) {
+                        return false;
+                    }
+
+                    if (m_serverSockets.find(peerId) != m_serverSockets.end()) {
+                        SDLNet_TCP_Close(m_serverSockets[peerId]);
+                        m_serverSockets.erase(peerId);
+                    }
+
+                    if (m_clientSocket && SDLNet_TCP_GetPeerAddress(m_clientSocket)->host == peerId) {
+                        SDLNet_TCP_Close(m_clientSocket);
+                        m_clientSocket = nullptr;
+                    }
+
+                    m_connectedPeers=0;
+
+                    return true;
+                }
+
+                bool network::disconnect_peer_softly(unsigned int peerId) {
+                    if (!m_active) {
+                        return false;
+                    }
+
+                    if (m_serverSockets.find(peerId) != m_serverSockets.end()) {
+                        SDLNet_TCP_Send(m_serverSockets[peerId], nullptr, 0);
+                    }
+
+                    if (m_clientSocket && SDLNet_TCP_GetPeerAddress(m_clientSocket)->host == peerId) {
+                        SDLNet_TCP_Send(m_clientSocket, nullptr, 0);
+                    }
+
+                    return true;
+                }
+
+                std::string network::get_peer_address(unsigned int peerId) {
+                    IPaddress ipAddress;
+                    ipAddress.host = peerId;
+
+                    std::string address = SDLNet_ResolveIP(&ipAddress);
+
+                    if (address=="") {
+                        return "";
+                    }
+
+
+
+                    return address;
+                }
+
+                double network::get_peer_average_round_trip_time(unsigned int peerId) {
+                    // Not implemented
+                    return 0.0;
+                }
+
+                std::vector<unsigned int> network::get_peer_list() {
+                    std::vector<unsigned int> result;
+
+                    if (m_clientSocket) {
+                        result.push_back(SDLNet_TCP_GetPeerAddress(m_clientSocket)->host);
+                    }
+
+                    for (auto const& pair : m_serverSockets) {
+                        result.push_back(pair.first);
+                    }
+
+                    return result;
+                }
+
+                network_event* network::request
+                () {
+                    network_event event;
+
+                    if (!m_active) {
+                        event.m_type = 0;
+                        return &event;
+                    }
+
+                    if (!m_socketSet) {
+                        event.m_type = 0;
+                        return &event;
+                    }
+
+                    int numReadySockets = SDLNet_CheckSockets(m_socketSet, 0);
+
+                    if (numReadySockets == -1) {
+                        event.m_type = 0;
+                        return &event;
+                    }
+
+                    if (numReadySockets == 0) {
+                        event.m_type = 0;
+                        return &event;
+                    }
+
+                    if (m_clientSocket && SDLNet_SocketReady(m_clientSocket)) {
+                        char buffer[1024];
+                        int bytesReceived = SDLNet_TCP_Recv(m_clientSocket, buffer, sizeof(buffer));
+
+                        if (bytesReceived <= 0) {
+                            disconnect_peer(SDLNet_TCP_GetPeerAddress(m_clientSocket)->host);
+                            event.m_type = 3;
+                            event.m_peerId = SDLNet_TCP_GetPeerAddress(m_clientSocket)->host;
+                            return &event;
+                        }
+
+                        m_bytesReceived += bytesReceived;
+
+                        event.m_type = 2;
+                        event.m_peerId = SDLNet_TCP_GetPeerAddress(m_clientSocket)->host;
+                        event.m_channel = 0;
+                        event.m_message = std::string(buffer, bytesReceived);
+
+                        return &event;
+                    }
+
+                    for (auto const& pair : m_serverSockets) {
+                        if (SDLNet_SocketReady(pair.second)) {
+                            char buffer[1024];
+                            int bytesReceived = SDLNet_TCP_Recv(pair.second, buffer, sizeof(buffer));
+
+                            if (bytesReceived <= 0) {
+                                disconnect_peer(pair.first);
+                                event.m_type = 3;
+                                event.m_peerId = pair.first;
+                                return &event;
+                            }
+
+                            m_bytesReceived += bytesReceived;
+
+                            event.m_type = 2;
+                            event.m_peerId = pair.first;
+                            event.m_channel = 0;
+                            event.m_message = std::string(buffer, bytesReceived);
+
+                            return &event;
+                        }
+                    }
+
+                    return &event;
+                }
+
+                bool network::send_reliable(unsigned int peerId, std::string packet, int channel) {
+                    if (!m_active) {
+                        return false;
+                    }
+
+                    if (m_clientSocket && SDLNet_TCP_GetPeerAddress(m_clientSocket)->host == peerId) {
+                        int bytesSent = SDLNet_TCP_Send(m_clientSocket, packet.c_str(), packet.length());
+
+                        if (bytesSent < packet.length()) {
+                            return false;
+                        }
+
+                        m_bytesSent += bytesSent;
+
+                        return true;
+                    }
+
+                    if (m_serverSockets.find(peerId) != m_serverSockets.end()) {
+                        int bytesSent = SDLNet_TCP_Send(m_serverSockets[peerId], packet.c_str(), packet.length());
+
+                        if (bytesSent < packet.length()) {
+                            return false;
+                        }
+
+                        m_bytesSent += bytesSent;
+
+                        return true;
+                    }
+
+                    return false;
+                }
+
+                bool network::send_unreliable(unsigned int peerId, std::string packet, int channel) {
+                    // Not implemented
+                    return false;
+                }
+
+                bool network::set_bandwidth_limits(double incomingBandwidth, double outgoingBandwidth) {
+                    // Not implemented
+                    return false;
+                }
+
+                bool network::setup_client(int channels, int maxPeers) {
+                    if (m_active) {
+                        return false;
+                    }
+
+
+                    m_socketSet = SDLNet_AllocSocketSet(1);
+
+                    if (!m_socketSet) {
+                        return false;
+                    }
+
+                    m_active = true;
+
+                    return true;
+                }
+
+                bool network::setup_server(int listeningPort, int channels, int maxPeers) {
+                    if (m_active) {
+                        return false;
+                    }
+
+                    IPaddress ipAddress;
+
+                    if (SDLNet_ResolveHost(&ipAddress, nullptr, listeningPort) == -1) {
+                        return false;
+                    }
+
+                    TCPsocket socket = SDLNet_TCP_Open(&ipAddress);
+
+                    if (!socket) {
+                        return false;
+                    }
+
+                    m_socketSet = SDLNet_AllocSocketSet(1);
+
+                    if (!m_socketSet) {
+                        return false;
+                    }
+
+                    if (SDLNet_TCP_AddSocket(m_socketSet, socket) == -1) {
+                        return false;
+                    }
+
+                    m_serverSocket = socket;
+
+                    m_active = true;
+
+                    return true;
+                }
+
+                int network::get_connected_peers() const {
+                    return m_connectedPeers;
+                }
+
+                double network::get_bytes_sent() const {
+                    return m_bytesSent;
+                }
+
+                double network::get_bytes_received() const {
+                    return m_bytesReceived;
+                }
+
+                bool network::is_active() const {
+                    return m_active;
+                }
+                void library::construct() {}
+                void library::destruct() {}
+                bool library::load(std::string libname) {
+                    return lib = LoadLibraryA(libname.c_str());
+                }
+                void* CallFunction(FARPROC func, va_list args) {
+                    const int MAX_ARGS = 10;
+                    void* argList[MAX_ARGS];
+                    int i = 0;
+
+                    while (i < MAX_ARGS) {
+                        argList[i] = va_arg(args, void*);
+                        if (argList[i] == nullptr) {
+                            break;
+                        }
+                        i++;
+                    }
+                    switch (i) {
+                    case 0: return ((void* (*)())func)();
+                    case 1: return ((void* (*)(void*))func)(argList[0]);
+                    case 2: return ((void* (*)(void*, void*))func)(argList[0], argList[1]);
+                    case 3: return ((void* (*)(void*, void*, void*))func)(argList[0], argList[1], argList[2]);
+                    case 4: return ((void* (*)(void*, void*, void*, void*))func)(argList[0], argList[1], argList[2], argList[3]);
+//                    case 5: return ((void* (*)(void*, void*, void*, void*, void*))func)(argList[0], argList[1], argList[2], argList[3], argList[4]);
+//                    case 6: return ((void* (*)(void*, void*, void*, void*, void*, void*))func)(argList[0], argList[1], argList[2], argList[3], argList[4], argList[5]);
+//                    case 7: return ((void* (*)(void*, void*, void*, void*, void*, void*, void*))func)(argList[0], argList[1], argList[2], argList[3], argList[4], argList[5], argList[6]);
+//                    case 8: return ((void* (*)(void*, void*, void*, void*, void*, void*, void*, void*))func)(argList[0], argList[1], argList[2], argList[3], argList[4], argList[5], argList[6], argList[7]);
+//                    case 9: return ((void* (*)(void*, void*, void*, void*, void*, void*, void*, void*, void*))func)(argList[0], argList[1], argList[2], argList[3], argList[4], argList[5], argList[6], argList[7], argList[8]);
+//                    case 10: return ((void* (*)(void*, void*, void*, void*, void*, void*, void*, void*, void*, void*))func)(argList[0], argList[1], argList[2], argList[3], argList[4], argList[5], argList[6], argList[7], argList[8], argList[9]);
+                    default: throw std::invalid_argument("Too many arguments");
+                    }
+                }
+                CScriptDictionary* library::call(std::string function_name, ...) {
+                    va_list args;
+                    va_start(args, function_name);
+
+                    void* result = nullptr;
+                    FARPROC func = GetProcAddress(lib, function_name.c_str());
+                            result = CallFunction(func, args);
+                            va_end(args);
+
+                }
+
+                void library::unload() {
+                    FreeLibrary(lib);
+                }
+                void instance::construct() {}
+                void instance::destruct() {}
+
+                bool instance::is_running() {
+                            DWORD result = WaitForSingleObject(mutex, 0);
+                            if (result == WAIT_OBJECT_0) {
+                                ReleaseMutex(mutex);
+                                return false;
+                            }
+                            return true;
+                        }

@@ -12,13 +12,13 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-
+#include "scriptdictionary/scriptdictionary.h"
 
 std::wstring wstr(const std::string& utf8String);
 
 void init_engine();
- double random(double min, double max);
-int get_last_error();
+ long random(long min, long max);
+ int get_last_error();
 void speak(std::string	 text, bool stop = true);
 void speak_wait(std::string	 text, bool stop = true);
 void stop_speech();
@@ -131,13 +131,14 @@ public:
 
 	bool pressing();
 };
-class NetworkEvent {
+class network_event {
 public:
     const int EVENT_NONE = 0;
     const int EVENT_CONNECT = 1;
     const int EVENT_RECEIVE = 2;
     const int EVENT_DISCONNECT = 3;
-
+	void construct();
+	void destruct();
     int get_type() const {
         return m_type;
     }
@@ -154,7 +155,6 @@ unsigned    int get_channel() const {
         return m_message;
     }
 
-private:
     int m_type;
 unsigned    int m_peerId;
     int m_channel;
@@ -163,7 +163,9 @@ unsigned    int m_peerId;
 
 class network {
 public:
-unsigned    int connect(std::string host, int port);
+	void construct();
+	void destruct();
+	unsigned    int connect(std::string host, int port);
     bool destroy();
     bool disconnect_peer(unsigned int peerId);
     bool disconnect_peer_forcefully(unsigned int peerId);
@@ -171,34 +173,58 @@ unsigned    int connect(std::string host, int port);
     std::string get_peer_address(unsigned int peerId);
     double get_peer_average_round_trip_time(unsigned int peerId);
     std	::vector<unsigned int> get_peer_list();
-    NetworkEvent request();
+    network_event* request();
     bool send_reliable(unsigned int peerId, std::string packet, int channel);
     bool send_unreliable(unsigned int peerId, std::string packet, int channel);
     bool set_bandwidth_limits(double incomingBandwidth, double outgoingBandwidth);
     bool setup_client(int channels, int maxPeers);
     bool setup_server(int listeningPort, int channels, int maxPeers);
 
-    int get_connected_peers() const {
-        return m_connectedPeers;
-    }
+	int get_connected_peers() const;
 
-    double get_bytes_sent() const {
-        return m_bytesSent;
-    }
+	double get_bytes_sent() const;
 
-    double get_bytes_received() const {
-        return m_bytesReceived;
-    }
+	double get_bytes_received() const;
 
-    bool is_active() const {
-        return m_active;
-    }
+	bool is_active() const;
 
 private:
     int m_connectedPeers;
     double m_bytesSent;
     double m_bytesReceived;
     bool m_active;
+	TCPsocket m_serverSocket;
+	TCPsocket m_clientSocket;
+	std::map<unsigned int, TCPsocket> m_serverSockets;
+
+	SDLNet_SocketSet m_socketSet;
 };
 
 
+class library {
+public:
+	HMODULE lib;
+	void construct();
+	void destruct();
+	bool load(std::string libname);
+	CScriptDictionary* call(std::string function_name, ...);
+	void unload();
+};
+class instance {
+private:
+	HANDLE mutex;
+public:
+	instance(std::string application_name) {
+		mutex = CreateMutexA(NULL, TRUE, application_name.c_str());
+	}
+	void construct();
+	void destruct();
+	bool is_running();
+	~instance() {
+		CloseHandle(mutex);
+	}
+};
+class ngtvector {
+public:
+	float x, y, z;
+};

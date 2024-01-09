@@ -394,7 +394,11 @@ void add_text(std::wstring text)
     sound* fsound() { return new sound; }
 reverb* freverb() { return new reverb; }
 timer* ftimer() { return new timer; }
+library* flibrary() { return new library; }
+instance* finstance(std::string app) { return new instance(app); }
+network_event* fnetwork_event() { return new network_event; }
 
+network* fnetwork() { return new network; }
 void MessageCallback(const asSMessageInfo* msg, void* param)
 {
     const char* type = "ERR ";
@@ -413,7 +417,7 @@ void MessageCallback(const asSMessageInfo* msg, void* param)
 void RegisterFunctions(asIScriptEngine* engine)
 {
     engine->SetEngineProperty(asEP_ALLOW_MULTILINE_STRINGS, true);
-    engine->RegisterGlobalFunction("double random(double, double)", asFUNCTION(random), asCALL_CDECL);
+    engine->RegisterGlobalFunction("int random(int, int)", asFUNCTION(random), asCALL_CDECL);
     engine->RegisterGlobalFunction("int get_last_error()", asFUNCTION(get_last_error), asCALL_CDECL);
 
     engine->RegisterGlobalFunction("void speak(string &in, bool=true)", asFUNCTION(speak), asCALL_CDECL);
@@ -500,7 +504,59 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectMethod("timer", "void resume()", asMETHOD(timer, resume), asCALL_THISCALL);
 //    engine->RegisterObjectType("key_hold", sizeof(key_hold), asOBJ_VALUE | asOBJ_APP_CLASS_ALLINTS | asGetTypeTraits<key_hold>());
 //    engine->RegisterObjectMethod("key_hold", "bool pressing()", asMETHOD(key_hold, pressing), asCALL_THISCALL);
-engine->RegisterGlobalProperty("const int SDLK_UNKNOWN", (void*)&AS_SDLK_UNKNOWN);
+    engine->RegisterObjectType("library", sizeof(library), asOBJ_REF);
+    engine->RegisterObjectBehaviour("library", asBEHAVE_FACTORY, "library@ f()", asFUNCTION(flibrary), asCALL_CDECL);
+    engine->RegisterObjectBehaviour("library", asBEHAVE_ADDREF, "void f()", asMETHOD(library, construct), asCALL_THISCALL);
+    engine->RegisterObjectBehaviour("library", asBEHAVE_RELEASE, "void f()", asMETHOD(library, destruct), asCALL_THISCALL);
+    engine->RegisterObjectMethod("library", "bool load(string&in)", asMETHOD(library, load), asCALL_THISCALL);
+    engine->RegisterObjectMethod("library", "void call(string&in, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null)", asMETHOD(library, call), asCALL_THISCALL);
+    engine->RegisterObjectMethod("library", "void unload()", asMETHOD(library, unload), asCALL_THISCALL);
+    engine->RegisterObjectType("instance", sizeof(instance), asOBJ_REF);
+    engine->RegisterObjectBehaviour("instance", asBEHAVE_FACTORY, "instance@ f(string&in)", asFUNCTION(finstance), asCALL_CDECL);
+    engine->RegisterObjectBehaviour("instance", asBEHAVE_ADDREF, "void f()", asMETHOD(instance, construct), asCALL_THISCALL);
+    engine->RegisterObjectBehaviour("instance", asBEHAVE_RELEASE, "void f()", asMETHOD(instance, destruct), asCALL_THISCALL);
+    engine->RegisterObjectMethod("instance", "bool is_running()", asMETHOD(instance, is_running), asCALL_THISCALL);
+    engine->RegisterObjectType("network_event", sizeof(network_event), asOBJ_REF);
+    engine->RegisterObjectBehaviour("network_event", asBEHAVE_FACTORY, "network_event@ f()", asFUNCTION(fnetwork_event), asCALL_CDECL);
+    engine->RegisterObjectBehaviour("network_event", asBEHAVE_ADDREF, "void f()", asMETHOD(network_event, construct), asCALL_THISCALL);
+    engine->RegisterObjectBehaviour("network_event", asBEHAVE_RELEASE, "void f()", asMETHOD(network_event, destruct), asCALL_THISCALL);
+    engine->RegisterObjectProperty("network_event", "const int EVENT_NONE", asOFFSET(network_event, EVENT_NONE));
+    engine->RegisterObjectProperty("network_event", "const int EVENT_CONNECT", asOFFSET(network_event, EVENT_CONNECT));
+    engine->RegisterObjectProperty("network_event", "const int EVENT_RECEIVE", asOFFSET(network_event, EVENT_RECEIVE));
+    engine->RegisterObjectProperty("network_event", "const int EVENT_DISCONNECT", asOFFSET(network_event, EVENT_DISCONNECT));
+    engine->RegisterObjectProperty("network_event", "int type", asOFFSET(network_event, m_type));
+    engine->RegisterObjectProperty("network_event", "uint peerId", asOFFSET(network_event, m_peerId));
+    engine->RegisterObjectProperty("network_event", "int channel", asOFFSET(network_event, m_channel));
+    engine->RegisterObjectProperty("network_event", "string message", asOFFSET(network_event, m_message));
+
+
+    engine->RegisterObjectType("network", sizeof(network), asOBJ_REF);
+    engine->RegisterObjectBehaviour("network", asBEHAVE_FACTORY, "network@ f()", asFUNCTION(fnetwork), asCALL_CDECL);
+    engine->RegisterObjectBehaviour("network", asBEHAVE_ADDREF, "void f()", asMETHOD(network, construct), asCALL_THISCALL);
+    engine->RegisterObjectBehaviour("network", asBEHAVE_RELEASE, "void f()", asMETHOD(network, destruct), asCALL_THISCALL);
+    engine->RegisterObjectMethod("network", "uint connect(string&in, int)", asMETHOD(network, connect), asCALL_THISCALL);
+    engine->RegisterObjectMethod("network", "bool destroy()", asMETHOD(network, destroy), asCALL_THISCALL);
+    engine->RegisterObjectMethod("network", "bool disconnect_peer(uint)", asMETHOD(network, disconnect_peer), asCALL_THISCALL);
+    engine->RegisterObjectMethod("network", "bool disconnect_peer_forcefully(uint)", asMETHOD(network, disconnect_peer_forcefully), asCALL_THISCALL);
+    engine->RegisterObjectMethod("network", "bool disconnect_peer_softly(uint)", asMETHOD(network, disconnect_peer_softly), asCALL_THISCALL);
+    engine->RegisterObjectMethod("network", "string get_peer_address(uint)", asMETHOD(network, get_peer_address), asCALL_THISCALL);
+    engine->RegisterObjectMethod("network", "double get_peer_average_round_trip_time(uint)", asMETHOD(network, get_peer_average_round_trip_time), asCALL_THISCALL);
+//    engine->RegisterObjectMethod("network", "array<uint> get_peer_list()", asMETHOD(network, get_peer_list), asCALL_THISCALL);
+    engine->RegisterObjectMethod("network", "network_event@ request()", asMETHOD(network, request), asCALL_THISCALL);
+    engine->RegisterObjectMethod("network", "bool send_reliable(uint, string&in, int)", asMETHOD(network, send_reliable), asCALL_THISCALL);
+    engine->RegisterObjectMethod("network", "bool send_unreliable(uint, string&in, int)", asMETHOD(network, send_unreliable), asCALL_THISCALL);
+    engine->RegisterObjectMethod("network", "bool set_bandwidth_limits(double, double)", asMETHOD(network, set_bandwidth_limits), asCALL_THISCALL);
+    engine->RegisterObjectMethod("network", "bool setup_client(int, int)", asMETHOD(network, setup_client), asCALL_THISCALL);
+    engine->RegisterObjectMethod("network", "bool setup_server(int, int, int)", asMETHOD(network, setup_server), asCALL_THISCALL);
+    engine->RegisterObjectMethod("network", "int get_connected_peers() const", asMETHOD(network, get_connected_peers), asCALL_THISCALL);
+    engine->RegisterObjectMethod("network", "double get_bytes_sent() const", asMETHOD(network, get_bytes_sent), asCALL_THISCALL);
+    engine->RegisterObjectMethod("network", "double get_bytes_received() const", asMETHOD(network, get_bytes_received), asCALL_THISCALL);
+    engine->RegisterObjectType("vector", sizeof(ngtvector), asOBJ_VALUE | asOBJ_POD);
+
+    engine->RegisterObjectProperty("vector", "float x", asOFFSET(ngtvector, x));
+    engine->RegisterObjectProperty("vector", "float y", asOFFSET(ngtvector, y));
+    engine->RegisterObjectProperty("vector", "float z", asOFFSET(ngtvector, z));
+    engine->RegisterGlobalProperty("const int SDLK_UNKNOWN", (void*)&AS_SDLK_UNKNOWN);
 engine->RegisterGlobalProperty("const int SDLK_BACKSPACE", (void*)&AS_SDLK_BACKSPACE);
 engine->RegisterGlobalProperty("const int SDLK_TAB", (void*)&AS_SDLK_TAB);
 engine->RegisterGlobalProperty("const int SDLK_RETURN", (void*)&AS_SDLK_RETURN);

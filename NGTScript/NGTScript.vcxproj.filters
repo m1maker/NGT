@@ -327,6 +327,15 @@
     <ClInclude Include="ogg\os_types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ffi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ffi_cfi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ffi_common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ngt.cpp">
