@@ -46,11 +46,12 @@ void init_engine() {
 }
 std::random_device rd;
 std::mt19937 gen(rd());
+int random(int min, int max) {
+    std::uniform_int_distribution<int> dis(min, max);
+    return dis(gen);
+}
 double random(double min, double max) {
-    static_assert(std::is_arithmetic<double>::value, "T must be an arithmetic type");
-
-    std::uniform_real_distribution<double> dis(min, max+1);
-
+    std::uniform_real_distribution<double> dis(min, max);
     return dis(gen);
 }
 int get_last_error() {return 0; 
