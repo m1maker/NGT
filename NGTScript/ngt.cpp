@@ -192,7 +192,7 @@ void wait(int time) {
     timer waittimer;
     int el = 0;
     while (el < time) {
-//        update_game_window();
+        update_game_window();
         el = waittimer.elapsed();
     }
 }
@@ -207,9 +207,10 @@ std::string get_sound_storage() {
     return sound_path;
 }
 void set_master_volume(float volume) {
+    ma_engine_set_gain_db(&sound_engine, volume);
 }
 float get_master_volume() {
-    return 0.0;
+    return ma_engine_get_gain_db(&sound_engine);
 }
 void sound::construct() {
 }
