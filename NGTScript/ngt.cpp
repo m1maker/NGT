@@ -47,14 +47,22 @@ void init_engine() {
 std::random_device rd;
 std::mt19937 gen(rd());
 long random(long min, long max) {
-    static_assert(std::is_arithmetic<double>::value, "T must be an arithmetic type");
+    static_assert(std::is_integral<long>::value, "Type must be integral");
 
-    std::uniform_real_distribution<double> dis(min, max + 1);
+    std::uniform_int_distribution<long> dis(min, max);
 
-    return dis(gen);
+    return dis(gen); // Ensure 'gen' is a valid random number generator
+}
+double randomDouble(double min, double max) {
+    static_assert(std::is_floating_point<double>::value, "Type must be floating point");
+
+    std::uniform_real_distribution<double> dis(min, max);
+
+    return dis(gen); // Ensure 'gen' is a valid random number generator
 }
 
-int get_last_error() {return 0; 
+
+int get_last_error() {return 0;
 }
 void speak(std::string text, bool stop) {
     std::wstring textstr = wstr(text);

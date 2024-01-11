@@ -18,6 +18,7 @@ std::wstring wstr(const std::string& utf8String);
 
 void init_engine();
  long random(long min, long max);
+ double randomDouble(double min, double max);
  int get_last_error();
 void speak(std::string	 text, bool stop = true);
 void speak_wait(std::string	 text, bool stop = true);

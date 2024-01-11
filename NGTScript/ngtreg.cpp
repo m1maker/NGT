@@ -417,7 +417,9 @@ void MessageCallback(const asSMessageInfo* msg, void* param)
 void RegisterFunctions(asIScriptEngine* engine)
 {
     engine->SetEngineProperty(asEP_ALLOW_MULTILINE_STRINGS, true);
-    engine->RegisterGlobalFunction("int random(int, int)", asFUNCTION(random), asCALL_CDECL);
+    engine->RegisterGlobalFunction("int random(int, int)", asFUNCTIONPR(random, (long, long), long), asCALL_CDECL);
+    engine->RegisterGlobalFunction("double random(double, double)", asFUNCTIONPR(randomDouble, (double, double), double), asCALL_CDECL);
+
     engine->RegisterGlobalFunction("int get_last_error()", asFUNCTION(get_last_error), asCALL_CDECL);
 
     engine->RegisterGlobalFunction("void speak(string &in, bool=true)", asFUNCTION(speak), asCALL_CDECL);
