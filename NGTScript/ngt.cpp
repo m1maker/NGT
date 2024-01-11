@@ -470,6 +470,10 @@ void timer::destruct() {
                           std::chrono::steady_clock::now() - inittime).count();
         }
 }
+bool timer::is_running() {
+    return pausedNanos == 0;
+}
+
     void timer::resume() {
         if (pausedNanos != 0) {
             inittime = std::chrono::steady_clock::now() - std::chrono::nanoseconds(pausedNanos);
