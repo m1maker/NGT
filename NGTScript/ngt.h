@@ -97,17 +97,20 @@ class timer {
 public:
 
 	std::chrono::time_point<std::chrono::steady_clock> inittime;
-	int paused;
+	uint64_t pausedNanos = 0;
 
 	timer() {
 		inittime = std::chrono::steady_clock::now();
-		paused = 0;
+		pausedNanos = 0;
 	}
 	void construct();
 	void destruct();
-
-	uint64_t elapsed();
-//	void elapsed(int amount);
+	uint64_t elapsed_millis();
+	uint64_t elapsed_micros();
+	uint64_t elapsed_nanos();
+	void force_millis(uint64_t millis);
+	void force_micros(uint64_t micros);
+	void force_nanos(uint64_t nanos);
 	void restart();
 	void pause();
 	void resume();
