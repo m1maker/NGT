@@ -16,6 +16,8 @@
 #include <locale>
 #include <codecvt>
 #include<fstream>
+#include <cstdlib>
+#include <cstring>
 SDL_Window* win = NULL;
 HMODULE bass;
 const short PAN_AUDIO = 0;
@@ -137,6 +139,28 @@ Tolk_Unload();
 SDL_Quit();
         SDLNet_Quit();
 exit(0);
+}
+std::string read_environment_variable(const std::string& path) {
+#ifdef _WIN32
+    // Use _dupenv_s on Windows
+    char* value;
+    size_t size;
+    if (_dupenv_s(&value, &size, path.c_str()) != 0 || value == nullptr) {
+        // Environment variable not found or error occurred
+        return "";
+    }
+    std::string result(value);
+    free(value);  // Free the allocated memory
+    return result;
+#else
+    // Use getenv for non-Windows platforms
+    char* value = std::getenv(path.c_str());
+    if (value == nullptr) {
+        // Environment variable not found
+        return "";
+    }
+    return std::string(value);
+#endif
 }
 bool clipboard_copy_text(std::string text) {
     SDL_SetClipboardText(text.c_str());

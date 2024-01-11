@@ -45,6 +45,7 @@ std::string get_sound_storage();
 void set_master_volume(float volume);
 float get_master_volume();
 void switch_audio_system(short system);
+std::string read_environment_variable(const std::string& path);
 class reverb {
 public:
 	void construct();
