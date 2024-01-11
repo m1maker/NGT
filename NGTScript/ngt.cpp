@@ -225,7 +225,7 @@ void wait(int time) {
     int el = 0;
     while (el < time) {
         update_game_window();
-        el = waittimer.elapsed();
+        el = waittimer.elapsed_millis();
     }
 }
 void delay(int ms)
@@ -422,39 +422,59 @@ void timer::construct() {
 
 void timer::destruct() {
 }
-
-
-
-uint64_t timer::elapsed() {
-        if (paused != 0) {
-            return paused;
-        }
-        else {
-            return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - inittime).count();
-        }
+    // Get elapsed time in milliseconds
+    uint64_t timer::elapsed_millis() {
+        return pausedNanos != 0 ? std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::nanoseconds(pausedNanos)).count() 
+                                : std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  std::chrono::steady_clock::now() - inittime).count();
     }
-/*
-    void timer::elapsed(int amount) {
-        if (paused == 0) {
-            inittime = std::chrono::steady_clock::now() - std::chrono::milliseconds(amount);
-        }
-        else {
-            paused = amount;
-        }
+
+    // Get elapsed time in microseconds
+    uint64_t timer::elapsed_micros() {
+        return pausedNanos != 0 ? std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::nanoseconds(pausedNanos)).count() 
+                                : std::chrono::duration_cast<std::chrono::microseconds>(
+                                  std::chrono::steady_clock::now() - inittime).count();
     }
-    */
+
+    // Get elapsed time in nanoseconds
+    uint64_t timer::elapsed_nanos() {
+        return pausedNanos != 0 ? pausedNanos 
+                                : std::chrono::duration_cast<std::chrono::nanoseconds>(
+                                  std::chrono::steady_clock::now() - inittime).count();
+    }
+    // Force the timer to a specific time in milliseconds
+    void timer::force_millis(uint64_t millis) {
+        inittime = std::chrono::steady_clock::now() - std::chrono::milliseconds(millis);
+        pausedNanos = 0;
+    }
+
+    // Force the timer to a specific time in microseconds
+    void timer::force_micros(uint64_t micros) {
+        inittime = std::chrono::steady_clock::now() - std::chrono::microseconds(micros);
+        pausedNanos = 0;
+    }
+
+    // Force the timer to a specific time in nanoseconds
+    void timer::force_nanos(uint64_t nanos) {
+        inittime = std::chrono::steady_clock::now() - std::chrono::nanoseconds(nanos);
+        pausedNanos = 0;
+    }
+
     void timer::restart() {
         inittime = std::chrono::steady_clock::now();
-        paused = 0;
+        pausedNanos = 0;
     }
-
     void timer::pause() {
-        paused = elapsed();
-    }
-
+        if (pausedNanos == 0) {
+            pausedNanos = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                          std::chrono::steady_clock::now() - inittime).count();
+        }
+}
     void timer::resume() {
-        inittime = std::chrono::steady_clock::now() - std::chrono::milliseconds(paused);
-        paused = 0;
+        if (pausedNanos != 0) {
+            inittime = std::chrono::steady_clock::now() - std::chrono::nanoseconds(pausedNanos);
+            pausedNanos = 0;
+        }
     }
 
         bool key_hold::pressing()
@@ -467,7 +487,7 @@ uint64_t timer::elapsed() {
                 key_flag = 0;
                 return false;
             }
-            int kh = key_timer.elapsed();
+            int kh = key_timer.elapsed_millis();
             if (kh >= repeat_time)
             {
                     switch (key_flag)
