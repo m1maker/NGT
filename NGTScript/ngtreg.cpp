@@ -451,6 +451,7 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterGlobalFunction("void set_master_volume(float)", asFUNCTION(set_master_volume), asCALL_CDECL);
     engine->RegisterGlobalFunction("float get_master_volume()", asFUNCTION(get_master_volume), asCALL_CDECL);
     engine->RegisterGlobalFunction("void switch_audio_system(int)", asFUNCTION(switch_audio_system), asCALL_CDECL);
+    engine->RegisterGlobalFunction("string read_environment_variable(string path)", asFUNCTION(read_environment_variable), asCALL_CDECL);
 
     engine->RegisterObjectType("reverb", sizeof(reverb), asOBJ_REF);
     engine->RegisterObjectBehaviour("reverb", asBEHAVE_FACTORY, "reverb@ f()", asFUNCTION(freverb), asCALL_CDECL);
