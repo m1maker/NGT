@@ -105,9 +105,15 @@ public:
 	}
 	void construct();
 	void destruct();
+	uint64_t elapsed_seconds();
+	uint64_t elapsed_minutes();
+	uint64_t elapsed_hours();
 	uint64_t elapsed_millis();
 	uint64_t elapsed_micros();
 	uint64_t elapsed_nanos();
+	void force_seconds(uint64_t seconds);
+	void force_minutes(uint64_t minutes);
+	void force_hours(uint64_t hours);
 	void force_millis(uint64_t millis);
 	void force_micros(uint64_t micros);
 	void force_nanos(uint64_t nanos);

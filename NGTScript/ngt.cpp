@@ -425,27 +425,49 @@ void timer::construct() {
 
 void timer::destruct() {
 }
-    // Get elapsed time in milliseconds
+    uint64_t timer::elapsed_seconds() {
+        return pausedNanos != 0 ? std::chrono::duration_cast<std::chrono::seconds>(std::chrono::nanoseconds(pausedNanos)).count() 
+                                : std::chrono::duration_cast<std::chrono::seconds>(
+                                  std::chrono::steady_clock::now() - inittime).count();
+    }
+    uint64_t timer::elapsed_minutes() {
+        return pausedNanos != 0 ? std::chrono::duration_cast<std::chrono::minutes>(std::chrono::nanoseconds(pausedNanos)).count() 
+                                : std::chrono::duration_cast<std::chrono::minutes>(
+                                  std::chrono::steady_clock::now() - inittime).count();
+    }
+    uint64_t timer::elapsed_hours() {
+        return pausedNanos != 0 ? std::chrono::duration_cast<std::chrono::hours>(std::chrono::nanoseconds(pausedNanos)).count() 
+                                : std::chrono::duration_cast<std::chrono::hours>(
+                                  std::chrono::steady_clock::now() - inittime).count();
+    }
     uint64_t timer::elapsed_millis() {
         return pausedNanos != 0 ? std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::nanoseconds(pausedNanos)).count() 
                                 : std::chrono::duration_cast<std::chrono::milliseconds>(
                                   std::chrono::steady_clock::now() - inittime).count();
     }
 
-    // Get elapsed time in microseconds
     uint64_t timer::elapsed_micros() {
         return pausedNanos != 0 ? std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::nanoseconds(pausedNanos)).count() 
                                 : std::chrono::duration_cast<std::chrono::microseconds>(
                                   std::chrono::steady_clock::now() - inittime).count();
     }
-
-    // Get elapsed time in nanoseconds
     uint64_t timer::elapsed_nanos() {
         return pausedNanos != 0 ? pausedNanos 
                                 : std::chrono::duration_cast<std::chrono::nanoseconds>(
                                   std::chrono::steady_clock::now() - inittime).count();
     }
-    // Force the timer to a specific time in milliseconds
+    void timer::force_seconds(uint64_t seconds) {
+        inittime = std::chrono::steady_clock::now() - std::chrono::seconds(seconds);
+        pausedNanos = 0;
+    }
+    void timer::force_minutes(uint64_t minutes) {
+        inittime = std::chrono::steady_clock::now() - std::chrono::minutes(minutes);
+        pausedNanos = 0;
+    }
+    void timer::force_hours(uint64_t hours) {
+        inittime = std::chrono::steady_clock::now() - std::chrono::hours(hours);
+        pausedNanos = 0;
+    }
     void timer::force_millis(uint64_t millis) {
         inittime = std::chrono::steady_clock::now() - std::chrono::milliseconds(millis);
         pausedNanos = 0;
