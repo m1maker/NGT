@@ -333,6 +333,7 @@ bool sound::load(std::string filename, bool set3d) {
     bool sound::close() {
         if (!active)return false;
         ma_sound_uninit(&handle_);
+        active = false;
         return true;
     }
 
