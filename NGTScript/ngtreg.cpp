@@ -509,6 +509,7 @@ engine->RegisterObjectMethod("timer", "void force_nanos(uint64)", asMETHOD(timer
 engine->RegisterObjectMethod("timer", "void restart()", asMETHOD(timer, restart), asCALL_THISCALL);
 engine->RegisterObjectMethod("timer", "void pause()", asMETHOD(timer, pause), asCALL_THISCALL);
 engine->RegisterObjectMethod("timer", "void resume()", asMETHOD(timer, resume), asCALL_THISCALL);
+    engine->RegisterObjectMethod("timer", "bool is_running()", asMETHOD(timer, is_running), asCALL_THISCALL);
 //    engine->RegisterObjectType("key_hold", sizeof(key_hold), asOBJ_VALUE | asOBJ_APP_CLASS_ALLINTS | asGetTypeTraits<key_hold>());
 //    engine->RegisterObjectMethod("key_hold", "bool pressing()", asMETHOD(key_hold, pressing), asCALL_THISCALL);
     engine->RegisterObjectType("library", sizeof(library), asOBJ_REF);

@@ -114,6 +114,7 @@ public:
 	void restart();
 	void pause();
 	void resume();
+	bool is_running();
 };
 class key_hold
 {
