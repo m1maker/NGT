@@ -170,7 +170,9 @@ std::string clipboard_read_text() {
     return SDL_GetClipboardText();
 }
 std::string get_input() {
-    return inputtext;
+    std::string temp=inputtext;
+    inputtext="";
+    return temp;
 }
 bool key_pressed(SDL_Keycode key_code)
 {
