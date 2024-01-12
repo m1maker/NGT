@@ -394,6 +394,7 @@ void add_text(std::wstring text)
     sound* fsound() { return new sound; }
 reverb* freverb() { return new reverb; }
 timer* ftimer() { return new timer; }
+user_idle* fuser_idle() { return new user_idle; }
 library* flibrary() { return new library; }
 instance* finstance(std::string app) { return new instance(app); }
 network_event* fnetwork_event() { return new network_event; }
@@ -496,6 +497,15 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectMethod("sound", "double get_sample_rate() const", asMETHOD(sound, get_sample_rate), asCALL_THISCALL);
 //    engine->RegisterObjectMethod("sound", "double get_channels() const", asMETHOD(sound, get_channels), asCALL_THISCALL);
 //    engine->RegisterObjectMethod("sound", "double get_bits() const", asMETHOD(sound, get_bits), asCALL_THISCALL);
+    engine->RegisterObjectType("user_idle", sizeof(user_idle), asOBJ_REF | asOBJ_NOCOUNT);
+    engine->RegisterObjectBehaviour("user_idle", asBEHAVE_FACTORY, "user_idle@ f()", asFUNCTION(fuser_idle), asCALL_CDECL);
+    engine->RegisterObjectMethod("user_idle", "uint64 elapsed_millis()", asMETHOD(user_idle, elapsed_millis), asCALL_THISCALL);
+    engine->RegisterObjectMethod("user_idle", "uint64 elapsed_seconds()", asMETHOD(user_idle, elapsed_seconds), asCALL_THISCALL);
+    engine->RegisterObjectMethod("user_idle", "uint64 elapsed_minutes()", asMETHOD(user_idle, elapsed_minutes), asCALL_THISCALL);
+    engine->RegisterObjectMethod("user_idle", "uint64 elapsed_hours()", asMETHOD(user_idle, elapsed_hours), asCALL_THISCALL);
+    engine->RegisterObjectMethod("user_idle", "uint64 elapsed_days()", asMETHOD(user_idle, elapsed_days), asCALL_THISCALL);
+    engine->RegisterObjectMethod("user_idle", "uint64 elapsed_weeks()", asMETHOD(user_idle, elapsed_weeks), asCALL_THISCALL);
+
     engine->RegisterObjectType("timer", sizeof(timer), asOBJ_REF);
     engine->RegisterObjectBehaviour("timer", asBEHAVE_FACTORY, "timer@ f()", asFUNCTION(ftimer), asCALL_CDECL);
     engine->RegisterObjectBehaviour("timer", asBEHAVE_ADDREF, "void f()", asMETHOD(timer, construct), asCALL_THISCALL);
