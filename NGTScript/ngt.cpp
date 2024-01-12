@@ -950,3 +950,29 @@ bool timer::is_running() {
                             }
                             return true;
                         }
+
+user_idle::user_idle() {}
+uint64_t user_idle::elapsed_millis() {
+    return get_idle_time();
+}
+uint64_t user_idle::elapsed_seconds() {
+    return get_idle_time() / 1000;
+}
+uint64_t user_idle::elapsed_minutes() {
+    return elapsed_seconds() / 60;
+}
+uint64_t user_idle::elapsed_hours() {
+    return elapsed_minutes() / 60;
+}
+uint64_t user_idle::elapsed_days() {
+    return elapsed_hours() / 24;
+}
+uint64_t user_idle::elapsed_weeks() {
+    return elapsed_days() / 7;
+}
+uint64_t user_idle::get_idle_time() {
+    LASTINPUTINFO lii = { sizeof(LASTINPUTINFO) };
+    GetLastInputInfo(&lii);
+    DWORD currentTick = GetTickCount();
+    return (currentTick - lii.dwTime);
+}

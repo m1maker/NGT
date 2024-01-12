@@ -240,3 +240,17 @@ class ngtvector {
 public:
 	float x, y, z;
 };
+
+class user_idle {
+public:
+    user_idle();
+    uint64_t elapsed_millis();  // Pridaná nová funkcia
+    uint64_t elapsed_seconds();
+    uint64_t elapsed_minutes();
+    uint64_t elapsed_hours();
+    uint64_t elapsed_days();
+    uint64_t elapsed_weeks();
+
+private:
+    uint64_t get_idle_time();
+};
