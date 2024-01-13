@@ -3,6 +3,7 @@
 #include "../scriptarray/scriptarray.h"
 #include <stdio.h>
 #include <string.h>
+#include <algorithm>
 
 using namespace std;
 
@@ -36,11 +37,11 @@ static CScriptArray *StringSplit(const string &delim, const string &str)
 	// Find the existence of the delimiter in the input string
 	size_t pos = 0, prev = 0;
 	asUINT count = 0;
-	while( (pos = str.find(delim, prev)) != string::npos )
+	while ((pos = str.find(delim, prev)) != string::npos)
 	{
 		// Add the part to the array
-		array->Resize(array->GetSize()+1);
-		((string*)array->At(count))->assign(&str[prev], pos-prev);
+		array->Resize(array->GetSize() + 1);
+		((string *)array->At(count))->assign(&str[prev], pos - prev);
 
 		// Find the next part
 		count++;
@@ -48,8 +49,8 @@ static CScriptArray *StringSplit(const string &delim, const string &str)
 	}
 
 	// Add the remaining part
-	array->Resize(array->GetSize()+1);
-	((string*)array->At(count))->assign(&str[prev]);
+	array->Resize(array->GetSize() + 1);
+	((string *)array->At(count))->assign(&str[prev]);
 
 	return array;
 }
@@ -57,11 +58,11 @@ static CScriptArray *StringSplit(const string &delim, const string &str)
 static void StringSplit_Generic(asIScriptGeneric *gen)
 {
 	// Get the arguments
-	string *str   = (string*)gen->GetObject();
-	string *delim = *(string**)gen->GetAddressOfArg(0);
+	string *str = (string *)gen->GetObject();
+	string *delim = *(string **)gen->GetAddressOfArg(0);
 
 	// Return the array by handle
-	*(CScriptArray**)gen->GetAddressOfReturnLocation() = StringSplit(*delim, *str);
+	*(CScriptArray **)gen->GetAddressOfReturnLocation() = StringSplit(*delim, *str);
 }
 
 // This function takes as input an array of string handles as well as a
@@ -81,17 +82,17 @@ static string StringJoin(const CScriptArray &array, const string &delim)
 {
 	// Create the new string
 	string str = "";
-	if( array.GetSize() )
+	if (array.GetSize())
 	{
 		int n;
-		for( n = 0; n < (int)array.GetSize() - 1; n++ )
+		for (n = 0; n < (int)array.GetSize() - 1; n++)
 		{
-			str += *(string*)array.At(n);
+			str += *(string *)array.At(n);
 			str += delim;
 		}
 
 		// Add the last part
-		str += *(string*)array.At(n);
+		str += *(string *)array.At(n);
 	}
 
 	return str;
@@ -100,41 +101,41 @@ static string StringJoin(const CScriptArray &array, const string &delim)
 static void StringJoin_Generic(asIScriptGeneric *gen)
 {
 	// Get the arguments
-	CScriptArray  *array = *(CScriptArray**)gen->GetAddressOfArg(0);
-	string *delim = *(string**)gen->GetAddressOfArg(1);
+	CScriptArray *array = *(CScriptArray **)gen->GetAddressOfArg(0);
+	string *delim = *(string **)gen->GetAddressOfArg(1);
 
 	// Return the string
-	new(gen->GetAddressOfReturnLocation()) string(StringJoin(*array, *delim));
+	new (gen->GetAddressOfReturnLocation()) string(StringJoin(*array, *delim));
 }
-static string StringReplace(const string& from, const string& to, const string& inp)
+static string StringReplace(const string &from, const string &to, const string &inp)
 {
-	//create new string to return, default value with the given string
+	// create new string to return, default value with the given string
 	string str = inp;
 	size_t start_pos = 0;
 	while ((start_pos = str.find(from.c_str(), start_pos)) != string::npos)
 	{
-		str=str.replace(start_pos, from.length(), to);
+		str = str.replace(start_pos, from.length(), to);
 		start_pos += to.length();
 	}
 	return str;
 }
 
-static void StringReplace_Generic(asIScriptGeneric* gen)
+static void StringReplace_Generic(asIScriptGeneric *gen)
 {
 	// Get the arguments
-	string* str = (string*)gen->GetObject();
-	string* from = (string*)gen->GetAddressOfArg(0);
-	string* to = (string*)gen->GetAddressOfArg(1);
+	string *str = (string *)gen->GetObject();
+	string *from = (string *)gen->GetAddressOfArg(0);
+	string *to = (string *)gen->GetAddressOfArg(1);
 
 	// Return the replaced string
-	new(gen->GetAddressOfReturnLocation()) string(StringReplace(*from, *to, *str));
+	new (gen->GetAddressOfReturnLocation()) string(StringReplace(*from, *to, *str));
 }
 
-static string StringCapitalize(const string& inp)
+static string StringCapitalize(const string &inp)
 {
-	//check the given string's length
-		//create new string to return, default value with the given string
-		string str = inp;
+	// check the given string's length
+	// create new string to return, default value with the given string
+	string str = inp;
 	if (inp.length())
 	{
 		str[0] = toupper(str[0]);
@@ -142,69 +143,82 @@ static string StringCapitalize(const string& inp)
 	return str;
 }
 
-static void StringCapitalize_Generic(asIScriptGeneric* gen)
+static void StringCapitalize_Generic(asIScriptGeneric *gen)
 {
 	// Get the arguments
-	string* str = (string*)gen->GetObject();
+	string *str = (string *)gen->GetObject();
 	// Return the Capitalized string
-	new(gen->GetAddressOfReturnLocation()) string(StringCapitalize(*str));
+	new (gen->GetAddressOfReturnLocation()) string(StringCapitalize(*str));
 }
 
-static CScriptArray* StringSplitLines(const string& str)
+static CScriptArray *StringSplitLines(const string &str)
 {
 	return StringSplit("\n", StringReplace("\r", "", str.c_str()));
 }
-static void StringSplitLines_Generic(asIScriptGeneric* gen)
+static void StringSplitLines_Generic(asIScriptGeneric *gen)
 {
 	// Get the arguments
-	string* str = (string*)gen->GetObject();
+	string *str = (string *)gen->GetObject();
 
 	// Return the array by handle
-	*(CScriptArray**)gen->GetAddressOfReturnLocation() = StringSplitLines(*str);
+	*(CScriptArray **)gen->GetAddressOfReturnLocation() = StringSplitLines(*str);
 }
 
-static bool StringEndsWith(const string& toMatch, const string& inp)
+static bool StringEndsWith(const string &toMatch, const string &inp)
 {
-	//compare strings length
+	// compare strings length
 	if (inp.length() >= toMatch.length())
 		return inp.compare(inp.length() - toMatch.length(), toMatch.length(), toMatch) == 0;
 	return false;
 }
 
-static void StringEndsWith_Generic(asIScriptGeneric* gen)
+static void StringEndsWith_Generic(asIScriptGeneric *gen)
 {
 	// Get the arguments
-	string* str = (string*)gen->GetObject();
-	string* toMatch = (string*)gen->GetAddressOfArg(0);
-	*(bool*)gen->GetAddressOfReturnLocation() = StringEndsWith(*toMatch, *str);
+	string *str = (string *)gen->GetObject();
+	string *toMatch = (string *)gen->GetAddressOfArg(0);
+	*(bool *)gen->GetAddressOfReturnLocation() = StringEndsWith(*toMatch, *str);
 }
 
-static bool StringStartsWith(const string& toMatch, const string& inp)
+static bool StringStartsWith(const string &toMatch, const string &inp)
 {
-	//compare strings
+	// compare strings
 	return inp.find(toMatch) == 0;
 }
 
-static void StringStartsWith_Generic(asIScriptGeneric* gen)
+static void StringStartsWith_Generic(asIScriptGeneric *gen)
 {
 	// Get the arguments
-	string* str = (string*)gen->GetObject();
-	string* toMatch = (string*)gen->GetAddressOfArg(0);
-	*(bool*)gen->GetAddressOfReturnLocation() = StringStartsWith(*toMatch, *str);
+	string *str = (string *)gen->GetObject();
+	string *toMatch = (string *)gen->GetAddressOfArg(0);
+	*(bool *)gen->GetAddressOfReturnLocation() = StringStartsWith(*toMatch, *str);
 }
 
-static bool StringContains(const string& toMatch, const string& inp)
+static bool StringContains(const string &toMatch, const string &inp)
 {
-	//compare strings
+	// compare strings
 	return inp.find(toMatch) != string::npos;
 }
 
-static void StringContains_Generic(asIScriptGeneric* gen)
+static void StringContains_Generic(asIScriptGeneric *gen)
 {
 	// Get the arguments
-	string* str = (string*)gen->GetObject();
-	string* toMatch = (string*)gen->GetAddressOfArg(0);
-	*(bool*)gen->GetAddressOfReturnLocation() = StringContains(*toMatch, *str);
+	string *str = (string *)gen->GetObject();
+	string *toMatch = (string *)gen->GetAddressOfArg(0);
+	*(bool *)gen->GetAddressOfReturnLocation() = StringContains(*toMatch, *str);
+}
+
+static bool is_upper(const string &s)
+{
+	return std::all_of(s.begin(), s.end(), [](unsigned char c)
+					   { return std::isupper(c); });
+}
+
+static void is_upper_Generic(asIScriptGeneric *gen)
+{
+	string *str = (string *)gen->GetObject();
+	bool result = is_upper(*str);
+	*(bool *)gen->GetAddressOfReturnLocation() = result;
 }
 
 // This is where the utility functions are registered.
@@ -213,27 +227,47 @@ void RegisterStdStringUtils(asIScriptEngine *engine)
 {
 	int r;
 
-	if( strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") )
+	if (strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY"))
 	{
-		r = engine->RegisterObjectMethod("string", "array<string>@ split(const string &in) const", asFUNCTION(StringSplit_Generic), asCALL_GENERIC); assert(r >= 0);
-		r = engine->RegisterGlobalFunction("string join(const array<string> &in, const string &in)", asFUNCTION(StringJoin_Generic), asCALL_GENERIC); assert(r >= 0);
-		r = engine->RegisterObjectMethod("string", "string replace(const string &in, const string &in) const", asFUNCTION(StringReplace_Generic), asCALL_GENERIC); assert(r >= 0);
-		r = engine->RegisterObjectMethod("string", "string capitalize() const", asFUNCTION(StringCapitalize_Generic), asCALL_GENERIC); assert(r >= 0);
-		r = engine->RegisterObjectMethod("string", "array<string>@ split_lines() const", asFUNCTION(StringSplitLines_Generic), asCALL_GENERIC); assert(r >= 0);
-		r = engine->RegisterObjectMethod("string", "bool ends_with(const string &in) const", asFUNCTION(StringEndsWith_Generic), asCALL_GENERIC); assert(r >= 0);
-		r = engine->RegisterObjectMethod("string", "bool starts_with(const string &in) const", asFUNCTION(StringStartsWith_Generic), asCALL_GENERIC); assert(r >= 0);
-		r = engine->RegisterObjectMethod("string", "bool contains(const string &in) const", asFUNCTION(StringContains_Generic), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterObjectMethod("string", "array<string>@ split(const string &in) const", asFUNCTION(StringSplit_Generic), asCALL_GENERIC);
+		assert(r >= 0);
+		r = engine->RegisterGlobalFunction("string join(const array<string> &in, const string &in)", asFUNCTION(StringJoin_Generic), asCALL_GENERIC);
+		assert(r >= 0);
+		r = engine->RegisterObjectMethod("string", "string replace(const string &in, const string &in) const", asFUNCTION(StringReplace_Generic), asCALL_GENERIC);
+		assert(r >= 0);
+		r = engine->RegisterObjectMethod("string", "string capitalize() const", asFUNCTION(StringCapitalize_Generic), asCALL_GENERIC);
+		assert(r >= 0);
+		r = engine->RegisterObjectMethod("string", "array<string>@ split_lines() const", asFUNCTION(StringSplitLines_Generic), asCALL_GENERIC);
+		assert(r >= 0);
+		r = engine->RegisterObjectMethod("string", "bool ends_with(const string &in) const", asFUNCTION(StringEndsWith_Generic), asCALL_GENERIC);
+		assert(r >= 0);
+		r = engine->RegisterObjectMethod("string", "bool starts_with(const string &in) const", asFUNCTION(StringStartsWith_Generic), asCALL_GENERIC);
+		assert(r >= 0);
+		r = engine->RegisterObjectMethod("string", "bool contains(const string &in) const", asFUNCTION(StringContains_Generic), asCALL_GENERIC);
+		assert(r >= 0);
+		r = engine->RegisterObjectMethod("string", "bool is_upper() const", asFUNCTION(is_upper_Generic), asCALL_GENERIC);
+		assert(r >= 0);
 	}
 	else
 	{
-		r = engine->RegisterObjectMethod("string", "array<string>@ split(const string &in) const", asFUNCTION(StringSplit), asCALL_CDECL_OBJLAST); assert(r >= 0);
-		r = engine->RegisterGlobalFunction("string join(const array<string> &in, const string &in)", asFUNCTION(StringJoin), asCALL_CDECL); assert(r >= 0);
-		r = engine->RegisterObjectMethod("string", "string replace(const string &in, const string &in) const", asFUNCTION(StringReplace), asCALL_CDECL_OBJLAST); assert(r >= 0);
-		r = engine->RegisterObjectMethod("string", "string capitalize() const", asFUNCTION(StringCapitalize), asCALL_CDECL_OBJLAST); assert(r >= 0);
-		r = engine->RegisterObjectMethod("string", "array<string>@ split_lines() const", asFUNCTION(StringSplitLines), asCALL_CDECL_OBJLAST); assert(r >= 0);
-		r = engine->RegisterObjectMethod("string", "bool ends_with(const string &in) const", asFUNCTION(StringEndsWith), asCALL_CDECL_OBJLAST); assert(r >= 0);
-		r = engine->RegisterObjectMethod("string", "bool starts_with(const string &in) const", asFUNCTION(StringStartsWith), asCALL_CDECL_OBJLAST); assert(r >= 0);
-		r = engine->RegisterObjectMethod("string", "bool contains(const string &in) const", asFUNCTION(StringContains), asCALL_CDECL_OBJLAST); assert(r >= 0);
+		r = engine->RegisterObjectMethod("string", "array<string>@ split(const string &in) const", asFUNCTION(StringSplit), asCALL_CDECL_OBJLAST);
+		assert(r >= 0);
+		r = engine->RegisterGlobalFunction("string join(const array<string> &in, const string &in)", asFUNCTION(StringJoin), asCALL_CDECL);
+		assert(r >= 0);
+		r = engine->RegisterObjectMethod("string", "string replace(const string &in, const string &in) const", asFUNCTION(StringReplace), asCALL_CDECL_OBJLAST);
+		assert(r >= 0);
+		r = engine->RegisterObjectMethod("string", "string capitalize() const", asFUNCTION(StringCapitalize), asCALL_CDECL_OBJLAST);
+		assert(r >= 0);
+		r = engine->RegisterObjectMethod("string", "array<string>@ split_lines() const", asFUNCTION(StringSplitLines), asCALL_CDECL_OBJLAST);
+		assert(r >= 0);
+		r = engine->RegisterObjectMethod("string", "bool ends_with(const string &in) const", asFUNCTION(StringEndsWith), asCALL_CDECL_OBJLAST);
+		assert(r >= 0);
+		r = engine->RegisterObjectMethod("string", "bool starts_with(const string &in) const", asFUNCTION(StringStartsWith), asCALL_CDECL_OBJLAST);
+		assert(r >= 0);
+		r = engine->RegisterObjectMethod("string", "bool contains(const string &in) const", asFUNCTION(StringContains), asCALL_CDECL_OBJLAST);
+		assert(r >= 0);
+		r = engine->RegisterObjectMethod("string", "bool is_upper() const", asFUNCTION(is_upper), asCALL_CDECL_OBJLAST);
+		assert(r >= 0);
 	}
 }
 
