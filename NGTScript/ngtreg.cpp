@@ -418,6 +418,8 @@ void MessageCallback(const asSMessageInfo* msg, void* param)
 void RegisterFunctions(asIScriptEngine* engine)
 {
     engine->SetEngineProperty(asEP_ALLOW_MULTILINE_STRINGS, true);
+    engine->RegisterGlobalFunction("uint64 get_time_stamp_millis()", asFUNCTION(get_time_stamp_millis), asCALL_CDECL);
+    engine->RegisterGlobalFunction("uint64 get_time_stamp_seconds()", asFUNCTION(get_time_stamp_seconds), asCALL_CDECL);
     engine->RegisterGlobalFunction("int random(int, int)", asFUNCTIONPR(random, (long, long), long), asCALL_CDECL);
     engine->RegisterGlobalFunction("double random(double, double)", asFUNCTIONPR(randomDouble, (double, double), double), asCALL_CDECL);
 
