@@ -447,7 +447,6 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterGlobalFunction("bool alert(string &in, string &in, uint=0)", asFUNCTION(alert), asCALL_CDECL);
     engine->RegisterGlobalFunction("void set_listener_position(float, float, float)", asFUNCTION(set_listener_position), asCALL_CDECL);
     engine->RegisterGlobalFunction("void wait(int)", asFUNCTION(wait), asCALL_CDECL);
-    engine->RegisterGlobalFunction("void delay(int)",asFUNCTION(delay),asCALL_CDECL);
     engine->RegisterGlobalFunction("void set_sound_storage(string &in)", asFUNCTION(set_sound_storage), asCALL_CDECL);
 
     engine->RegisterGlobalFunction("string get_sound_storage()", asFUNCTION(get_sound_storage), asCALL_CDECL);

@@ -222,15 +222,7 @@ return true;
 void set_listener_position(float l_x, float l_y, float l_z) {
     ma_engine_listener_set_position(&sound_engine, 0, l_x, l_y, l_z);
 }
-void wait(int time) {
-    timer waittimer;
-    int el = 0;
-    while (el < time) {
-        update_game_window();
-        el = waittimer.elapsed_millis();
-    }
-}
-void delay(int ms)
+void wait(int ms)
 {
 SDL_Delay(ms);
 }
@@ -318,7 +310,7 @@ bool sound::load(std::string filename, bool set3d) {
         if (!active)return false;
         while (true) {
             update_game_window();
-            delay(5);
+            wait(5);
             bool ac = sound::is_playing();
             if (ac == false) {
                 break;
