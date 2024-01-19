@@ -16,6 +16,8 @@
 
 std::wstring wstr(const std::string& utf8String);
 
+uint64_t get_time_stamp_millis();
+uint64_t get_time_stamp_seconds();
 void init_engine();
  long random(long min, long max);
  double randomDouble(double min, double max);

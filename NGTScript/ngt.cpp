@@ -976,3 +976,17 @@ uint64_t user_idle::get_idle_time() {
     DWORD currentTick = GetTickCount();
     return (currentTick - lii.dwTime);
 }
+
+uint64_t get_time_stamp_millis() {
+    auto now = std::chrono::system_clock::now();
+    auto duration = now.time_since_epoch();
+    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+    return millis;
+}
+
+uint64_t get_time_stamp_seconds() {
+    auto now = std::chrono::system_clock::now();
+    auto duration = now.time_since_epoch();
+    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
+    return seconds;
+}
