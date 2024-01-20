@@ -29,7 +29,7 @@ std::wstring wstr(const std::string& utf8String)
 }
 std::wstring reader;
 std::string sound_path;
-std::map<SDL_Keycode,bool> keys;
+std::unordered_map<SDL_Keycode,bool> keys;
 bool keyhook = false;
 std::string inputtext;
 short audio_system = PAN_AUDIO;
