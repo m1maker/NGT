@@ -129,12 +129,17 @@ bool closeTo(double a, double b, double epsilon)
 	
 	return diff / (fabs(a) + fabs(b)) < epsilon;
 }
+
 #include <cmath>
-#include <iostream>
 
 double round(double value, int decimal_places) {
-    double scale = std::pow(10.0, decimal_places);
-    return std::floor(value * scale) / scale;
+	if (decimal_places >= 0) {
+		double factor = pow(10.0, decimal_places);
+		return round(value * factor) / factor;
+	} else {
+		double factor = pow(10.0, -decimal_places);
+		return round(value / factor) * factor;
+	}
 }
 
 void RegisterScriptMath_Native(asIScriptEngine *engine)
