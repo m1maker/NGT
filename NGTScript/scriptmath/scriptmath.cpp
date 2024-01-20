@@ -130,6 +130,11 @@ bool closeTo(double a, double b, double epsilon)
 	return diff / (fabs(a) + fabs(b)) < epsilon;
 }
 
+double round(double number, int decimal_places) {
+	double factor = pow(10.0, decimal_places);
+	return ceil(number * factor) / factor;
+}
+
 void RegisterScriptMath_Native(asIScriptEngine *engine)
 {
 	int r;
@@ -196,6 +201,8 @@ void RegisterScriptMath_Native(asIScriptEngine *engine)
 	r = engine->RegisterGlobalFunction("double floor(double)", asFUNCTIONPR(floor, (double), double), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("double fraction(double)", asFUNCTIONPR(fraction, (double), double), asCALL_CDECL); assert( r >= 0 );
 #endif
+	//register round function
+	r = engine->RegisterGlobalFunction("double round(double, int)", asFUNCTIONPR(round, (double, int), double), asCALL_CDECL); assert(r >= 0);
 }
 
 #if AS_USE_FLOAT
@@ -276,6 +283,15 @@ void atan2_generic(asIScriptGeneric *gen)
 	*(double*)gen->GetAddressOfReturnLocation() = atan2(f1, f2);
 }
 #endif
+
+//round, generic
+void round_generic(asIScriptGeneric* gen)
+{
+	double n = *(double*)gen->GetAddressOfArg(0);
+	int m = *(int*)gen->GetAddressOfArg(1);
+	*(double*)gen->GetAddressOfReturnLocation() = round(n, m);
+}
+
 void RegisterScriptMath_Generic(asIScriptEngine *engine)
 {
 	int r;
@@ -332,6 +348,8 @@ void RegisterScriptMath_Generic(asIScriptEngine *engine)
 	r = engine->RegisterGlobalFunction("double floor(double)", asFUNCTION(floor_generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterGlobalFunction("double fraction(double)", asFUNCTION(fraction_generic), asCALL_GENERIC); assert( r >= 0 );
 #endif
+	//register round generic function
+	r = engine->RegisterGlobalFunction("double round(double, int)", asFUNCTION(round_generic), asCALL_GENERIC); assert(r >= 0);
 }
 
 void RegisterScriptMath(asIScriptEngine *engine)
