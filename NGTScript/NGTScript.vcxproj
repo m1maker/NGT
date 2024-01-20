@@ -239,6 +239,7 @@
     <ClInclude Include="SDL_net.h" />
     <ClInclude Include="serializer\serializer.h" />
     <ClInclude Include="Tolk.h" />
+    <ClInclude Include="uni_algo.h" />
     <ClInclude Include="vorbisfile.h" />
     <ClInclude Include="vorbis\codec.h" />
     <ClInclude Include="vorbis\vorbisenc.h" />

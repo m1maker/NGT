@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <algorithm>
+#include "../uni_algo.h"
 
 using namespace std;
 

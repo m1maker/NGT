@@ -7,7 +7,8 @@
 #ifndef __psp2__
 	#include <locale.h> // setlocale()
 #endif
-
+#include <algorithm>
+#include "../uni_algo.h"
 using namespace std;
 
 // This macro is used to avoid warnings about unused variables.
