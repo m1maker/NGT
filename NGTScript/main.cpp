@@ -18,7 +18,7 @@
 #include "datetime/datetime.h"
 #include "scriptmath/scriptmath.h"
 #include <thread>
-
+bool SCRIPT_COMPILED = false;
 BOOL FileExists(LPCTSTR szPath)
 {
     DWORD dwAttrib = GetFileAttributes(szPath);
@@ -184,7 +184,7 @@ int main(int argc, char* argv[]) {
         engine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
         engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
         engine->RegisterGlobalFunction("int exec(const string &in, string &out)", asFUNCTIONPR(ExecSystemCmd, (const string&, string&), int), asCALL_CDECL);
-
+        engine->RegisterGlobalProperty("const bool SCRIPT_COMPILED", (void*)&SCRIPT_COMPILED);
 
         // Compile the script
         asIScriptModule* module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
@@ -235,6 +235,7 @@ int main(int argc, char* argv[]) {
         engine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
         engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
         engine->RegisterGlobalFunction("int exec(const string &in, string &out)", asFUNCTIONPR(ExecSystemCmd, (const string&, string&), int), asCALL_CDECL);
+        engine->RegisterGlobalProperty("const bool SCRIPT_COMPILED", (void*)&SCRIPT_COMPILED);
 
 
         // Compile the script
@@ -308,6 +309,7 @@ int main(int argc, char* argv[]) {
 
     }
     else if (flag == "-b") {
+        SCRIPT_COMPILED = true;
         asIScriptEngine* engine = asCreateScriptEngine();
         engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
 
@@ -324,6 +326,7 @@ int main(int argc, char* argv[]) {
         engine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
         engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
         engine->RegisterGlobalFunction("int exec(const string &in, string &out)", asFUNCTIONPR(ExecSystemCmd, (const string&, string&), int), asCALL_CDECL);
+        engine->RegisterGlobalProperty("const bool SCRIPT_COMPILED", (void*)&SCRIPT_COMPILED);
 
 
         asIScriptModule* module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
