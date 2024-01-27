@@ -10,7 +10,7 @@
 #include <algorithm>
 #include "../uni_algo.h"
 using namespace std;
-
+una::found finder_string;
 // This macro is used to avoid warnings about unused variables.
 // Usually where the variables are only used in debug mode.
 #define UNUSED_VAR(x) (void)(x)
@@ -363,22 +363,33 @@ static int StringCmp(const string &a, const string &b)
 //
 // AngelScript signature:
 // int string::findFirst(const string &in sub, uint start = 0) const
-static int StringFindFirst(const string &sub, asUINT start, const string &str)
+static int StringFindFirst(const string& sub, asUINT start, const string& str)
 {
-	// We don't register the method directly because the argument types change between 32bit and 64bit platforms
-	return (int)str.find(sub, (size_t)(start < 0 ? string::npos : start));
+	una::ranges::utf8_view temp(str);
+	auto it = temp.begin();
+	std::advance(it, start);
+	auto result = std::search(it, temp.end(), sub.begin(), sub.end());
+	if (result == temp.end())
+		return -1;
+	else
+		return std::distance(temp.begin(), result);
 }
 
-// This function returns the index of the first position where the one of the bytes in substring
 // exists in the input string. If the characters in the substring doesn't exist in the input
 // string -1 is returned.
 //
 // AngelScript signature:
 // int string::findFirstOf(const string &in sub, uint start = 0) const
-static int StringFindFirstOf(const string &sub, asUINT start, const string &str)
+static int StringFindFirstOf(const string& sub, asUINT start, const string& str)
 {
-	// We don't register the method directly because the argument types change between 32bit and 64bit platforms
-	return (int)str.find_first_of(sub, (size_t)(start < 0 ? string::npos : start));
+	una::ranges::utf8_view temp(str);
+	auto it = temp.begin();
+	std::advance(it, start);
+	auto result = std::find_first_of(it, temp.end(), sub.begin(), sub.end());
+	if (result == temp.end())
+		return -1;
+	else
+		return std::distance(temp.begin(), result);
 }
 
 // This function returns the index of the last position where the one of the bytes in substring
@@ -387,12 +398,19 @@ static int StringFindFirstOf(const string &sub, asUINT start, const string &str)
 //
 // AngelScript signature:
 // int string::findLastOf(const string &in sub, uint start = -1) const
-static int StringFindLastOf(const string &sub, asUINT start, const string &str)
+static int StringFindLastOf(const string& sub, asUINT start, const string& str)
 {
-	// We don't register the method directly because the argument types change between 32bit and 64bit platforms
-	return (int)str.find_last_of(sub, (size_t)(start < 0 ? string::npos : start));
-}
+	una::ranges::utf8_view utf8temp(str);
+	una::ranges::reverse_view temp(utf8temp);
 
+	auto it = temp.begin();
+	std::advance(it, start+1);
+	auto result = std::find_first_of(it, temp.end(), sub.begin(), sub.end());
+	if (result == temp.end())
+		return -1;
+	else
+		return std::distance(temp.begin(), result);
+}
 // This function returns the index of the first position where a byte other than those in substring
 // exists in the input string. If none is found -1 is returned.
 //
@@ -424,15 +442,27 @@ static int StringFindLastNotOf(const string &sub, asUINT start, const string &st
 static int StringFindLast(const string &sub, int start, const string &str)
 {
 	// We don't register the method directly because the argument types change between 32bit and 64bit platforms
-	return (int)str.rfind(sub, (size_t)(start < 0 ? string::npos : start));
+	una::ranges::utf8_view utf8temp(str);
+	una::ranges::reverse_view temp(utf8temp);
+	auto it = temp.begin();
+	std::advance(it, start);
+	auto result = std::search(it, temp.end(), sub.begin(), sub.end());
+	if (result == temp.end())
+		return -1;
+	else
+		return std::distance(temp.begin(), result);
 }
 
 // AngelScript signature:
 // void string::insert(uint pos, const string &in other)
-static void StringInsert(unsigned int pos, const string &other, string &str)
+static void StringInsert(std::size_t pos, const std::string& other, std::string& str)
 {
 	// We don't register the method directly because the argument types change between 32bit and 64bit platforms
-	str.insert(pos, other);
+	una::ranges::utf8_view temp(str);
+
+	auto it = temp.begin();
+	std::advance(it, static_cast<std::ptrdiff_t>(pos));
+	str.insert(static_cast<std::size_t>(std::distance(temp.begin(), it)), other);
 }
 
 // AngelScript signature:
@@ -440,7 +470,13 @@ static void StringInsert(unsigned int pos, const string &other, string &str)
 static void StringErase(unsigned int pos, int count, string &str)
 {
 	// We don't register the method directly because the argument types change between 32bit and 64bit platforms
-	str.erase(pos, (size_t)(count < 0 ? string::npos : count));
+	una::ranges::utf8_view temp(str);
+
+	auto it = temp.begin();
+	std::advance(it, static_cast<std::ptrdiff_t>(pos));
+
+
+	str.erase(pos, count);
 }
 
 
@@ -449,7 +485,8 @@ static void StringErase(unsigned int pos, int count, string &str)
 static asUINT StringLength(const string &str)
 {
 	// We don't register the method directly because the return type changes between 32bit and 64bit platforms
-	return (asUINT)str.length();
+	una::ranges::utf8_view view(str);
+	return static_cast<asUINT>(std::distance(view.begin(), view.end()));
 }
 
 
