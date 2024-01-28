@@ -33,7 +33,6 @@ bool paused;
 bool stationary;
 double start_offset;
 bool persistent;
-
 sound_pool_item()
 {
 reset();
@@ -378,7 +377,7 @@ return slot;
 }
 }
 if(!memory)
-items[slot].handle.load(items[slot].filename);
+items[slot].handle.load(items[slot].filename, true);
 /*
 else
 {
@@ -423,6 +422,7 @@ if(slot==-1)
 {
 return -1;
 }
+items[slot].handle.set_sound_hrtf(true);
 items[slot].filename=filename;
 items[slot].packname=get_sound_storage();
 items[slot].x=sound_x;
@@ -460,7 +460,7 @@ return slot;
 }
 }
 if(!memory)
-items[slot].handle.load(items[slot].filename);
+items[slot].handle.load(items[slot].filename, true);
 /*
 else
 {
@@ -505,6 +505,7 @@ if(slot==-1)
 {
 return -1;
 }
+items[slot].handle.set_sound_hrtf(true);
 items[slot].filename=filename;
 items[slot].packname=get_sound_storage();
 items[slot].x=sound_x;
@@ -547,7 +548,7 @@ return slot;
 }
 }
 if(!memory)
-items[slot].handle.load(items[slot].filename);
+items[slot].handle.load(items[slot].filename, true);
 /*
 else
 {

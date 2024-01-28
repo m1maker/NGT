@@ -11,44 +11,9 @@ position_sound_custom_1d(handle, listener_x, source_x, pan_step, volume_step, 0.
 
 void position_sound_custom_1d(sound@ handle, int listener_x, int source_x, float pan_step, float volume_step, float start_pan, float start_volume)
 {
-int delta=0;
-float final_pan=start_pan;
-float final_volume=start_volume;
-
-// First, we calculate the delta between the listener and the source.
-if(source_x<listener_x)
-{
-delta=listener_x-source_x;
-final_pan-=(delta*pan_step);
-final_volume-=(delta*volume_step);
+set_listener_position(listener_x, 0, 0);
+handle.set_sound_position(source_x, 0, 0);
 }
-if(source_x>listener_x)
-{
-delta=source_x-listener_x;
-final_pan+=(delta*pan_step);
-final_volume-=(delta*volume_step);
-}
-// Then we check if the calculated values are out of range, and fix them if that's the case.
-if(final_pan<-100)
-{
-final_pan=-100;
-}
-if(final_pan>100)
-{
-final_pan=100;
-}
-if(final_volume<-100)
-{
-final_volume=-100;
-}
-
-// Now we set the properties on the sound, provided that they are not already correct.
-if(handle.get_pan()!=final_pan)
-handle.set_pan(final_pan);
-if(handle.get_volume()!=final_volume)
-handle.set_volume(final_volume);
-}
-
 void position_sound_2d(sound@ handle, float listener_x, float listener_y, float source_x, float source_y, double theta, float pan_step, float volume_step, float behind_pitch_decrease)
 {
 position_sound_custom_2d(handle, listener_x, listener_y, source_x, source_y, theta, pan_step, volume_step, behind_pitch_decrease, 0.0, 0.0, 100.0);
@@ -56,75 +21,8 @@ position_sound_custom_2d(handle, listener_x, listener_y, source_x, source_y, the
 
 void position_sound_custom_2d(sound@ handle, float listener_x, float listener_y, float source_x, float source_y, double theta, float pan_step, float volume_step, float behind_pitch_decrease, float start_pan, float start_volume, float start_pitch)
 {
-float delta_x=0;
-float delta_y=0;
-float final_pan=start_pan;
-float final_volume=start_volume;
-float final_pitch=start_pitch;
-float rotational_source_x=source_x;
-float rotational_source_y=source_y;
-// First, we calculate the x and y based on the theta the listener is facing. 
-if(theta > 0.0)
-{
-rotational_source_x = (cos(theta) * (source_x-listener_x)) - (sin(theta) * (source_y-listener_y)) + listener_x;
-rotational_source_y = (sin(theta) * (source_x-listener_x)) + (cos(theta) * (source_y-listener_y)) + listener_y;
-source_x=rotational_source_x;
-source_y=rotational_source_y;
-}
-// Next, we calculate the delta between the listener and the source.
-if(source_x<listener_x)
-{
-delta_x=listener_x-source_x;
-final_pan-=(delta_x*pan_step);
-final_volume-=(delta_x*volume_step);
-}
-if(source_x>listener_x)
-{
-delta_x=source_x-listener_x;
-final_pan+=(delta_x*pan_step);
-final_volume-=(delta_x*volume_step);
-}
-if(source_y<listener_y)
-{
-final_pitch-=abs(behind_pitch_decrease);
-delta_y=listener_y-source_y;
-final_volume-=(delta_y*volume_step);
-}
-if(source_y>listener_y)
-{
-delta_y=source_y-listener_y;
-final_volume-=(delta_y*volume_step);
-}
-
-// Then we check if the calculated values are out of range, and fix them if that's the case.
-if(final_pan<-100)
-{
-final_pan=-100;
-}
-if(final_pan>100)
-{
-final_pan=100;
-}
-if(final_volume<-100)
-{
-final_volume=-100;
-}
-if(final_pitch<handle.get_pitch())
-{
-final_pitch=handle.get_pitch();
-}
-// We don't check for the highest possible pitch as it is hard to determine.
-
-// Now we set the properties on the sound, provided that they are not already correct.
-if(handle.get_pan()!=final_pan)
-handle.set_pan(final_pan);
-if(handle.get_volume()!=final_volume)
-handle.set_volume(final_volume);
-
-
-if(handle.get_pitch()!=final_pitch)
-handle.set_pitch(final_pitch);
-
+set_listener_position(listener_x, listener_y, 0);
+handle.set_sound_position(source_x, source_y, 0);
 }
 void position_sound_3d(sound@ handle, float listener_x, float listener_y, float listener_z, float source_x, float source_y, float source_z, double theta, float pan_step, float volume_step, float behind_pitch_decrease)
 {
@@ -132,83 +30,7 @@ position_sound_custom_3d(handle, listener_x, listener_y, listener_z, source_x, s
 }
 void position_sound_custom_3d(sound@ handle, float listener_x, float listener_y, float listener_z, float source_x, float source_y, float source_z, double theta, float pan_step, float volume_step, float behind_pitch_decrease, float start_pan, float start_volume, float start_pitch)
 {
-float delta_x=0;
-float delta_y=0;
-float delta_z=0;
-float final_pan=start_pan;
-float final_volume=start_volume;
-float final_pitch=start_pitch;
-float rotational_source_x=source_x;
-float rotational_source_y=source_y;
-// First, we calculate the x and y based on the theta the listener is facing. 
-if(theta > 0.0)
-{
-rotational_source_x = (cos(theta) * (source_x-listener_x)) - (sin(theta) * (source_y-listener_y)) + listener_x;
-rotational_source_y = (sin(theta) * (source_x-listener_x)) + (cos(theta) * (source_y-listener_y)) + listener_y;
-source_x=rotational_source_x;
-source_y=rotational_source_y;
-}
-// Next, we calculate the delta between the listener and the source.
-if(source_x<listener_x)
-{
-delta_x=listener_x-source_x;
-final_pan-=(delta_x*pan_step);
-final_volume-=(delta_x*volume_step);
-}
-if(source_x>listener_x)
-{
-delta_x=source_x-listener_x;
-final_pan+=(delta_x*pan_step);
-final_volume-=(delta_x*volume_step);
-}
-if(source_y<listener_y)
-{
-final_pitch-=abs(behind_pitch_decrease);
-delta_y=listener_y-source_y;
-final_volume-=(delta_y*volume_step);
-}
-if(source_y>listener_y)
-{
-delta_y=source_y-listener_y;
-final_volume-=(delta_y*volume_step);
-}
-if(source_z<listener_z)
-{
-final_pitch-=abs(behind_pitch_decrease);
-delta_z=listener_z-source_z;
-final_volume-=(delta_z*volume_step);
-}
-if(source_z>listener_z)
-{
-delta_z=source_z-listener_z;
-final_volume-=(delta_z*volume_step);
-}
-// Then we check if the calculated values are out of range, and fix them if that's the case.
-if(final_pan<-100)
-{
-final_pan=-100;
-}
-if(final_pan>100)
-{
-final_pan=100;
-}
-if(final_volume<-100)
-{
-final_volume=-100;
-}
-if(final_pitch<handle.get_pitch())
-{
-final_pitch=handle.get_pitch();
-}
-// We don't check for the highest possible pitch as it is hard to determine.
-
-// Now we set the properties on the sound, provided that they are not already correct.
-if(handle.get_pan()!=final_pan)
-handle.set_pan(final_pan);
-if(handle.get_volume()!=final_volume)
-handle.set_volume(final_volume);
-
-if(handle.get_pitch()!=final_pitch)
-handle.set_pitch(final_pitch);
+set_listener_position(listener_x, listener_y, listener_z);
+handle.set_sound_position(source_x, source_y, source_z);
 
 }

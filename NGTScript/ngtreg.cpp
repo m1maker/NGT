@@ -453,7 +453,6 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterGlobalFunction("string get_sound_storage()", asFUNCTION(get_sound_storage), asCALL_CDECL);
     engine->RegisterGlobalFunction("void set_master_volume(float)", asFUNCTION(set_master_volume), asCALL_CDECL);
     engine->RegisterGlobalFunction("float get_master_volume()", asFUNCTION(get_master_volume), asCALL_CDECL);
-    engine->RegisterGlobalFunction("void switch_audio_system(int)", asFUNCTION(switch_audio_system), asCALL_CDECL);
     engine->RegisterGlobalFunction("string read_environment_variable(string&in)", asFUNCTION(read_environment_variable), asCALL_CDECL);
 
     engine->RegisterObjectType("reverb", sizeof(reverb), asOBJ_REF);
@@ -482,6 +481,8 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectMethod("sound", "bool close()", asMETHOD(sound, close), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "void set_sound_position(float, float, float)", asMETHOD(sound, set_sound_position), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "void set_sound_reverb(float, float, float)", asMETHOD(sound, set_sound_reverb), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void set_sound_hrtf(bool)", asMETHOD(sound, set_sound_hrtf), asCALL_THISCALL);
+
     engine->RegisterObjectMethod("sound", "void cancel_reverb()", asMETHOD(sound, cancel_reverb), asCALL_THISCALL);
 
     engine->RegisterObjectMethod("sound", "double get_pan() const", asMETHOD(sound, get_pan), asCALL_THISCALL);

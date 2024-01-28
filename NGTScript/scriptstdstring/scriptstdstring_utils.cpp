@@ -139,7 +139,9 @@ static string StringCapitalize(const string &inp)
 	string str = inp;
 	if (inp.length())
 	{
-		str[0] = toupper(str[0]);
+		std::string temp = una::cases::to_uppercase_utf8(str);
+		una::ranges::utf8_view tempstr(temp);
+//		std::replace(tempstr.begin(), tempstr.end(), str[0], tempstr.begin());
 	}
 	return str;
 }
@@ -165,14 +167,14 @@ static void StringSplitLines_Generic(asIScriptGeneric *gen)
 	*(CScriptArray **)gen->GetAddressOfReturnLocation() = StringSplitLines(*str);
 }
 
-static bool StringEndsWith(const string &toMatch, const string &inp)
+static bool StringEndsWith(const string& toMatch, const string& inp)
 {
 	// compare strings length
-	if (inp.length() >= toMatch.length())
-		return inp.compare(inp.length() - toMatch.length(), toMatch.length(), toMatch) == 0;
-	return false;
-}
+	una::ranges::utf8_view temp(inp);
+	una::ranges::utf8_view temp2(toMatch);
+	return std::search(temp.begin(), temp.end(), temp2.begin(), temp2.end()) != temp.end();
 
+}
 static void StringEndsWith_Generic(asIScriptGeneric *gen)
 {
 	// Get the arguments
@@ -198,7 +200,9 @@ static void StringStartsWith_Generic(asIScriptGeneric *gen)
 static bool StringContains(const string &toMatch, const string &inp)
 {
 	// compare strings
-	return inp.find(toMatch) != string::npos;
+	una::ranges::utf8_view temp(inp);
+	una::ranges::utf8_view temp2(toMatch);
+	return std::search(temp.begin(), temp.end(), temp2.begin(), temp2.end()) != temp.end();
 }
 
 static void StringContains_Generic(asIScriptGeneric *gen)
@@ -211,8 +215,9 @@ static void StringContains_Generic(asIScriptGeneric *gen)
 
 static bool is_upper(const string &s)
 {
-	return std::all_of(s.begin(), s.end(), [](unsigned char c)
-					   { return std::isupper(c); });
+	una::ranges::utf8_view temp(s);
+	return std::all_of(temp.begin(), temp.end(), [](auto c)
+					   { return una::codepoint::is_uppercase(c); });
 }
 
 static void is_upper_Generic(asIScriptGeneric *gen)

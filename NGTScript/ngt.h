@@ -1,7 +1,9 @@
 #pragma once
 #define MINIAUDIO_IMPLEMENTATION
 
-
+#include "AL/al.h"
+#include "AL/alc.h"
+#include "sndfile.h"
 #include "miniaudio.h"
 #include <random>
 #include <type_traits>
@@ -46,7 +48,6 @@ void set_sound_storage(std::string path);
 std::string get_sound_storage();
 void set_master_volume(float volume);
 float get_master_volume();
-void switch_audio_system(short system);
 std::string read_environment_variable(const std::string& path);
 class reverb {
 public:
@@ -64,7 +65,11 @@ public:
 };
 class sound {
 public:
+	ALuint buffer_;
+	ALuint source_;
+	bool is_3d_;
 	ma_sound handle_;
+	short audio_system=0;
 	bool playing=false, paused=false, active=false;
 	void construct();
 	void destruct();
@@ -78,6 +83,7 @@ public:
 	bool close();
 	void set_sound_position(float s_x, float s_y, float s_z);
 	void set_sound_reverb(float input_gain, float reverb_mix, float reverb_time);
+	void set_sound_hrtf(bool hrtf = true);
 	void cancel_reverb();
 	double get_pan() const;
 	void set_pan(double pan);

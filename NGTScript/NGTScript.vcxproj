@@ -127,7 +127,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);angelscript64.lib;tolk.lib;SDL2main.lib;SDL2.lib;winmm.lib;imm32.lib;version.lib;setupapi.lib;sdl2_net.lib;libcmt.lib;ws2_32.lib;iphlpapi.lib;libffi.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);angelscript64.lib;tolk.lib;SDL2main.lib;SDL2.lib;winmm.lib;imm32.lib;version.lib;setupapi.lib;sdl2_net.lib;libcmt.lib;ws2_32.lib;iphlpapi.lib;libffi.lib;openal32.lib;sndfile.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>
       </IgnoreAllDefaultLibraries>
@@ -136,6 +136,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AL\al.h" />
+    <ClInclude Include="AL\alc.h" />
+    <ClInclude Include="AL\alext.h" />
+    <ClInclude Include="AL\efx-creative.h" />
+    <ClInclude Include="AL\efx-presets.h" />
+    <ClInclude Include="AL\efx.h" />
     <ClInclude Include="angelscript.h" />
     <ClInclude Include="autowrapper\aswrappedcall.h" />
     <ClInclude Include="datetime\datetime.h" />
@@ -239,6 +245,7 @@
     <ClInclude Include="sdl\SDL_vulkan.h" />
     <ClInclude Include="SDL_net.h" />
     <ClInclude Include="serializer\serializer.h" />
+    <ClInclude Include="sndfile.h" />
     <ClInclude Include="Tolk.h" />
     <ClInclude Include="uni_algo.h" />
     <ClInclude Include="vorbisfile.h" />

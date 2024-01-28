@@ -20,8 +20,6 @@
 #include <cstring>
 SDL_Window* win = NULL;
 HMODULE bass;
-const short PAN_AUDIO = 0;
-const short HRTF_AUDIO = 1;
 std::wstring wstr(const std::string& utf8String)
 {
     std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
@@ -32,9 +30,14 @@ std::string sound_path;
 std::unordered_map<SDL_Keycode,bool> keys;
 bool keyhook = false;
 std::string inputtext;
-short audio_system = PAN_AUDIO;
 ma_engine sound_engine;
+ALCdevice* device = NULL;
+ALCcontext* context = NULL;
 void init_engine() {
+    device = alcOpenDevice(nullptr);
+    context = alcCreateContext(device, nullptr);
+    alcMakeContextCurrent(context);
+
     ma_engine_init(NULL, &sound_engine);
     SDL_Init(SDL_INIT_EVERYTHING);
     SDLNet_Init();
@@ -64,7 +67,8 @@ double randomDouble(double min, double max) {
 }
 
 
-int get_last_error() {return 0;
+int get_last_error() {
+    return alGetError();
 }
 void speak(std::string text, bool stop) {
     std::wstring textstr = wstr(text);
@@ -129,6 +133,9 @@ void update_game_window()
     }
 void quit()
 {
+    alcDestroyContext(context);
+    alcCloseDevice(device);
+
     ma_engine_uninit(&sound_engine);
 
     SDL_StopTextInput();
@@ -220,6 +227,7 @@ bool alert(std::string title, std::string text, unsigned int flag)
 return true;
 }
 void set_listener_position(float l_x, float l_y, float l_z) {
+    alListener3f(AL_POSITION, l_x, l_y, l_z);
     ma_engine_listener_set_position(&sound_engine, 0, l_x, l_y, l_z);
 }
 void wait(int time) {
@@ -242,18 +250,18 @@ std::string get_sound_storage() {
 }
 void set_master_volume(float volume) {
     ma_engine_set_gain_db(&sound_engine, volume);
+    alListenerf(AL_GAIN, static_cast<float>(volume));
 }
 float get_master_volume() {
+    float volume;
+    alGetListenerf(AL_GAIN, &volume);
+    return volume;
     return ma_engine_get_gain_db(&sound_engine);
 }
 void sound::construct() {
 }
 
 void sound::destruct() {
-}
-void switch_audio_system(short system) {
-if(system==PAN_AUDIO or system==HRTF_AUDIO)
-    audio_system = system;
 }
 BOOL sound_check(LPCTSTR szPath)
 {
@@ -263,9 +271,7 @@ BOOL sound_check(LPCTSTR szPath)
         !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
 }
 bool sound::load(std::string filename, bool set3d) {
-    if (active == true)
-        return false;
-        std::string result;
+    std::string result;
     if (sound_path != "") {
         result = sound_path + "/" + filename.c_str();
     }
@@ -277,13 +283,64 @@ bool sound::load(std::string filename, bool set3d) {
         active = false;
         return false;
     }
-    if (set3d)
-        ma_sound_init_from_file(&sound_engine, result.c_str(), 0, NULL, NULL, &handle_);
-    else
-        ma_sound_init_from_file(&sound_engine, result.c_str(), MA_SOUND_FLAG_NO_SPATIALIZATION, NULL, NULL, &handle_);
-    active = true;
-    return true;
-    }
+        if (set3d)
+            ma_sound_init_from_file(&sound_engine, result.c_str(), 0, NULL, NULL, &handle_);
+        else
+            ma_sound_init_from_file(&sound_engine, result.c_str(), MA_SOUND_FLAG_NO_SPATIALIZATION, NULL, NULL, &handle_);
+        active = true;
+        SNDFILE* sndfile;
+        SF_INFO sfinfo;
+        sndfile = sf_open(result.c_str(), SFM_READ, &sfinfo);
+        if (!sndfile) {
+            active = false;
+            return false;
+        }
+
+        std::vector<short> samples(sfinfo.channels * sfinfo.frames);
+        sf_readf_short(sndfile, &samples[0], sfinfo.frames);
+        sf_close(sndfile);
+        if (sfinfo.channels > 1) {
+            std::vector<short> monoSamples(sfinfo.frames);
+            for (int i = 0; i < sfinfo.frames; i++) {
+                int index = i * sfinfo.channels;
+                monoSamples[i] = (samples[index] + samples[index + 1]) / 2;
+            }
+            samples = monoSamples;
+            sfinfo.channels = 1;
+        }
+
+
+        alGenBuffers(1, &buffer_);
+        alBufferData(buffer_,
+            (sfinfo.channels == 1) ? AL_FORMAT_MONO16: AL_FORMAT_STEREO16,
+            &samples[0],
+            static_cast<ALsizei>(sfinfo.frames * sfinfo.channels * sizeof(short)),
+            sfinfo.samplerate);
+
+        alGenSources(1, &source_);
+
+        // Set source properties
+        alSourcei(source_, AL_BUFFER, buffer_);
+        alSourcef(source_, AL_PITCH, 1.0f);
+        alSourcef(source_, AL_GAIN, 1.0f);
+        alSourcei(source_, AL_LOOPING, AL_FALSE);
+
+        // Set 3D properties if requested
+        if (set3d) {
+            is_3d_ = true;
+            alSource3f(source_, AL_POSITION, 0.0f, 0.0f, 0.0f);
+            alSource3f(source_, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
+
+            alSourcei(source_, AL_SOURCE_RELATIVE, AL_FALSE);
+            alSourcef(source_, AL_ROLLOFF_FACTOR, 1.0f);
+            alSourcei(source_, AL_REFERENCE_DISTANCE, 1);
+            alSourcei(source_, AL_MAX_DISTANCE, 100);
+        }
+
+        active = true;
+        return true;
+}
+
 
     bool sound::load_from_memory(std::string data, bool set3d) {
         return false;
@@ -291,32 +348,58 @@ bool sound::load(std::string filename, bool set3d) {
 
     bool sound::play() {
         if (!active)return false;
-        stop();
-        ma_sound_set_looping(&handle_, false);
-        ma_sound_start(&handle_);
-        return true;
+        if (audio_system == 0) {
+            stop();
+            ma_sound_set_looping(&handle_, false);
+            ma_sound_start(&handle_);
+            return true;
+        }
+        else {
+            alSourcei(source_, AL_LOOPING, AL_FALSE);
+            alSourcePlay(source_);
+            return true;
+        }
     }
 
     bool sound::play_looped() {
         if (!active)return false;
-        stop();
+        if (audio_system == 0) {
+            stop();
 
-        ma_sound_set_looping(&handle_, true);
-        ma_sound_start(&handle_);
-        return true;
-    }
+            ma_sound_set_looping(&handle_, true);
+            ma_sound_start(&handle_);
+            return true;
+        }
+        else {
+            alSourcei(source_, AL_LOOPING, AL_TRUE);
+            alSourcePlay(source_);
+            return true;
+        }
+        }
 
     bool sound::pause() {
         if (!active)return false;
-        ma_sound_stop(&handle_);
+        if (audio_system == 0) {
+            ma_sound_stop(&handle_);
+            return true;
+        }
+        else {
+            alSourcePause(source_);
+        }
     }
 
     bool sound::play_wait() {
-        stop();
-        ma_sound_set_looping(&handle_, false);
-        ma_sound_start(&handle_);
-        if (!active)return false;
-        while (true) {
+        if (audio_system == 0) {
+            stop();
+            ma_sound_set_looping(&handle_, false);
+            ma_sound_start(&handle_);
+            if (!active)return false;
+        }
+        else {
+            alSourcei(source_, AL_LOOPING, AL_FALSE);
+            alSourcePlay(source_);
+        }
+            while (true) {
             update_game_window();
             delay(5);
             bool ac = sound::is_playing();
@@ -329,22 +412,45 @@ bool sound::load(std::string filename, bool set3d) {
 
     bool sound::stop() {
         if (!active)return false;
-        ma_sound_stop(&handle_);
-        ma_sound_seek_to_pcm_frame(&handle_, 0);
+        if (audio_system == 0) {
+            ma_sound_stop(&handle_);
+            ma_sound_seek_to_pcm_frame(&handle_, 0);
+        }
+        else {
+            alSourceStop(source_);
+            alSourcei(source_, AL_BUFFER, 0);
+        }
+        return true;
     }
     bool sound::close() {
         if (!active)return false;
-        ma_sound_uninit(&handle_);
-        active = false;
+            ma_sound_uninit(&handle_);
+            if (source_) {
+                alDeleteSources(1, &source_);
+                source_ = 0;
+            }
+
+            if (buffer_) {
+                alDeleteBuffers(1, &buffer_);
+                buffer_ = 0;
+            }
+            active = false;
         return true;
     }
 
     void sound::set_sound_position(float s_x, float s_y, float s_z) {
         if (!active)return;
         ma_sound_set_position(&handle_, s_x, s_y, s_z);
+        alSource3f(source_, AL_POSITION, s_x, s_y, s_z);
     }
     void sound::set_sound_reverb(float input_gain, float reverb_mix, float reverb_time) {
         return;
+    }
+    void sound::set_sound_hrtf(bool hrtf) {
+        if (hrtf)
+            this->audio_system = 1;
+        else
+            this->audio_system = 0;
     }
     void sound::cancel_reverb() {
         return;
@@ -366,17 +472,29 @@ bool sound::load(std::string filename, bool set3d) {
     double sound::get_volume() const {
         if (!active)return -17435;
 
-        double volume;
-        volume = ma_sound_get_volume(&handle_);
-        return ma_volume_linear_to_db(volume);
-    }
+        float volume;
+        if (audio_system == 0) {
 
+            volume = ma_sound_get_volume(&handle_);
+            return ma_volume_linear_to_db(volume);
+
+        }
+        else {
+            alGetSourcef(source_, AL_GAIN, &volume);
+            return volume;
+        }
+    }
     void sound::set_volume(double volume) {
         if (!active)return;
         if (volume > 0 or volume < -100)return;
-        ma_sound_set_volume(&handle_, ma_volume_db_to_linear(volume));
-    }
+        if(audio_system == 0) {
+            ma_sound_set_volume(&handle_, ma_volume_db_to_linear(volume));
+        }
+        else {
+            alSourcef(source_, AL_GAIN, static_cast<float>(volume/100));
 
+        }
+    }
     double sound::get_pitch() const {
         if (!active)return -17435;
 
@@ -395,10 +513,17 @@ bool sound::load(std::string filename, bool set3d) {
     }
 
     bool sound::is_playing() const {
+        ALenum state;
+        if(audio_system==0)
         return ma_sound_is_playing(&handle_);
+        else {
+            alGetSourcei(source_, AL_SOURCE_STATE, &state);
+            return state == AL_PLAYING;
+        }
     }
-
     bool sound::is_paused() const {
+        ALenum state;
+
         return paused;
     }
 
