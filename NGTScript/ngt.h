@@ -16,7 +16,7 @@
 #include <vector>
 #include "scriptdictionary/scriptdictionary.h"
 
-std::wstring wstr(const std::string& utf8String);
+std::wstring wstr(const std::string & utf8String);
 
 uint64_t get_time_stamp_millis();
 uint64_t get_time_stamp_seconds();
@@ -24,31 +24,33 @@ void init_engine();
  long random(long min, long max);
  double randomDouble(double min, double max);
  int get_last_error();
-void speak(std::string	 text, bool stop = true);
-void speak_wait(std::string	 text, bool stop = true);
+void speak(const std::string &	 text, bool stop = true);
+void speak_wait(const std::string &	 text, bool stop = true);
 void stop_speech();
-bool show_game_window(std::string title,int width=640, int height=480, bool closable=true);
+bool show_game_window(const std::string & title,int width=640, int height=480, bool closable=true);
 
 void hide_game_window();
-void set_game_window_title(std::string new_title);
+void set_game_window_title(const std::string & new_title);
+void set_game_window_closable(bool set_closable);
 void update_game_window();
-void quit();
-bool clipboard_copy_text(std::string text);
+void exit_engine(int=0);
+bool clipboard_copy_text(const std::string & text);
 std::string clipboard_read_text();
 std::string get_input();
 bool key_pressed(SDL_Keycode key_code);
 bool key_released(SDL_Keycode key_code);
 bool key_down(SDL_Keycode key_code);
 bool key_repeat(SDL_Keycode key_code);
-bool alert(std::string	 title, std::string	 text, unsigned int flag=0);
+bool alert(const std::string &	 title, const std::string &	 text, const std::string &button_name="OK");
+int question(const std::string& title, const std::string &text);
 void set_listener_position(float l_x, float l_y, float l_z);
 void wait(int time);
 void delay(int ms);
-void set_sound_storage(std::string path);
+void set_sound_storage(const std::string & path);
 std::string get_sound_storage();
 void set_master_volume(float volume);
 float get_master_volume();
-std::string read_environment_variable(const std::string& path);
+std::string read_environment_variable(const std::string & path);
 class reverb {
 public:
 	void construct();
@@ -73,8 +75,9 @@ public:
 	bool playing=false, paused=false, active=false;
 	void construct();
 	void destruct();
-	bool load(std::string	 filename, bool set3d=false);
-	bool load_from_memory(std::string data, bool set3d = false);
+
+	bool load(const std::string &	 filename, bool set3d=false);
+	bool load_from_memory(const std::string & data, bool set3d = false);
 	bool play();
 	bool play_looped();
 	bool pause();
@@ -83,6 +86,7 @@ public:
 	bool close();
 	void set_sound_position(float s_x, float s_y, float s_z);
 	void set_sound_reverb(float input_gain, float reverb_mix, float reverb_time);
+	bool seek(double new_position);
 	void set_sound_hrtf(bool hrtf = true);
 	void cancel_reverb();
 	double get_pan() const;
@@ -130,27 +134,6 @@ public:
 	void resume();
 	bool is_running();
 };
-class key_hold
-{
-	bool status;
-	short key_flag = 0;
-	int key_code;
-	int repeat_time;
-	int setting_1;
-	int setting_2;
-	timer key_timer;
-
-public:
-	key_hold(int _key_code, int _setting_1, int _setting_2)
-	{
-		key_code = _key_code;
-		setting_1 = _setting_1;
-		setting_2 = _setting_2;
-		repeat_time = setting_1;
-	}
-
-	bool pressing();
-};
 class network_event {
 public:
     const int EVENT_NONE = 0;
@@ -185,7 +168,7 @@ class network {
 public:
 	void construct();
 	void destruct();
-	unsigned    int connect(std::string host, int port);
+	unsigned    int connect(const std::string & host, int port);
     bool destroy();
     bool disconnect_peer(unsigned int peerId);
     bool disconnect_peer_forcefully(unsigned int peerId);
@@ -194,8 +177,8 @@ public:
     double get_peer_average_round_trip_time(unsigned int peerId);
     std	::vector<unsigned int> get_peer_list();
     network_event* request();
-    bool send_reliable(unsigned int peerId, std::string packet, int channel);
-    bool send_unreliable(unsigned int peerId, std::string packet, int channel);
+    bool send_reliable(unsigned int peerId, const std::string & packet, int channel);
+    bool send_unreliable(unsigned int peerId, const std::string & packet, int channel);
     bool set_bandwidth_limits(double incomingBandwidth, double outgoingBandwidth);
     bool setup_client(int channels, int maxPeers);
     bool setup_server(int listeningPort, int channels, int maxPeers);
@@ -226,15 +209,16 @@ public:
 	HMODULE lib;
 	void construct();
 	void destruct();
-	bool load(std::string libname);
-	CScriptDictionary* call(std::string function_name, ...);
+	bool load(const std::string & libname);
+	template<typename... Args>
+	CScriptDictionary* call(const std::string function_name, Args... args);
 	void unload();
 };
 class instance {
 private:
 	HANDLE mutex;
 public:
-	instance(std::string application_name) {
+	instance(const std::string & application_name) {
 		mutex = CreateMutexA(NULL, TRUE, application_name.c_str());
 	}
 	void construct();

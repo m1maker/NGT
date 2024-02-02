@@ -39,6 +39,7 @@ void init_engine() {
     alcMakeContextCurrent(context);
 
     ma_engine_init(NULL, &sound_engine);
+    ma_engine_listener_set_velocity(&sound_engine, 0, 20, 20, 20);
     SDL_Init(SDL_INIT_EVERYTHING);
     SDLNet_Init();
     Tolk_TrySAPI(true);
@@ -70,11 +71,11 @@ double randomDouble(double min, double max) {
 int get_last_error() {
     return alGetError();
 }
-void speak(std::string text, bool stop) {
+void speak(const std::string & text, bool stop) {
     std::wstring textstr = wstr(text);
     Tolk_Speak(textstr.c_str(), stop);
 }
-void speak_wait(std::string text, bool stop) {
+void speak_wait(const std::string & text, bool stop) {
     std::wstring textstr = wstr(text);
     Tolk_Speak(textstr.c_str(), stop);
     while (Tolk_IsSpeaking()) {
@@ -87,7 +88,7 @@ void stop_speech() {
     }
 bool window_closable;
 SDL_Event e;
-bool show_game_window(std::string title,int width, int height, bool closable)
+bool show_game_window(const std::string & title,int width, int height, bool closable)
 {
 if(reader==L"JAWS")
     win=SDL_CreateWindow(title.c_str(),SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,width,height,SDL_WINDOW_SHOWN | SDL_WINDOW_KEYBOARD_GRABBED);
@@ -109,15 +110,19 @@ return false;
 
     SDL_DestroyWindow(win);
 }
-void set_game_window_title(std::string new_title) {
+void set_game_window_title(const std::string & new_title) {
     SDL_SetWindowTitle(win, new_title.c_str());
 }
+void set_game_window_closable(bool set_closable) {
+    window_closable = set_closable;
+}
+
 void update_game_window()
 {
     SDL_PollEvent(&e);
-        if (e.type == SDL_QUIT and window_closable == true)
+    if (e.type == SDL_QUIT and window_closable == true)
         {
-            quit();
+            exit_engine();
         }
         else if (e.type == SDL_TEXTINPUT)
             inputtext += e.text.text;
@@ -131,7 +136,7 @@ void update_game_window()
             keys[e.key.keysym.sym] = false;
         }
     }
-void quit()
+void exit_engine(int return_number)
 {
     alcDestroyContext(context);
     alcCloseDevice(device);
@@ -145,7 +150,7 @@ SDL_UnregisterApp();
 Tolk_Unload();
 SDL_Quit();
         SDLNet_Quit();
-exit(0);
+exit(return_number);
 }
 std::string read_environment_variable(const std::string& path) {
 #ifdef _WIN32
@@ -156,7 +161,7 @@ std::string read_environment_variable(const std::string& path) {
         // Environment variable not found or error occurred
         return "";
     }
-    std::string result(value);
+    const std::string & result(value);
     free(value);  // Free the allocated memory
     return result;
 #else
@@ -166,10 +171,10 @@ std::string read_environment_variable(const std::string& path) {
         // Environment variable not found
         return "";
     }
-    return std::string(value);
+    return const std::string &(value);
 #endif
 }
-bool clipboard_copy_text(std::string text) {
+bool clipboard_copy_text(const std::string & text) {
     SDL_SetClipboardText(text.c_str());
     return true;
 }
@@ -221,11 +226,58 @@ bool key_repeat(SDL_Keycode key_code)
     }
     return false;
 }
-bool alert(std::string title, std::string text, unsigned int flag)
+bool alert(const std::string & title, const std::string & text, const std::string &button_name)
 {
-    SDL_ShowSimpleMessageBox(flag , title.c_str(), text.c_str(), NULL);
+    SDL_MessageBoxButtonData buttons[] = {
+        { SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT | SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 1, button_name.c_str()},
+    };
+
+    SDL_MessageBoxData messageboxdata = {
+        SDL_MESSAGEBOX_INFORMATION,
+        win,
+        title.c_str(),
+        text.c_str(),
+        SDL_arraysize(buttons),
+        buttons,
+        NULL
+    };
+
+    int buttonid;
+    if (SDL_ShowMessageBox(&messageboxdata, &buttonid) < 0) {
+        SDL_Log("Error displaying message box");
+        return false;
+    }
+
+
+
 return true;
 }
+int question(const std::string& title, const std::string& text) {
+    SDL_MessageBoxButtonData buttons[] = {
+    { SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Yes" },
+    { SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 2, "No" },
+    };
+
+    SDL_MessageBoxData messageboxdata = {
+        SDL_MESSAGEBOX_INFORMATION,
+        win,
+        title.c_str(),
+        text.c_str(),
+        SDL_arraysize(buttons),
+        buttons,
+        NULL
+    };
+
+    int buttonid;
+    if (SDL_ShowMessageBox(&messageboxdata, &buttonid) < 0) {
+        SDL_Log("Error displaying message box");
+        return -1;
+    }
+
+    return buttonid;
+}
+
+
 void set_listener_position(float l_x, float l_y, float l_z) {
     alListener3f(AL_POSITION, l_x, l_y, l_z);
     ma_engine_listener_set_position(&sound_engine, 0, l_x, l_y, l_z);
@@ -242,10 +294,10 @@ void delay(int ms)
 {
 SDL_Delay(ms);
 }
-void set_sound_storage(std::string path) {
+void set_sound_storage(const std::string & path) {
     sound_path = path;
 }
-std::string get_sound_storage() {
+ std::string get_sound_storage() {
     return sound_path;
 }
 void set_master_volume(float volume) {
@@ -253,9 +305,6 @@ void set_master_volume(float volume) {
     alListenerf(AL_GAIN, static_cast<float>(volume));
 }
 float get_master_volume() {
-    float volume;
-    alGetListenerf(AL_GAIN, &volume);
-    return volume;
     return ma_engine_get_gain_db(&sound_engine);
 }
 void sound::construct() {
@@ -270,7 +319,7 @@ BOOL sound_check(LPCTSTR szPath)
     return (dwAttrib != INVALID_FILE_ATTRIBUTES &&
         !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
 }
-bool sound::load(std::string filename, bool set3d) {
+bool sound::load(const std::string & filename, bool set3d) {
     std::string result;
     if (sound_path != "") {
         result = sound_path + "/" + filename.c_str();
@@ -283,10 +332,16 @@ bool sound::load(std::string filename, bool set3d) {
         active = false;
         return false;
     }
-        if (set3d)
-            ma_sound_init_from_file(&sound_engine, result.c_str(), 0, NULL, NULL, &handle_);
+    if (active){
+        this->close();
+    active = false;
+}
+
+    if (set3d)
+            ma_sound_init_from_file(&sound_engine, result.c_str(), MA_SOUND_FLAG_DECODE, NULL, NULL, &handle_);
         else
-            ma_sound_init_from_file(&sound_engine, result.c_str(), MA_SOUND_FLAG_NO_SPATIALIZATION, NULL, NULL, &handle_);
+            ma_sound_init_from_file(&sound_engine, result.c_str(), MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_DECODE, NULL, NULL, &handle_);
+        ma_sound_set_doppler_factor(&handle_, 0.1);
         active = true;
         SNDFILE* sndfile;
         SF_INFO sfinfo;
@@ -328,21 +383,21 @@ bool sound::load(std::string filename, bool set3d) {
         // Set 3D properties if requested
         if (set3d) {
             is_3d_ = true;
+        }
             alSource3f(source_, AL_POSITION, 0.0f, 0.0f, 0.0f);
             alSource3f(source_, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
 
             alSourcei(source_, AL_SOURCE_RELATIVE, AL_FALSE);
-            alSourcef(source_, AL_ROLLOFF_FACTOR, 1.0f);
+            alSourcef(source_, AL_ROLLOFF_FACTOR, 0.1f);
             alSourcei(source_, AL_REFERENCE_DISTANCE, 1);
-            alSourcei(source_, AL_MAX_DISTANCE, 100);
-        }
+            alSourcei(source_, AL_MAX_DISTANCE, 500);
 
         active = true;
         return true;
 }
 
 
-    bool sound::load_from_memory(std::string data, bool set3d) {
+    bool sound::load_from_memory(const std::string & data, bool set3d) {
         return false;
     }
 
@@ -452,6 +507,11 @@ bool sound::load(std::string filename, bool set3d) {
         else
             this->audio_system = 0;
     }
+    bool sound::seek(double new_position) {
+        if (!active)return false;
+//        ma_sound_seek_to_pcm_frame(&handle_, );
+    }
+
     void sound::cancel_reverb() {
         return;
     }
@@ -538,8 +598,8 @@ bool sound::load(std::string filename, bool set3d) {
     double sound::get_length() const {
         if (!active)return-17435;
 
-        float length;
-//        ma_sound_get_length_in_seconds(&handle_, length);
+        double length;
+//        length=ma_sound_get_length_in_seconds(&handle_, 0);
     }
         double sound::get_sample_rate() const {
     float rate=0;
@@ -631,36 +691,6 @@ bool timer::is_running() {
         }
     }
 
-        bool key_hold::pressing()
-        {
-            status = key_down(key_code);
-            if (status == false)
-            {
-                repeat_time = 0;
-                key_timer.restart();
-                key_flag = 0;
-                return false;
-            }
-            int kh = key_timer.elapsed_millis();
-            if (kh >= repeat_time)
-            {
-                    switch (key_flag)
-                {
-                case 0:
-                    key_flag = 1;
-                    repeat_time = setting_1;
-                    key_timer.restart();
-                    break;
-                case 1:
-                    repeat_time = setting_2;
-                    key_timer.restart();
-
-                    break;
-                }
-                return true;
-            }
-            return false;
-        }
         void reverb::construct() {
         }
 
@@ -689,7 +719,7 @@ bool timer::is_running() {
 
         void network::construct() {}
         void network::destruct() {}
-        unsigned int network::connect(std::string host, int port) {
+        unsigned int network::connect(const std::string & host, int port) {
                     IPaddress ipAddress;
 
                     if (SDLNet_ResolveHost(&ipAddress, host.c_str(), port) == -1) {
@@ -803,7 +833,7 @@ bool timer::is_running() {
                     return true;
                 }
 
-                std::string network::get_peer_address(unsigned int peerId) {
+                 std::string network::get_peer_address(unsigned int peerId) {
                     IPaddress ipAddress;
                     ipAddress.host = peerId;
 
@@ -879,7 +909,7 @@ bool timer::is_running() {
                         event.m_type = 2;
                         event.m_peerId = SDLNet_TCP_GetPeerAddress(m_clientSocket)->host;
                         event.m_channel = 0;
-                        event.m_message = std::string(buffer, bytesReceived);
+                        event.m_message = std::string (buffer, bytesReceived);
 
                         return &event;
                     }
@@ -901,7 +931,7 @@ bool timer::is_running() {
                             event.m_type = 2;
                             event.m_peerId = pair.first;
                             event.m_channel = 0;
-                            event.m_message = std::string(buffer, bytesReceived);
+                            event.m_message = std::string (buffer, bytesReceived);
 
                             return &event;
                         }
@@ -910,7 +940,7 @@ bool timer::is_running() {
                     return &event;
                 }
 
-                bool network::send_reliable(unsigned int peerId, std::string packet, int channel) {
+                bool network::send_reliable(unsigned int peerId, const std::string & packet, int channel) {
                     if (!m_active) {
                         return false;
                     }
@@ -942,7 +972,7 @@ bool timer::is_running() {
                     return false;
                 }
 
-                bool network::send_unreliable(unsigned int peerId, std::string packet, int channel) {
+                bool network::send_unreliable(unsigned int peerId, const std::string & packet, int channel) {
                     // Not implemented
                     return false;
                 }
@@ -1020,48 +1050,24 @@ bool timer::is_running() {
                 }
                 void library::construct() {}
                 void library::destruct() {}
-                bool library::load(std::string libname) {
+                bool library::load(const std::string & libname) {
                     return lib = LoadLibraryA(libname.c_str());
                 }
-                void* CallFunction(FARPROC func, va_list args) {
-                    const int MAX_ARGS = 10;
-                    void* argList[MAX_ARGS];
-                    int i = 0;
-
-                    while (i < MAX_ARGS) {
-                        argList[i] = va_arg(args, void*);
-                        if (argList[i] == nullptr) {
-                            break;
-                        }
-                        i++;
+                template<typename... Args>
+                CScriptDictionary* library::call(const std::string function_name, Args... args) {
+                    CScriptDictionary CallResult;
+                    if (lib == nullptr) {
+                        return nullptr; // library not loaded
                     }
-                    switch (i) {
-                    case 0: return ((void* (*)())func)();
-                    case 1: return ((void* (*)(void*))func)(argList[0]);
-                    case 2: return ((void* (*)(void*, void*))func)(argList[0], argList[1]);
-                    case 3: return ((void* (*)(void*, void*, void*))func)(argList[0], argList[1], argList[2]);
-                    case 4: return ((void* (*)(void*, void*, void*, void*))func)(argList[0], argList[1], argList[2], argList[3]);
-//                    case 5: return ((void* (*)(void*, void*, void*, void*, void*))func)(argList[0], argList[1], argList[2], argList[3], argList[4]);
-//                    case 6: return ((void* (*)(void*, void*, void*, void*, void*, void*))func)(argList[0], argList[1], argList[2], argList[3], argList[4], argList[5]);
-//                    case 7: return ((void* (*)(void*, void*, void*, void*, void*, void*, void*))func)(argList[0], argList[1], argList[2], argList[3], argList[4], argList[5], argList[6]);
-//                    case 8: return ((void* (*)(void*, void*, void*, void*, void*, void*, void*, void*))func)(argList[0], argList[1], argList[2], argList[3], argList[4], argList[5], argList[6], argList[7]);
-//                    case 9: return ((void* (*)(void*, void*, void*, void*, void*, void*, void*, void*, void*))func)(argList[0], argList[1], argList[2], argList[3], argList[4], argList[5], argList[6], argList[7], argList[8]);
-//                    case 10: return ((void* (*)(void*, void*, void*, void*, void*, void*, void*, void*, void*, void*))func)(argList[0], argList[1], argList[2], argList[3], argList[4], argList[5], argList[6], argList[7], argList[8], argList[9]);
-                    default: throw std::invalid_argument("Too many arguments");
-                    }
-                }
-                CScriptDictionary* library::call(std::string function_name, ...) {
-                    va_list args;
-                    va_start(args, function_name);
+//                    auto function = reinterpret_cast<ReturnType(*)(Args...)>(GetProcAddress(lib, function_name));
+//                    if (function == nullptr) {
+//                        return nullptr; // function not found
+//                    }
+//                    function(args...);
 
-                    void* result = nullptr;
-                    FARPROC func = GetProcAddress(lib, function_name.c_str());
-                            result = CallFunction(func, args);
-                            va_end(args);
 
                 }
-
-                void library::unload() {
+                    void library::unload() {
                     FreeLibrary(lib);
                 }
                 void instance::construct() {}

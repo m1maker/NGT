@@ -172,7 +172,6 @@ int main(int argc, char* argv[]) {
         // Register any necessary functions and types
         // ...
         RegisterStdString(engine);
-        RegisterFunctions(engine);
         RegisterScriptArray(engine, true);
         RegisterStdStringUtils(engine);
         RegisterScriptDictionary(engine);
@@ -181,6 +180,7 @@ int main(int argc, char* argv[]) {
         RegisterScriptFileSystem(engine);
         RegisterExceptionRoutines(engine);
         RegisterScriptMath(engine);
+        RegisterFunctions(engine);
         engine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
         engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
         engine->RegisterGlobalFunction("int exec(const string &in, string &out)", asFUNCTIONPR(ExecSystemCmd, (const string&, string&), int), asCALL_CDECL);
@@ -223,7 +223,6 @@ int main(int argc, char* argv[]) {
         // Register any necessary functions and types
         // ...
         RegisterStdString(engine);
-        RegisterFunctions(engine);
         RegisterScriptArray(engine, true);
         RegisterStdStringUtils(engine);
         RegisterScriptDictionary(engine);
@@ -232,6 +231,7 @@ int main(int argc, char* argv[]) {
         RegisterScriptFileSystem(engine);
         RegisterExceptionRoutines(engine);
         RegisterScriptMath(engine);
+        RegisterFunctions(engine);
         engine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
         engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
         engine->RegisterGlobalFunction("int exec(const string &in, string &out)", asFUNCTIONPR(ExecSystemCmd, (const string&, string&), int), asCALL_CDECL);
@@ -314,7 +314,6 @@ int main(int argc, char* argv[]) {
         engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
 
         RegisterStdString(engine);
-        RegisterFunctions(engine);
         RegisterScriptArray(engine, true);
         RegisterStdStringUtils(engine);
         RegisterScriptDictionary(engine);
@@ -323,6 +322,7 @@ int main(int argc, char* argv[]) {
         RegisterScriptFileSystem(engine);
         RegisterExceptionRoutines(engine);
         RegisterScriptMath(engine);
+        RegisterFunctions(engine);
         engine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
         engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
         engine->RegisterGlobalFunction("int exec(const string &in, string &out)", asFUNCTIONPR(ExecSystemCmd, (const string&, string&), int), asCALL_CDECL);
