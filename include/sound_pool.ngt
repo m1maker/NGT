@@ -82,12 +82,12 @@ return;
 if(max_distance>0 and looping==true)
 {
 int total_distance=get_total_distance(listener_x, listener_y, listener_z);
-if(total_distance>max_distance and handle.is_active()==true)
+if(total_distance>max_distance and handle.active==true)
 {
 handle.close();
 return;
 }
-if(total_distance<=max_distance and handle.is_active()==false)
+if(total_distance<=max_distance and handle.active==false)
 {
 if(!memoryplaying)
 {
@@ -97,7 +97,7 @@ handle.load(filename);
 set_sound_storage(old_storage);
 }
 //else handle.load_from_memory(filename);
-if(handle.is_active()==true)
+if(handle.active==true)
 {
 if(start_offset>0)
 {
@@ -120,7 +120,7 @@ This method recalculates the position parameters including the ranges, if any. I
 */
 void update_listener_position(double listener_x, double listener_y, double listener_z, double rotation)
 {
-if(handle.is_active()==false)
+if(handle.active==false)
 {
 return;
 }
@@ -297,7 +297,7 @@ items[slot].memoryplaying=true;
 items[slot].handle.load_from_memory(items[slot].filename);
 }
 */
-if(items[slot].handle.is_active()==false)
+if(items[slot].handle.active==false)
 {
 items[slot].reset();
 return -1;
@@ -385,7 +385,7 @@ items[slot].memoryplaying=true;
 items[slot].handle.load_from_memory(items[slot].filename);
 }
 */
-if(items[slot].handle.is_active()==false)
+if(items[slot].handle.active==false)
 {
 items[slot].reset();
 return -1;
@@ -468,7 +468,7 @@ items[slot].memoryplaying=true;
 items[slot].handle.load_from_memory(items[slot].filename);
 }
 */
-if(items[slot].handle.is_active()==false)
+if(items[slot].handle.active==false)
 {
 items[slot].reset();
 return -1;
@@ -556,7 +556,7 @@ items[slot].memoryplaying=true;
 items[slot].handle.load_from_memory(items[slot].filename);
 }
 */
-if(items[slot].handle.is_active()==false)
+if(items[slot].handle.active==false)
 {
 items[slot].reset();
 return -1;
@@ -583,7 +583,7 @@ highest_slot=slot;
 return slot;
 }
 
-bool sound_is_active(int slot)
+bool sound_active(int slot)
 {
 /*
 If the looping parameter is set to true and the sound object is inactive, the sound is still considered to be active as this just means that we are currently out of earshot. A non-looping sound that has finished playing is considered to be dead, and will be cleaned up.
@@ -596,7 +596,7 @@ if(items[slot].looping==false and @items[slot].handle==null)
 {
 return false;
 }
-if(items[slot].looping==false and items[slot].handle.is_playing()==false)
+if(items[slot].looping==false and items[slot].handle.playing==false)
 {
 return false;
 }
@@ -605,16 +605,16 @@ return true;
 
 bool sound_is_playing(int slot)
 {
-if(sound_is_active(slot)==false)
+if(sound_active(slot)==false)
 {
 return false;
 }
-return items[slot].handle.is_playing();
+return items[slot].handle.playing;
 }
 
 bool pause_sound(int slot)
 {
-if(sound_is_active(slot)==false)
+if(sound_active(slot)==false)
 {
 return false;
 }
@@ -623,7 +623,7 @@ if(items[slot].paused==true)
 return false;
 }
 items[slot].paused=true;
-if(items[slot].handle.is_playing()==true)
+if(items[slot].handle.playing==true)
 items[slot].handle.pause();
 return true;
 }
@@ -641,12 +641,12 @@ return false;
 items[slot].paused=false;
 if(max_distance>0 and items[slot].get_total_distance(last_listener_x, last_listener_y, last_listener_z)>max_distance)
 {
-if(items[slot].handle.is_active()==true)
+if(items[slot].handle.active==true)
 items[slot].handle.close();
 return true;
 }
 items[slot].update(last_listener_x, last_listener_y, last_listener_z, last_listener_rotation, max_distance);
-if(items[slot].handle.is_active()==true and items[slot].handle.is_playing()==false)
+if(items[slot].handle.active==true and items[slot].handle.playing==false)
 {
 if(items[slot].looping==true)
 {
@@ -828,7 +828,7 @@ if(current.looping==false and @current.handle==null)
 {
 continue;
 }
-if(current.looping==false and current.handle.is_playing()==false)
+if(current.looping==false and current.handle.playing==false)
 {
 continue;
 }
@@ -861,11 +861,11 @@ if(@current.handle==null)
 {
 continue;
 }
-if(current.handle.is_active()==false)
+if(current.handle.active==false)
 {
 continue;
 }
-if(current.handle.is_playing()==false and current.paused==false)
+if(current.handle.playing==false and current.paused==false)
 {
 if(i==highest_slot)
 killed_highest_slot=true;
@@ -931,12 +931,12 @@ if(@current.handle==null)
 slot=i;
 break;
 }
-if(current.handle.is_active()==false)
+if(current.handle.active==false)
 {
 slot=i;
 break;
 }
-if(current.handle.is_playing()==false)
+if(current.handle.playing==false)
 {
 slot=i;
 break;

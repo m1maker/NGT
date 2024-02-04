@@ -24,7 +24,7 @@ key_timer.restart();
 key_flag=0;
 return false;
 }
-int keytimerelapsed=key_timer.elapsed_millis();
+int keytimerelapsed=key_timer.elapsed_millis;
 if(keytimerelapsed>=repeat_time)
 {
 switch(key_flag)
