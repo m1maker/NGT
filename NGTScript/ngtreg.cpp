@@ -397,6 +397,7 @@ user_idle* fuser_idle() { return new user_idle; }
 library* flibrary() { return new library; }
 instance* finstance(std::string app) { return new instance(app); }
 network_event* fnetwork_event() { return new network_event; }
+ngtvector* fngtvector() { return new ngtvector; }
 
 network* fnetwork() { return new network; }
 void MessageCallback(const asSMessageInfo* msg, void* param)
@@ -410,13 +411,21 @@ void MessageCallback(const asSMessageInfo* msg, void* param)
     _itoa_s(msg->row, rowStr, 10);
     _itoa_s(msg->col, colStr, 10);
     std::string messageStr(msg->message);
-    std::string output = "File: \r\n"+std::string(msg->section) + "Line (\r\n" + rowStr + ", " + colStr + ") : \r\n" + type + " : " + messageStr;
+    std::string output = "File: \r\n"+std::string(msg->section) + "\r\nLine (" + rowStr + ", " + colStr + ") : \r\n" + type + " : " + messageStr;
     ouou = wstr(output);
     result_message  += ouou+L"\r\n";
 }
 void RegisterFunctions(asIScriptEngine* engine)
 {
     engine->SetEngineProperty(asEP_ALLOW_MULTILINE_STRINGS, true);
+    engine->RegisterObjectType("vector", sizeof(ngtvector), asOBJ_REF);
+    engine->RegisterObjectBehaviour("vector", asBEHAVE_FACTORY, "vector@ v()", asFUNCTION(fngtvector), asCALL_CDECL);
+    engine->RegisterObjectBehaviour("vector", asBEHAVE_ADDREF, "void f()", asMETHOD(ngtvector, construct), asCALL_THISCALL);
+    engine->RegisterObjectBehaviour("vector", asBEHAVE_RELEASE, "void f()", asMETHOD(ngtvector, destruct), asCALL_THISCALL);
+    engine->RegisterObjectProperty("vector", "float x", asOFFSET(ngtvector, x));
+    engine->RegisterObjectProperty("vector", "float y", asOFFSET(ngtvector, y));
+    engine->RegisterObjectProperty("vector", "float z", asOFFSET(ngtvector, z));
+
     engine->RegisterGlobalFunction("uint64 get_time_stamp_millis()", asFUNCTION(get_time_stamp_millis), asCALL_CDECL);
     engine->RegisterGlobalFunction("uint64 get_time_stamp_seconds()", asFUNCTION(get_time_stamp_seconds), asCALL_CDECL);
     engine->RegisterGlobalFunction("int random(int, int)", asFUNCTIONPR(random, (long, long), long), asCALL_CDECL);
@@ -434,6 +443,7 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterGlobalFunction("void set_game_window_closable(bool)", asFUNCTION(set_game_window_closable), asCALL_CDECL);
 
     engine->RegisterGlobalFunction("void update_game_window()", asFUNCTION(update_game_window), asCALL_CDECL);
+    engine->RegisterGlobalFunction("bool is_game_window_active()", asFUNCTION(is_game_window_active), asCALL_CDECL);
     engine->RegisterGlobalFunction("void exit(int=0)",asFUNCTION(exit_engine),asCALL_CDECL);
     engine->RegisterGlobalFunction("bool clipboard_copy_text(const string &in)", asFUNCTION(clipboard_copy_text), asCALL_CDECL);
     engine->RegisterGlobalFunction("string clipboard_read_text()", asFUNCTION(clipboard_read_text), asCALL_CDECL);
@@ -446,7 +456,9 @@ void RegisterFunctions(asIScriptEngine* engine)
 
     engine->RegisterGlobalFunction("bool alert(const string &in, const string &in, const string &in=\"OK\")", asFUNCTION(alert), asCALL_CDECL);
     engine->RegisterGlobalFunction("int question(const string &in, const string &in)", asFUNCTION(question), asCALL_CDECL);
-    engine->RegisterGlobalFunction("void set_listener_position(float, float, float)", asFUNCTION(set_listener_position), asCALL_CDECL);
+    engine->RegisterGlobalFunction("void set_listener_position(float, float, float)", asFUNCTIONPR(set_listener_position, (float, float, float), void), asCALL_CDECL);
+    engine->RegisterGlobalFunction("void set_listener_position(vector@=null)", asFUNCTIONPR(set_listener_position, (ngtvector*), void), asCALL_CDECL);
+
     engine->RegisterGlobalFunction("void wait(int)", asFUNCTION(wait), asCALL_CDECL);
     engine->RegisterGlobalFunction("void delay(int)",asFUNCTION(delay),asCALL_CDECL);
     engine->RegisterGlobalFunction("void set_sound_storage(const string &in)", asFUNCTION(set_sound_storage), asCALL_CDECL);
@@ -472,53 +484,52 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectBehaviour("sound", asBEHAVE_RELEASE, "void f()", asMETHOD(sound, destruct), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool load(const string &in, bool=false)", asMETHOD(sound, load), asCALL_THISCALL);
 //    engine->RegisterObjectMethod("sound", "bool load_from_memory(const string &in, bool=false)", asMETHOD(sound, load), asCALL_THISCALL);
-
     engine->RegisterObjectMethod("sound", "bool play()", asMETHOD(sound, play), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool play_looped()", asMETHOD(sound, play_looped), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool pause()", asMETHOD(sound, pause), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool play_wait()", asMETHOD(sound, play_wait), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "bool set_faid_parameters(float, float, uint)", asMETHOD(sound, set_faid_parameters), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool stop()", asMETHOD(sound, stop), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool close()", asMETHOD(sound, close), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "void set_sound_position(float, float, float)", asMETHOD(sound, set_sound_position), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "void set_sound_reverb(float, float, float)", asMETHOD(sound, set_sound_reverb), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "void set_sound_hrtf(bool)", asMETHOD(sound, set_sound_hrtf), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void set_sound_position(float, float, float)", asMETHODPR(sound, set_sound_position, (float, float, float), void), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void set_sound_position(vector@=null)", asMETHODPR(sound, set_sound_position, (ngtvector*), void), asCALL_THISCALL);
 
+    engine->RegisterObjectMethod("sound", "void set_sound_reverb(reverb@=null)", asMETHOD(sound, set_sound_reverb), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void set_sound_hrtf(bool)", asMETHOD(sound, set_sound_hrtf), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "bool seek(double)", asMETHOD(sound, seek), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "void cancel_reverb()", asMETHOD(sound, cancel_reverb), asCALL_THISCALL);
 
-    engine->RegisterObjectMethod("sound", "double get_pan() const", asMETHOD(sound, get_pan), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "void set_pan(double)", asMETHOD(sound, set_pan), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "double get_volume() const", asMETHOD(sound, get_volume), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "void set_volume(double)", asMETHOD(sound, set_volume), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "double get_pitch() const", asMETHOD(sound, get_pitch), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "void set_pitch(double)", asMETHOD(sound, set_pitch), asCALL_THISCALL);
-//    engine->RegisterObjectMethod("sound", "double get_pitch_lower_limit() const", asMETHOD(sound, get_pitch_lower_limit), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "bool is_active() const", asMETHOD(sound, is_active), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "bool is_playing() const", asMETHOD(sound, is_playing), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "bool is_paused() const", asMETHOD(sound, is_paused), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "double get_position() const", asMETHOD(sound, get_position), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "double get_length() const", asMETHOD(sound, get_length), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "double get_sample_rate() const", asMETHOD(sound, get_sample_rate), asCALL_THISCALL);
-//    engine->RegisterObjectMethod("sound", "double get_channels() const", asMETHOD(sound, get_channels), asCALL_THISCALL);
-//    engine->RegisterObjectMethod("sound", "double get_bits() const", asMETHOD(sound, get_bits), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "double get_pan() const property", asMETHOD(sound, get_pan), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void set_pan(double)const property", asMETHOD(sound, set_pan), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "double get_volume() const property", asMETHOD(sound, get_volume), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void set_volume(double)const property", asMETHOD(sound, set_volume), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "double get_pitch() const property", asMETHOD(sound, get_pitch), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void set_pitch(double)const property", asMETHOD(sound, set_pitch), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "bool get_active() const property", asMETHOD(sound, is_active), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "bool get_playing() const property", asMETHOD(sound, is_playing), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "bool get_paused() const property", asMETHOD(sound, is_paused), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "double get_position() const property", asMETHOD(sound, get_position), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "double get_length() const property", asMETHOD(sound, get_length), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "double get_sample_rate() const property", asMETHOD(sound, get_sample_rate), asCALL_THISCALL);
     engine->RegisterObjectType("user_idle", sizeof(user_idle), asOBJ_REF | asOBJ_NOCOUNT);
     engine->RegisterObjectBehaviour("user_idle", asBEHAVE_FACTORY, "user_idle@ u()", asFUNCTION(fuser_idle), asCALL_CDECL);
-    engine->RegisterObjectMethod("user_idle", "uint64 elapsed_millis()", asMETHOD(user_idle, elapsed_millis), asCALL_THISCALL);
-    engine->RegisterObjectMethod("user_idle", "uint64 elapsed_seconds()", asMETHOD(user_idle, elapsed_seconds), asCALL_THISCALL);
-    engine->RegisterObjectMethod("user_idle", "uint64 elapsed_minutes()", asMETHOD(user_idle, elapsed_minutes), asCALL_THISCALL);
-    engine->RegisterObjectMethod("user_idle", "uint64 elapsed_hours()", asMETHOD(user_idle, elapsed_hours), asCALL_THISCALL);
-    engine->RegisterObjectMethod("user_idle", "uint64 elapsed_days()", asMETHOD(user_idle, elapsed_days), asCALL_THISCALL);
-    engine->RegisterObjectMethod("user_idle", "uint64 elapsed_weeks()", asMETHOD(user_idle, elapsed_weeks), asCALL_THISCALL);
+    engine->RegisterObjectMethod("user_idle", "uint64 get_elapsed_millis()const property", asMETHOD(user_idle, elapsed_millis), asCALL_THISCALL);
+    engine->RegisterObjectMethod("user_idle", "uint64 get_elapsed_seconds()const property", asMETHOD(user_idle, elapsed_seconds), asCALL_THISCALL);
+    engine->RegisterObjectMethod("user_idle", "uint64 get_elapsed_minutes()const property", asMETHOD(user_idle, elapsed_minutes), asCALL_THISCALL);
+    engine->RegisterObjectMethod("user_idle", "uint64 get_elapsed_hours()const property", asMETHOD(user_idle, elapsed_hours), asCALL_THISCALL);
+    engine->RegisterObjectMethod("user_idle", "uint64 get_elapsed_days()const property", asMETHOD(user_idle, elapsed_days), asCALL_THISCALL);
+    engine->RegisterObjectMethod("user_idle", "uint64 get_elapsed_weeks()const property", asMETHOD(user_idle, elapsed_weeks), asCALL_THISCALL);
 
     engine->RegisterObjectType("timer", sizeof(timer), asOBJ_REF);
     engine->RegisterObjectBehaviour("timer", asBEHAVE_FACTORY, "timer@ t()", asFUNCTION(ftimer), asCALL_CDECL);
     engine->RegisterObjectBehaviour("timer", asBEHAVE_ADDREF, "void f()", asMETHOD(timer, construct), asCALL_THISCALL);
     engine->RegisterObjectBehaviour("timer", asBEHAVE_RELEASE, "void f()", asMETHOD(timer, destruct), asCALL_THISCALL);
-    engine->RegisterObjectMethod("timer", "uint64 elapsed_seconds()", asMETHOD(timer, elapsed_seconds), asCALL_THISCALL);
-    engine->RegisterObjectMethod("timer", "uint64 elapsed_minutes()", asMETHOD(timer, elapsed_minutes), asCALL_THISCALL);
-    engine->RegisterObjectMethod("timer", "uint64 elapsed_hours()", asMETHOD(timer, elapsed_hours), asCALL_THISCALL);
-    engine->RegisterObjectMethod("timer", "uint64 elapsed_millis()", asMETHOD(timer, elapsed_millis), asCALL_THISCALL);
-    engine->RegisterObjectMethod("timer", "uint64 elapsed_micros()", asMETHOD(timer, elapsed_micros), asCALL_THISCALL);
-    engine->RegisterObjectMethod("timer", "uint64 elapsed_nanos()", asMETHOD(timer, elapsed_nanos), asCALL_THISCALL);
+    engine->RegisterObjectMethod("timer", "uint64 get_elapsed_seconds()const property", asMETHOD(timer, elapsed_seconds), asCALL_THISCALL);
+    engine->RegisterObjectMethod("timer", "uint64 get_elapsed_minutes()const property", asMETHOD(timer, elapsed_minutes), asCALL_THISCALL);
+    engine->RegisterObjectMethod("timer", "uint64 get_elapsed_hours()const property", asMETHOD(timer, elapsed_hours), asCALL_THISCALL);
+    engine->RegisterObjectMethod("timer", "uint64 get_elapsed_millis()const property", asMETHOD(timer, elapsed_millis), asCALL_THISCALL);
+    engine->RegisterObjectMethod("timer", "uint64 get_elapsed_micros()const property", asMETHOD(timer, elapsed_micros), asCALL_THISCALL);
+    engine->RegisterObjectMethod("timer", "uint64 get_elapsed_nanos()const property", asMETHOD(timer, elapsed_nanos), asCALL_THISCALL);
     engine->RegisterObjectMethod("timer", "void force_seconds(uint64)", asMETHOD(timer, force_seconds), asCALL_THISCALL);
     engine->RegisterObjectMethod("timer", "void force_minutes(uint64)", asMETHOD(timer, force_minutes), asCALL_THISCALL);
     engine->RegisterObjectMethod("timer", "void force_hours(uint64)", asMETHOD(timer, force_hours), asCALL_THISCALL);
@@ -528,7 +539,7 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectMethod("timer", "void restart()", asMETHOD(timer, restart), asCALL_THISCALL);
     engine->RegisterObjectMethod("timer", "void pause()", asMETHOD(timer, pause), asCALL_THISCALL);
     engine->RegisterObjectMethod("timer", "void resume()", asMETHOD(timer, resume), asCALL_THISCALL);
-    engine->RegisterObjectMethod("timer", "bool is_running()", asMETHOD(timer, is_running), asCALL_THISCALL);
+    engine->RegisterObjectMethod("timer", "bool get_running()const property", asMETHOD(timer, is_running), asCALL_THISCALL);
     engine->RegisterObjectType("library", sizeof(library), asOBJ_REF);
     engine->RegisterObjectBehaviour("library", asBEHAVE_FACTORY, "library@ l()", asFUNCTION(flibrary), asCALL_CDECL);
     engine->RegisterObjectBehaviour("library", asBEHAVE_ADDREF, "void f()", asMETHOD(library, construct), asCALL_THISCALL);
@@ -541,6 +552,7 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectBehaviour("instance", asBEHAVE_ADDREF, "void f()", asMETHOD(instance, construct), asCALL_THISCALL);
     engine->RegisterObjectBehaviour("instance", asBEHAVE_RELEASE, "void f()", asMETHOD(instance, destruct), asCALL_THISCALL);
     engine->RegisterObjectMethod("instance", "bool is_running()", asMETHOD(instance, is_running), asCALL_THISCALL);
+/*
     engine->RegisterObjectType("network_event", sizeof(network_event), asOBJ_REF);
     engine->RegisterObjectBehaviour("network_event", asBEHAVE_FACTORY, "network_event@ n()", asFUNCTION(fnetwork_event), asCALL_CDECL);
     engine->RegisterObjectBehaviour("network_event", asBEHAVE_ADDREF, "void f()", asMETHOD(network_event, construct), asCALL_THISCALL);
@@ -576,11 +588,7 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectMethod("network", "int get_connected_peers() const", asMETHOD(network, get_connected_peers), asCALL_THISCALL);
     engine->RegisterObjectMethod("network", "double get_bytes_sent() const", asMETHOD(network, get_bytes_sent), asCALL_THISCALL);
     engine->RegisterObjectMethod("network", "double get_bytes_received() const", asMETHOD(network, get_bytes_received), asCALL_THISCALL);
-    engine->RegisterObjectType("vector", sizeof(ngtvector), asOBJ_VALUE | asOBJ_POD);
-
-    engine->RegisterObjectProperty("vector", "float x", asOFFSET(ngtvector, x));
-    engine->RegisterObjectProperty("vector", "float y", asOFFSET(ngtvector, y));
-    engine->RegisterObjectProperty("vector", "float z", asOFFSET(ngtvector, z));
+*/
     engine->RegisterGlobalProperty("const int SDLK_UNKNOWN", (void*)&AS_SDLK_UNKNOWN);
 engine->RegisterGlobalProperty("const int SDLK_BACKSPACE", (void*)&AS_SDLK_BACKSPACE);
 engine->RegisterGlobalProperty("const int SDLK_TAB", (void*)&AS_SDLK_TAB);

@@ -14,6 +14,8 @@ GitHub:        https://github.com/mackron/miniaudio
 #ifdef __cplusplus
 extern "C" {
 #endif
+#define MA_ZERO_OBJECT(p)               MA_ZERO_MEMORY((p), sizeof(*(p)))
+#define MA_ZERO_MEMORY(p, sz)           ma_zero_memory_default((p), (sz))
 
 #define MA_STRINGIFY(x)     #x
 #define MA_XSTRINGIFY(x)    MA_STRINGIFY(x)
@@ -365,6 +367,7 @@ versions of Visual Studio, which I've confirmed with at least VC6.
         #define MA_ATOMIC(alignment, type)        type
     #endif
 #endif
+MA_INLINE void ma_zero_memory_default(void* p, size_t sz);
 
 typedef struct ma_context ma_context;
 typedef struct ma_device ma_device;

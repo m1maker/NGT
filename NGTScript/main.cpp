@@ -4,9 +4,6 @@
 #include "scriptstdstring/scriptstdstring.h"
 #include <fstream>
 #include <cstdlib>
-
-#include <iostream>
-
 #include <assert.h>  // assert()
 #include "angelscript.h"
 #include "ngt.h"
@@ -18,6 +15,67 @@
 #include "datetime/datetime.h"
 #include "scriptmath/scriptmath.h"
 #include <thread>
+std::wstring get_exe() {
+    std::vector<wchar_t> pathBuf;
+    DWORD copied = 0;
+    do {
+        pathBuf.resize(pathBuf.size() + MAX_PATH);
+        copied = GetModuleFileName(0, &pathBuf.at(0), pathBuf.size());
+    } while (copied >= pathBuf.size());
+
+    pathBuf.resize(copied);
+
+    return std::wstring(pathBuf.begin(), pathBuf.end());
+}
+unsigned char NGTOfset = 0x3213213523423121;
+const char* end = "0e0e0e0e0e0e0e0e";
+
+std::vector <asBYTE> buffer;
+asUINT buffer_size;
+typedef struct NGT{
+    WORD e_magic=0x4410052116654543;
+    DWORD NGTProgram=0e1277297;
+    const char* product = "NGT";
+    double version=3.0;
+} NGTHeader;
+
+NGTHeader h;
+bool has_bytes() {
+    FILE* temp;
+    std::wstring exe = get_exe();
+    std::string str;
+    str.assign(exe.begin(), exe.end());
+
+    fopen_s(&temp, str.c_str(), "rb");
+    if (temp == nullptr) {
+        return false;
+    }
+
+    const size_t struct_size = sizeof(h);
+    const size_t buffer_size = 4096;
+    char buffer[buffer_size];
+
+    bool found = false;
+    size_t last_pos = 0; // Позиция последней найденной структуры
+
+    while (!feof(temp)) {
+        size_t bytes_read = fread(buffer, 1, buffer_size, temp);
+        for (size_t i = 0; i < bytes_read - struct_size + 1; ++i) {
+            if (memcmp(&buffer[i], &h, struct_size) == 0) {
+                found = true;
+                last_pos = ftell(temp) - (bytes_read - i); // Сохраняем позицию найденной структуры
+            }
+        }
+    }
+
+    if (found) {
+        fseek(temp, last_pos, SEEK_SET); // Перемещаем указатель на позицию последней структуры
+    }
+
+    fclose(temp);
+    return found;
+}
+
 bool SCRIPT_COMPILED = false;
 BOOL FileExists(LPCTSTR szPath)
 {
@@ -37,48 +95,66 @@ char** g_argv = 0;
 
 class CBytecodeStream : public asIBinaryStream
 {
-public:
-    CBytecodeStream() { f = 0; }
-    ~CBytecodeStream() { if (f) fclose(f); }
+private:
+    std::vector<asBYTE> Code;
+    int ReadPos, WritePos;
 
-    int Open(const char* filename, const char* mode)
+public:
+    CBytecodeStream() : ReadPos(0), WritePos(0)
     {
-        if (f) return -1;
-#if _MSC_VER >= 1500
-        fopen_s(&f, filename, mode);
-#else
-        f = fopen(filename, mode);
-#endif
-        if (f == 0) return -1;
+}
+
+    CBytecodeStream(const std::vector<asBYTE>& Data) : Code(Data), ReadPos(0), WritePos(0)
+    {
+    }
+
+    int Read(void* Ptr, asUINT Size) override
+    {
+        if (Ptr == nullptr || Size == 0)
+        {
+            return -1; // Error: corrupted read
+        }
+
+        if (ReadPos + Size > Code.size())
+        {
+            return -1; // Error: trying to read past end of stream
+        }
+
+        std::memcpy(Ptr, &Code[ReadPos], Size);
+        ReadPos += Size;
+
         return 0;
     }
 
-    int Write(const void* ptr, asUINT size)
+    int Write(const void* Ptr, asUINT Size) override
     {
-        if (size == 0) return 0;
-        fwrite(ptr, size, 1, f);
+        if (Ptr == nullptr || Size == 0)
+        {
+            return -1; // Error: corrupted write
+        }
+
+        Code.insert(Code.end(), static_cast<const asBYTE*>(Ptr), static_cast<const asBYTE*>(Ptr) + Size);
+        WritePos += Size;
+
+        return 0;
     }
-    int Read(void* ptr, asUINT size)
+
+    std::vector<asBYTE>& GetCode()
     {
-        if (size == 0) return 0;
-        fread(ptr, size, 1, f);
+        return Code;
     }
-protected:
-    FILE* f;
+
+    asUINT GetSize() const
+    {
+        return static_cast<asUINT>(Code.size());
+    }
 };
+
+
 int Compile(asIScriptEngine* engine, const char* outputFile)
 {
+    int r;
     CBytecodeStream stream;
-    int r = stream.Open(outputFile, "wb");
-    if (r < 0)
-    {
-        engine->WriteMessage(outputFile, 0, 0, asMSGTYPE_ERROR, "Failed to open output file for writing");
-
-        std::thread t(show_message);
-        t.join();
-        return -1;
-    }
-
     asIScriptModule* mod = engine->GetModule("ngtgame");
     if (mod == 0)
     {
@@ -100,6 +176,8 @@ int Compile(asIScriptEngine* engine, const char* outputFile)
 
         return -1;
     }
+    buffer = stream.GetCode();
+    buffer_size = stream.GetSize();
     alert("NGT", "Script was compiled successfully");
 
 
@@ -108,18 +186,8 @@ int Compile(asIScriptEngine* engine, const char* outputFile)
 
 int Load(asIScriptEngine* engine, const char* inputFile)
 {
+    int r;
     CBytecodeStream stream;
-    int r = stream.Open(inputFile, "rb");
-    if (r < 0)
-    {
-        engine->WriteMessage(inputFile, 0, 0, asMSGTYPE_ERROR, "Failed to open output file for writing");
-
-        std::thread t(show_message);
-        t.join();
-
-        return -1;
-    }
-
     asIScriptModule* mod = engine->GetModule("ngtgame");
     if (mod == 0)
     {
@@ -153,15 +221,16 @@ int scriptArg=0;
 
 
 int main(int argc, char* argv[]) {
-    if (FileExists(L"game_object.ngtb")) {
-        filename = "game_object.ngtb";
+    /*
+    if(has_bytes){
         flag = "-b";
-//        alert("DebugInfo", filename);
+        alert("DebugInfo", filename);
     }
     else {
+*/
     filename = argv[1];
     flag = argv[2];
-    }
+//    }
     g_argc = argc - (scriptArg + 1);
     g_argv = argv + (scriptArg + 1);
 
@@ -185,7 +254,6 @@ int main(int argc, char* argv[]) {
         engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
         engine->RegisterGlobalFunction("int exec(const string &in, string &out)", asFUNCTIONPR(ExecSystemCmd, (const string&, string&), int), asCALL_CDECL);
         engine->RegisterGlobalProperty("const bool SCRIPT_COMPILED", (void*)&SCRIPT_COMPILED);
-
         // Compile the script
         asIScriptModule* module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
         int result = builder.StartNewModule(engine, "ngtgame");
@@ -208,14 +276,33 @@ int main(int argc, char* argv[]) {
 
         // Call compiler to create executable file
         CreateDirectory(L"Release", 0);
-        CopyFile(L"NGTScript.exe", L"Release/run.exe", false);
+        std::wstring main_exe = get_exe();
+        CopyFile(main_exe.c_str(), L"Release/run.exe", false);
         CopyFile(L"SAAPI64.dll", L"Release/SAAPI64.dll", false);
 
         CopyFile(L"nvdaControllerClient64.dll", L"Release/nvdaControllerClient64.dll", false);
+        FILE* f;
+        fopen_s(&f, "release/run.exe", "ab");
+        if (f == NULL) {
+            engine->WriteMessage("run.exe", 0, 0, asMSGTYPE_ERROR, "Failed to open output file for writing");
 
-        CopyFile(L"game_object.ngtb", L"Release/game_object.ngtb", false);
-        DeleteFile(L"game_object.ngtb");
+            std::thread t(show_message);
+            t.join();
+            return -1;
         }
+
+        // Find the end of the file
+        fseek(f, 0, SEEK_END);
+        long file_size = ftell(f);
+        // Write the bytecode after the NGTGAME marker
+        fwrite(reinterpret_cast<char*>(file_size), file_size, 1, f);
+        fwrite(buffer.data(), buffer.size(), 1, f);
+
+        fclose(f);
+
+    }
+
+
     else if (flag == "-d") {
         asIScriptEngine* engine = asCreateScriptEngine();
         engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);

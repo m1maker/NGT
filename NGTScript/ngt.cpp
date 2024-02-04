@@ -1,6 +1,4 @@
-﻿#define DLLCALL   __declspec( dllimport )
-//#define MA_NO_OPUS      /* Disable the (not yet implemented) built-in Opus decoder to ensure the libopus decoder is picked. */
-#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS 
+﻿#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS 
 #include <random>
 #include <type_traits>
 #include <Windows.h>
@@ -19,7 +17,7 @@
 #include <cstdlib>
 #include <cstring>
 SDL_Window* win = NULL;
-HMODULE bass;
+bool window_is_focused;
 std::wstring wstr(const std::string& utf8String)
 {
     std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
@@ -41,7 +39,6 @@ void init_engine() {
     ma_engine_init(NULL, &sound_engine);
     ma_engine_listener_set_velocity(&sound_engine, 0, 20, 20, 20);
     SDL_Init(SDL_INIT_EVERYTHING);
-    SDLNet_Init();
     Tolk_TrySAPI(true);
 
     Tolk_Load();
@@ -90,7 +87,7 @@ bool window_closable;
 SDL_Event e;
 bool show_game_window(const std::string & title,int width, int height, bool closable)
 {
-if(reader==L"JAWS")
+    if(reader==L"JAWS")
     win=SDL_CreateWindow(title.c_str(),SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,width,height,SDL_WINDOW_SHOWN | SDL_WINDOW_KEYBOARD_GRABBED);
 else
 win = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
@@ -121,21 +118,29 @@ void update_game_window()
 {
     SDL_PollEvent(&e);
     if (e.type == SDL_QUIT and window_closable == true)
-        {
-            exit_engine();
-        }
-        else if (e.type == SDL_TEXTINPUT)
-            inputtext += e.text.text;
-
-        else if (e.type == SDL_KEYDOWN)
-        {
-            keys[e.key.keysym.sym] = true;
-        }
-        else if (e.type == SDL_KEYUP)
-        {
-            keys[e.key.keysym.sym] = false;
-        }
+    {
+        exit_engine();
     }
+    if (e.type == SDL_TEXTINPUT)
+        inputtext += e.text.text;
+
+    if (e.type == SDL_KEYDOWN)
+    {
+        keys[e.key.keysym.sym] = true;
+    }
+    if (e.type == SDL_KEYUP)
+    {
+        keys[e.key.keysym.sym] = false;
+    }
+    if (e.type == SDL_WINDOWEVENT_FOCUS_GAINED)
+        window_is_focused == true;
+    if (e.type == SDL_WINDOWEVENT_FOCUS_LOST)
+        window_is_focused == false;
+
+}
+bool is_game_window_active() {
+    return window_is_focused;
+}
 void exit_engine(int return_number)
 {
     alcDestroyContext(context);
@@ -149,7 +154,6 @@ win=NULL;
 SDL_UnregisterApp();
 Tolk_Unload();
 SDL_Quit();
-        SDLNet_Quit();
 exit(return_number);
 }
 std::string read_environment_variable(const std::string& path) {
@@ -210,7 +214,7 @@ bool key_released(SDL_Keycode key_code)
 }
 bool key_down(SDL_Keycode key_code)
 {
-    if (keys.find(key_code) != keys.end()) {
+    if (keys.find(key_code) != keys.begin()or keys.find(key_code) != keys.end()) {
         return keys[key_code];
     }
 return false;
@@ -282,6 +286,11 @@ void set_listener_position(float l_x, float l_y, float l_z) {
     alListener3f(AL_POSITION, l_x, l_y, l_z);
     ma_engine_listener_set_position(&sound_engine, 0, l_x, l_y, l_z);
 }
+void set_listener_position(ngtvector* v) {
+    alListener3f(AL_POSITION, v->x, v->y, v->z);
+    ma_engine_listener_set_position(&sound_engine, 0, v->x, v->y, v->z);
+}
+
 void wait(int time) {
     timer waittimer;
     int el = 0;
@@ -301,8 +310,10 @@ void set_sound_storage(const std::string & path) {
     return sound_path;
 }
 void set_master_volume(float volume) {
+
+    if (volume > 0 or volume < -100)return;
     ma_engine_set_gain_db(&sound_engine, volume);
-    alListenerf(AL_GAIN, static_cast<float>(volume));
+    alListenerf(AL_GAIN, static_cast<float>(volume/2));
 }
 float get_master_volume() {
     return ma_engine_get_gain_db(&sound_engine);
@@ -341,7 +352,7 @@ bool sound::load(const std::string & filename, bool set3d) {
             ma_sound_init_from_file(&sound_engine, result.c_str(), MA_SOUND_FLAG_DECODE, NULL, NULL, &handle_);
         else
             ma_sound_init_from_file(&sound_engine, result.c_str(), MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_DECODE, NULL, NULL, &handle_);
-        ma_sound_set_doppler_factor(&handle_, 0.1);
+    ma_sound_set_rolloff(&handle_, 0.1);
         active = true;
         SNDFILE* sndfile;
         SF_INFO sfinfo;
@@ -431,6 +442,12 @@ bool sound::load(const std::string & filename, bool set3d) {
             return true;
         }
         }
+    bool sound::set_faid_parameters(float volume_beg, float volume_end, unsigned int time) {
+        if(!active)return false;
+        ma_sound_set_fade_in_milliseconds(&handle_, volume_beg, volume_end, time);
+        ma_sound_set_fade_start_in_milliseconds(&handle_, volume_beg, volume_end, time, time);
+        return true;
+    }
 
     bool sound::pause() {
         if (!active)return false;
@@ -498,8 +515,27 @@ bool sound::load(const std::string & filename, bool set3d) {
         ma_sound_set_position(&handle_, s_x, s_y, s_z);
         alSource3f(source_, AL_POSITION, s_x, s_y, s_z);
     }
-    void sound::set_sound_reverb(float input_gain, float reverb_mix, float reverb_time) {
-        return;
+    void sound::set_sound_position(ngtvector*v) {
+        if (!active)return;
+        ma_sound_set_position(&handle_, v->x, v->y, v->z);
+        alSource3f(source_, AL_POSITION, v->x, v->y, v->z);
+    }
+
+    void sound::set_sound_reverb(reverb* r){
+        (ma_node_graph*)&sound_engine;
+        ma_reverb_node_config rconf;
+        ma_uint32 channels;
+        ma_uint32 sampleRate;
+
+        channels = ma_engine_get_channels(&sound_engine);
+        sampleRate = ma_engine_get_sample_rate(&sound_engine);
+
+         rconf= ma_reverb_node_config_init(channels, sampleRate);
+         rconf = r->c;
+         ma_reverb_node_init(ma_engine_get_node_graph(&sound_engine), &rconf, NULL, &rev);
+         ma_node_attach_output_bus(&rev, 0, ma_engine_get_endpoint(&sound_engine), 0);
+         ma_node_attach_output_bus(&handle_, 0, &rev, 0);
+
     }
     void sound::set_sound_hrtf(bool hrtf) {
         if (hrtf)
@@ -509,11 +545,11 @@ bool sound::load(const std::string & filename, bool set3d) {
     }
     bool sound::seek(double new_position) {
         if (!active)return false;
-//        ma_sound_seek_to_pcm_frame(&handle_, );
+        ma_sound_seek_to_pcm_frame(&handle_, static_cast<unsigned int>(new_position*100));
     }
 
     void sound::cancel_reverb() {
-        return;
+        ma_reverb_node_uninit(&rev, NULL);
     }
 
     double sound::get_pan() const {
@@ -597,9 +633,8 @@ bool sound::load(const std::string & filename, bool set3d) {
 
     double sound::get_length() const {
         if (!active)return-17435;
-
-        double length;
-//        length=ma_sound_get_length_in_seconds(&handle_, 0);
+        ma_uint64 length;
+//        ma_sound_get_length_in_pcm_frames(&handle_, &length);
     }
         double sound::get_sample_rate() const {
     float rate=0;
@@ -700,378 +735,41 @@ bool timer::is_running() {
 
 
         void reverb::set_input_gain(float input_gain) {
+            c.dryVolume = input_gain;
         }
         void reverb::set_reverb_mix(float reverb_mix) {
+            c.wetVolume = reverb_mix;
         }       
         void reverb::set_reverb_time(float reverb_time) {
+            c.roomSize = reverb_time;
         }
         float reverb::get_input_gain() {
-            return 2;
+            return c.dryVolume;
         }
         float reverb::get_reverb_mix() {
-            return 2;
+            return c.wetVolume;
         }
         float reverb::get_reverb_time() {
-            return 2;
+            return c.roomSize;
         }
         void network_event::construct() {}
         void network_event::destruct() {}
 
         void network::construct() {}
-        void network::destruct() {}
-        unsigned int network::connect(const std::string & host, int port) {
-                    IPaddress ipAddress;
-
-                    if (SDLNet_ResolveHost(&ipAddress, host.c_str(), port) == -1) {
-                        return 0;
-                    }
-
-                    TCPsocket socket = SDLNet_TCP_Open(&ipAddress);
-
-                    if (!socket) {
-                        return 0;
-                    }
-
-                    unsigned int peerId = SDLNet_TCP_GetPeerAddress(socket)->host;
-
-                    m_connectedPeers++;
-                    m_active = true;
-
-                    m_socketSet = SDLNet_AllocSocketSet(1);
-
-                    if (!m_socketSet) {
-                        return 0;
-                    }
-
-                    if (SDLNet_TCP_AddSocket(m_socketSet, socket) == -1) {
-                        return 0;
-                    }
-
-                    m_clientSocket = socket;
-
-                    return peerId;
-                }
-
-                bool network::destroy() {
-                    if (m_serverSocket) {
-                        SDLNet_TCP_Close(m_serverSocket);
-                        m_serverSocket = nullptr;
-                    }
-
-                    if (m_clientSocket) {
-                        SDLNet_TCP_Close(m_clientSocket);
-                        m_clientSocket = nullptr;
-                    }
-
-                    if (m_socketSet) {
-                        SDLNet_FreeSocketSet(m_socketSet);
-                        m_socketSet = nullptr;
-                    }
-
-                    m_connectedPeers = 0;
-                    m_bytesSent = 0.0;
-                    m_bytesReceived = 0.0;
-                    m_active = false;
-
-                    return true;
-                }
-
-                bool network::disconnect_peer(unsigned int peerId) {
-                    if (!m_active) {
-                        std::cerr << "Error: Network is not active." << std::endl;
-                        return false;
-                    }
-
-                    if (m_serverSockets.find(peerId) != m_serverSockets.end()) {
-                        SDLNet_TCP_Close(m_serverSockets[peerId]);
-                        m_serverSockets.erase(peerId);
-                    }
-
-                    if (m_clientSocket && SDLNet_TCP_GetPeerAddress(m_clientSocket)->host == peerId) {
-                        SDLNet_TCP_Close(m_clientSocket);
-                        m_clientSocket = nullptr;
-                    }
-
-                    m_connectedPeers=0;
-
-                    return true;
-                }
-
-                bool network::disconnect_peer_forcefully(unsigned int peerId) {
-                    if (!m_active) {
-                        return false;
-                    }
-
-                    if (m_serverSockets.find(peerId) != m_serverSockets.end()) {
-                        SDLNet_TCP_Close(m_serverSockets[peerId]);
-                        m_serverSockets.erase(peerId);
-                    }
-
-                    if (m_clientSocket && SDLNet_TCP_GetPeerAddress(m_clientSocket)->host == peerId) {
-                        SDLNet_TCP_Close(m_clientSocket);
-                        m_clientSocket = nullptr;
-                    }
-
-                    m_connectedPeers=0;
-
-                    return true;
-                }
-
-                bool network::disconnect_peer_softly(unsigned int peerId) {
-                    if (!m_active) {
-                        return false;
-                    }
-
-                    if (m_serverSockets.find(peerId) != m_serverSockets.end()) {
-                        SDLNet_TCP_Send(m_serverSockets[peerId], nullptr, 0);
-                    }
-
-                    if (m_clientSocket && SDLNet_TCP_GetPeerAddress(m_clientSocket)->host == peerId) {
-                        SDLNet_TCP_Send(m_clientSocket, nullptr, 0);
-                    }
-
-                    return true;
-                }
-
-                 std::string network::get_peer_address(unsigned int peerId) {
-                    IPaddress ipAddress;
-                    ipAddress.host = peerId;
-
-                    std::string address = SDLNet_ResolveIP(&ipAddress);
-
-                    if (address=="") {
-                        return "";
-                    }
-
-
-
-                    return address;
-                }
-
-                double network::get_peer_average_round_trip_time(unsigned int peerId) {
-                    // Not implemented
-                    return 0.0;
-                }
-
-                std::vector<unsigned int> network::get_peer_list() {
-                    std::vector<unsigned int> result;
-
-                    if (m_clientSocket) {
-                        result.push_back(SDLNet_TCP_GetPeerAddress(m_clientSocket)->host);
-                    }
-
-                    for (auto const& pair : m_serverSockets) {
-                        result.push_back(pair.first);
-                    }
-
-                    return result;
-                }
-
-                network_event* network::request
-                () {
-                    network_event event;
-
-                    if (!m_active) {
-                        event.m_type = 0;
-                        return &event;
-                    }
-
-                    if (!m_socketSet) {
-                        event.m_type = 0;
-                        return &event;
-                    }
-
-                    int numReadySockets = SDLNet_CheckSockets(m_socketSet, 0);
-
-                    if (numReadySockets == -1) {
-                        event.m_type = 0;
-                        return &event;
-                    }
-
-                    if (numReadySockets == 0) {
-                        event.m_type = 0;
-                        return &event;
-                    }
-
-                    if (m_clientSocket && SDLNet_SocketReady(m_clientSocket)) {
-                        char buffer[1024];
-                        int bytesReceived = SDLNet_TCP_Recv(m_clientSocket, buffer, sizeof(buffer));
-
-                        if (bytesReceived <= 0) {
-                            disconnect_peer(SDLNet_TCP_GetPeerAddress(m_clientSocket)->host);
-                            event.m_type = 3;
-                            event.m_peerId = SDLNet_TCP_GetPeerAddress(m_clientSocket)->host;
-                            return &event;
-                        }
-
-                        m_bytesReceived += bytesReceived;
-
-                        event.m_type = 2;
-                        event.m_peerId = SDLNet_TCP_GetPeerAddress(m_clientSocket)->host;
-                        event.m_channel = 0;
-                        event.m_message = std::string (buffer, bytesReceived);
-
-                        return &event;
-                    }
-
-                    for (auto const& pair : m_serverSockets) {
-                        if (SDLNet_SocketReady(pair.second)) {
-                            char buffer[1024];
-                            int bytesReceived = SDLNet_TCP_Recv(pair.second, buffer, sizeof(buffer));
-
-                            if (bytesReceived <= 0) {
-                                disconnect_peer(pair.first);
-                                event.m_type = 3;
-                                event.m_peerId = pair.first;
-                                return &event;
-                            }
-
-                            m_bytesReceived += bytesReceived;
-
-                            event.m_type = 2;
-                            event.m_peerId = pair.first;
-                            event.m_channel = 0;
-                            event.m_message = std::string (buffer, bytesReceived);
-
-                            return &event;
-                        }
-                    }
-
-                    return &event;
-                }
-
-                bool network::send_reliable(unsigned int peerId, const std::string & packet, int channel) {
-                    if (!m_active) {
-                        return false;
-                    }
-
-                    if (m_clientSocket && SDLNet_TCP_GetPeerAddress(m_clientSocket)->host == peerId) {
-                        int bytesSent = SDLNet_TCP_Send(m_clientSocket, packet.c_str(), packet.length());
-
-                        if (bytesSent < packet.length()) {
-                            return false;
-                        }
-
-                        m_bytesSent += bytesSent;
-
-                        return true;
-                    }
-
-                    if (m_serverSockets.find(peerId) != m_serverSockets.end()) {
-                        int bytesSent = SDLNet_TCP_Send(m_serverSockets[peerId], packet.c_str(), packet.length());
-
-                        if (bytesSent < packet.length()) {
-                            return false;
-                        }
-
-                        m_bytesSent += bytesSent;
-
-                        return true;
-                    }
-
-                    return false;
-                }
-
-                bool network::send_unreliable(unsigned int peerId, const std::string & packet, int channel) {
-                    // Not implemented
-                    return false;
-                }
-
-                bool network::set_bandwidth_limits(double incomingBandwidth, double outgoingBandwidth) {
-                    // Not implemented
-                    return false;
-                }
-
-                bool network::setup_client(int channels, int maxPeers) {
-                    if (m_active) {
-                        return false;
-                    }
-
-
-                    m_socketSet = SDLNet_AllocSocketSet(1);
-
-                    if (!m_socketSet) {
-                        return false;
-                    }
-
-                    m_active = true;
-
-                    return true;
-                }
-
-                bool network::setup_server(int listeningPort, int channels, int maxPeers) {
-                    if (m_active) {
-                        return false;
-                    }
-
-                    IPaddress ipAddress;
-
-                    if (SDLNet_ResolveHost(&ipAddress, nullptr, listeningPort) == -1) {
-                        return false;
-                    }
-
-                    TCPsocket socket = SDLNet_TCP_Open(&ipAddress);
-
-                    if (!socket) {
-                        return false;
-                    }
-
-                    m_socketSet = SDLNet_AllocSocketSet(1);
-
-                    if (!m_socketSet) {
-                        return false;
-                    }
-
-                    if (SDLNet_TCP_AddSocket(m_socketSet, socket) == -1) {
-                        return false;
-                    }
-
-                    m_serverSocket = socket;
-
-                    m_active = true;
-
-                    return true;
-                }
-
-                int network::get_connected_peers() const {
-                    return m_connectedPeers;
-                }
-
-                double network::get_bytes_sent() const {
-                    return m_bytesSent;
-                }
-
-                double network::get_bytes_received() const {
-                    return m_bytesReceived;
-                }
-
-                bool network::is_active() const {
-                    return m_active;
-                }
+        void network::destruct() { }
                 void library::construct() {}
-                void library::destruct() {}
+                void library::destruct() {  }
                 bool library::load(const std::string & libname) {
                     return lib = LoadLibraryA(libname.c_str());
                 }
-                template<typename... Args>
-                CScriptDictionary* library::call(const std::string function_name, Args... args) {
-                    CScriptDictionary CallResult;
-                    if (lib == nullptr) {
-                        return nullptr; // library not loaded
-                    }
-//                    auto function = reinterpret_cast<ReturnType(*)(Args...)>(GetProcAddress(lib, function_name));
-//                    if (function == nullptr) {
-//                        return nullptr; // function not found
-//                    }
-//                    function(args...);
-
-
+                CScriptDictionary* library::call(const std::string function_name, ...){
+//                CScriptDictionary CallResult;
                 }
                     void library::unload() {
                     FreeLibrary(lib);
                 }
                 void instance::construct() {}
-                void instance::destruct() {}
+                void instance::destruct() {  }
 
                 bool instance::is_running() {
                             DWORD result = WaitForSingleObject(mutex, 0);
@@ -1121,3 +819,5 @@ uint64_t get_time_stamp_seconds() {
     auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
     return seconds;
 }
+void ngtvector::construct() {}
+void ngtvector::destruct() {}

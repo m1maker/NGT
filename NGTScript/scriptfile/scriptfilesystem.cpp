@@ -15,7 +15,7 @@
 #include <sys/stat.h> // stat
 #endif
 #include <assert.h> // assert
-
+#include <filesystem>
 using namespace std;
 
 BEGIN_AS_NAMESPACE
@@ -40,7 +40,8 @@ void RegisterScriptFileSystem_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("filesystem", asBEHAVE_FACTORY, "filesystem @f()", asFUNCTION(ScriptFileSystem_Factory), asCALL_CDECL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("filesystem", asBEHAVE_ADDREF, "void f()", asMETHOD(CScriptFileSystem,AddRef), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("filesystem", asBEHAVE_RELEASE, "void f()", asMETHOD(CScriptFileSystem,Release), asCALL_THISCALL); assert( r >= 0 );
-
+	r = engine->RegisterObjectMethod("filesystem", "bool file_exists(const string &in)", asMETHOD(CScriptFileSystem, FileExists), asCALL_THISCALL); assert(r >= 0);
+	r = engine->RegisterObjectMethod("filesystem", "bool dir_exists(const string &in)", asMETHOD(CScriptFileSystem, DirExists), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("filesystem", "bool change_current_path(const string &in)", asMETHOD(CScriptFileSystem, ChangeCurrentPath), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("filesystem", "string get_current_path() const", asMETHOD(CScriptFileSystem, GetCurrentPath), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("filesystem", "array<string> @get_dirs() const", asMETHOD(CScriptFileSystem, GetDirs), asCALL_THISCALL); assert( r >= 0 );
@@ -69,6 +70,8 @@ void RegisterScriptFileSystem_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectBehaviour("filesystem", asBEHAVE_FACTORY, "filesystem @f()", WRAP_FN(ScriptFileSystem_Factory), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("filesystem", asBEHAVE_ADDREF, "void f()", WRAP_MFN(CScriptFileSystem,AddRef), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectBehaviour("filesystem", asBEHAVE_RELEASE, "void f()", WRAP_MFN(CScriptFileSystem,Release), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("filesystem", "bool file_exists(const string &in)", WRAP_MFN(CScriptFileSystem, FileExists), asCALL_GENERIC); assert(r >= 0);
+	r = engine->RegisterObjectMethod("filesystem", "bool dir_exists(const string &in)", WRAP_MFN(CScriptFileSystem, DirExists), asCALL_GENERIC); assert(r >= 0);
 
 	r = engine->RegisterObjectMethod("filesystem", "bool change_current_path(const string &in)", WRAP_MFN(CScriptFileSystem, ChangeCurrentPath), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("filesystem", "string get_current_path() const", WRAP_MFN(CScriptFileSystem, GetCurrentPath), asCALL_GENERIC); assert( r >= 0 );
@@ -121,6 +124,12 @@ void CScriptFileSystem::Release() const
 {
 	if( asAtomicDec(refCount) == 0 )
 		delete this;
+}
+bool CScriptFileSystem::FileExists(const std::string& file) {
+	return filesystem::exists(file);
+}
+bool CScriptFileSystem::DirExists(const std::string& dir) {
+	return filesystem::exists(dir);
 }
 
 CScriptArray *CScriptFileSystem::GetFiles() const

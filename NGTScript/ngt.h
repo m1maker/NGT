@@ -5,16 +5,24 @@
 #include "AL/alc.h"
 #include "sndfile.h"
 #include "miniaudio.h"
+#include "reverb/reverb.h"
 #include <random>
 #include <type_traits>
 #include<chrono>
 #include <string>
 #include"sdl/SDL.h"
-#include "SDL_net.h"
+//#include "enet/enet.h"
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include "scriptdictionary/scriptdictionary.h"
+class ngtvector {
+public:
+	void construct();
+	void destruct();
+	float x, y, z;
+};
+
 
 std::wstring wstr(const std::string & utf8String);
 
@@ -30,42 +38,44 @@ void stop_speech();
 bool show_game_window(const std::string & title,int width=640, int height=480, bool closable=true);
 
 void hide_game_window();
-void set_game_window_title(const std::string & new_title);
-void set_game_window_closable(bool set_closable);
+void set_game_window_title(const std::string & );
+void set_game_window_closable(bool);
+bool is_game_window_active();
 void update_game_window();
 void exit_engine(int=0);
-bool clipboard_copy_text(const std::string & text);
+bool clipboard_copy_text(const std::string&);
 std::string clipboard_read_text();
 std::string get_input();
-bool key_pressed(SDL_Keycode key_code);
-bool key_released(SDL_Keycode key_code);
-bool key_down(SDL_Keycode key_code);
-bool key_repeat(SDL_Keycode key_code);
+bool key_pressed(SDL_Keycode);
+bool key_released(SDL_Keycode);
+bool key_down(SDL_Keycode);
+bool key_repeat(SDL_Keycode);
 bool alert(const std::string &	 title, const std::string &	 text, const std::string &button_name="OK");
 int question(const std::string& title, const std::string &text);
 void set_listener_position(float l_x, float l_y, float l_z);
-void wait(int time);
-void delay(int ms);
-void set_sound_storage(const std::string & path);
+void set_listener_position(ngtvector*);
+void wait(int);
+void delay(int);
+void set_sound_storage(const std::string &);
 std::string get_sound_storage();
-void set_master_volume(float volume);
+void set_master_volume(float);
 float get_master_volume();
-std::string read_environment_variable(const std::string & path);
+std::string read_environment_variable(const std::string&);
 class reverb {
 public:
+
+	ma_reverb_node_config c;
 	void construct();
 	void destruct();
 
-
-	void set_input_gain(float input_gain);
-	void set_reverb_mix(float reverb_mix);
-	void  set_reverb_time(float reverb_time);
+	void set_input_gain(float);
+	void set_reverb_mix(float);
+	void  set_reverb_time(float);
 	float get_input_gain();
 	float get_reverb_mix();
 	float  get_reverb_time();
-
 };
-class sound {
+class sound{
 public:
 	ALuint buffer_;
 	ALuint source_;
@@ -73,6 +83,7 @@ public:
 	ma_sound handle_;
 	short audio_system=0;
 	bool playing=false, paused=false, active=false;
+	ma_reverb_node rev;
 	void construct();
 	void destruct();
 
@@ -80,21 +91,24 @@ public:
 	bool load_from_memory(const std::string & data, bool set3d = false);
 	bool play();
 	bool play_looped();
+	bool set_faid_parameters(float volume_beg, float volume_end, unsigned int time);
 	bool pause();
 	bool play_wait();
 	bool stop();
 	bool close();
 	void set_sound_position(float s_x, float s_y, float s_z);
-	void set_sound_reverb(float input_gain, float reverb_mix, float reverb_time);
-	bool seek(double new_position);
-	void set_sound_hrtf(bool hrtf = true);
+	void set_sound_position(ngtvector*);
+
+	void set_sound_reverb(reverb* =NULL);
+	bool seek(double);
+	void set_sound_hrtf(bool = true);
 	void cancel_reverb();
 	double get_pan() const;
-	void set_pan(double pan);
+	void set_pan(double);
 	double get_volume() const;
-	void set_volume(double volume);
+	void set_volume(double);
 	double get_pitch() const;
-	void set_pitch(double pitch);
+	void set_pitch(double);
 	double get_pitch_lower_limit() const;
 	bool is_active() const;
 	bool is_playing() const;
@@ -123,12 +137,12 @@ public:
 	uint64_t elapsed_millis();
 	uint64_t elapsed_micros();
 	uint64_t elapsed_nanos();
-	void force_seconds(uint64_t seconds);
-	void force_minutes(uint64_t minutes);
-	void force_hours(uint64_t hours);
-	void force_millis(uint64_t millis);
-	void force_micros(uint64_t micros);
-	void force_nanos(uint64_t nanos);
+	void force_seconds(uint64_t);
+	void force_minutes(uint64_t);
+	void force_hours(uint64_t);
+	void force_millis(uint64_t);
+	void force_micros(uint64_t);
+	void force_nanos(uint64_t);
 	void restart();
 	void pause();
 	void resume();
@@ -168,20 +182,20 @@ class network {
 public:
 	void construct();
 	void destruct();
-	unsigned    int connect(const std::string & host, int port);
-    bool destroy();
-    bool disconnect_peer(unsigned int peerId);
-    bool disconnect_peer_forcefully(unsigned int peerId);
-    bool disconnect_peer_softly(unsigned int peerId);
-    std::string get_peer_address(unsigned int peerId);
-    double get_peer_average_round_trip_time(unsigned int peerId);
-    std	::vector<unsigned int> get_peer_list();
-    network_event* request();
-    bool send_reliable(unsigned int peerId, const std::string & packet, int channel);
-    bool send_unreliable(unsigned int peerId, const std::string & packet, int channel);
-    bool set_bandwidth_limits(double incomingBandwidth, double outgoingBandwidth);
-    bool setup_client(int channels, int maxPeers);
-    bool setup_server(int listeningPort, int channels, int maxPeers);
+	unsigned    int connect(const std::string& host, int port);
+	bool destroy();
+	bool disconnect_peer(unsigned int);
+	bool disconnect_peer_forcefully(unsigned int);
+	bool disconnect_peer_softly(unsigned int);
+	std::string get_peer_address(unsigned int);
+	double get_peer_average_round_trip_time(unsigned int);
+	CScriptArray* get_peer_list();
+	network_event* request();
+	bool send_reliable(unsigned int peerId, const std::string& packet, int channel);
+	bool send_unreliable(unsigned int peerId, const std::string& packet, int channel);
+	bool set_bandwidth_limits(double incomingBandwidth, double outgoingBandwidth);
+	bool setup_client(int channels, int maxPeers);
+	bool setup_server(int listeningPort, int channels, int maxPeers);
 
 	int get_connected_peers() const;
 
@@ -192,26 +206,18 @@ public:
 	bool is_active() const;
 
 private:
-    int m_connectedPeers;
-    double m_bytesSent;
-    double m_bytesReceived;
-    bool m_active;
-	TCPsocket m_serverSocket;
-	TCPsocket m_clientSocket;
-	std::map<unsigned int, TCPsocket> m_serverSockets;
-
-	SDLNet_SocketSet m_socketSet;
+	int m_connectedPeers;
+	double m_bytesSent;
+	double m_bytesReceived;
+	bool m_active;
 };
-
-
 class library {
 public:
 	HMODULE lib;
 	void construct();
 	void destruct();
-	bool load(const std::string & libname);
-	template<typename... Args>
-	CScriptDictionary* call(const std::string function_name, Args... args);
+	bool load(const std::string &);
+	CScriptDictionary* call(const std::string function_name, ...);
 	void unload();
 };
 class instance {
@@ -228,11 +234,6 @@ public:
 		CloseHandle(mutex);
 	}
 };
-class ngtvector {
-public:
-	float x, y, z;
-};
-
 class user_idle {
 public:
     user_idle();

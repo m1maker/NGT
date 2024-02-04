@@ -21,7 +21,8 @@ public:
 
 	void AddRef() const;
 	void Release() const;
-
+	bool FileExists(const std::string & file);
+	bool DirExists(const std::string& path);
 	// Sets the current path that should be used in other calls when using relative paths
 	// It can use relative paths too, so moving up a directory is used by passing in ".."
 	bool ChangeCurrentPath(const std::string &path);

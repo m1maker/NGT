@@ -127,7 +127,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);angelscript64.lib;tolk.lib;SDL2main.lib;SDL2.lib;winmm.lib;imm32.lib;version.lib;setupapi.lib;sdl2_net.lib;libcmt.lib;ws2_32.lib;iphlpapi.lib;libffi.lib;openal32.lib;sndfile.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);angelscript64.lib;tolk.lib;SDL2main.lib;SDL2.lib;winmm.lib;imm32.lib;version.lib;setupapi.lib;libcmt.lib;ws2_32.lib;iphlpapi.lib;libffi.lib;openal32.lib;sndfile.lib;enet64.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>
       </IgnoreAllDefaultLibraries>
@@ -145,6 +145,15 @@
     <ClInclude Include="angelscript.h" />
     <ClInclude Include="autowrapper\aswrappedcall.h" />
     <ClInclude Include="datetime\datetime.h" />
+    <ClInclude Include="enet\callbacks.h" />
+    <ClInclude Include="enet\enet.h" />
+    <ClInclude Include="enet\list.h" />
+    <ClInclude Include="enet\protocol.h" />
+    <ClInclude Include="enet\time.h" />
+    <ClInclude Include="enet\types.h" />
+    <ClInclude Include="enet\unix.h" />
+    <ClInclude Include="enet\utility.h" />
+    <ClInclude Include="enet\win32.h" />
     <ClInclude Include="ffi.h" />
     <ClInclude Include="ffi_cfi.h" />
     <ClInclude Include="ffi_common.h" />
@@ -154,6 +163,8 @@
     <ClInclude Include="ogg\ogg.h" />
     <ClInclude Include="ogg\os_types.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="reverb\reverb.h" />
+    <ClInclude Include="reverb\verblib.h" />
     <ClInclude Include="scriptany\scriptany.h" />
     <ClInclude Include="scriptarray\scriptarray.h" />
     <ClInclude Include="scriptbuilder\scriptbuilder.h" />
@@ -259,6 +270,7 @@
     <ClCompile Include="miniaudio.c" />
     <ClCompile Include="ngt.cpp" />
     <ClCompile Include="ngtreg.cpp" />
+    <ClCompile Include="reverb\reverb.c" />
     <ClCompile Include="scriptany\scriptany.cpp" />
     <ClCompile Include="scriptarray\scriptarray.cpp" />
     <ClCompile Include="scriptbuilder\scriptbuilder.cpp" />

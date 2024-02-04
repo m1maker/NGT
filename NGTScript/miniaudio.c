@@ -1,3 +1,4 @@
+#include "stb_vorbis.h"
 /*
 Audio playback and capture library. Choice of public domain or MIT-0. See license statements at the end of this file.
 miniaudio - v0.11.21 - 2023-11-15
@@ -12,7 +13,6 @@ GitHub:        https://github.com/mackron/miniaudio
 
 #ifndef miniaudio_c
 #define miniaudio_c
-#include "stb_vorbis.h"
 
 #include <assert.h>
 #include <limits.h>         /* For INT_MAX */
@@ -790,7 +790,7 @@ Standard Library Stuff
 #define MA_FREE(p)                      free((p))
 #endif
 
-static MA_INLINE void ma_zero_memory_default(void* p, size_t sz)
+MA_INLINE void ma_zero_memory_default(void* p, size_t sz)
 {
     if (p == NULL) {
         MA_ASSERT(sz == 0); /* If this is triggered there's an error with the calling code. */
