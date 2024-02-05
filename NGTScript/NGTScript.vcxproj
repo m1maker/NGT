@@ -127,7 +127,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);angelscript64.lib;tolk.lib;SDL2main.lib;SDL2.lib;winmm.lib;imm32.lib;version.lib;setupapi.lib;libcmt.lib;ws2_32.lib;iphlpapi.lib;libffi.lib;openal32.lib;sndfile.lib;enet64.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);angelscript64.lib;tolk.lib;SDL2main.lib;SDL2.lib;winmm.lib;imm32.lib;version.lib;setupapi.lib;libcmt.lib;ws2_32.lib;iphlpapi.lib;libffi.lib;enet64.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>
       </IgnoreAllDefaultLibraries>

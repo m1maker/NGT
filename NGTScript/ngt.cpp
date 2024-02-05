@@ -16,6 +16,8 @@
 #include<fstream>
 #include <cstdlib>
 #include <cstring>
+HINSTANCE sndfile;
+HINSTANCE openal;
 SDL_Window* win = NULL;
 bool window_is_focused;
 std::wstring wstr(const std::string& utf8String)
@@ -25,17 +27,33 @@ std::wstring wstr(const std::string& utf8String)
 }
 std::wstring reader;
 std::string sound_path;
-std::unordered_map<SDL_Keycode,bool> keys;
+std::unordered_map<SDL_Keycode, bool> keys;
 bool keyhook = false;
 std::string inputtext;
 ma_engine sound_engine;
+typedef ALCdevice* (*LPALCOPENDEVICE)(const ALCchar*);
+typedef ALCcontext* (*LPALCCREATECONTEXT)(ALCdevice*, const ALCint*);
+typedef ALCboolean(*LPALCMAKECONTEXTCURRENT)(ALCcontext*);
+typedef void (*LPALCDESTROYCONTEXT)(ALCcontext*);
+typedef ALCboolean(*LPALCCLOSEDEVICE)(ALCdevice*);
+typedef void (*LPALLISTENER3F)(ALenum, ALfloat, ALfloat, ALfloat);
+typedef void (*LPALLISTENERF)(ALenum, ALfloat);
+
 ALCdevice* device = NULL;
 ALCcontext* context = NULL;
-void init_engine() {
-    device = alcOpenDevice(nullptr);
-    context = alcCreateContext(device, nullptr);
-    alcMakeContextCurrent(context);
 
+void init_engine() {
+    sndfile = LoadLibrary(L"sndfile.dll");
+    openal = LoadLibrary(L"OpenAL32.dll");
+    if (openal != NULL) {
+    LPALCOPENDEVICE alcOpenDevice = (LPALCOPENDEVICE)GetProcAddress(openal, "alcOpenDevice");
+    LPALCCREATECONTEXT alcCreateContext = (LPALCCREATECONTEXT)GetProcAddress(openal, "alcCreateContext");
+    LPALCMAKECONTEXTCURRENT alcMakeContextCurrent = (LPALCMAKECONTEXTCURRENT)GetProcAddress(openal, "alcMakeContextCurrent");
+
+        device = alcOpenDevice(nullptr);
+        context = alcCreateContext(device, nullptr);
+        alcMakeContextCurrent(context);
+    }
     ma_engine_init(NULL, &sound_engine);
     ma_engine_listener_set_velocity(&sound_engine, 0, 20, 20, 20);
     SDL_Init(SDL_INIT_EVERYTHING);
@@ -66,7 +84,7 @@ double randomDouble(double min, double max) {
 
 
 int get_last_error() {
-    return alGetError();
+    return 0;
 }
 void speak(const std::string & text, bool stop) {
     std::wstring textstr = wstr(text);
@@ -143,8 +161,16 @@ bool is_game_window_active() {
 }
 void exit_engine(int return_number)
 {
-    alcDestroyContext(context);
-    alcCloseDevice(device);
+    if (openal != NULL) {
+
+        LPALCDESTROYCONTEXT alcDestroyContext = (LPALCDESTROYCONTEXT)GetProcAddress(openal, "alcDestroyContext");
+        LPALCCLOSEDEVICE alcCloseDevice = (LPALCCLOSEDEVICE)GetProcAddress(openal, "alcCloseDevice");
+        alcDestroyContext(context);
+        alcCloseDevice(device);
+        FreeLibrary(openal);
+    }
+    if(sndfile!=NULL)
+    FreeLibrary(sndfile);
 
     ma_engine_uninit(&sound_engine);
 
@@ -283,11 +309,19 @@ int question(const std::string& title, const std::string& text) {
 
 
 void set_listener_position(float l_x, float l_y, float l_z) {
-    alListener3f(AL_POSITION, l_x, l_y, l_z);
+    if (openal != NULL) {
+
+        LPALLISTENER3F alListener3f = (LPALLISTENER3F)GetProcAddress(openal, "alListener3f");
+        alListener3f(AL_POSITION, l_x, l_y, l_z);
+    }
     ma_engine_listener_set_position(&sound_engine, 0, l_x, l_y, l_z);
 }
 void set_listener_position(ngtvector* v) {
-    alListener3f(AL_POSITION, v->x, v->y, v->z);
+    if (openal != NULL) {
+
+        LPALLISTENER3F alListener3f = (LPALLISTENER3F)GetProcAddress(openal, "alListener3f");
+        alListener3f(AL_POSITION, v->x, v->y, v->z);
+    }
     ma_engine_listener_set_position(&sound_engine, 0, v->x, v->y, v->z);
 }
 
@@ -313,7 +347,10 @@ void set_master_volume(float volume) {
 
     if (volume > 0 or volume < -100)return;
     ma_engine_set_gain_db(&sound_engine, volume);
-    alListenerf(AL_GAIN, static_cast<float>(volume/2));
+    if (openal != NULL) {
+        LPALLISTENERF alListenerf = (LPALLISTENERF)GetProcAddress(openal, "alListenerf");
+        alListenerf(AL_GAIN, static_cast<float>(volume / 2));
+    }
 }
 float get_master_volume() {
     return ma_engine_get_gain_db(&sound_engine);
@@ -354,57 +391,83 @@ bool sound::load(const std::string & filename, bool set3d) {
             ma_sound_init_from_file(&sound_engine, result.c_str(), MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_DECODE, NULL, NULL, &handle_);
     ma_sound_set_rolloff(&handle_, 0.1);
         active = true;
-        SNDFILE* sndfile;
-        SF_INFO sfinfo;
-        sndfile = sf_open(result.c_str(), SFM_READ, &sfinfo);
-        if (!sndfile) {
-            active = false;
-            return false;
-        }
+        if (sndfile != NULL and openal != NULL) {
+        typedef SNDFILE* (cdecl* sf_open_func)(const char*, int, SF_INFO*);
+        typedef int(cdecl* sf_close_func)(SNDFILE*);
+        typedef sf_count_t(__cdecl* sf_readf_short_func)(SNDFILE*, short*, sf_count_t);
+            sf_open_func sf_open = (sf_open_func)GetProcAddress(sndfile, "sf_open");
+            sf_close_func sf_close = (sf_close_func)GetProcAddress(sndfile, "sf_close");
+            sf_readf_short_func sf_readf_short = (sf_readf_short_func)GetProcAddress(sndfile, "sf_readf_short");
 
-        std::vector<short> samples(sfinfo.channels * sfinfo.frames);
-        sf_readf_short(sndfile, &samples[0], sfinfo.frames);
-        sf_close(sndfile);
-        if (sfinfo.channels > 1) {
-            std::vector<short> monoSamples(sfinfo.frames);
-            for (int i = 0; i < sfinfo.frames; i++) {
-                int index = i * sfinfo.channels;
-                monoSamples[i] = (samples[index] + samples[index + 1]) / 2;
+            SNDFILE* sndfile;
+            SF_INFO sfinfo;
+            std::vector<short> samples;
+
+            if (sf_open && sf_close && sf_readf_short) {
+                sndfile = sf_open(result.c_str(), SFM_READ, &sfinfo);
+                if (!sndfile) {
+                    active = false;
+                    return false;
+                }
+
+                samples.resize(sfinfo.channels * sfinfo.frames);
+
+                sf_readf_short(sndfile, &samples[0], sfinfo.frames);
+                sf_close(sndfile);
+
+                if (sfinfo.channels > 1) {
+                    std::vector<short> monoSamples(sfinfo.frames);
+                    for (int i = 0; i < sfinfo.frames; i++) {
+                        int index = i * sfinfo.channels;
+                        monoSamples[i] = (samples[index] + samples[index + 1]) / 2;
+                    }
+                    samples = monoSamples;
+                    sfinfo.channels = 1;
+                }
             }
-            samples = monoSamples;
-            sfinfo.channels = 1;
+            typedef void (*PFNALGENBUFFERSPROC)(ALsizei, ALuint*);
+            typedef void (*PFNALBUFFERDATAPROC)(ALuint, ALenum, const ALvoid*, ALsizei, ALsizei);
+            typedef void (*PFNALGENSOURCESPROC)(ALsizei, ALuint*);
+            typedef void (*PFNALSOURCEIPROC)(ALuint, ALenum, ALint);
+            typedef void (*PFNALSOURCEFPROC)(ALuint, ALenum, ALfloat);
+            typedef void (*PFNALSOURCE3FPROC)(ALuint, ALenum, ALfloat, ALfloat, ALfloat);
+            PFNALGENBUFFERSPROC alGenBuffers = (PFNALGENBUFFERSPROC)GetProcAddress(openal, "alGenBuffers");
+            PFNALBUFFERDATAPROC alBufferData = (PFNALBUFFERDATAPROC)GetProcAddress(openal, "alBufferData");
+            PFNALGENSOURCESPROC alGenSources = (PFNALGENSOURCESPROC)GetProcAddress(openal, "alGenSources");
+            PFNALSOURCEIPROC alSourcei = (PFNALSOURCEIPROC)GetProcAddress(openal, "alSourcei");
+            PFNALSOURCEFPROC alSourcef = (PFNALSOURCEFPROC)GetProcAddress(openal, "alSourcef");
+            PFNALSOURCE3FPROC alSource3f = (PFNALSOURCE3FPROC)GetProcAddress(openal, "alSource3f");
+
+            alGenBuffers(1, &buffer_);
+            alBufferData(buffer_,
+                (sfinfo.channels == 1) ? AL_FORMAT_MONO16 : AL_FORMAT_STEREO16,
+                &samples[0],
+                static_cast<ALsizei>(sfinfo.frames * sfinfo.channels * sizeof(short)),
+                sfinfo.samplerate);
+
+            alGenSources(1, &source_);
+
+            // Set source properties
+            alSourcei(source_, AL_BUFFER, buffer_);
+            alSourcef(source_, AL_PITCH, 1.0f);
+            alSourcef(source_, AL_GAIN, 1.0f);
+            alSourcei(source_, AL_LOOPING, AL_FALSE);
+
+            // Set 3D properties if requested
+            if (set3d) {
+                is_3d_ = true;
+                alSource3f(source_, AL_POSITION, 0.0f, 0.0f, 0.0f);
+                alSource3f(source_, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
+
+                alSourcei(source_, AL_SOURCE_RELATIVE, AL_FALSE);
+                alSourcef(source_, AL_ROLLOFF_FACTOR, 0.1f);
+                alSourcei(source_, AL_REFERENCE_DISTANCE, 1);
+                alSourcei(source_, AL_MAX_DISTANCE, 500);
+            }
+
+            active = true;
+            return true;
         }
-
-
-        alGenBuffers(1, &buffer_);
-        alBufferData(buffer_,
-            (sfinfo.channels == 1) ? AL_FORMAT_MONO16: AL_FORMAT_STEREO16,
-            &samples[0],
-            static_cast<ALsizei>(sfinfo.frames * sfinfo.channels * sizeof(short)),
-            sfinfo.samplerate);
-
-        alGenSources(1, &source_);
-
-        // Set source properties
-        alSourcei(source_, AL_BUFFER, buffer_);
-        alSourcef(source_, AL_PITCH, 1.0f);
-        alSourcef(source_, AL_GAIN, 1.0f);
-        alSourcei(source_, AL_LOOPING, AL_FALSE);
-
-        // Set 3D properties if requested
-        if (set3d) {
-            is_3d_ = true;
-        }
-            alSource3f(source_, AL_POSITION, 0.0f, 0.0f, 0.0f);
-            alSource3f(source_, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
-
-            alSourcei(source_, AL_SOURCE_RELATIVE, AL_FALSE);
-            alSourcef(source_, AL_ROLLOFF_FACTOR, 0.1f);
-            alSourcei(source_, AL_REFERENCE_DISTANCE, 1);
-            alSourcei(source_, AL_MAX_DISTANCE, 500);
-
-        active = true;
-        return true;
 }
 
 
@@ -421,10 +484,17 @@ bool sound::load(const std::string & filename, bool set3d) {
             return true;
         }
         else {
-            alSourcei(source_, AL_LOOPING, AL_FALSE);
-            alSourcePlay(source_);
-            return true;
-        }
+            if (openal != NULL) {
+                typedef void (*PFNALSOURCEIPROC)(ALuint, ALenum, ALint);
+                typedef void (*PFNALSOURCEPLAYPROC)(ALuint);
+                PFNALSOURCEIPROC alSourcei = (PFNALSOURCEIPROC)GetProcAddress(openal, "alSourcei");
+                PFNALSOURCEPLAYPROC alSourcePlay = (PFNALSOURCEPLAYPROC)GetProcAddress(openal, "alSourcePlay");
+                alSourcei(source_, AL_LOOPING, AL_FALSE);
+                alSourcePlay(source_);
+                return true;
+            }
+}
+
     }
 
     bool sound::play_looped() {
@@ -437,10 +507,17 @@ bool sound::load(const std::string & filename, bool set3d) {
             return true;
         }
         else {
-            alSourcei(source_, AL_LOOPING, AL_TRUE);
-            alSourcePlay(source_);
-            return true;
-        }
+            if (openal != NULL) {
+
+                typedef void (*PFNALSOURCEIPROC)(ALuint, ALenum, ALint);
+                typedef void (*PFNALSOURCEPLAYPROC)(ALuint);
+                PFNALSOURCEIPROC alSourcei = (PFNALSOURCEIPROC)GetProcAddress(openal, "alSourcei");
+                PFNALSOURCEPLAYPROC alSourcePlay = (PFNALSOURCEPLAYPROC)GetProcAddress(openal, "alSourcePlay");
+                alSourcei(source_, AL_LOOPING, AL_FALSE);
+                alSourcePlay(source_);
+                return true;
+            }
+            }
         }
     bool sound::set_faid_parameters(float volume_beg, float volume_end, unsigned int time) {
         if(!active)return false;
@@ -456,22 +533,18 @@ bool sound::load(const std::string & filename, bool set3d) {
             return true;
         }
         else {
-            alSourcePause(source_);
-        }
+            if (openal != NULL) {
+                typedef void (*PFNALSOURCEPAUSEPROC)(ALuint);
+                PFNALSOURCEPAUSEPROC alSourcePause = (PFNALSOURCEPAUSEPROC)GetProcAddress(openal, "alSourcePause");
+                alSourcePause(source_);
+                return true;
+            }
+            }
     }
 
     bool sound::play_wait() {
-        if (audio_system == 0) {
-            stop();
-            ma_sound_set_looping(&handle_, false);
-            ma_sound_start(&handle_);
-            if (!active)return false;
-        }
-        else {
-            alSourcei(source_, AL_LOOPING, AL_FALSE);
-            alSourcePlay(source_);
-        }
-            while (true) {
+        this->play();
+        while (true) {
             update_game_window();
             delay(5);
             bool ac = sound::is_playing();
@@ -489,22 +562,37 @@ bool sound::load(const std::string & filename, bool set3d) {
             ma_sound_seek_to_pcm_frame(&handle_, 0);
         }
         else {
-            alSourceStop(source_);
-            alSourcei(source_, AL_BUFFER, 0);
-        }
+            if (openal != NULL) {
+                typedef void (*PFNALSOURCEIPROC)(ALuint, ALenum, ALint);
+                typedef void (*PFNALSOURCESTOPPROC)(ALuint);
+                PFNALSOURCEIPROC alSourcei = (PFNALSOURCEIPROC)GetProcAddress(openal, "alSourcei");
+                PFNALSOURCESTOPPROC alSourceStop = (PFNALSOURCESTOPPROC)GetProcAddress(openal, "alSourceStop");
+
+                alSourceStop(source_);
+                alSourcei(source_, AL_BUFFER, 0);
+            }
+            }
         return true;
     }
     bool sound::close() {
         if (!active)return false;
             ma_sound_uninit(&handle_);
-            if (source_) {
-                alDeleteSources(1, &source_);
-                source_ = 0;
-            }
+            if (openal != NULL) {
 
-            if (buffer_) {
-                alDeleteBuffers(1, &buffer_);
-                buffer_ = 0;
+                typedef ALvoid(AL_APIENTRY* PFNALDELETEBUFFERS)(ALsizei, const ALuint*);
+                typedef ALvoid(AL_APIENTRY* PFNALDELETESOURCES)(ALsizei, const ALuint*);
+                PFNALDELETEBUFFERS alDeleteBuffers = (PFNALDELETEBUFFERS)GetProcAddress(openal, "alDeleteBuffers");
+                PFNALDELETESOURCES alDeleteSources = (PFNALDELETESOURCES)GetProcAddress(openal, "alDeleteSources");
+
+                if (source_) {
+                    alDeleteSources(1, &source_);
+                    source_ = 0;
+                }
+
+                if (buffer_) {
+                    alDeleteBuffers(1, &buffer_);
+                    buffer_ = 0;
+                }
             }
             active = false;
         return true;
@@ -513,13 +601,22 @@ bool sound::load(const std::string & filename, bool set3d) {
     void sound::set_sound_position(float s_x, float s_y, float s_z) {
         if (!active)return;
         ma_sound_set_position(&handle_, s_x, s_y, s_z);
-        alSource3f(source_, AL_POSITION, s_x, s_y, s_z);
-    }
+        if (openal != NULL) {
+            typedef void (*PFNALSOURCE3FPROC)(ALuint, ALenum, ALfloat, ALfloat, ALfloat);
+            PFNALSOURCE3FPROC alSource3f = (PFNALSOURCE3FPROC)GetProcAddress(openal, "alSource3f");
+            alSource3f(source_, AL_POSITION, s_x, s_y, s_z);
+        }
+        }
     void sound::set_sound_position(ngtvector*v) {
         if (!active)return;
         ma_sound_set_position(&handle_, v->x, v->y, v->z);
-        alSource3f(source_, AL_POSITION, v->x, v->y, v->z);
-    }
+        if (openal != NULL) {
+
+            typedef void (*PFNALSOURCE3FPROC)(ALuint, ALenum, ALfloat, ALfloat, ALfloat);
+            PFNALSOURCE3FPROC alSource3f = (PFNALSOURCE3FPROC)GetProcAddress(openal, "alSource3f");
+            alSource3f(source_, AL_POSITION, v->x, v->y, v->z);
+        }
+        }
 
     void sound::set_sound_reverb(reverb* r){
         (ma_node_graph*)&sound_engine;
@@ -576,9 +673,14 @@ bool sound::load(const std::string & filename, bool set3d) {
 
         }
         else {
-            alGetSourcef(source_, AL_GAIN, &volume);
-            return volume;
-        }
+            if (openal != NULL) {
+
+                typedef void (*PFNALGETSOURCEFPROC)(ALuint, ALenum, ALfloat*);
+                PFNALGETSOURCEFPROC alGetSourcef = (PFNALGETSOURCEFPROC)GetProcAddress(openal, "alGetSourcef");
+                alGetSourcef(source_, AL_GAIN, &volume);
+                return volume;
+            }
+            }
     }
     void sound::set_volume(double volume) {
         if (!active)return;
@@ -587,8 +689,13 @@ bool sound::load(const std::string & filename, bool set3d) {
             ma_sound_set_volume(&handle_, ma_volume_db_to_linear(volume));
         }
         else {
-            alSourcef(source_, AL_GAIN, static_cast<float>(volume/100));
+            if (openal != NULL) {
 
+                typedef void (*PFNALSOURCEFPROC)(ALuint, ALenum, ALfloat);
+                PFNALSOURCEFPROC alSourcef = (PFNALSOURCEFPROC)GetProcAddress(openal, "alSourcef");
+
+                alSourcef(source_, AL_GAIN, static_cast<float>(volume / 100));
+            }
         }
     }
     double sound::get_pitch() const {
@@ -613,9 +720,14 @@ bool sound::load(const std::string & filename, bool set3d) {
         if(audio_system==0)
         return ma_sound_is_playing(&handle_);
         else {
-            alGetSourcei(source_, AL_SOURCE_STATE, &state);
-            return state == AL_PLAYING;
-        }
+            if (openal != NULL) {
+
+                typedef void (*PFNALGETSOURCEIPROC)(ALuint, ALenum, ALint*);
+                PFNALGETSOURCEIPROC alGetSourcei = (PFNALGETSOURCEIPROC)GetProcAddress(openal, "alGetSourcei");
+                alGetSourcei(source_, AL_SOURCE_STATE, &state);
+                return state == AL_PLAYING;
+            }
+            }
     }
     bool sound::is_paused() const {
         ALenum state;

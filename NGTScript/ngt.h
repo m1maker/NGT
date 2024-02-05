@@ -3,8 +3,8 @@
 
 #include "AL/al.h"
 #include "AL/alc.h"
-#include "sndfile.h"
 #include "miniaudio.h"
+#include "sndfile.h"
 #include "reverb/reverb.h"
 #include <random>
 #include <type_traits>
