@@ -428,6 +428,8 @@ void RegisterFunctions(asIScriptEngine* engine)
 
     engine->RegisterGlobalFunction("uint64 get_time_stamp_millis()", asFUNCTION(get_time_stamp_millis), asCALL_CDECL);
     engine->RegisterGlobalFunction("uint64 get_time_stamp_seconds()", asFUNCTION(get_time_stamp_seconds), asCALL_CDECL);
+    engine->RegisterGlobalFunction("void set_library_path(const string &in)", asFUNCTION(set_library_path), asCALL_CDECL);
+
     engine->RegisterGlobalFunction("int random(int, int)", asFUNCTIONPR(random, (long, long), long), asCALL_CDECL);
     engine->RegisterGlobalFunction("double random(double, double)", asFUNCTIONPR(randomDouble, (double, double), double), asCALL_CDECL);
 
@@ -437,7 +439,9 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterGlobalFunction("void speak_wait(const string &in, bool=true)", asFUNCTION(speak_wait), asCALL_CDECL);
 
     engine->RegisterGlobalFunction("void stop_speech()", asFUNCTION(stop_speech), asCALL_CDECL);
-    engine->RegisterGlobalFunction("void show_game_window(const string &in,int=640,int=480, bool=true)", asFUNCTION(show_game_window), asCALL_CDECL);
+    engine->RegisterGlobalFunction("bool show_game_window(const string &in,int=640,int=480, bool=true)", asFUNCTION(show_game_window), asCALL_CDECL);
+    engine->RegisterGlobalFunction("bool focus_game_window()", asFUNCTION(focus_game_window), asCALL_CDECL);
+
     engine->RegisterGlobalFunction("void hide_game_window()", asFUNCTION(hide_game_window), asCALL_CDECL);
     engine->RegisterGlobalFunction("void set_game_window_title(const string &in)", asFUNCTION(set_game_window_title), asCALL_CDECL);
     engine->RegisterGlobalFunction("void set_game_window_closable(bool)", asFUNCTION(set_game_window_closable), asCALL_CDECL);

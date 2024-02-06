@@ -295,9 +295,9 @@ int main(int argc, char* argv[]) {
         fseek(f, 0, SEEK_END);
         long file_size = ftell(f);
         // Write the bytecode after the NGTGAME marker
-        fwrite(reinterpret_cast<char*>(file_size), file_size, 1, f);
         fwrite(buffer.data(), buffer.size(), 1, f);
-
+        buffer_size = buffer.size();
+        fwrite(&buffer_size, buffer_size, 1, f);
         fclose(f);
 
     }
@@ -392,7 +392,7 @@ int main(int argc, char* argv[]) {
         // Clean up
         ctx->Release();
         engine->ShutDownAndRelease();
-
+        
 
     }
     else if (flag == "-b") {
@@ -451,6 +451,7 @@ int main(int argc, char* argv[]) {
         // executed. Note, that if you intend to execute the same function several 
         // times, it might be a good idea to store the function returned by 
         // GetFunctionByDecl(), so that this relatively slow call can be skipped.
+
         int r = ctx->Prepare(func);
         init_engine();
         if (r < 0)

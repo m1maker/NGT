@@ -25,18 +25,18 @@ public:
 
 
 std::wstring wstr(const std::string & utf8String);
-
 uint64_t get_time_stamp_millis();
 uint64_t get_time_stamp_seconds();
 void init_engine();
- long random(long min, long max);
+void set_library_path(const std::string& path);
+long random(long min, long max);
  double randomDouble(double min, double max);
  int get_last_error();
 void speak(const std::string &	 text, bool stop = true);
 void speak_wait(const std::string &	 text, bool stop = true);
 void stop_speech();
 bool show_game_window(const std::string & title,int width=640, int height=480, bool closable=true);
-
+bool focus_game_window();
 void hide_game_window();
 void set_game_window_title(const std::string & );
 void set_game_window_closable(bool);

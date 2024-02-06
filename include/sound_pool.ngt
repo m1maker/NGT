@@ -234,6 +234,7 @@ int max_distance;
 float pan_step;
 float volume_step;
 float behind_pitch_decrease;
+bool use_hrtf;
 
 // Default constructor, where we give the user 100 sounds.
 sound_pool()
@@ -249,12 +250,14 @@ last_listener_z=0;
 last_listener_rotation=0.0;
 highest_slot=0;
 clean_frequency=3;
+use_hrtf = true;
 }
 
 // In this constructor the user can specify how many sounds they want.
-sound_pool(int number_of_items)
+sound_pool(int number_of_items, bool hrtf = true)
 {
 items.resize(number_of_items);
+use_hrtf = hrtf;
 max_distance=0;
 pan_step=1.0;
 volume_step=1.0;
@@ -422,7 +425,7 @@ if(slot==-1)
 {
 return -1;
 }
-items[slot].handle.set_sound_hrtf(true);
+items[slot].handle.set_sound_hrtf(use_hrtf);
 items[slot].filename=filename;
 items[slot].packname=get_sound_storage();
 items[slot].x=sound_x;
@@ -505,7 +508,7 @@ if(slot==-1)
 {
 return -1;
 }
-items[slot].handle.set_sound_hrtf(true);
+items[slot].handle.set_sound_hrtf(use_hrtf);
 items[slot].filename=filename;
 items[slot].packname=get_sound_storage();
 items[slot].x=sound_x;

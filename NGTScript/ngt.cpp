@@ -2,6 +2,7 @@
 #include <random>
 #include <type_traits>
 #include <Windows.h>
+#include <filesystem>
 #include <thread>
 #include "Tolk.h"
 #include <chrono>
@@ -11,6 +12,7 @@
 #include<map>
 #include <stdio.h>
 #include "NGT.H"
+#include "scriptfile/scriptfilesystem.h"
 #include <locale>
 #include <codecvt>
 #include<fstream>
@@ -18,6 +20,7 @@
 #include <cstring>
 HINSTANCE sndfile;
 HINSTANCE openal;
+bool engine_is_active= false;
 SDL_Window* win = NULL;
 bool window_is_focused;
 std::wstring wstr(const std::string& utf8String)
@@ -38,13 +41,12 @@ typedef void (*LPALCDESTROYCONTEXT)(ALCcontext*);
 typedef ALCboolean(*LPALCCLOSEDEVICE)(ALCdevice*);
 typedef void (*LPALLISTENER3F)(ALenum, ALfloat, ALfloat, ALfloat);
 typedef void (*LPALLISTENERF)(ALenum, ALfloat);
-
 ALCdevice* device = NULL;
 ALCcontext* context = NULL;
-
-void init_engine() {
+void init_engine(){
     sndfile = LoadLibrary(L"sndfile.dll");
     openal = LoadLibrary(L"OpenAL32.dll");
+    Tolk_Load();
     if (openal != NULL) {
     LPALCOPENDEVICE alcOpenDevice = (LPALCOPENDEVICE)GetProcAddress(openal, "alcOpenDevice");
     LPALCCREATECONTEXT alcCreateContext = (LPALCCREATECONTEXT)GetProcAddress(openal, "alcCreateContext");
@@ -55,16 +57,46 @@ void init_engine() {
         alcMakeContextCurrent(context);
     }
     ma_engine_init(NULL, &sound_engine);
-    ma_engine_listener_set_velocity(&sound_engine, 0, 20, 20, 20);
     SDL_Init(SDL_INIT_EVERYTHING);
     Tolk_TrySAPI(true);
 
-    Tolk_Load();
     reader=Tolk_DetectScreenReader();
     if (!Tolk_HasSpeech()) {
         Tolk_PreferSAPI(true);
 }
 }
+void set_library_path(const std::string& path) {
+    if (Tolk_IsLoaded())Tolk_Unload();
+    std::filesystem::path current_dir = std::filesystem::current_path();
+    std::filesystem::path new_dir= std::filesystem::current_path()/path;
+
+    std::filesystem::current_path(new_dir);
+
+    Tolk_Load();
+    if (openal != NULL) {
+
+        LPALCDESTROYCONTEXT alcDestroyContext = (LPALCDESTROYCONTEXT)GetProcAddress(openal, "alcDestroyContext");
+        LPALCCLOSEDEVICE alcCloseDevice = (LPALCCLOSEDEVICE)GetProcAddress(openal, "alcCloseDevice");
+        alcDestroyContext(context);
+        alcCloseDevice(device);
+        FreeLibrary(openal);
+    }
+    if (sndfile != NULL)
+        FreeLibrary(sndfile);
+    sndfile = LoadLibrary(L"sndfile.dll");
+    openal = LoadLibrary(L"OpenAL32.dll");
+    if (openal != NULL) {
+        LPALCOPENDEVICE alcOpenDevice = (LPALCOPENDEVICE)GetProcAddress(openal, "alcOpenDevice");
+        LPALCCREATECONTEXT alcCreateContext = (LPALCCREATECONTEXT)GetProcAddress(openal, "alcCreateContext");
+        LPALCMAKECONTEXTCURRENT alcMakeContextCurrent = (LPALCMAKECONTEXTCURRENT)GetProcAddress(openal, "alcMakeContextCurrent");
+
+        device = alcOpenDevice(nullptr);
+        context = alcCreateContext(device, nullptr);
+        alcMakeContextCurrent(context);
+    }
+    std::filesystem::current_path(current_dir);
+}
+
 std::random_device rd;
 std::mt19937 gen(rd());
 long random(long min, long max) {
@@ -91,8 +123,7 @@ void speak(const std::string & text, bool stop) {
     Tolk_Speak(textstr.c_str(), stop);
 }
 void speak_wait(const std::string & text, bool stop) {
-    std::wstring textstr = wstr(text);
-    Tolk_Speak(textstr.c_str(), stop);
+    speak(text, stop);
     while (Tolk_IsSpeaking()) {
         update_game_window();
     }
@@ -105,9 +136,13 @@ bool window_closable;
 SDL_Event e;
 bool show_game_window(const std::string & title,int width, int height, bool closable)
 {
-    if(reader==L"JAWS")
-    win=SDL_CreateWindow(title.c_str(),SDL_WINDOWPOS_UNDEFINED,SDL_WINDOWPOS_UNDEFINED,width,height,SDL_WINDOW_SHOWN | SDL_WINDOW_KEYBOARD_GRABBED);
-else
+    if (win != NULL)
+        return false;
+    if (reader == L"JAWS") {
+        win = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN | SDL_WINDOW_KEYBOARD_GRABBED);
+        SDL_SetHint(SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED, "1");
+    }
+    else
 win = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
 SDL_RegisterApp("NGTWindow", 0, win);
 
@@ -120,7 +155,11 @@ if (win!=NULL)
 }
 return false;
 }
-    void hide_game_window() {
+bool focus_game_window() {
+    SDL_SetWindowInputFocus(win);
+    return true;
+}
+void hide_game_window() {
     SDL_StopTextInput();
 
     SDL_DestroyWindow(win);
@@ -131,31 +170,29 @@ void set_game_window_title(const std::string & new_title) {
 void set_game_window_closable(bool set_closable) {
     window_closable = set_closable;
 }
-
 void update_game_window()
 {
     SDL_PollEvent(&e);
     if (e.type == SDL_QUIT and window_closable == true)
-    {
-        exit_engine();
-    }
-    if (e.type == SDL_TEXTINPUT)
-        inputtext += e.text.text;
+        {
+            exit_engine();
+        }
+        if (e.type == SDL_TEXTINPUT)
+            inputtext += e.text.text;
 
-    if (e.type == SDL_KEYDOWN)
-    {
-        keys[e.key.keysym.sym] = true;
+        if (e.type == SDL_KEYDOWN)
+        {
+            keys[e.key.keysym.sym] = true;
+        }
+        if (e.type == SDL_KEYUP)
+        {
+            keys[e.key.keysym.sym] = false;
+        }
+        if (e.type == SDL_WINDOWEVENT_FOCUS_GAINED)
+            window_is_focused == true;
+        if (e.type == SDL_WINDOWEVENT_FOCUS_LOST)
+            window_is_focused == false;
     }
-    if (e.type == SDL_KEYUP)
-    {
-        keys[e.key.keysym.sym] = false;
-    }
-    if (e.type == SDL_WINDOWEVENT_FOCUS_GAINED)
-        window_is_focused == true;
-    if (e.type == SDL_WINDOWEVENT_FOCUS_LOST)
-        window_is_focused == false;
-
-}
 bool is_game_window_active() {
     return window_is_focused;
 }
@@ -218,23 +255,21 @@ std::string get_input() {
 }
 bool key_pressed(SDL_Keycode key_code)
 {
-    if (e.type == SDL_KEYDOWN)
+    if (e.key.state == SDL_PRESSED)
     {
-        if (e.key.keysym.sym == key_code && e.key.repeat == 0)
-        {
+        if (e.key.keysym.sym == key_code and e.key.repeat==0){
             return true;
-        }
+    }
     }
 return false;
 }
 bool key_released(SDL_Keycode key_code)
 {
-    if (e.type == SDL_KEYUP)
+    if (e.key.state== SDL_RELEASED)
     {
-        if (e.key.keysym.sym == key_code)
-        {
-            return true;
-        }
+if(e.key.keysym.sym==key_code){
+    return true;
+}
     }
     return false;
 }
@@ -249,10 +284,9 @@ bool key_repeat(SDL_Keycode key_code)
 {
     if (e.type == SDL_KEYDOWN)
     {
-        if (e.key.keysym.sym == key_code)
-        {
-            return true;
-        }
+if(e.key.keysym.sym==key_code){
+    return true;
+}
     }
     return false;
 }
@@ -360,13 +394,6 @@ void sound::construct() {
 
 void sound::destruct() {
 }
-BOOL sound_check(LPCTSTR szPath)
-{
-    DWORD dwAttrib = GetFileAttributes(szPath);
-
-    return (dwAttrib != INVALID_FILE_ATTRIBUTES &&
-        !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
-}
 bool sound::load(const std::string & filename, bool set3d) {
     std::string result;
     if (sound_path != "") {
@@ -374,11 +401,6 @@ bool sound::load(const std::string & filename, bool set3d) {
     }
     else {
         result = filename;
-    }
-    std::wstring filenameW = wstr(result);
-    if (!sound_check(filenameW.c_str())) {
-        active = false;
-        return false;
     }
     if (active){
         this->close();
@@ -635,10 +657,12 @@ bool sound::load(const std::string & filename, bool set3d) {
 
     }
     void sound::set_sound_hrtf(bool hrtf) {
-        if (hrtf)
+        if (hrtf and openal!=NULL and sndfile!=NULL)
             this->audio_system = 1;
         else
             this->audio_system = 0;
+        if (this->is_playing())
+            this->play();
     }
     bool sound::seek(double new_position) {
         if (!active)return false;

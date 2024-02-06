@@ -65,7 +65,6 @@ public:
 	// Gets the date and time of the file/dir modification
 	CDateTime GetModifyDateTime(const std::string &path) const;
 
-protected:
 	~CScriptFileSystem();
 
 	mutable int refCount;
