@@ -186,9 +186,9 @@ int Load(asIScriptEngine* engine, std::vector<asBYTE> code)
 std::string filename;
 std::string flag;
 int scriptArg=0;
+std::string this_exe;
 
 int main(int argc, char* argv[]) {
-    std::string this_exe;
 
     this_exe = get_exe();
     std::fstream read_file(this_exe.c_str(), std::ios::binary | std::ios::in);
@@ -257,7 +257,7 @@ int main(int argc, char* argv[]) {
             CopyFile(L"nvdaControllerClient64.dll", L"Release/nvdaControllerClient64.dll", false);
             std::fstream file("release/run.exe", std::ios::app | std::ios::binary);
             if (!file.is_open()) {
-                engine->WriteMessage("run.exe", 0, 0, asMSGTYPE_ERROR, "Failed to open output file for writing");
+                engine->WriteMessage(this_exe.c_str(), 0, 0, asMSGTYPE_ERROR, "Failed to open output file for writing");
 
                 std::thread t(show_message);
                 t.join();
@@ -394,7 +394,7 @@ int main(int argc, char* argv[]) {
             module = engine->GetModule("ngtgame");
             if (module)
             {
-                std::fstream read_file("run.exe", std::ios::binary | std::ios::in);
+                std::fstream read_file(this_exe.c_str(), std::ios::binary | std::ios::in);
                 if (read_file.is_open()) {
                     read_file.seekg(0, std::ios::end);
                     long file_size = read_file.tellg();
@@ -409,7 +409,7 @@ int main(int argc, char* argv[]) {
                     read_file.close();
                 }
                 else {
-                    engine->WriteMessage("run.exe", 0, 0, asMSGTYPE_ERROR, "Failed to open output file for reading");
+                    engine->WriteMessage(this_exe.c_str(), 0, 0, asMSGTYPE_ERROR, "Failed to open output file for reading");
 
                     std::thread t(show_message);
                     t.join();
