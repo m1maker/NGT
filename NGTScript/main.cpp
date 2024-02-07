@@ -15,67 +15,35 @@
 #include "datetime/datetime.h"
 #include "scriptmath/scriptmath.h"
 #include <thread>
-std::wstring get_exe() {
+std::string get_exe() {
     std::vector<wchar_t> pathBuf;
     DWORD copied = 0;
     do {
         pathBuf.resize(pathBuf.size() + MAX_PATH);
-        copied = GetModuleFileName(0, &pathBuf.at(0), pathBuf.size());
+        copied = GetModuleFileNameW(0, &pathBuf.at(0), pathBuf.size());
     } while (copied >= pathBuf.size());
 
     pathBuf.resize(copied);
 
-    return std::wstring(pathBuf.begin(), pathBuf.end());
+    std::wstring widePath(pathBuf.begin(), pathBuf.end());
+    return std::string(widePath.begin(), widePath.end());
 }
-unsigned char NGTOfset = 0x3213213523423121;
-const char* end = "0e0e0e0e0e0e0e0e";
+std::wstring get_exe_w() {
+    std::vector<wchar_t> pathBuf;
+    DWORD copied = 0;
+    do {
+        pathBuf.resize(pathBuf.size() + MAX_PATH);
+        copied = GetModuleFileNameW(0, &pathBuf.at(0), pathBuf.size());
+    } while (copied >= pathBuf.size());
+
+    pathBuf.resize(copied);
+
+    std::wstring widePath(pathBuf.begin(), pathBuf.end());
+    return std::wstring(widePath.begin(), widePath.end());
+}
 
 std::vector <asBYTE> buffer;
 asUINT buffer_size;
-typedef struct NGT{
-    WORD e_magic=0x4410052116654543;
-    DWORD NGTProgram=0e1277297;
-    const char* product = "NGT";
-    double version=3.0;
-} NGTHeader;
-
-NGTHeader h;
-bool has_bytes() {
-    FILE* temp;
-    std::wstring exe = get_exe();
-    std::string str;
-    str.assign(exe.begin(), exe.end());
-
-    fopen_s(&temp, str.c_str(), "rb");
-    if (temp == nullptr) {
-        return false;
-    }
-
-    const size_t struct_size = sizeof(h);
-    const size_t buffer_size = 4096;
-    char buffer[buffer_size];
-
-    bool found = false;
-    size_t last_pos = 0; // Позиция последней найденной структуры
-
-    while (!feof(temp)) {
-        size_t bytes_read = fread(buffer, 1, buffer_size, temp);
-        for (size_t i = 0; i < bytes_read - struct_size + 1; ++i) {
-            if (memcmp(&buffer[i], &h, struct_size) == 0) {
-                found = true;
-                last_pos = ftell(temp) - (bytes_read - i); // Сохраняем позицию найденной структуры
-            }
-        }
-    }
-
-    if (found) {
-        fseek(temp, last_pos, SEEK_SET); // Перемещаем указатель на позицию последней структуры
-    }
-
-    fclose(temp);
-    return found;
-}
-
 bool SCRIPT_COMPILED = false;
 BOOL FileExists(LPCTSTR szPath)
 {
@@ -95,7 +63,7 @@ char** g_argv = 0;
 
 class CBytecodeStream : public asIBinaryStream
 {
-private:
+public:
     std::vector<asBYTE> Code;
     int ReadPos, WritePos;
 
@@ -184,25 +152,25 @@ int Compile(asIScriptEngine* engine, const char* outputFile)
     return 0;
 }
 
-int Load(asIScriptEngine* engine, const char* inputFile)
+int Load(asIScriptEngine* engine, std::vector<asBYTE> code)
 {
     int r;
     CBytecodeStream stream;
     asIScriptModule* mod = engine->GetModule("ngtgame");
     if (mod == 0)
     {
-        engine->WriteMessage(inputFile, 0, 0, asMSGTYPE_ERROR, "Failed to retrieve the compiled bytecode");
+        engine->WriteMessage("Product.ngt", 0, 0, asMSGTYPE_ERROR, "Failed to retrieve the compiled bytecode");
 
         std::thread t(show_message);
         t.join();
 
         return -1;
     }
-
+    stream.Code=code;
     r = mod->LoadByteCode(&stream);
     if (r < 0)
     {
-        engine->WriteMessage(inputFile, 0, 0, asMSGTYPE_ERROR, "Failed to write the bytecode");
+        engine->WriteMessage("Product.ngt", 0, 0, asMSGTYPE_ERROR, "Failed to write the bytecode");
 
         std::thread t(show_message);
         t.join();
@@ -219,268 +187,296 @@ std::string filename;
 std::string flag;
 int scriptArg=0;
 
-
 int main(int argc, char* argv[]) {
-    /*
-    if(has_bytes){
-        flag = "-b";
-        alert("DebugInfo", filename);
-    }
-    else {
-*/
-    filename = argv[1];
-    flag = argv[2];
-//    }
-    g_argc = argc - (scriptArg + 1);
-    g_argv = argv + (scriptArg + 1);
+    std::string this_exe;
 
-    if (flag == "-c") {
-        asIScriptEngine* engine = asCreateScriptEngine();
-        engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
+    this_exe = get_exe();
+    std::fstream read_file(this_exe.c_str(), std::ios::binary | std::ios::in);
+        read_file.seekg(0, std::ios::end);
+        long file_size = read_file.tellg();
+        read_file.seekg(file_size - sizeof(asUINT));
 
-        // Register any necessary functions and types
-        // ...
-        RegisterStdString(engine);
-        RegisterScriptArray(engine, true);
-        RegisterStdStringUtils(engine);
-        RegisterScriptDictionary(engine);
-        RegisterScriptDateTime(engine);
-        RegisterScriptFile(engine);
-        RegisterScriptFileSystem(engine);
-        RegisterExceptionRoutines(engine);
-        RegisterScriptMath(engine);
-        RegisterFunctions(engine);
-        engine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
-        engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
-        engine->RegisterGlobalFunction("int exec(const string &in, string &out)", asFUNCTIONPR(ExecSystemCmd, (const string&, string&), int), asCALL_CDECL);
-        engine->RegisterGlobalProperty("const bool SCRIPT_COMPILED", (void*)&SCRIPT_COMPILED);
-        // Compile the script
-        asIScriptModule* module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
-        int result = builder.StartNewModule(engine, "ngtgame");
-        result = builder.AddSectionFromFile(argv[1]);
-
-        result = builder.BuildModule();
-
-        if (result < 0) {
-            std::thread t(show_message);
-            t.join();
-
-            return 1;
+        read_file.read(reinterpret_cast<char*>(&buffer_size), sizeof(asUINT));
+        if (buffer_size != NULL) {
+            filename = "";
+            flag = "-b";
         }
-        module = engine->GetModule("ngtgame");
-        if (module)
-        {
-            Compile(engine, "game_object.ngtb");
-        }
-
-
-        // Call compiler to create executable file
-        CreateDirectory(L"Release", 0);
-        std::wstring main_exe = get_exe();
-        CopyFile(main_exe.c_str(), L"Release/run.exe", false);
-        CopyFile(L"SAAPI64.dll", L"Release/SAAPI64.dll", false);
-
-        CopyFile(L"nvdaControllerClient64.dll", L"Release/nvdaControllerClient64.dll", false);
-        FILE* f;
-        fopen_s(&f, "release/run.exe", "ab");
-        if (f == NULL) {
-            engine->WriteMessage("run.exe", 0, 0, asMSGTYPE_ERROR, "Failed to open output file for writing");
-
-            std::thread t(show_message);
-            t.join();
-            return -1;
-        }
-
-        // Find the end of the file
-        fseek(f, 0, SEEK_END);
-        long file_size = ftell(f);
-        // Write the bytecode after the NGTGAME marker
-        fwrite(buffer.data(), buffer.size(), 1, f);
-        buffer_size = buffer.size();
-        fwrite(&buffer_size, buffer_size, 1, f);
-        fclose(f);
-
-    }
-
-
-    else if (flag == "-d") {
-        asIScriptEngine* engine = asCreateScriptEngine();
-        engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
-
-        // Register any necessary functions and types
-        // ...
-        RegisterStdString(engine);
-        RegisterScriptArray(engine, true);
-        RegisterStdStringUtils(engine);
-        RegisterScriptDictionary(engine);
-        RegisterScriptDateTime(engine);
-        RegisterScriptFile(engine);
-        RegisterScriptFileSystem(engine);
-        RegisterExceptionRoutines(engine);
-        RegisterScriptMath(engine);
-        RegisterFunctions(engine);
-        engine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
-        engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
-        engine->RegisterGlobalFunction("int exec(const string &in, string &out)", asFUNCTIONPR(ExecSystemCmd, (const string&, string&), int), asCALL_CDECL);
-        engine->RegisterGlobalProperty("const bool SCRIPT_COMPILED", (void*)&SCRIPT_COMPILED);
-
-
-        // Compile the script
-        asIScriptModule* module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
-        int result = builder.StartNewModule(engine, "ngtgame");
-        result = builder.AddSectionFromFile(argv[1]);
-        result = builder.BuildModule();
-
-        if (result < 0) {
-            std::thread t(show_message);
-            t.join();
-
-
-                        return 1;
+        else{
+        filename = argv[1];
+        flag = argv[2];
             }
-        int r;
-        // Execute the script
-        asIScriptContext* ctx = engine->CreateContext();
-        if (ctx == 0)
-        {
-            alert("NGTExecutableError", "Failed to create the context.");
-            engine->Release();
-            return -1;
+        g_argc = argc - (scriptArg + 1);
+        g_argv = argv + (scriptArg + 1);
+
+        if (flag == "-c") {
+            asIScriptEngine* engine = asCreateScriptEngine();
+            engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
+
+            // Register any necessary functions and types
+            // ...
+            RegisterStdString(engine);
+            RegisterScriptArray(engine, true);
+            RegisterStdStringUtils(engine);
+            RegisterScriptDictionary(engine);
+            RegisterScriptDateTime(engine);
+            RegisterScriptFile(engine);
+            RegisterScriptFileSystem(engine);
+            RegisterExceptionRoutines(engine);
+            RegisterScriptMath(engine);
+            RegisterFunctions(engine);
+            engine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
+            engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
+            engine->RegisterGlobalFunction("int exec(const string &in, string &out)", asFUNCTIONPR(ExecSystemCmd, (const string&, string&), int), asCALL_CDECL);
+            engine->RegisterGlobalProperty("const bool SCRIPT_COMPILED", (void*)&SCRIPT_COMPILED);
+            // Compile the script
+            asIScriptModule* module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
+            int result = builder.StartNewModule(engine, "ngtgame");
+            result = builder.AddSectionFromFile(argv[1]);
+
+            result = builder.BuildModule();
+
+            if (result < 0) {
+                std::thread t(show_message);
+                t.join();
+
+                return 1;
+            }
+            module = engine->GetModule("ngtgame");
+            if (module)
+            {
+                Compile(engine, "game_object.ngtb");
+            }
+
+
+            // Call compiler to create executable file
+            CreateDirectory(L"Release", 0);
+            std::wstring main_exe = get_exe_w();
+            CopyFile(main_exe.c_str(), L"Release/run.exe", false);
+            CopyFile(L"SAAPI64.dll", L"Release/SAAPI64.dll", false);
+
+            CopyFile(L"nvdaControllerClient64.dll", L"Release/nvdaControllerClient64.dll", false);
+            std::fstream file("release/run.exe", std::ios::app | std::ios::binary);
+            if (!file.is_open()) {
+                engine->WriteMessage("run.exe", 0, 0, asMSGTYPE_ERROR, "Failed to open output file for writing");
+
+                std::thread t(show_message);
+                t.join();
+                return -1;
+            }
+
+            file.seekg(0, std::ios::end);
+            long file_size = file.tellg();
+            file.write("\r\n", strlen("\r\n"));
+            file.write(reinterpret_cast<char*>(buffer.data()), buffer.size());
+            buffer_size = buffer.size();
+            file.write(reinterpret_cast<char*>(&buffer_size), sizeof(asUINT));
+
+            file.close();
+
         }
 
-        // We don't want to allow the script to hang the application, e.g. with an
-        // infinite loop, so we'll use the line callback function to set a timeout
-        // that will abort the script after a certain time. Before executing the 
-        // script the timeOut variable will be set to the time when the script must 
-        // stop executing. 
-        // Find the func        tion for the function we want to execute.
-        asIScriptFunction* func = engine->GetModule("ngtgame")->GetFunctionByName("main");
-        if (func == 0)
-        {
-            alert("NGTExecutableError", "No entry point found (either 'int main()' or 'void main()'.)");
+
+        else if (flag == "-d") {
+            asIScriptEngine* engine = asCreateScriptEngine();
+            engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
+
+            // Register any necessary functions and types
+            // ...
+            RegisterStdString(engine);
+            RegisterScriptArray(engine, true);
+            RegisterStdStringUtils(engine);
+            RegisterScriptDictionary(engine);
+            RegisterScriptDateTime(engine);
+            RegisterScriptFile(engine);
+            RegisterScriptFileSystem(engine);
+            RegisterExceptionRoutines(engine);
+            RegisterScriptMath(engine);
+            RegisterFunctions(engine);
+            engine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
+            engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
+            engine->RegisterGlobalFunction("int exec(const string &in, string &out)", asFUNCTIONPR(ExecSystemCmd, (const string&, string&), int), asCALL_CDECL);
+            engine->RegisterGlobalProperty("const bool SCRIPT_COMPILED", (void*)&SCRIPT_COMPILED);
+
+
+            // Compile the script
+            asIScriptModule* module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
+            int result = builder.StartNewModule(engine, "ngtgame");
+            result = builder.AddSectionFromFile(argv[1]);
+            result = builder.BuildModule();
+
+            if (result < 0) {
+                std::thread t(show_message);
+                t.join();
+
+
+                return 1;
+            }
+            int r;
+            // Execute the script
+            asIScriptContext* ctx = engine->CreateContext();
+            if (ctx == 0)
+            {
+                alert("NGTExecutableError", "Failed to create the context.");
+                engine->Release();
+                return -1;
+            }
+
+            // We don't want to allow the script to hang the application, e.g. with an
+            // infinite loop, so we'll use the line callback function to set a timeout
+            // that will abort the script after a certain time. Before executing the 
+            // script the timeOut variable will be set to the time when the script must 
+            // stop executing. 
+            // Find the func        tion for the function we want to execute.
+            asIScriptFunction* func = engine->GetModule("ngtgame")->GetFunctionByName("main");
+            if (func == 0)
+            {
+                alert("NGTExecutableError", "No entry point found (either 'int main()' or 'void main()'.)");
+                ctx->Release();
+                engine->Release();
+                return -1;
+            }
+
+            // Prepare the script context with the function we wish to execute. Prepare()
+            // must be called on the context before each new script function that will be
+            // executed. Note, that if you intend to execute the same function several 
+            // times, it might be a good idea to store the function returned by 
+            // GetFunctionByDecl(), so that this relatively slow call can be skipped.
+            r = ctx->Prepare(func);
+            init_engine();
+            if (r < 0)
+            {
+                alert("NGTExecutableError", "Failed to prepare the context.");
+                ctx->Release();
+                engine->Release();
+                return -1;
+            }
+
+            // Set the timeout before executing the function. Give the function 1 sec
+            // to return before we'll abort it.
+
+            // Execute the function
+            result = ctx->Execute();
+            if (result != asEXECUTION_FINISHED) {
+                std::string output = GetExceptionInfo(ctx, true);
+                alert("NGTRuntimeError", "Info: " + output);
+                return 1;
+            }
+
+            // Clean up
             ctx->Release();
-            engine->Release();
-            return -1;
-        }
+            engine->ShutDownAndRelease();
 
-        // Prepare the script context with the function we wish to execute. Prepare()
-        // must be called on the context before each new script function that will be
-        // executed. Note, that if you intend to execute the same function several 
-        // times, it might be a good idea to store the function returned by 
-        // GetFunctionByDecl(), so that this relatively slow call can be skipped.
-        r = ctx->Prepare(func);
-        init_engine();
-        if (r < 0)
-        {
-            alert("NGTExecutableError", "Failed to prepare the context.");
+
+        }
+        else if (flag == "-b") {
+            SCRIPT_COMPILED = true;
+            asIScriptEngine* engine = asCreateScriptEngine();
+            engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
+
+            RegisterStdString(engine);
+            RegisterScriptArray(engine, true);
+            RegisterStdStringUtils(engine);
+            RegisterScriptDictionary(engine);
+            RegisterScriptDateTime(engine);
+            RegisterScriptFile(engine);
+            RegisterScriptFileSystem(engine);
+            RegisterExceptionRoutines(engine);
+            RegisterScriptMath(engine);
+            RegisterFunctions(engine);
+            engine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
+            engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
+            engine->RegisterGlobalFunction("int exec(const string &in, string &out)", asFUNCTIONPR(ExecSystemCmd, (const string&, string&), int), asCALL_CDECL);
+            engine->RegisterGlobalProperty("const bool SCRIPT_COMPILED", (void*)&SCRIPT_COMPILED);
+
+
+            asIScriptModule* module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
+            int result;
+            module = engine->GetModule("ngtgame");
+            if (module)
+            {
+                std::fstream read_file("run.exe", std::ios::binary | std::ios::in);
+                if (read_file.is_open()) {
+                    read_file.seekg(0, std::ios::end);
+                    long file_size = read_file.tellg();
+                    read_file.seekg(file_size - sizeof(asUINT));
+
+                    read_file.read(reinterpret_cast<char*>(&buffer_size), sizeof(asUINT));
+
+                    read_file.seekg(file_size - buffer_size - 4, std::ios::beg);
+                    buffer.resize(buffer_size);
+                    read_file.read(reinterpret_cast<char*>(buffer.data()), buffer_size);
+
+                    read_file.close();
+                }
+                else {
+                    engine->WriteMessage("run.exe", 0, 0, asMSGTYPE_ERROR, "Failed to open output file for reading");
+
+                    std::thread t(show_message);
+                    t.join();
+                    return -1;
+                }
+
+
+                Load(engine, buffer);
+            }
+            asIScriptContext* ctx = engine->CreateContext();
+            if (ctx == 0)
+            {
+                alert("NGTExecutableError", "Failed to create the context.");
+                engine->Release();
+                return -1;
+            }
+
+            // We don't want to allow the script to hang the application, e.g. with an
+            // infinite loop, so we'll use the line callback function to set a timeout
+            // that will abort the script after a certain time. Before executing the 
+            // script the timeOut variable will be set to the time when the script must 
+            // stop executing. 
+            // Find the func        tion for the function we want to execute.
+            asIScriptFunction* func = engine->GetModule("ngtgame")->GetFunctionByName("main");
+            if (func == 0)
+            {
+                alert("NGTExecutableError", "No entry point found (either 'int main()' or 'void main()'.)");
+                ctx->Release();
+                engine->Release();
+                return -1;
+            }
+
+            // Prepare the script context with the function we wish to execute. Prepare()
+            // must be called on the context before each new script function that will be
+            // executed. Note, that if you intend to execute the same function several 
+            // times, it might be a good idea to store the function returned by 
+            // GetFunctionByDecl(), so that this relatively slow call can be skipped.
+
+            int r = ctx->Prepare(func);
+            init_engine();
+            if (r < 0)
+            {
+                alert("NGTExecutableError", "Failed to prepare the context.");
+                ctx->Release();
+                engine->Release();
+                return -1;
+            }
+
+            // Set the timeout before executing the function. Give the function 1 sec
+            // to return before we'll abort it.
+
+            // Execute the function
+            result = ctx->Execute();
+            if (result != asEXECUTION_FINISHED) {
+                std::string output = GetExceptionInfo(ctx, true);
+                alert("NGTRuntimeError", "Info: " + output);
+                return 1;
+            }
+
+            // Clean up
             ctx->Release();
-            engine->Release();
-            return -1;
+            engine->ShutDownAndRelease();
+
+
         }
-
-        // Set the timeout before executing the function. Give the function 1 sec
-        // to return before we'll abort it.
-
-        // Execute the function
-        result = ctx->Execute();
-        if (result != asEXECUTION_FINISHED) {
-            std::string output = GetExceptionInfo(ctx, true);
-            alert("NGTRuntimeError", "Info: " + output);
-            return 1;
-        }
-
-        // Clean up
-        ctx->Release();
-        engine->ShutDownAndRelease();
-        
-
+        return EXIT_SUCCESS;
     }
-    else if (flag == "-b") {
-        SCRIPT_COMPILED = true;
-        asIScriptEngine* engine = asCreateScriptEngine();
-        engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
-
-        RegisterStdString(engine);
-        RegisterScriptArray(engine, true);
-        RegisterStdStringUtils(engine);
-        RegisterScriptDictionary(engine);
-        RegisterScriptDateTime(engine);
-        RegisterScriptFile(engine);
-        RegisterScriptFileSystem(engine);
-        RegisterExceptionRoutines(engine);
-        RegisterScriptMath(engine);
-        RegisterFunctions(engine);
-        engine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
-        engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
-        engine->RegisterGlobalFunction("int exec(const string &in, string &out)", asFUNCTIONPR(ExecSystemCmd, (const string&, string&), int), asCALL_CDECL);
-        engine->RegisterGlobalProperty("const bool SCRIPT_COMPILED", (void*)&SCRIPT_COMPILED);
-
-
-        asIScriptModule* module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
-        int result;
-        module = engine->GetModule("ngtgame");
-        if (module)
-        {
-            Load(engine, "game_object.ngtb");
-        }
-        asIScriptContext* ctx = engine->CreateContext();
-        if (ctx == 0)
-        {
-            alert("NGTExecutableError", "Failed to create the context.");
-            engine->Release();
-            return -1;
-        }
-
-        // We don't want to allow the script to hang the application, e.g. with an
-        // infinite loop, so we'll use the line callback function to set a timeout
-        // that will abort the script after a certain time. Before executing the 
-        // script the timeOut variable will be set to the time when the script must 
-        // stop executing. 
-        // Find the func        tion for the function we want to execute.
-        asIScriptFunction* func = engine->GetModule("ngtgame")->GetFunctionByName("main");
-        if (func == 0)
-        {
-            alert("NGTExecutableError", "No entry point found (either 'int main()' or 'void main()'.)");
-            ctx->Release();
-            engine->Release();
-            return -1;
-        }
-
-        // Prepare the script context with the function we wish to execute. Prepare()
-        // must be called on the context before each new script function that will be
-        // executed. Note, that if you intend to execute the same function several 
-        // times, it might be a good idea to store the function returned by 
-        // GetFunctionByDecl(), so that this relatively slow call can be skipped.
-
-        int r = ctx->Prepare(func);
-        init_engine();
-        if (r < 0)
-        {
-            alert("NGTExecutableError", "Failed to prepare the context.");
-            ctx->Release();
-            engine->Release();
-            return -1;
-        }
-
-        // Set the timeout before executing the function. Give the function 1 sec
-        // to return before we'll abort it.
-
-        // Execute the function
-        result = ctx->Execute();
-        if (result != asEXECUTION_FINISHED) {
-            std::string output = GetExceptionInfo(ctx, true);
-            alert("NGTRuntimeError", "Info: "+ output);
-            return 1;
-        }
-
-        // Clean up
-        ctx->Release();
-        engine->ShutDownAndRelease();
-
-
-    }
-    return EXIT_SUCCESS;
-}
 int ExecSystemCmd(const string& str, string& out)
 {
 #ifdef _WIN32

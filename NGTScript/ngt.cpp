@@ -657,12 +657,15 @@ bool sound::load(const std::string & filename, bool set3d) {
 
     }
     void sound::set_sound_hrtf(bool hrtf) {
-        if (hrtf and openal!=NULL and sndfile!=NULL)
+        bool state = this->is_playing();
+        this->stop();
+        if (hrtf )
             this->audio_system = 1;
-        else
+        else 
             this->audio_system = 0;
-        if (this->is_playing())
+        if (state == true) {
             this->play();
+}
     }
     bool sound::seek(double new_position) {
         if (!active)return false;
