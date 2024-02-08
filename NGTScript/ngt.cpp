@@ -535,7 +535,7 @@ bool sound::load(const std::string & filename, bool set3d) {
                 typedef void (*PFNALSOURCEPLAYPROC)(ALuint);
                 PFNALSOURCEIPROC alSourcei = (PFNALSOURCEIPROC)GetProcAddress(openal, "alSourcei");
                 PFNALSOURCEPLAYPROC alSourcePlay = (PFNALSOURCEPLAYPROC)GetProcAddress(openal, "alSourcePlay");
-                alSourcei(source_, AL_LOOPING, AL_FALSE);
+                alSourcei(source_, AL_LOOPING, AL_TRUE);
                 alSourcePlay(source_);
                 return true;
             }
@@ -659,7 +659,7 @@ bool sound::load(const std::string & filename, bool set3d) {
     void sound::set_sound_hrtf(bool hrtf) {
         bool state = this->is_playing();
         this->stop();
-        if (hrtf )
+        if (hrtf and openal!=NULL)
             this->audio_system = 1;
         else 
             this->audio_system = 0;
@@ -899,10 +899,13 @@ bool timer::is_running() {
                 void library::construct() {}
                 void library::destruct() {  }
                 bool library::load(const std::string & libname) {
-                    return lib = LoadLibraryA(libname.c_str());
+                    lib = LoadLibraryA(libname.c_str());
+                    if (lib != NULL)
+                        return true;
+                    return false;
                 }
                 CScriptDictionary* library::call(const std::string function_name, ...){
-//                CScriptDictionary CallResult;
+                CScriptDictionary* CallResult;
                 }
                     void library::unload() {
                     FreeLibrary(lib);
