@@ -623,109 +623,8 @@ static string formatFloat(double value, const string &options, asUINT width, asU
 }
 
 // AngelScript signature:
-// int64 parseInt(const string &in val, uint base = 10, uint &out byteCount = 0)
-static asINT64 parseInt(const string &val, asUINT base, asUINT *byteCount)
-{
-	// Only accept base 10 and 16
-	if( base != 10 && base != 16 )
-	{
-		if( byteCount ) *byteCount = 0;
-		return 0;
-	}
-
-	const char *end = &val[0];
-
-	// Determine the sign
-	bool sign = false;
-	if( *end == '-' )
-	{
-		sign = true;
-		end++;
-	}
-	else if( *end == '+' )
-		end++;
-
-	asINT64 res = 0;
-	if( base == 10 )
-	{
-		while( *end >= '0' && *end <= '9' )
-		{
-			res *= 10;
-			res += *end++ - '0';
-		}
-	}
-	else if( base == 16 )
-	{
-		while( (*end >= '0' && *end <= '9') ||
-		       (*end >= 'a' && *end <= 'f') ||
-		       (*end >= 'A' && *end <= 'F') )
-		{
-			res *= 16;
-			if( *end >= '0' && *end <= '9' )
-				res += *end++ - '0';
-			else if( *end >= 'a' && *end <= 'f' )
-				res += *end++ - 'a' + 10;
-			else if( *end >= 'A' && *end <= 'F' )
-				res += *end++ - 'A' + 10;
-		}
-	}
-
-	if( byteCount )
-		*byteCount = asUINT(size_t(end - val.c_str()));
-
-	if( sign )
-		res = -res;
-
-	return res;
-}
-
-// AngelScript signature:
-// uint64 parseUInt(const string &in val, uint base = 10, uint &out byteCount = 0)
-static asQWORD parseUInt(const string &val, asUINT base, asUINT *byteCount)
-{
-	// Only accept base 10 and 16
-	if (base != 10 && base != 16)
-	{
-		if (byteCount) *byteCount = 0;
-		return 0;
-	}
-
-	const char *end = &val[0];
-
-	asQWORD res = 0;
-	if (base == 10)
-	{
-		while (*end >= '0' && *end <= '9')
-		{
-			res *= 10;
-			res += *end++ - '0';
-		}
-	}
-	else if (base == 16)
-	{
-		while ((*end >= '0' && *end <= '9') ||
-			(*end >= 'a' && *end <= 'f') ||
-			(*end >= 'A' && *end <= 'F'))
-		{
-			res *= 16;
-			if (*end >= '0' && *end <= '9')
-				res += *end++ - '0';
-			else if (*end >= 'a' && *end <= 'f')
-				res += *end++ - 'a' + 10;
-			else if (*end >= 'A' && *end <= 'F')
-				res += *end++ - 'A' + 10;
-		}
-	}
-
-	if (byteCount)
-		*byteCount = asUINT(size_t(end - val.c_str()));
-
-	return res;
-}
-
-// AngelScript signature:
 // double parseFloat(const string &in val, uint &out byteCount = 0)
-double parseFloat(const string &val, asUINT *byteCount)
+double stringToNumber(const string &val, asUINT *byteCount)
 {
 	char *end;
 
@@ -870,9 +769,7 @@ void RegisterStdString_Native(asIScriptEngine *engine)
 	r = engine->RegisterGlobalFunction("string formatInt(int64 val, const string &in options = \"\", uint width = 0)", asFUNCTION(formatInt), asCALL_CDECL); assert(r >= 0);
 	r = engine->RegisterGlobalFunction("string formatUInt(uint64 val, const string &in options = \"\", uint width = 0)", asFUNCTION(formatUInt), asCALL_CDECL); assert(r >= 0);
 	r = engine->RegisterGlobalFunction("string formatFloat(double val, const string &in options = \"\", uint width = 0, uint precision = 0)", asFUNCTION(formatFloat), asCALL_CDECL); assert(r >= 0);
-	r = engine->RegisterGlobalFunction("int64 parse_int(const string &in, uint base = 10, uint &out byteCount = 0)", asFUNCTION(parseInt), asCALL_CDECL); assert(r >= 0);
-	r = engine->RegisterGlobalFunction("uint64 parse_uint(const string &in, uint base = 10, uint &out byteCount = 0)", asFUNCTION(parseUInt), asCALL_CDECL); assert(r >= 0);
-	r = engine->RegisterGlobalFunction("double parse_float(const string &in, uint &out byteCount = 0)", asFUNCTION(parseFloat), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterGlobalFunction("double string_to_number(const string &in, uint &out byteCount = 0)", asFUNCTION(stringToNumber), asCALL_CDECL); assert(r >= 0);
 
 #if AS_USE_STLNAMES == 1
 	// Same as length
@@ -1058,27 +955,11 @@ static void formatFloat_Generic(asIScriptGeneric *gen)
 	new(gen->GetAddressOfReturnLocation()) string(formatFloat(val, *options, width, precision));
 }
 
-static void parseInt_Generic(asIScriptGeneric *gen)
-{
-	string *str = reinterpret_cast<string*>(gen->GetArgAddress(0));
-	asUINT base = gen->GetArgDWord(1);
-	asUINT *byteCount = reinterpret_cast<asUINT*>(gen->GetArgAddress(2));
-	gen->SetReturnQWord(parseInt(*str,base,byteCount));
-}
-
-static void parseUInt_Generic(asIScriptGeneric *gen)
-{
-	string *str = reinterpret_cast<string*>(gen->GetArgAddress(0));
-	asUINT base = gen->GetArgDWord(1);
-	asUINT *byteCount = reinterpret_cast<asUINT*>(gen->GetArgAddress(2));
-	gen->SetReturnQWord(parseUInt(*str, base, byteCount));
-}
-
-static void parseFloat_Generic(asIScriptGeneric *gen)
+static void stringToNumber_Generic(asIScriptGeneric *gen)
 {
 	string *str = reinterpret_cast<string*>(gen->GetArgAddress(0));
 	asUINT *byteCount = reinterpret_cast<asUINT*>(gen->GetArgAddress(1));
-	gen->SetReturnDouble(parseFloat(*str,byteCount));
+	gen->SetReturnDouble(stringToNumber(*str,byteCount));
 }
 
 static void StringCharAtGeneric(asIScriptGeneric * gen)
@@ -1391,9 +1272,7 @@ void RegisterStdString_Generic(asIScriptEngine *engine)
 	r = engine->RegisterGlobalFunction("string formatInt(int64 val, const string &in options = \"\", uint width = 0)", asFUNCTION(formatInt_Generic), asCALL_GENERIC); assert(r >= 0);
 	r = engine->RegisterGlobalFunction("string formatUInt(uint64 val, const string &in options = \"\", uint width = 0)", asFUNCTION(formatUInt_Generic), asCALL_GENERIC); assert(r >= 0);
 	r = engine->RegisterGlobalFunction("string formatFloat(double val, const string &in options = \"\", uint width = 0, uint precision = 0)", asFUNCTION(formatFloat_Generic), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterGlobalFunction("int64 parse_int(const string &in, uint base = 10, uint &out byteCount = 0)", asFUNCTION(parseInt_Generic), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterGlobalFunction("uint64 parse_uint(const string &in, uint base = 10, uint &out byteCount = 0)", asFUNCTION(parseUInt_Generic), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterGlobalFunction("double parse_float(const string &in, uint &out byteCount = 0)", asFUNCTION(parseFloat_Generic), asCALL_GENERIC); assert(r >= 0);
+	r = engine->RegisterGlobalFunction("double string_to_number(const string &in, uint &out byteCount = 0)", asFUNCTION(stringToNumber_Generic), asCALL_GENERIC); assert(r >= 0);
 }
 
 void RegisterStdString(asIScriptEngine * engine)
