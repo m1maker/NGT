@@ -55,20 +55,10 @@ public:
 	bool IsEOF() const;
 
 	// Reading
-	std::string ReadString(unsigned int length);
+	std::string Read(unsigned int length);
 	std::string ReadLine();
-	asINT64     ReadInt(asUINT bytes);
-	asQWORD     ReadUInt(asUINT bytes);
-	float       ReadFloat();
-	double      ReadDouble();
-
 	// Writing
-	int WriteString(const std::string &str);
-	int WriteInt(asINT64 v, asUINT bytes);
-	int WriteUInt(asQWORD v, asUINT bytes);
-	int WriteFloat(float v);
-	int WriteDouble(double v);
-
+	int Write(const std::string &str);
 	// Cursor
 	int GetPos() const;
 	int SetPos(int pos);
