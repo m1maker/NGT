@@ -1,0 +1,6 @@
+tile:0:10000000:0:10000000:0:0:concrete
+tile:4:6:4:6:0:0:carpet
+src:0:10000000:0:10000000:0:10:citybirds.ogg
+tile:3:3:3:3:0:10:concrete
+tile:5:5:5:5:0:15:carpet
+tile:15:18:5:10:0:5:wall1

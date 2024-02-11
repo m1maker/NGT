@@ -744,9 +744,11 @@ bool sound::load(const std::string & filename, bool set3d) {
     }
 
     bool sound::is_playing() const {
+        if (!active)return false;
         ALenum state;
-        if(audio_system==0)
-        return ma_sound_is_playing(&handle_);
+        if (audio_system == 0) {
+            return ma_sound_is_playing(&handle_);
+        }
         else {
             if (openal != NULL) {
 
@@ -758,6 +760,7 @@ bool sound::load(const std::string & filename, bool set3d) {
             }
     }
     bool sound::is_paused() const {
+        if (!active)return false;
         ALenum state;
 
         return paused;
