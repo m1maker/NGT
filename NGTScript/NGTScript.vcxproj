@@ -257,6 +257,7 @@
     <ClInclude Include="SDL_net.h" />
     <ClInclude Include="serializer\serializer.h" />
     <ClInclude Include="sndfile.h" />
+    <ClInclude Include="sqlite3.h" />
     <ClInclude Include="Tolk.h" />
     <ClInclude Include="uni_algo.h" />
     <ClInclude Include="vorbisfile.h" />
@@ -285,6 +286,7 @@
     <ClCompile Include="scriptstdstring\scriptstdstring.cpp" />
     <ClCompile Include="scriptstdstring\scriptstdstring_utils.cpp" />
     <ClCompile Include="serializer\serializer.cpp" />
+    <ClCompile Include="sqlite3.c" />
     <ClCompile Include="stb_vorbis.c" />
     <ClCompile Include="stb_vorbis.h" />
   </ItemGroup>

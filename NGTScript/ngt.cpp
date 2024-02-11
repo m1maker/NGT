@@ -1,14 +1,11 @@
 ﻿#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS 
 #include <random>
-#include <type_traits>
-#include <Windows.h>
 #include <filesystem>
 #include <thread>
 #include "Tolk.h"
 #include <chrono>
 #include <string>
 #include"sdl/SDL.h"
-#include <commctrl.h>
 #include<map>
 #include <stdio.h>
 #include "NGT.H"
@@ -58,6 +55,7 @@ void init_engine(){
     }
     ma_engine_init(NULL, &sound_engine);
     SDL_Init(SDL_INIT_EVERYTHING);
+    enet_initialize();
     Tolk_TrySAPI(true);
 
     reader=Tolk_DetectScreenReader();
@@ -114,7 +112,9 @@ double randomDouble(double min, double max) {
     return dis(gen); // Ensure 'gen' is a valid random number generator
 }
 
-
+bool random_bool() {
+    return rand() % 2 == 0;
+}
 int get_last_error() {
     return 0;
 }
@@ -215,6 +215,7 @@ void exit_engine(int return_number)
     SDL_DestroyWindow(win);
 win=NULL;
 SDL_UnregisterApp();
+enet_deinitialize();
 Tolk_Unload();
 SDL_Quit();
 exit(return_number);
@@ -896,7 +897,29 @@ bool timer::is_running() {
 
         void network::construct() {}
         void network::destruct() { }
-                void library::construct() {}
+    unsigned int network::connect(const std::string& hostAddress, int port) {
+        ENetAddress enetAddress;
+        enet_address_set_host(&enetAddress, hostAddress.c_str());
+        enetAddress.port = port;
+
+        ENetPeer* peer = enet_host_connect(host, &enetAddress, 1, 0);
+        if (peer == NULL) {
+            return 0; // Connection failed
+        }
+
+        return peer->incomingPeerID;
+    }
+
+    bool network::destroy() {
+        if (host) {
+            enet_host_destroy(host);
+            host = NULL;
+            return true;
+        }
+        return false;
+    }
+
+        void library::construct() {}
                 void library::destruct() {  }
                 bool library::load(const std::string & libname) {
                     lib = LoadLibraryA(libname.c_str());
@@ -963,3 +986,70 @@ uint64_t get_time_stamp_seconds() {
 }
 void ngtvector::construct() {}
 void ngtvector::destruct() {}
+void sqlite3statement::construct() {}
+void sqlite3statement::destruct() {}
+void ngtsqlite3::construct() {}
+void ngtsqlite3::destruct() {}
+
+int sqlite3statement::step() { return sqlite3_step(stmt); }
+    int sqlite3statement::reset() { return sqlite3_reset(stmt); }
+    std::string sqlite3statement::get_expanded_sql_statement() const { return sqlite3_expanded_sql(stmt); }
+    std::string sqlite3statement::get_sql_statement() const { return sqlite3_sql(stmt); }
+    int sqlite3statement::get_bind_param_count() const { return sqlite3_bind_parameter_count(stmt); }
+    int sqlite3statement::get_column_count() const { return sqlite3_column_count(stmt); }
+    int sqlite3statement::bind_blob(int index, const std::string& value, bool copy) { return sqlite3_bind_blob(stmt, index, value.c_str(), value.size(), copy ? SQLITE_TRANSIENT : SQLITE_STATIC); }
+    int sqlite3statement::bind_double(int index, double value) { return sqlite3_bind_double(stmt, index, value); }
+    int sqlite3statement::bind_int(int index, int value) { return sqlite3_bind_int(stmt, index, value); }
+    int sqlite3statement::bind_int64(int index, int64_t value) { return sqlite3_bind_int64(stmt, index, value); }
+    int sqlite3statement::bind_null(int index) { return sqlite3_bind_null(stmt, index); }
+    int sqlite3statement::bind_param_index(const std::string& name) { return sqlite3_bind_parameter_index(stmt, name.c_str()); }
+    std::string sqlite3statement::bind_param_name(int index) { return sqlite3_bind_parameter_name(stmt, index); }
+    int sqlite3statement::bind_text(int index, const std::string& value, bool copy) { return sqlite3_bind_text(stmt, index, value.c_str(), value.size(), copy ? SQLITE_TRANSIENT : SQLITE_STATIC); }
+    int sqlite3statement::clear_bindings() { return sqlite3_clear_bindings(stmt); }
+    std::string sqlite3statement::column_blob(int index) { return std::string(reinterpret_cast<const char*>(sqlite3_column_blob(stmt, index)), sqlite3_column_bytes(stmt, index)); }
+    int sqlite3statement::column_bytes(int index) { return sqlite3_column_bytes(stmt, index); }
+    std::string sqlite3statement::column_decltype(int index) { return sqlite3_column_decltype(stmt, index); }
+    double sqlite3statement::column_double(int index) { return sqlite3_column_double(stmt, index); }
+    int sqlite3statement::column_int(int index) { return sqlite3_column_int(stmt, index); }
+    int64_t sqlite3statement::column_int64(int index) { return sqlite3_column_int64(stmt, index); }
+    std::string sqlite3statement::column_name(int index) { return sqlite3_column_name(stmt, index); }
+    int sqlite3statement::column_type(int index) { return sqlite3_column_type(stmt, index); }
+    std::string sqlite3statement::column_text(int index) { return reinterpret_cast<const char*>(sqlite3_column_text(stmt, index)); }
+
+
+    int ngtsqlite3::close() { return sqlite3_close(db); }
+
+    int ngtsqlite3::open(const std::string& filename, int flags) { return sqlite3_open_v2(filename.c_str(), &db, flags, nullptr); }
+    sqlite3statement* ngtsqlite3::prepare(const std::string& name, int& out) {
+        sqlite3statement* statement = new sqlite3statement();
+        if (sqlite3_prepare_v2(db, name.c_str(), -1, &statement->stmt, 0) != SQLITE_OK)
+        {
+            out = sqlite3_errcode(db);
+            return nullptr;
+        }
+        return statement;
+    }
+
+    int ngtsqlite3::execute(const std::string& sql)
+    {
+        return sqlite3_exec(db, sql.c_str(), 0, 0, 0);
+    }
+
+    int64_t ngtsqlite3::get_rows_changed() const { return sqlite3_changes(db); }
+
+    int64_t ngtsqlite3::get_total_rows_changed() const { return sqlite3_total_changes(db); }
+
+    int ngtsqlite3::limit(int id, int val) { return sqlite3_limit(db, id, val); }
+
+    int ngtsqlite3::set_authorizer(sqlite3_authorizer* callback, const std::string& arg) { return 0; }
+
+    int64_t ngtsqlite3::get_last_insert_rowid() const { return sqlite3_last_insert_rowid(db); }
+
+    void ngtsqlite3::set_last_insert_rowid(int64_t id) { sqlite3_set_last_insert_rowid(db, id); }
+
+    int ngtsqlite3::get_last_error() { return sqlite3_errcode(db); }
+
+    std::string ngtsqlite3::get_last_error_text() { return sqlite3_errmsg(db); }
+
+    bool ngtsqlite3::get_active() const { return db != nullptr; }
+

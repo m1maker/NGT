@@ -1,8 +1,11 @@
 #pragma once
 #define MINIAUDIO_IMPLEMENTATION
-
+#define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
+#include <Windows.h>
+#include "enet/enet.h"
 #include "AL/al.h"
 #include "AL/alc.h"
+#include "sqlite3.h"
 #include "miniaudio.h"
 #include "sndfile.h"
 #include "reverb/reverb.h"
@@ -11,9 +14,7 @@
 #include<chrono>
 #include <string>
 #include"sdl/SDL.h"
-//#include "enet/enet.h"
 #include <iostream>
-#include <fstream>
 #include <vector>
 #include "scriptdictionary/scriptdictionary.h"
 class ngtvector {
@@ -31,6 +32,7 @@ void init_engine();
 void set_library_path(const std::string& path);
 long random(long min, long max);
  double randomDouble(double min, double max);
+ bool random_bool();
  int get_last_error();
 void speak(const std::string &	 text, bool stop = true);
 void speak_wait(const std::string &	 text, bool stop = true);
@@ -206,6 +208,8 @@ public:
 	bool is_active() const;
 
 private:
+	ENetAddress address;
+	ENetHost* host;
 	int m_connectedPeers;
 	double m_bytesSent;
 	double m_bytesReceived;
@@ -247,3 +251,63 @@ public:
 private:
     uint64_t get_idle_time();
 };
+class sqlite3statement
+{
+public:
+	void construct();
+	void destruct();
+	int step();
+	int reset();
+	std::string get_expanded_sql_statement()const;
+	std::string get_sql_statement() const;
+	int get_bind_param_count()const;
+	int get_column_count()const;
+	int bind_blob(int index, const std::string& value, bool copy = true);
+	int bind_double(int index, double value);
+	int bind_int(int index, int value);
+	int bind_int64(int index, int64_t value);
+	int bind_null(int index);
+	int bind_param_index(const std::string& name);
+	std::string bind_param_name(int index);
+	int bind_text(int index, const std::string& value, bool copy = true);
+	int clear_bindings();
+	std::string column_blob(int index);
+	int column_bytes(int index);
+	std::string column_decltype(int index);
+	double column_double(int index);
+	int column_int(int index);
+	int64_t column_int64(int index);
+	std::string column_name(int index);
+	int column_type(int index);
+	std::string column_text(int index);
+	sqlite3_stmt* stmt;
+};
+
+using sqlite3_authorizer = int(*)(std::string, int, std::string, std::string, std::string, std::string);
+
+
+class ngtsqlite3
+{
+public:
+	void construct();
+	void destruct();
+
+	int close();
+	int open(const std::string& filename, int flags = 6);
+	sqlite3statement* prepare(const std::string& name, int& out);
+
+	int execute(const std::string& sql);
+	int64_t get_rows_changed() const;
+	int64_t get_total_rows_changed()const;
+	int limit(int id, int val);
+	int set_authorizer(sqlite3_authorizer* callback, const std::string& arg = "");
+	int64_t get_last_insert_rowid() const;
+	void set_last_insert_rowid(int64_t id);
+	int get_last_error();
+	std::string get_last_error_text();
+	bool get_active()const;
+private:
+	sqlite3* db;
+};
+
+

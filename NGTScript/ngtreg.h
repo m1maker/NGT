@@ -1,4 +1,3 @@
-#pragma comment(lib, "angelscript64.lib")
 #include "scriptbuilder/scriptbuilder.h"
 #include "scriptstdstring/scriptstdstring.h"
 #include <fstream>
@@ -9,6 +8,7 @@
 #include <assert.h>  // assert()
 
 #include "angelscript.h"
+#define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
 #include "ngt.h"
 CScriptBuilder builder;
 using namespace std;

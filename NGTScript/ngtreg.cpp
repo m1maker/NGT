@@ -4,9 +4,9 @@
 #include <cstdlib>
 
 #include <iostream>
-
+#define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
+#include <windows.h>
 #include <assert.h>  // assert()
-#include<Windows.h>
 #include "angelscript.h"
 #include "ngt.h"
 HWND g_hwndEdit;
@@ -398,7 +398,8 @@ library* flibrary() { return new library; }
 instance* finstance(std::string app) { return new instance(app); }
 network_event* fnetwork_event() { return new network_event; }
 ngtvector* fngtvector() { return new ngtvector; }
-
+sqlite3statement* fsqlite3statement() { return new sqlite3statement; }
+ngtsqlite3* fngtsqlite3() { return new ngtsqlite3; }
 network* fnetwork() { return new network; }
 void MessageCallback(const asSMessageInfo* msg, void* param)
 {
@@ -432,6 +433,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 
     engine->RegisterGlobalFunction("int random(int, int)", asFUNCTIONPR(random, (long, long), long), asCALL_CDECL);
     engine->RegisterGlobalFunction("double random(double, double)", asFUNCTIONPR(randomDouble, (double, double), double), asCALL_CDECL);
+    engine->RegisterGlobalFunction("bool random_bool()", asFUNCTION(random_bool), asCALL_CDECL);
 
     engine->RegisterGlobalFunction("int get_last_error()", asFUNCTION(get_last_error), asCALL_CDECL);
 
@@ -593,6 +595,53 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectMethod("network", "double get_bytes_sent() const", asMETHOD(network, get_bytes_sent), asCALL_THISCALL);
     engine->RegisterObjectMethod("network", "double get_bytes_received() const", asMETHOD(network, get_bytes_received), asCALL_THISCALL);
 */
+    engine->RegisterFuncdef("int sqlite3authorizer(string, int, string, string, string, string)");
+    engine->RegisterObjectType("sqlite3statement", sizeof(sqlite3statement), asOBJ_REF);
+    engine->RegisterObjectBehaviour("sqlite3statement", asBEHAVE_FACTORY, "sqlite3statement@ s()", asFUNCTION(fsqlite3statement), asCALL_CDECL);
+    engine->RegisterObjectBehaviour("sqlite3statement", asBEHAVE_ADDREF, "void f()", asMETHOD(sqlite3statement, construct), asCALL_THISCALL);
+    engine->RegisterObjectBehaviour("sqlite3statement", asBEHAVE_RELEASE, "void f()", asMETHOD(sqlite3statement, destruct), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3statement", "int step()", asMETHOD(sqlite3statement, step), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3statement", "int reset()", asMETHOD(sqlite3statement, reset), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3statement", "string get_expanded_sql_statement() property", asMETHOD(sqlite3statement, get_expanded_sql_statement), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3statement", "string get_sql_statement() property", asMETHOD(sqlite3statement, get_sql_statement), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3statement", "int get_bind_param_count() property", asMETHOD(sqlite3statement, get_bind_param_count), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3statement", "int get_column_count() property", asMETHOD(sqlite3statement, get_column_count), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3statement", "int bind_blob(int, const string&in, bool=true)", asMETHOD(sqlite3statement, bind_blob), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3statement", "int bind_double(int, double)", asMETHOD(sqlite3statement, bind_double), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3statement", "int bind_int(int, int)", asMETHOD(sqlite3statement, bind_int), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3statement", "int bind_int64(int, int64)", asMETHOD(sqlite3statement, bind_int64), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3statement", "int bind_null(int)", asMETHOD(sqlite3statement, bind_null), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3statement", "int bind_param_index(const string&in)", asMETHOD(sqlite3statement, bind_param_index), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3statement", "string bind_param_name(int)", asMETHOD(sqlite3statement, bind_param_name), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3statement", "int bind_text(int, const string&in, bool=true)", asMETHOD(sqlite3statement, bind_text), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3statement", "int clear_bindings()", asMETHOD(sqlite3statement, clear_bindings), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3statement", "string column_blob(int)", asMETHOD(sqlite3statement, column_blob), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3statement", "int column_bytes(int)", asMETHOD(sqlite3statement, column_bytes), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3statement", "string column_decltype(int)", asMETHOD(sqlite3statement, column_decltype), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3statement", "double column_double(int)", asMETHOD(sqlite3statement, column_double), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3statement", "int column_int(int)", asMETHOD(sqlite3statement, column_int), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3statement", "int64 column_int64(int)", asMETHOD(sqlite3statement, column_int64), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3statement", "string column_name(int)", asMETHOD(sqlite3statement, column_name), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3statement", "int column_type(int)", asMETHOD(sqlite3statement, column_type), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3statement", "string column_text(int)", asMETHOD(sqlite3statement, column_text), asCALL_THISCALL);
+    engine->RegisterObjectType("sqlite3", sizeof(ngtsqlite3), asOBJ_REF);
+    engine->RegisterObjectBehaviour("sqlite3", asBEHAVE_FACTORY, "sqlite3@ db()", asFUNCTION(fngtsqlite3), asCALL_CDECL);
+    engine->RegisterObjectBehaviour("sqlite3", asBEHAVE_ADDREF, "void f()", asMETHOD(ngtsqlite3, construct), asCALL_THISCALL);
+    engine->RegisterObjectBehaviour("sqlite3", asBEHAVE_RELEASE, "void f()", asMETHOD(ngtsqlite3, destruct), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3", "int close()", asMETHOD(ngtsqlite3, close), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3", "int open(const string&in, int=6)", asMETHOD(ngtsqlite3, open), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3", "sqlite3statement@ prepare(const string&in, int&out=void)", asMETHOD(ngtsqlite3, prepare), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3", "int execute(const string&in)", asMETHOD(ngtsqlite3, execute), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3", "int64 get_rows_changed() property", asMETHOD(ngtsqlite3, get_rows_changed), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3", "int64 get_total_rows_changed() property", asMETHOD(ngtsqlite3, get_total_rows_changed), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3", "int limit(int id, int val)", asMETHOD(ngtsqlite3, limit), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3", "int set_authorizer(sqlite3authorizer@, const string&in=\"\")", asMETHOD(ngtsqlite3, set_authorizer), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3", "int64 get_last_insert_rowid() property", asMETHOD(ngtsqlite3, get_last_insert_rowid), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3", "void set_last_insert_rowid(int64) property", asMETHOD(ngtsqlite3, set_last_insert_rowid), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3", "int get_last_error()", asMETHOD(ngtsqlite3, get_last_error), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3", "string get_last_error_text()", asMETHOD(ngtsqlite3, get_last_error_text), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sqlite3", "bool get_active() property", asMETHOD(ngtsqlite3, get_active), asCALL_THISCALL);
+
     engine->RegisterGlobalProperty("const int SDLK_UNKNOWN", (void*)&AS_SDLK_UNKNOWN);
 engine->RegisterGlobalProperty("const int SDLK_BACKSPACE", (void*)&AS_SDLK_BACKSPACE);
 engine->RegisterGlobalProperty("const int SDLK_TAB", (void*)&AS_SDLK_TAB);
