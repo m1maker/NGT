@@ -12,10 +12,13 @@
 #include "scriptdictionary/scriptdictionary.h"
 #include "scriptfile/scriptfile.h"
 #include "scriptfile/scriptfilesystem.h"
+#include "scripthandle/scripthandle.h"
 #include "scripthelper/scripthelper.h"
 #include "datetime/datetime.h"
 #include "scriptmath/scriptmath.h"
 #include <thread>
+CScriptBuilder builder;
+
 std::string get_exe() {
     std::vector<wchar_t> pathBuf;
     DWORD copied = 0;
@@ -190,7 +193,6 @@ int scriptArg=0;
 std::string this_exe;
 
 int main(int argc, char* argv[]) {
-
     this_exe = get_exe();
     std::fstream read_file(this_exe.c_str(), std::ios::binary | std::ios::in);
         read_file.seekg(0, std::ios::end);
@@ -224,6 +226,7 @@ int main(int argc, char* argv[]) {
             RegisterScriptFileSystem(engine);
             RegisterExceptionRoutines(engine);
             RegisterScriptMath(engine);
+            RegisterScriptHandle(engine);
             RegisterFunctions(engine);
             engine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
             engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
@@ -292,6 +295,7 @@ int main(int argc, char* argv[]) {
             RegisterScriptFileSystem(engine);
             RegisterExceptionRoutines(engine);
             RegisterScriptMath(engine);
+            RegisterScriptHandle(engine);
             RegisterFunctions(engine);
             engine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
             engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
@@ -384,6 +388,7 @@ int main(int argc, char* argv[]) {
             RegisterExceptionRoutines(engine);
             RegisterScriptMath(engine);
             RegisterFunctions(engine);
+            RegisterScriptHandle(engine);
             engine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
             engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
             engine->RegisterGlobalFunction("int exec(const string &in, string &out)", asFUNCTIONPR(ExecSystemCmd, (const string&, string&), int), asCALL_CDECL);

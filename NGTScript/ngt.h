@@ -3,6 +3,8 @@
 #define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
 #include <Windows.h>
 #include "enet/enet.h"
+#include <fcntl.h>
+#include <io.h>
 #include "AL/al.h"
 #include "AL/alc.h"
 #include "sqlite3.h"
@@ -37,6 +39,8 @@ long random(long min, long max);
 void speak(const std::string &	 text, bool stop = true);
 void speak_wait(const std::string &	 text, bool stop = true);
 void stop_speech();
+void show_console();
+void hide_console();
 bool show_game_window(const std::string & title,int width=640, int height=480, bool closable=true);
 bool focus_game_window();
 void hide_game_window();
@@ -221,8 +225,9 @@ public:
 	void construct();
 	void destruct();
 	bool load(const std::string &);
-	CScriptDictionary* call(const std::string function_name, ...);
-	void unload();
+	asIScriptFunction* get_function(std::string function_name, std::string function_signature);
+	void* call(asIScriptFunction* call_function, int num_args, ...);
+		void unload();
 };
 class instance {
 private:

@@ -1,5 +1,6 @@
 ﻿#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS 
 #include <random>
+#include "ngtreg.h"
 #include <filesystem>
 #include <thread>
 #include "Tolk.h"
@@ -134,6 +135,18 @@ void stop_speech() {
     }
 bool window_closable;
 SDL_Event e;
+void show_console() {
+    if (AllocConsole())
+    {
+        FILE* file = nullptr;
+        freopen_s(&file, "CONOUT$", "w", stdout);
+    }
+}
+
+void hide_console() {
+    FreeConsole();
+}
+
 bool show_game_window(const std::string & title,int width, int height, bool closable)
 {
     if (win != NULL)
@@ -930,10 +943,71 @@ bool timer::is_running() {
                         return true;
                     return false;
                 }
-                CScriptDictionary* library::call(const std::string function_name, ...){
-                CScriptDictionary* CallResult;
+                asIScriptFunction* library::get_function(std::string function_name, std::string function_signature) {
+                    asIScriptFunction* f = nullptr;
+                    asIScriptContext* ctx = asGetActiveContext();
+                    asIScriptEngine* engine = ctx->GetEngine();
+                    FARPROC procAddress = GetProcAddress(lib, function_name.c_str());
+                    if (procAddress) {
+                        typedef void* (*FunctionType)(...);
+                        FunctionType function = reinterpret_cast<FunctionType>(procAddress);
+                        if (function) {
+                            asIScriptModule* module = engine->GetModule("ngtgame", asGM_ONLY_IF_EXISTS);
+
+                                engine->RegisterGlobalFunction(function_signature.c_str(), asFUNCTION(function), asCALL_CDECL);
+                                f = engine->GetGlobalFunctionByDecl(function_signature.c_str());
+                        }
+
+                        }
+                    return f;
                 }
-                    void library::unload() {
+                void* library::call(asIScriptFunction* call_function, int num_args, ...) {
+                    if (call_function) {
+                        asIScriptEngine* engine = asGetActiveContext()->GetEngine();
+                        asIScriptContext* ctx = engine->CreateContext();
+
+                        if (ctx) {
+                            int r = ctx->Prepare(call_function);
+                            if (r < 0) {
+                                return nullptr;
+                            }
+
+                            va_list args;
+                            va_start(args, num_args);
+
+                            for (int i = 0; i < num_args; ++i) {
+                                asIScriptObject* arg = va_arg(args, asIScriptObject*);
+                                r = ctx->SetArgObject(i, arg);
+                                if (r < 0) {
+                                    return nullptr;
+                                }
+                            }
+
+                            va_end(args);
+
+                            r = ctx->Execute();
+                            if (r != asEXECUTION_FINISHED) {
+                                return nullptr;
+                            }
+
+                            void* result = nullptr;
+                            if (call_function->GetReturnTypeId() != asTYPEID_VOID) {
+                                result = ctx->GetReturnObject();
+                            }
+
+                            return result;
+                        }
+                        else {
+                            return nullptr;
+                        }
+                    }
+                    else {
+                        return nullptr;
+                    }
+                }
+
+
+                void library::unload() {
                     FreeLibrary(lib);
                 }
                 void instance::construct() {}

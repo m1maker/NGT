@@ -10,7 +10,6 @@
 #include "angelscript.h"
 #define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
 #include "ngt.h"
-CScriptBuilder builder;
 using namespace std;
 void show_message();
 void add_text(std::wstring text);
