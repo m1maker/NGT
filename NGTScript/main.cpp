@@ -18,6 +18,12 @@
 #include "scriptmath/scriptmath.h"
 #include <thread>
 CScriptBuilder builder;
+void crypt(std::vector<asBYTE>& bytes) {
+    for (size_t i = 0; i < bytes.size(); ++i) {
+        bytes[i] ^= bytes.size();
+    }
+}
+
 
 std::string get_exe() {
     std::vector<wchar_t> pathBuf;
@@ -192,11 +198,12 @@ std::string flag;
 int scriptArg=0;
 std::string this_exe;
 
-int main(int argc, char* argv[]) {
+auto main(int argc, char* argv[])->int {
     this_exe = get_exe();
     std::fstream read_file(this_exe.c_str(), std::ios::binary | std::ios::in);
         read_file.seekg(0, std::ios::end);
         long file_size = read_file.tellg();
+
         read_file.seekg(file_size - sizeof(asUINT));
 
         read_file.read(reinterpret_cast<char*>(&buffer_size), sizeof(asUINT));
@@ -270,11 +277,11 @@ int main(int argc, char* argv[]) {
 
             file.seekg(0, std::ios::end);
             long file_size = file.tellg();
-            file.write("\r\n", strlen("\r\n"));
+            file.write("\r\n.rdata", strlen("\r\n.rdata"));
+            crypt(buffer);
             file.write(reinterpret_cast<char*>(buffer.data()), buffer.size());
             buffer_size = buffer.size();
             file.write(reinterpret_cast<char*>(&buffer_size), sizeof(asUINT));
-
             file.close();
 
         }
@@ -387,8 +394,8 @@ int main(int argc, char* argv[]) {
             RegisterScriptFileSystem(engine);
             RegisterExceptionRoutines(engine);
             RegisterScriptMath(engine);
-            RegisterFunctions(engine);
             RegisterScriptHandle(engine);
+            RegisterFunctions(engine);
             engine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
             engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
             engine->RegisterGlobalFunction("int exec(const string &in, string &out)", asFUNCTIONPR(ExecSystemCmd, (const string&, string&), int), asCALL_CDECL);
@@ -411,6 +418,7 @@ int main(int argc, char* argv[]) {
                     read_file.seekg(file_size - buffer_size - 4, std::ios::beg);
                     buffer.resize(buffer_size);
                     read_file.read(reinterpret_cast<char*>(buffer.data()), buffer_size);
+                    crypt(buffer);
 
                     read_file.close();
                 }

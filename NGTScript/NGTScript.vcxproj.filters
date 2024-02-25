@@ -387,9 +387,6 @@
     <ClInclude Include="enet\win32.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="miniaudio.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="reverb\reverb.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -397,6 +394,240 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="sqlite3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sound.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="phonon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="phonon_interfaces.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="phonon_version.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="debugger\debugger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\backends\AudioDevice_Miniaudio.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\backends\AudioDevice_RtAudio.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\AnalyserNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\AudioArray.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\AudioBasicInspectorNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\AudioBasicProcessorNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\AudioBus.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\AudioChannel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\AudioContext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\AudioDevice.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\AudioHardwareInputNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\AudioListener.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\AudioNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\AudioNodeDescriptor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\AudioNodeInput.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\AudioNodeOutput.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\AudioNodeScheduler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\AudioParam.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\AudioParamDescriptor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\AudioParamTimeline.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\AudioProcessor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\AudioScheduledSourceNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\AudioSetting.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\AudioSettingDescriptor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\AudioSourceProvider.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\AudioSummingJunction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\BiquadFilterNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\ChannelMergerNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\ChannelSplitterNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\ConcurrentQueue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\ConstantSourceNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\ConvolverNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\DelayNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\DynamicsCompressorNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\FloatPoint3D.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\GainNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\Macros.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\Mixing.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\OscillatorNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\PannerNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\PeriodicWave.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\Profiler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\SampledAudioNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\StereoPannerNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\WaveShaperNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\core\WindowFunctions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\extended\ADSRNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\extended\AudioContextLock.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\extended\AudioFileReader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\extended\BPMDelayNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\extended\ClipNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\extended\DiodeNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\extended\FunctionNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\extended\GranulationNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\extended\Logging.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\extended\NoiseNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\extended\PdNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\extended\PeakCompNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\extended\PingPongDelayNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\extended\PolyBLEPNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\extended\PowerMonitorNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\extended\PWMNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\extended\RealtimeAnalyser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\extended\RecorderNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\extended\Registry.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\extended\SfxrNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\extended\SpatializationNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\extended\SpectralMonitorNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\extended\SupersawNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\extended\Util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LabSound\extended\VectorMath.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="miniaudio.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -461,13 +692,13 @@
     <ClCompile Include="stb_vorbis.h">
       <Filter>Header Files</Filter>
     </ClCompile>
-    <ClCompile Include="miniaudio.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="reverb\reverb.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="sqlite3.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sound.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="debugger\debugger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

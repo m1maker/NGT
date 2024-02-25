@@ -1,5 +1,4 @@
 #pragma once
-#define MINIAUDIO_IMPLEMENTATION
 #define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
 #include <Windows.h>
 #include "enet/enet.h"
@@ -8,9 +7,8 @@
 #include "AL/al.h"
 #include "AL/alc.h"
 #include "sqlite3.h"
-#include "miniaudio.h"
 #include "sndfile.h"
-#include "reverb/reverb.h"
+#include "scripthandle/scripthandle.h"
 #include <random>
 #include <type_traits>
 #include<chrono>
@@ -39,6 +37,7 @@ long random(long min, long max);
 void speak(const std::string &	 text, bool stop = true);
 void speak_wait(const std::string &	 text, bool stop = true);
 void stop_speech();
+std::string screen_reader_detect();
 void show_console();
 void hide_console();
 bool show_game_window(const std::string & title,int width=640, int height=480, bool closable=true);
@@ -62,69 +61,7 @@ void set_listener_position(float l_x, float l_y, float l_z);
 void set_listener_position(ngtvector*);
 void wait(int);
 void delay(int);
-void set_sound_storage(const std::string &);
-std::string get_sound_storage();
-void set_master_volume(float);
-float get_master_volume();
 std::string read_environment_variable(const std::string&);
-class reverb {
-public:
-
-	ma_reverb_node_config c;
-	void construct();
-	void destruct();
-
-	void set_input_gain(float);
-	void set_reverb_mix(float);
-	void  set_reverb_time(float);
-	float get_input_gain();
-	float get_reverb_mix();
-	float  get_reverb_time();
-};
-class sound{
-public:
-	ALuint buffer_;
-	ALuint source_;
-	bool is_3d_;
-	ma_sound handle_;
-	short audio_system=0;
-	bool playing=false, paused=false, active=false;
-	ma_reverb_node rev;
-	void construct();
-	void destruct();
-
-	bool load(const std::string &	 filename, bool set3d=false);
-	bool load_from_memory(const std::string & data, bool set3d = false);
-	bool play();
-	bool play_looped();
-	bool set_faid_parameters(float volume_beg, float volume_end, unsigned int time);
-	bool pause();
-	bool play_wait();
-	bool stop();
-	bool close();
-	void set_sound_position(float s_x, float s_y, float s_z);
-	void set_sound_position(ngtvector*);
-
-	void set_sound_reverb(reverb* =NULL);
-	bool seek(double);
-	void set_sound_hrtf(bool = true);
-	void cancel_reverb();
-	double get_pan() const;
-	void set_pan(double);
-	double get_volume() const;
-	void set_volume(double);
-	double get_pitch() const;
-	void set_pitch(double);
-	double get_pitch_lower_limit() const;
-	bool is_active() const;
-	bool is_playing() const;
-	bool is_paused() const;
-	double get_position() const;
-	double get_length() const;
-	double get_sample_rate() const;
-	double get_channels() const;
-	double get_bits() const;
-};
 class timer {
 public:
 
@@ -225,9 +162,8 @@ public:
 	void construct();
 	void destruct();
 	bool load(const std::string &);
-	asIScriptFunction* get_function(std::string function_name, std::string function_signature);
-	void* call(asIScriptFunction* call_function, int num_args, ...);
-		void unload();
+	CScriptHandle get_function(std::string function_address, std::string function_signature);
+	void unload();
 };
 class instance {
 private:

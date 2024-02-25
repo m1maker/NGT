@@ -104,10 +104,12 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);angelscript64.lib;tolk.lib;SDL2main.lib;SDL2.lib;winmm.lib;imm32.lib;version.lib;setupapi.lib;libcmt.lib;ws2_32.lib;iphlpapi.lib;libffi.lib;enet64.lib;phonon.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -121,13 +123,14 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <TranslateIncludes>false</TranslateIncludes>
       <LanguageStandard>stdcpp20</LanguageStandard>
+      <Optimization>Disabled</Optimization>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);angelscript64.lib;tolk.lib;SDL2main.lib;SDL2.lib;winmm.lib;imm32.lib;version.lib;setupapi.lib;libcmt.lib;ws2_32.lib;iphlpapi.lib;libffi.lib;enet64.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);angelscript64.lib;tolk.lib;SDL2main.lib;SDL2.lib;winmm.lib;imm32.lib;version.lib;setupapi.lib;libcmt.lib;ws2_32.lib;iphlpapi.lib;libffi.lib;enet64.lib;phonon.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>
       </IgnoreAllDefaultLibraries>
@@ -145,6 +148,7 @@
     <ClInclude Include="angelscript.h" />
     <ClInclude Include="autowrapper\aswrappedcall.h" />
     <ClInclude Include="datetime\datetime.h" />
+    <ClInclude Include="debugger\debugger.h" />
     <ClInclude Include="enet\callbacks.h" />
     <ClInclude Include="enet\enet.h" />
     <ClInclude Include="enet\list.h" />
@@ -157,11 +161,86 @@
     <ClInclude Include="ffi.h" />
     <ClInclude Include="ffi_cfi.h" />
     <ClInclude Include="ffi_common.h" />
+    <ClInclude Include="LabSound.h" />
+    <ClInclude Include="LabSound\backends\AudioDevice_Miniaudio.h" />
+    <ClInclude Include="LabSound\backends\AudioDevice_RtAudio.h" />
+    <ClInclude Include="LabSound\core\AnalyserNode.h" />
+    <ClInclude Include="LabSound\core\AudioArray.h" />
+    <ClInclude Include="LabSound\core\AudioBasicInspectorNode.h" />
+    <ClInclude Include="LabSound\core\AudioBasicProcessorNode.h" />
+    <ClInclude Include="LabSound\core\AudioBus.h" />
+    <ClInclude Include="LabSound\core\AudioChannel.h" />
+    <ClInclude Include="LabSound\core\AudioContext.h" />
+    <ClInclude Include="LabSound\core\AudioDevice.h" />
+    <ClInclude Include="LabSound\core\AudioHardwareInputNode.h" />
+    <ClInclude Include="LabSound\core\AudioListener.h" />
+    <ClInclude Include="LabSound\core\AudioNode.h" />
+    <ClInclude Include="LabSound\core\AudioNodeDescriptor.h" />
+    <ClInclude Include="LabSound\core\AudioNodeInput.h" />
+    <ClInclude Include="LabSound\core\AudioNodeOutput.h" />
+    <ClInclude Include="LabSound\core\AudioNodeScheduler.h" />
+    <ClInclude Include="LabSound\core\AudioParam.h" />
+    <ClInclude Include="LabSound\core\AudioParamDescriptor.h" />
+    <ClInclude Include="LabSound\core\AudioParamTimeline.h" />
+    <ClInclude Include="LabSound\core\AudioProcessor.h" />
+    <ClInclude Include="LabSound\core\AudioScheduledSourceNode.h" />
+    <ClInclude Include="LabSound\core\AudioSetting.h" />
+    <ClInclude Include="LabSound\core\AudioSettingDescriptor.h" />
+    <ClInclude Include="LabSound\core\AudioSourceProvider.h" />
+    <ClInclude Include="LabSound\core\AudioSummingJunction.h" />
+    <ClInclude Include="LabSound\core\BiquadFilterNode.h" />
+    <ClInclude Include="LabSound\core\ChannelMergerNode.h" />
+    <ClInclude Include="LabSound\core\ChannelSplitterNode.h" />
+    <ClInclude Include="LabSound\core\ConcurrentQueue.h" />
+    <ClInclude Include="LabSound\core\ConstantSourceNode.h" />
+    <ClInclude Include="LabSound\core\ConvolverNode.h" />
+    <ClInclude Include="LabSound\core\DelayNode.h" />
+    <ClInclude Include="LabSound\core\DynamicsCompressorNode.h" />
+    <ClInclude Include="LabSound\core\FloatPoint3D.h" />
+    <ClInclude Include="LabSound\core\GainNode.h" />
+    <ClInclude Include="LabSound\core\Macros.h" />
+    <ClInclude Include="LabSound\core\Mixing.h" />
+    <ClInclude Include="LabSound\core\OscillatorNode.h" />
+    <ClInclude Include="LabSound\core\PannerNode.h" />
+    <ClInclude Include="LabSound\core\PeriodicWave.h" />
+    <ClInclude Include="LabSound\core\Profiler.h" />
+    <ClInclude Include="LabSound\core\SampledAudioNode.h" />
+    <ClInclude Include="LabSound\core\StereoPannerNode.h" />
+    <ClInclude Include="LabSound\core\WaveShaperNode.h" />
+    <ClInclude Include="LabSound\core\WindowFunctions.h" />
+    <ClInclude Include="LabSound\extended\ADSRNode.h" />
+    <ClInclude Include="LabSound\extended\AudioContextLock.h" />
+    <ClInclude Include="LabSound\extended\AudioFileReader.h" />
+    <ClInclude Include="LabSound\extended\BPMDelayNode.h" />
+    <ClInclude Include="LabSound\extended\ClipNode.h" />
+    <ClInclude Include="LabSound\extended\DiodeNode.h" />
+    <ClInclude Include="LabSound\extended\FunctionNode.h" />
+    <ClInclude Include="LabSound\extended\GranulationNode.h" />
+    <ClInclude Include="LabSound\extended\Logging.h" />
+    <ClInclude Include="LabSound\extended\NoiseNode.h" />
+    <ClInclude Include="LabSound\extended\PdNode.h" />
+    <ClInclude Include="LabSound\extended\PeakCompNode.h" />
+    <ClInclude Include="LabSound\extended\PingPongDelayNode.h" />
+    <ClInclude Include="LabSound\extended\PolyBLEPNode.h" />
+    <ClInclude Include="LabSound\extended\PowerMonitorNode.h" />
+    <ClInclude Include="LabSound\extended\PWMNode.h" />
+    <ClInclude Include="LabSound\extended\RealtimeAnalyser.h" />
+    <ClInclude Include="LabSound\extended\RecorderNode.h" />
+    <ClInclude Include="LabSound\extended\Registry.h" />
+    <ClInclude Include="LabSound\extended\SfxrNode.h" />
+    <ClInclude Include="LabSound\extended\SpatializationNode.h" />
+    <ClInclude Include="LabSound\extended\SpectralMonitorNode.h" />
+    <ClInclude Include="LabSound\extended\SupersawNode.h" />
+    <ClInclude Include="LabSound\extended\Util.h" />
+    <ClInclude Include="LabSound\extended\VectorMath.h" />
     <ClInclude Include="miniaudio.h" />
     <ClInclude Include="ngt.h" />
     <ClInclude Include="ngtreg.h" />
     <ClInclude Include="ogg\ogg.h" />
     <ClInclude Include="ogg\os_types.h" />
+    <ClInclude Include="phonon.h" />
+    <ClInclude Include="phonon_interfaces.h" />
+    <ClInclude Include="phonon_version.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="reverb\reverb.h" />
     <ClInclude Include="reverb\verblib.h" />
@@ -257,6 +336,7 @@
     <ClInclude Include="SDL_net.h" />
     <ClInclude Include="serializer\serializer.h" />
     <ClInclude Include="sndfile.h" />
+    <ClInclude Include="sound.h" />
     <ClInclude Include="sqlite3.h" />
     <ClInclude Include="Tolk.h" />
     <ClInclude Include="uni_algo.h" />
@@ -267,11 +347,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="datetime\datetime.cpp" />
+    <ClCompile Include="debugger\debugger.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="miniaudio.c" />
     <ClCompile Include="ngt.cpp" />
     <ClCompile Include="ngtreg.cpp" />
-    <ClCompile Include="reverb\reverb.c" />
     <ClCompile Include="scriptany\scriptany.cpp" />
     <ClCompile Include="scriptarray\scriptarray.cpp" />
     <ClCompile Include="scriptbuilder\scriptbuilder.cpp" />
@@ -286,6 +365,7 @@
     <ClCompile Include="scriptstdstring\scriptstdstring.cpp" />
     <ClCompile Include="scriptstdstring\scriptstdstring_utils.cpp" />
     <ClCompile Include="serializer\serializer.cpp" />
+    <ClCompile Include="sound.cpp" />
     <ClCompile Include="sqlite3.c" />
     <ClCompile Include="stb_vorbis.c" />
     <ClCompile Include="stb_vorbis.h" />
