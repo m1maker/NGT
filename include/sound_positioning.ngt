@@ -11,8 +11,7 @@ position_sound_custom_1d(handle, listener_x, source_x, pan_step, volume_step, 0.
 
 void position_sound_custom_1d(sound@ handle, int listener_x, int source_x, float pan_step, float volume_step, float start_pan, float start_volume)
 {
-set_listener_position(listener_x, 0, 0);
-handle.set_sound_position(source_x, 0, 0);
+handle.set_position(listener_x, 0, 0, source_x, 0, 0);
 }
 void position_sound_2d(sound@ handle, float listener_x, float listener_y, float source_x, float source_y, double theta, float pan_step, float volume_step, float behind_pitch_decrease)
 {
@@ -21,8 +20,7 @@ position_sound_custom_2d(handle, listener_x, listener_y, source_x, source_y, the
 
 void position_sound_custom_2d(sound@ handle, float listener_x, float listener_y, float source_x, float source_y, double theta, float pan_step, float volume_step, float behind_pitch_decrease, float start_pan, float start_volume, float start_pitch)
 {
-set_listener_position(listener_x, listener_y, 0);
-handle.set_sound_position(source_x, source_y, 0);
+handle.set_position(listener_x, listener_y, 0, source_x, source_y, 0);
 }
 void position_sound_3d(sound@ handle, float listener_x, float listener_y, float listener_z, float source_x, float source_y, float source_z, double theta, float pan_step, float volume_step, float behind_pitch_decrease)
 {
@@ -30,7 +28,6 @@ position_sound_custom_3d(handle, listener_x, listener_y, listener_z, source_x, s
 }
 void position_sound_custom_3d(sound@ handle, float listener_x, float listener_y, float listener_z, float source_x, float source_y, float source_z, double theta, float pan_step, float volume_step, float behind_pitch_decrease, float start_pan, float start_volume, float start_pitch)
 {
-set_listener_position(listener_x, listener_y, listener_z);
-handle.set_sound_position(source_x, source_y, source_z);
+handle.set_position(listener_x, listener_y, listener_z, source_x, source_y, source_z);
 
 }

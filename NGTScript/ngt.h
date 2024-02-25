@@ -4,10 +4,7 @@
 #include "enet/enet.h"
 #include <fcntl.h>
 #include <io.h>
-#include "AL/al.h"
-#include "AL/alc.h"
 #include "sqlite3.h"
-#include "sndfile.h"
 #include "scripthandle/scripthandle.h"
 #include <random>
 #include <type_traits>
@@ -57,8 +54,6 @@ bool key_down(SDL_Keycode);
 bool key_repeat(SDL_Keycode);
 bool alert(const std::string &	 title, const std::string &	 text, const std::string &button_name="OK");
 int question(const std::string& title, const std::string &text);
-void set_listener_position(float l_x, float l_y, float l_z);
-void set_listener_position(ngtvector*);
 void wait(int);
 void delay(int);
 std::string read_environment_variable(const std::string&);

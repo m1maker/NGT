@@ -450,8 +450,7 @@ bool timer::is_running() {
                             asUINT func_id=                        engine->RegisterGlobalFunction(function_signature.c_str(), asFUNCTION(function), asCALL_CDECL);
                                   asIScriptFunction* f = engine->GetFunctionById(func_id);
                               CScriptHandle h;
-                                h.Set(f, f->GetObjectType());
-                                return h;
+                              h.Set(f, engine->GetTypeInfoById(f->GetTypeId()));                                return h;
               }
               }
 

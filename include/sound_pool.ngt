@@ -425,7 +425,6 @@ if(slot==-1)
 {
 return -1;
 }
-items[slot].handle.set_sound_hrtf(use_hrtf);
 items[slot].filename=filename;
 items[slot].packname=get_sound_storage();
 items[slot].x=sound_x;
@@ -464,6 +463,7 @@ return slot;
 }
 if(!memory)
 items[slot].handle.load(items[slot].filename, true);
+items[slot].handle.set_hrtf(use_hrtf);
 /*
 else
 {
@@ -508,7 +508,6 @@ if(slot==-1)
 {
 return -1;
 }
-items[slot].handle.set_sound_hrtf(use_hrtf);
 items[slot].filename=filename;
 items[slot].packname=get_sound_storage();
 items[slot].x=sound_x;
@@ -552,6 +551,7 @@ return slot;
 }
 if(!memory)
 items[slot].handle.load(items[slot].filename, true);
+items[slot].handle.set_hrtf(use_hrtf);
 /*
 else
 {

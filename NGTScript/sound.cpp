@@ -3,49 +3,286 @@
 #include "ngt.h"
 #define MINIAUDIO_IMPLEMENTATION
 #include "miniaudio.h"
-#include "AL/al.h"
-#include "AL/alc.h"
-bool inited= false;
-HINSTANCE openal;
-HINSTANCE sndfile;
-typedef ALCdevice* (*LPALCOPENDEVICE)(const ALCchar*);
-typedef ALCcontext* (*LPALCCREATECONTEXT)(ALCdevice*, const ALCint*);
-typedef ALCboolean(*LPALCMAKECONTEXTCURRENT)(ALCcontext*);
-typedef void (*LPALCDESTROYCONTEXT)(ALCcontext*);
-typedef ALCboolean(*LPALCCLOSEDEVICE)(ALCdevice*);
-typedef void (*LPALLISTENER3F)(ALenum, ALfloat, ALfloat, ALfloat);
-typedef void (*LPALLISTENERF)(ALenum, ALfloat);
-ALCdevice* device = NULL;
-ALCcontext* context = NULL;
-ma_engine sound_engine;
-void soundsystem_init() {
-    sndfile = LoadLibrary(L"sndfile.dll");
-    openal = LoadLibrary(L"OpenAL32.dll");
-    if (openal != NULL) {
-        LPALCOPENDEVICE alcOpenDevice = (LPALCOPENDEVICE)GetProcAddress(openal, "alcOpenDevice");
-        LPALCCREATECONTEXT alcCreateContext = (LPALCCREATECONTEXT)GetProcAddress(openal, "alcCreateContext");
-        LPALCMAKECONTEXTCURRENT alcMakeContextCurrent = (LPALCMAKECONTEXTCURRENT)GetProcAddress(openal, "alcMakeContextCurrent");
+#include <stdint.h> /* Required for uint32_t which is used by STEAMAUDIO_VERSION. That dependency needs to be removed from Steam Audio - use IPLuint32 or "unsigned int" instead! */
 
-        device = alcOpenDevice(nullptr);
-        context = alcCreateContext(device, nullptr);
-        alcMakeContextCurrent(context);
+#include "phonon.h" /* Steam Audio */
+
+#define FORMAT      ma_format_f32   /* Must be floating point. */
+#define CHANNELS    2               /* Must be stereo for this example. */
+#define SAMPLE_RATE 44100
+
+static ma_result ma_result_from_IPLerror(IPLerror error)
+{
+    switch (error)
+    {
+    case IPL_STATUS_SUCCESS:      return MA_SUCCESS;
+    case IPL_STATUS_OUTOFMEMORY:  return MA_OUT_OF_MEMORY;
+    case IPL_STATUS_INITIALIZATION:
+    case IPL_STATUS_FAILURE:
+    default: return MA_ERROR;
     }
-    ma_engine_init(NULL, &sound_engine);
+}
+
+
+typedef struct
+{
+    ma_node_config nodeConfig;
+    ma_uint32 channelsIn;
+    IPLAudioSettings iplAudioSettings;
+    IPLContext iplContext;
+    IPLHRTF iplHRTF;   /* There is one HRTF object to many binaural effect objects. */
+} ma_steamaudio_binaural_node_config;
+
+MA_API ma_steamaudio_binaural_node_config ma_steamaudio_binaural_node_config_init(ma_uint32 channelsIn, IPLAudioSettings iplAudioSettings, IPLContext iplContext, IPLHRTF iplHRTF);
+
+
+typedef struct
+{
+    ma_node_base baseNode;
+    IPLAudioSettings iplAudioSettings;
+    IPLContext iplContext;
+    IPLHRTF iplHRTF;
+    IPLBinauralEffect iplEffect;
+    ma_vec3f direction;
+    float* ppBuffersIn[2];      /* Each buffer is an offset of _pHeap. */
+    float* ppBuffersOut[2];     /* Each buffer is an offset of _pHeap. */
+    void* _pHeap;
+} ma_steamaudio_binaural_node;
+
+MA_API ma_result ma_steamaudio_binaural_node_init(ma_node_graph* pNodeGraph, const ma_steamaudio_binaural_node_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_steamaudio_binaural_node* pBinauralNode);
+MA_API void ma_steamaudio_binaural_node_uninit(ma_steamaudio_binaural_node* pBinauralNode, const ma_allocation_callbacks* pAllocationCallbacks);
+MA_API ma_result ma_steamaudio_binaural_node_set_direction(ma_steamaudio_binaural_node* pBinauralNode, float x, float y, float z);
+
+
+MA_API ma_steamaudio_binaural_node_config ma_steamaudio_binaural_node_config_init(ma_uint32 channelsIn, IPLAudioSettings iplAudioSettings, IPLContext iplContext, IPLHRTF iplHRTF)
+{
+    ma_steamaudio_binaural_node_config config;
+
+    MA_ZERO_OBJECT(&config);
+    config.nodeConfig = ma_node_config_init();
+    config.channelsIn = channelsIn;
+    config.iplAudioSettings = iplAudioSettings;
+    config.iplContext = iplContext;
+    config.iplHRTF = iplHRTF;
+
+    return config;
+}
+
+
+static void ma_steamaudio_binaural_node_process_pcm_frames(ma_node* pNode, const float** ppFramesIn, ma_uint32* pFrameCountIn, float** ppFramesOut, ma_uint32* pFrameCountOut)
+{
+    ma_steamaudio_binaural_node* pBinauralNode = (ma_steamaudio_binaural_node*)pNode;
+    IPLBinauralEffectParams binauralParams;
+    IPLAudioBuffer inputBufferDesc;
+    IPLAudioBuffer outputBufferDesc;
+    ma_uint32 totalFramesToProcess = *pFrameCountOut;
+    ma_uint32 totalFramesProcessed = 0;
+
+    binauralParams.direction.x = pBinauralNode->direction.x;
+    binauralParams.direction.y = pBinauralNode->direction.y;
+    binauralParams.direction.z = pBinauralNode->direction.z;
+    binauralParams.interpolation = IPL_HRTFINTERPOLATION_NEAREST;
+    binauralParams.spatialBlend = 1.0f;
+    binauralParams.hrtf = pBinauralNode->iplHRTF;
+    binauralParams.peakDelays = NULL;
+    inputBufferDesc.numChannels = (IPLint32)ma_node_get_input_channels(pNode, 0);
+
+    /* We'll run this in a loop just in case our deinterleaved buffers are too small. */
+    outputBufferDesc.numSamples = pBinauralNode->iplAudioSettings.frameSize;
+    outputBufferDesc.numChannels = 2;
+    outputBufferDesc.data = pBinauralNode->ppBuffersOut;
+
+    while (totalFramesProcessed < totalFramesToProcess) {
+        ma_uint32 framesToProcessThisIteration = totalFramesToProcess - totalFramesProcessed;
+        if (framesToProcessThisIteration > (ma_uint32)pBinauralNode->iplAudioSettings.frameSize) {
+            framesToProcessThisIteration = (ma_uint32)pBinauralNode->iplAudioSettings.frameSize;
+        }
+
+        if (inputBufferDesc.numChannels == 1) {
+            /* Fast path. No need for deinterleaving since it's a mono stream. */
+            pBinauralNode->ppBuffersIn[0] = (float*)ma_offset_pcm_frames_const_ptr_f32(ppFramesIn[0], totalFramesProcessed, 1);
+        }
+        else {
+            /* Slow path. Need to deinterleave the input data. */
+            ma_deinterleave_pcm_frames(ma_format_f32, inputBufferDesc.numChannels, framesToProcessThisIteration, ma_offset_pcm_frames_const_ptr_f32(ppFramesIn[0], totalFramesProcessed, inputBufferDesc.numChannels), (void**)pBinauralNode->ppBuffersIn);
+        }
+
+        inputBufferDesc.data = pBinauralNode->ppBuffersIn;
+        inputBufferDesc.numSamples = (IPLint32)framesToProcessThisIteration;
+
+        /* Apply the effect. */
+        iplBinauralEffectApply(pBinauralNode->iplEffect, &binauralParams, &inputBufferDesc, &outputBufferDesc);
+
+        /* Interleave straight into the output buffer. */
+        ma_interleave_pcm_frames(ma_format_f32, 2, framesToProcessThisIteration, (const void**)pBinauralNode->ppBuffersOut, ma_offset_pcm_frames_ptr_f32(ppFramesOut[0], totalFramesProcessed, 2));
+
+        /* Advance. */
+        totalFramesProcessed += framesToProcessThisIteration;
+    }
+
+    (void)pFrameCountIn;    /* Unused. */
+}
+
+static ma_node_vtable g_ma_steamaudio_binaural_node_vtable =
+{
+    ma_steamaudio_binaural_node_process_pcm_frames,
+    NULL,
+    1,  /* 1 input channel. */
+1    ,  /* 1 output channel. */
+    0
+};
+
+MA_API ma_result ma_steamaudio_binaural_node_init(ma_node_graph* pNodeGraph, const ma_steamaudio_binaural_node_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_steamaudio_binaural_node* pBinauralNode)
+{
+    ma_result result;
+    ma_node_config baseConfig;
+    ma_uint32 channelsIn;
+    ma_uint32 channelsOut;
+    IPLBinauralEffectSettings iplBinauralEffectSettings;
+    size_t heapSizeInBytes;
+
+    if (pBinauralNode == NULL) {
+        return MA_INVALID_ARGS;
+    }
+
+    MA_ZERO_OBJECT(pBinauralNode);
+
+    if (pConfig == NULL || pConfig->iplAudioSettings.frameSize == 0 || pConfig->iplContext == NULL || pConfig->iplHRTF == NULL) {
+        return MA_INVALID_ARGS;
+    }
+
+    /* Steam Audio only supports mono and stereo input. */
+    if (pConfig->channelsIn < 1 || pConfig->channelsIn > 2) {
+        return MA_INVALID_ARGS;
+    }
+
+    channelsIn = pConfig->channelsIn;
+    channelsOut = 2;    /* Always stereo output. */
+
+    baseConfig = ma_node_config_init();
+    baseConfig.vtable = &g_ma_steamaudio_binaural_node_vtable;
+    baseConfig.pInputChannels = &channelsIn;
+    baseConfig.pOutputChannels = &channelsOut;
+    result = ma_node_init(pNodeGraph, &baseConfig, pAllocationCallbacks, &pBinauralNode->baseNode);
+    if (result != MA_SUCCESS) {
+        return result;
+    }
+
+    pBinauralNode->iplAudioSettings = pConfig->iplAudioSettings;
+    pBinauralNode->iplContext = pConfig->iplContext;
+    pBinauralNode->iplHRTF = pConfig->iplHRTF;
+
+    MA_ZERO_OBJECT(&iplBinauralEffectSettings);
+    iplBinauralEffectSettings.hrtf = pBinauralNode->iplHRTF;
+
+    result = ma_result_from_IPLerror(iplBinauralEffectCreate(pBinauralNode->iplContext, &pBinauralNode->iplAudioSettings, &iplBinauralEffectSettings, &pBinauralNode->iplEffect));
+    if (result != MA_SUCCESS) {
+        ma_node_uninit(&pBinauralNode->baseNode, pAllocationCallbacks);
+        return result;
+    }
+
+    heapSizeInBytes = 0;
+
+    /*
+    Unfortunately Steam Audio uses deinterleaved buffers for everything so we'll need to use some
+    intermediary buffers. We'll allocate one big buffer on the heap and then use offsets. We'll
+    use the frame size from the IPLAudioSettings structure as a basis for the size of the buffer.
+    */
+    heapSizeInBytes += sizeof(float) * channelsOut * pBinauralNode->iplAudioSettings.frameSize; /* Output buffer. */
+    heapSizeInBytes += sizeof(float) * channelsIn * pBinauralNode->iplAudioSettings.frameSize; /* Input buffer. */
+
+    pBinauralNode->_pHeap = ma_malloc(heapSizeInBytes, pAllocationCallbacks);
+    if (pBinauralNode->_pHeap == NULL) {
+        iplBinauralEffectRelease(&pBinauralNode->iplEffect);
+        ma_node_uninit(&pBinauralNode->baseNode, pAllocationCallbacks);
+        return MA_OUT_OF_MEMORY;
+    }
+
+    pBinauralNode->ppBuffersOut[0] = (float*)pBinauralNode->_pHeap;
+    pBinauralNode->ppBuffersOut[1] = (float*)ma_offset_ptr(pBinauralNode->_pHeap, sizeof(float) * pBinauralNode->iplAudioSettings.frameSize);
+
+    {
+        ma_uint32 iChannelIn;
+        for (iChannelIn = 0; iChannelIn < channelsIn; iChannelIn += 1) {
+            pBinauralNode->ppBuffersIn[iChannelIn] = (float*)ma_offset_ptr(pBinauralNode->_pHeap, sizeof(float) * pBinauralNode->iplAudioSettings.frameSize * (channelsOut + iChannelIn));
+        }
+    }
+
+    return MA_SUCCESS;
+}
+
+MA_API void ma_steamaudio_binaural_node_uninit(ma_steamaudio_binaural_node* pBinauralNode, const ma_allocation_callbacks* pAllocationCallbacks)
+{
+    if (pBinauralNode == NULL) {
+        return;
+    }
+
+    /* The base node is always uninitialized first. */
+    ma_node_uninit(&pBinauralNode->baseNode, pAllocationCallbacks);
+
+    /*
+    The Steam Audio objects are deleted after the base node. This ensures the base node is removed from the graph
+    first to ensure these objects aren't getting used by the audio thread.
+    */
+    iplBinauralEffectRelease(&pBinauralNode->iplEffect);
+    ma_free(pBinauralNode->_pHeap, pAllocationCallbacks);
+}
+
+MA_API ma_result ma_steamaudio_binaural_node_set_direction(ma_steamaudio_binaural_node* pBinauralNode, float x, float y, float z)
+{
+    if (pBinauralNode == NULL) {
+        return MA_INVALID_ARGS;
+    }
+
+    pBinauralNode->direction.x = x;
+    pBinauralNode->direction.y = y;
+    pBinauralNode->direction.z = z;
+
+    return MA_SUCCESS;
+}
+
+
+
+IPLAudioSettings iplAudioSettings;
+IPLContextSettings iplContextSettings;
+IPLContext iplContext;
+IPLHRTFSettings iplHRTFSettings;
+IPLHRTF iplHRTF;
+
+
+bool inited= false;
+ma_engine sound_engine;
+
+ma_engine_config engineConfig;
+void soundsystem_init() {
+    engineConfig = ma_engine_config_init();
+    engineConfig.channels = CHANNELS;
+    engineConfig.sampleRate = SAMPLE_RATE;
+    engineConfig.periodSizeInFrames = 256;
+
+    ma_engine_init(&engineConfig, &sound_engine);
+    MA_ZERO_OBJECT(&iplAudioSettings);
+    iplAudioSettings.samplingRate = ma_engine_get_sample_rate(&sound_engine);
+
+    iplAudioSettings.frameSize = engineConfig.periodSizeInFrames;
+
+
+    /* IPLContext */
+    MA_ZERO_OBJECT(&iplContextSettings);
+    iplContextSettings.version = STEAMAUDIO_VERSION;
+    //    iplContextSettings.flags = IPL_CONTEXTFLAGS_VALIDATION;
+    ma_result_from_IPLerror(iplContextCreate(&iplContextSettings, &iplContext));
+    /* IPLHRTF */
+    MA_ZERO_OBJECT(&iplHRTFSettings);
+    iplHRTFSettings.type = IPL_HRTFTYPE_DEFAULT;
+    iplHRTFSettings.volume = 1.0f;
+
+    ma_result_from_IPLerror(iplHRTFCreate(iplContext, &iplAudioSettings, &iplHRTFSettings, &iplHRTF));
+
 
 
 }
 void soundsystem_free() {
-    if (openal != NULL) {
-
-        LPALCDESTROYCONTEXT alcDestroyContext = (LPALCDESTROYCONTEXT)GetProcAddress(openal, "alcDestroyContext");
-        LPALCCLOSEDEVICE alcCloseDevice = (LPALCCLOSEDEVICE)GetProcAddress(openal, "alcCloseDevice");
-        alcDestroyContext(context);
-        alcCloseDevice(device);
-        FreeLibrary(openal);
-    }
-    if (sndfile != NULL)
-        FreeLibrary(sndfile);
-
     ma_engine_uninit(&sound_engine);
 
 
@@ -57,33 +294,10 @@ void set_sound_storage(const std::string& path) {
 std::string get_sound_storage() {
     return sound_path;
 }
-void set_listener_position(float l_x, float l_y, float l_z) {
-    if (openal != NULL) {
-
-        LPALLISTENER3F alListener3f = (LPALLISTENER3F)GetProcAddress(openal, "alListener3f");
-        alListener3f(AL_POSITION, l_x, l_y, l_z);
-    }
-    ma_engine_listener_set_position(&sound_engine, 0, l_x, l_y, l_z);
-}
-void set_listener_position(ngtvector* v) {
-    if (openal != NULL) {
-
-        LPALLISTENER3F alListener3f = (LPALLISTENER3F)GetProcAddress(openal, "alListener3f");
-        alListener3f(AL_POSITION, v->x, v->y, v->z);
-    }
-    ma_engine_listener_set_position(&sound_engine, 0, v->x, v->y, v->z);
-}
-
-
 void set_master_volume(float volume) {
 
     if (volume > 0 or volume < -100)return;
     ma_engine_set_gain_db(&sound_engine, volume);
-    if (openal != NULL) {
-        LPALLISTENERF alListenerf = (LPALLISTENERF)GetProcAddress(openal, "alListenerf");
-        alListenerf(AL_GAIN, static_cast<float>(volume / 2));
-    }
-
 }
 float get_master_volume() {
     return ma_engine_get_gain_db(&sound_engine);
@@ -94,10 +308,9 @@ class sound {
 public:
     bool is_3d_;
     bool playing = false, paused = false, active = false;
-    ALuint buffer_;
-    ALuint source_;
-    short audiosystem = 0;
     ma_sound handle_;
+    ma_steamaudio_binaural_node g_binauralNode;   /* The echo effect is achieved using a delay node. */
+    ma_steamaudio_binaural_node_config binauralNodeConfig;
     void construct() {
     }
 
@@ -128,83 +341,9 @@ public:
         else
             ma_sound_init_from_file(&sound_engine, result.c_str(), MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_DECODE, NULL, NULL, &handle_);
         ma_sound_set_rolloff(&handle_, 0.1);
-        if (sndfile != NULL and openal != NULL) {
-            typedef SNDFILE* (cdecl* sf_open_func)(const char*, int, SF_INFO*);
-            typedef int(cdecl* sf_close_func)(SNDFILE*);
-            typedef sf_count_t(__cdecl* sf_readf_short_func)(SNDFILE*, short*, sf_count_t);
-            sf_open_func sf_open = (sf_open_func)GetProcAddress(sndfile, "sf_open");
-            sf_close_func sf_close = (sf_close_func)GetProcAddress(sndfile, "sf_close");
-            sf_readf_short_func sf_readf_short = (sf_readf_short_func)GetProcAddress(sndfile, "sf_readf_short");
-
-            SNDFILE* sndfile;
-            SF_INFO sfinfo;
-            std::vector<short> samples;
-
-            if (sf_open && sf_close && sf_readf_short) {
-                sndfile = sf_open(result.c_str(), SFM_READ, &sfinfo);
-                if (!sndfile) {
-                    active = false;
-                    return false;
-                }
-
-                samples.resize(sfinfo.channels * sfinfo.frames);
-
-                sf_readf_short(sndfile, &samples[0], sfinfo.frames);
-                sf_close(sndfile);
-
-                if (sfinfo.channels > 1) {
-                    std::vector<short> monoSamples(sfinfo.frames);
-                    for (int i = 0; i < sfinfo.frames; i++) {
-                        int index = i * sfinfo.channels;
-                        monoSamples[i] = (samples[index] + samples[index + 1]) / 2;
-                    }
-                    samples = monoSamples;
-                    sfinfo.channels = 1;
-                }
-            }
-            typedef void (*PFNALGENBUFFERSPROC)(ALsizei, ALuint*);
-            typedef void (*PFNALBUFFERDATAPROC)(ALuint, ALenum, const ALvoid*, ALsizei, ALsizei);
-            typedef void (*PFNALGENSOURCESPROC)(ALsizei, ALuint*);
-            typedef void (*PFNALSOURCEIPROC)(ALuint, ALenum, ALint);
-            typedef void (*PFNALSOURCEFPROC)(ALuint, ALenum, ALfloat);
-            typedef void (*PFNALSOURCE3FPROC)(ALuint, ALenum, ALfloat, ALfloat, ALfloat);
-            PFNALGENBUFFERSPROC alGenBuffers = (PFNALGENBUFFERSPROC)GetProcAddress(openal, "alGenBuffers");
-            PFNALBUFFERDATAPROC alBufferData = (PFNALBUFFERDATAPROC)GetProcAddress(openal, "alBufferData");
-            PFNALGENSOURCESPROC alGenSources = (PFNALGENSOURCESPROC)GetProcAddress(openal, "alGenSources");
-            PFNALSOURCEIPROC alSourcei = (PFNALSOURCEIPROC)GetProcAddress(openal, "alSourcei");
-            PFNALSOURCEFPROC alSourcef = (PFNALSOURCEFPROC)GetProcAddress(openal, "alSourcef");
-            PFNALSOURCE3FPROC alSource3f = (PFNALSOURCE3FPROC)GetProcAddress(openal, "alSource3f");
-
-            alGenBuffers(1, &buffer_);
-            alBufferData(buffer_,
-                (sfinfo.channels == 1) ? AL_FORMAT_MONO16 : AL_FORMAT_STEREO16,
-                &samples[0],
-                static_cast<ALsizei>(sfinfo.frames * sfinfo.channels * sizeof(short)),
-                sfinfo.samplerate);
-
-            alGenSources(1, &source_);
-
-            // Set source properties
-            alSourcei(source_, AL_BUFFER, buffer_);
-            alSourcef(source_, AL_PITCH, 1.0f);
-            alSourcei(source_, AL_LOOPING, AL_FALSE);
-
-            // Set 3D properties if requested
-            if (set3d) {
-                is_3d_ = true;
-                alSource3f(source_, AL_POSITION, 0.0f, 0.0f, 0.0f);
-                alSource3f(source_, AL_VELOCITY, 0.0f, 0.0f, 0.0f);
-
-                alSourcei(source_, AL_SOURCE_RELATIVE, AL_FALSE);
-                alSourcef(source_, AL_ROLLOFF_FACTOR, 0.1f);
-                alSourcei(source_, AL_REFERENCE_DISTANCE, 1);
-                alSourcei(source_, AL_MAX_DISTANCE, 500);
-            }
-
             active = true;
             return true;
         }
-    }
     bool load_from_memory(const std::string& data, bool set3d) {
         return false;
 
@@ -212,44 +351,16 @@ public:
 
     bool play() {
         if (!active)return false;
-        if (audiosystem == 0) {
             ma_sound_set_looping(&handle_, false);
             ma_sound_start(&handle_);
             return true;
         }
-        else {
-            if (openal != NULL) {
-                typedef void (*PFNALSOURCEIPROC)(ALuint, ALenum, ALint);
-                typedef void (*PFNALSOURCEPLAYPROC)(ALuint);
-                PFNALSOURCEIPROC alSourcei = (PFNALSOURCEIPROC)GetProcAddress(openal, "alSourcei");
-                PFNALSOURCEPLAYPROC alSourcePlay = (PFNALSOURCEPLAYPROC)GetProcAddress(openal, "alSourcePlay");
-                alSourcei(source_, AL_LOOPING, AL_FALSE);
-                alSourcePlay(source_);
-                return true;
-            }
-        }
-        }
     bool play_looped() {
         if (!active)return false;
-        if (audiosystem == 0) {
 
             ma_sound_set_looping(&handle_, true);
             ma_sound_start(&handle_);
             return true;
-        }
-        else {
-            if (openal != NULL) {
-
-                typedef void (*PFNALSOURCEIPROC)(ALuint, ALenum, ALint);
-                typedef void (*PFNALSOURCEPLAYPROC)(ALuint);
-                PFNALSOURCEIPROC alSourcei = (PFNALSOURCEIPROC)GetProcAddress(openal, "alSourcei");
-                PFNALSOURCEPLAYPROC alSourcePlay = (PFNALSOURCEPLAYPROC)GetProcAddress(openal, "alSourcePlay");
-                alSourcei(source_, AL_LOOPING, AL_TRUE);
-                alSourcePlay(source_);
-                return true;
-            }
-        }
-
         }
     bool set_faid_parameters(float volume_beg, float volume_end, unsigned int time) {
         if (!active)return false;
@@ -260,19 +371,8 @@ public:
 
     bool pause() {
         if (!active)return false;
-        if (audiosystem == 0) {
             ma_sound_stop(&handle_);
             return true;
-        }
-        else {
-            if (openal != NULL) {
-                typedef void (*PFNALSOURCEPAUSEPROC)(ALuint);
-                PFNALSOURCEPAUSEPROC alSourcePause = (PFNALSOURCEPAUSEPROC)GetProcAddress(openal, "alSourcePause");
-                alSourcePause(source_);
-                return true;
-            }
-        }
-
         }
     bool play_wait() {
         this->play();
@@ -289,80 +389,66 @@ public:
 
     bool stop() {
         if (!active)return false;
-        if (audiosystem == 0) {
             ma_sound_stop(&handle_);
             ma_sound_seek_to_pcm_frame(&handle_, 0);
         }
-        else {
-            if (openal != NULL) {
-                typedef void (*PFNALSOURCEIPROC)(ALuint, ALenum, ALint);
-                typedef void (*PFNALSOURCESTOPPROC)(ALuint);
-                PFNALSOURCEIPROC alSourcei = (PFNALSOURCEIPROC)GetProcAddress(openal, "alSourcei");
-                PFNALSOURCESTOPPROC alSourceStop = (PFNALSOURCESTOPPROC)GetProcAddress(openal, "alSourceStop");
-
-                alSourceStop(source_);
-                alSourcei(source_, AL_BUFFER, 0);
-            }
-        }
-        return true;
-    }
     bool close() {
         if (!active)return false;
         ma_sound_uninit(&handle_);
-        if (openal != NULL) {
-
-            typedef ALvoid(AL_APIENTRY* PFNALDELETEBUFFERS)(ALsizei, const ALuint*);
-            typedef ALvoid(AL_APIENTRY* PFNALDELETESOURCES)(ALsizei, const ALuint*);
-            PFNALDELETEBUFFERS alDeleteBuffers = (PFNALDELETEBUFFERS)GetProcAddress(openal, "alDeleteBuffers");
-            PFNALDELETESOURCES alDeleteSources = (PFNALDELETESOURCES)GetProcAddress(openal, "alDeleteSources");
-
-            if (source_) {
-                alDeleteSources(1, &source_);
-                source_ = 0;
-            }
-
-            if (buffer_) {
-                alDeleteBuffers(1, &buffer_);
-                buffer_ = 0;
-            }
-        }
         active = false;
         return true;
     }
 
-    void set_position(float s_x, float s_y, float s_z) {
+    void set_position(float l_x, float l_y, float l_z, float s_x, float s_y, float s_z) {
         if (!active)return;
+
+        ma_vec3f direction;
+        ma_engine_listener_set_position(&sound_engine, 0, l_x, l_y, l_z);
         ma_sound_set_position(&handle_, s_x, s_y, s_z);
-        if (openal != NULL) {
-            typedef void (*PFNALSOURCE3FPROC)(ALuint, ALenum, ALfloat, ALfloat, ALfloat);
-            PFNALSOURCE3FPROC alSource3f = (PFNALSOURCE3FPROC)GetProcAddress(openal, "alSource3f");
-            alSource3f(source_, AL_POSITION, s_x, s_y, s_z);
-        }
+        ma_vec3f relativePos;
+            direction=ma_vec3f_init_3f(0, 0, -1);
+
+            direction=ma_vec3f_init_3f(0, 0, -1);
+            ma_spatializer_get_relative_position_and_direction(&handle_.engineNode.spatializer, &sound_engine.listeners[ma_sound_get_listener_index(&handle_)], &relativePos, NULL);
+
+        direction=ma_vec3f_normalize(relativePos);
+
+        ma_steamaudio_binaural_node_set_direction(&g_binauralNode, direction.x, direction.y, direction.z);
+
     }
-    void set_position(ngtvector* v) {
+    void set_position(ngtvector* listener, ngtvector* source) {
         if (!active)return;
-        ma_sound_set_position(&handle_, v->x, v->y, v->z);
-        if (openal != NULL) {
+        ma_vec3f direction;
 
-            typedef void (*PFNALSOURCE3FPROC)(ALuint, ALenum, ALfloat, ALfloat, ALfloat);
-            PFNALSOURCE3FPROC alSource3f = (PFNALSOURCE3FPROC)GetProcAddress(openal, "alSource3f");
-            alSource3f(source_, AL_POSITION, v->x, v->y, v->z);
+        ma_engine_listener_set_position(&sound_engine, 0, listener->x, listener->y, listener->z);
+        ma_sound_set_position(&handle_, source->x, source->y, source->z);
+        ma_vec3f relativePos;
+        direction = ma_vec3f_init_3f(0, 0, -1);
+
+        direction = ma_vec3f_init_3f(0, 0, -1);
+        ma_spatializer_get_relative_position_and_direction(&handle_.engineNode.spatializer, &sound_engine.listeners[ma_sound_get_listener_index(&handle_)], &relativePos, NULL);
+
+        direction = ma_vec3f_normalize(relativePos);
+
+        ma_steamaudio_binaural_node_set_direction(&g_binauralNode, direction.x, direction.y, direction.z);
+
+    }
+    void set_hrtf(bool hrtf) {
+        if (!active)return;
+        if (hrtf) {
+
+            binauralNodeConfig = ma_steamaudio_binaural_node_config_init(CHANNELS, iplAudioSettings, iplContext, iplHRTF);
+
+            ma_steamaudio_binaural_node_init(ma_engine_get_node_graph(&sound_engine), &binauralNodeConfig, NULL, &g_binauralNode);
+            /* Connect the output of the delay node to the input of the endpoint. */
+            ma_node_attach_output_bus(&g_binauralNode, 0, ma_engine_get_endpoint(&sound_engine), 0);
+
+            ma_node_attach_output_bus(&handle_, 0, &g_binauralNode, 0);
+
+            ma_sound_set_directional_attenuation_factor(&handle_, 0);
+
         }
     }
-
-
-    void set_hrtf(bool hrtf) {
-        bool state = this->is_playing();
-        this->stop();
-        if (hrtf and openal != NULL)
-            this->audiosystem = 1;
-        else
-            this->audiosystem = 0;
-        if (state == true) {
-            this->play();
-        }
-
-}
     void set_reverb(float dry, float wet, float time) {
     }
 
@@ -391,97 +477,36 @@ public:
     double get_volume() const {
         if (!active)return -17435;
 
-        float volume=0;
-        if (audiosystem == 0) {
+        float volume = 0;
 
-            volume = ma_sound_get_volume(&handle_);
-            return ma_volume_linear_to_db(volume);
-
-        }
-        else {
-            if (openal != NULL) {
-
-                typedef void (*PFNALGETSOURCEFPROC)(ALuint, ALenum, ALfloat*);
-                PFNALGETSOURCEFPROC alGetSourcef = (PFNALGETSOURCEFPROC)GetProcAddress(openal, "alGetSourcef");
-                alGetSourcef(source_, AL_GAIN, &volume);
-            }
-        }
-
-        return volume;
-        }
-    void set_volume(double volume) {
+        volume = ma_sound_get_volume(&handle_);
+        return ma_volume_linear_to_db(volume);
+    }
+            void set_volume(double volume) {
         if (!active)return;
         if (volume > 0 or volume < -100)return;
-        if (audiosystem == 0) {
             ma_sound_set_volume(&handle_, ma_volume_db_to_linear(volume));
         }
-        else {
-            if (openal != NULL) {
-
-                typedef void (*PFNALSOURCEFPROC)(ALuint, ALenum, ALfloat);
-                PFNALSOURCEFPROC alSourcef = (PFNALSOURCEFPROC)GetProcAddress(openal, "alSourcef");
-
-                alSourcef(source_, AL_GAIN, static_cast<float>(volume / 100));
-            }
-        }
-
-    }
         double get_pitch() const {
         if (!active)return -17435;
         float pitch = 0;
-        if (audiosystem == 0) {
             pitch = ma_sound_get_pitch(&handle_);
-        }
-        else{
-                if (openal != NULL) {
-
-                    typedef void (*PFNALGETSOURCEFPROC)(ALuint, ALenum, ALfloat*);
-                    PFNALGETSOURCEFPROC alGetSourcef = (PFNALGETSOURCEFPROC)GetProcAddress(openal, "alGetSourcef");
-                    alGetSourcef(source_, AL_PITCH, & pitch);
-                }
-            }
-
         return pitch * 100;
     }
 
-    void set_pitch(double pitch) {
-        if (!active)return;
-if(audiosystem==0)
-        ma_sound_set_pitch(&handle_, pitch / 100);
-else {
-    if (openal != NULL) {
-
-        typedef void (*PFNALSOURCEFPROC)(ALuint, ALenum, ALfloat);
-        PFNALSOURCEFPROC alSourcef = (PFNALSOURCEFPROC)GetProcAddress(openal, "alSourcef");
-
-        alSourcef(source_, AL_PITCH, pitch/100);
-    }
-
-}
-    }
-
-    bool is_active() const {
+        void set_pitch(double pitch) {
+            if (!active)return;
+            ma_sound_set_pitch(&handle_, pitch / 100);
+        }
+        bool is_active() const {
         return active;
     }
 
     bool is_playing() const {
         if (!active)return false;
-        ALenum state;
-        if (audiosystem == 0) {
             return ma_sound_is_playing(&handle_);
         }
-        else {
-            if (openal != NULL) {
-
-                typedef void (*PFNALGETSOURCEIPROC)(ALuint, ALenum, ALint*);
-                PFNALGETSOURCEIPROC alGetSourcei = (PFNALGETSOURCEIPROC)GetProcAddress(openal, "alGetSourcei");
-                alGetSourcei(source_, AL_SOURCE_STATE, &state);
-                return state == AL_PLAYING;
-            }
-        }
-
-        return true;
-    }
+        
     bool is_paused() const {
         if (!active)return false;
         return paused;
@@ -511,8 +536,6 @@ void register_sound(asIScriptEngine* engine) {
     engine->RegisterGlobalFunction("string get_sound_storage()", asFUNCTION(get_sound_storage), asCALL_CDECL);
     engine->RegisterGlobalFunction("void set_master_volume(float)", asFUNCTION(set_master_volume), asCALL_CDECL);
     engine->RegisterGlobalFunction("float get_master_volume()", asFUNCTION(get_master_volume), asCALL_CDECL);
-    engine->RegisterGlobalFunction("void set_listener_position(float, float, float)", asFUNCTIONPR(set_listener_position, (float, float, float), void), asCALL_CDECL);
-    engine->RegisterGlobalFunction("void set_listener_position(vector@=null)", asFUNCTIONPR(set_listener_position, (ngtvector*), void), asCALL_CDECL);
 
     engine->RegisterObjectType("sound", sizeof(sound), asOBJ_REF);
     engine->RegisterObjectBehaviour("sound", asBEHAVE_FACTORY, "sound@ s()", asFUNCTION(fsound), asCALL_CDECL);
@@ -527,8 +550,8 @@ void register_sound(asIScriptEngine* engine) {
     engine->RegisterObjectMethod("sound", "bool set_faid_parameters(float, float, uint)", asMETHOD(sound, set_faid_parameters), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool stop()", asMETHOD(sound, stop), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool close()", asMETHOD(sound, close), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "void set_position(float, float, float)", asMETHODPR(sound, set_position, (float, float, float), void), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "void set_position(vector@=null)", asMETHODPR(sound, set_position, (ngtvector*), void), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void set_position(float, float, float, float, float, float)", asMETHODPR(sound, set_position, (float, float, float, float, float, float), void), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void set_position(vector@=null, vector@=null)", asMETHODPR(sound, set_position, (ngtvector*, ngtvector*), void), asCALL_THISCALL);
 
     engine->RegisterObjectMethod("sound", "void set_reverb(float, float, float)", asMETHOD(sound, set_reverb), asCALL_THISCALL);
         engine->RegisterObjectMethod("sound", "void set_hrtf(bool)const property", asMETHOD(sound, set_hrtf), asCALL_THISCALL);
