@@ -235,7 +235,7 @@ float pan_step;
 float volume_step;
 float behind_pitch_decrease;
 bool use_hrtf;
-
+string global_fx;
 // Default constructor, where we give the user 100 sounds.
 sound_pool()
 {
@@ -293,6 +293,7 @@ items[slot].start_pitch=start_pitch;
 items[slot].persistent=persistent;
 if(!memory)
 items[slot].handle.load(items[slot].filename);
+items[slot].handle.set_fx(global_fx);
 /*
 else
 {
@@ -381,6 +382,7 @@ return slot;
 }
 if(!memory)
 items[slot].handle.load(items[slot].filename, true);
+items[slot].handle.set_fx(global_fx);
 /*
 else
 {
@@ -463,6 +465,7 @@ return slot;
 }
 if(!memory)
 items[slot].handle.load(items[slot].filename, true);
+items[slot].handle.set_fx(global_fx);
 items[slot].handle.set_hrtf(use_hrtf);
 /*
 else
@@ -551,6 +554,7 @@ return slot;
 }
 if(!memory)
 items[slot].handle.load(items[slot].filename, true);
+items[slot].handle.set_fx(global_fx);
 items[slot].handle.set_hrtf(use_hrtf);
 /*
 else
@@ -585,7 +589,9 @@ if(slot>highest_slot)
 highest_slot=slot;
 return slot;
 }
-
+void set_global_fx(string fx){
+global_fx=fx;
+}
 bool sound_active(int slot)
 {
 /*

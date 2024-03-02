@@ -387,9 +387,6 @@
     <ClInclude Include="enet\win32.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="reverb\reverb.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="reverb\verblib.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -630,6 +627,9 @@
     <ClInclude Include="miniaudio.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="pack.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ngt.cpp">
@@ -699,6 +699,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="debugger\debugger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="pack.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

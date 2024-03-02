@@ -238,11 +238,11 @@
     <ClInclude Include="ngtreg.h" />
     <ClInclude Include="ogg\ogg.h" />
     <ClInclude Include="ogg\os_types.h" />
+    <ClInclude Include="pack.h" />
     <ClInclude Include="phonon.h" />
     <ClInclude Include="phonon_interfaces.h" />
     <ClInclude Include="phonon_version.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="reverb\reverb.h" />
     <ClInclude Include="reverb\verblib.h" />
     <ClInclude Include="scriptany\scriptany.h" />
     <ClInclude Include="scriptarray\scriptarray.h" />
@@ -351,6 +351,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ngt.cpp" />
     <ClCompile Include="ngtreg.cpp" />
+    <ClCompile Include="pack.cpp" />
     <ClCompile Include="scriptany\scriptany.cpp" />
     <ClCompile Include="scriptarray\scriptarray.cpp" />
     <ClCompile Include="scriptbuilder\scriptbuilder.cpp" />
