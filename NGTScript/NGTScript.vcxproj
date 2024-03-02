@@ -242,7 +242,6 @@
     <ClInclude Include="phonon_interfaces.h" />
     <ClInclude Include="phonon_version.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="reverb\reverb.h" />
     <ClInclude Include="reverb\verblib.h" />
     <ClInclude Include="scriptany\scriptany.h" />
     <ClInclude Include="scriptarray\scriptarray.h" />

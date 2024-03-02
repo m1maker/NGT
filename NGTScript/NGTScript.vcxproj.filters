@@ -387,9 +387,6 @@
     <ClInclude Include="enet\win32.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="reverb\reverb.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="reverb\verblib.h">
       <Filter>Header Files</Filter>
     </ClInclude>

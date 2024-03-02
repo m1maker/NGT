@@ -332,21 +332,20 @@ static string AddBoolString(bool b, const string &str)
 }
 #endif
 
-static char *StringCharAt(unsigned int i, string &str)
+static char* StringCharAt(unsigned int i, string& str)
 {
-	if( i >= str.size() )
+	if (i >= str.size())
 	{
 		// Set a script exception
-		asIScriptContext *ctx = asGetActiveContext();
+		asIScriptContext* ctx = asGetActiveContext();
 		ctx->SetException("Out of range");
 
 		// Return a null pointer
 		return 0;
 	}
-
-	return &str[i];
+	una::ranges::utf8_view tempstr(str);
 }
-
+	
 // AngelScript signature:
 // int string::opCmp(const string &in) const
 static int StringCmp(const string &a, const string &b)

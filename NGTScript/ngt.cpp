@@ -148,8 +148,9 @@ void set_game_window_closable(bool set_closable) {
 }
 void update_game_window()
 {
-    SDL_PollEvent(&e);
-    if (e.type == SDL_QUIT and window_closable == true)
+    if (win != nullptr) {
+        SDL_PollEvent(&e);
+        if (e.type == SDL_QUIT and window_closable == true)
         {
             exit_engine();
         }
@@ -169,7 +170,8 @@ void update_game_window()
         if (e.type == SDL_WINDOWEVENT_FOCUS_LOST)
             window_is_focused == false;
     }
-bool is_game_window_active() {
+}
+    bool is_game_window_active() {
     return window_is_focused;
 }
 void exit_engine(int return_number)
