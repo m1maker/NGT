@@ -886,7 +886,7 @@ void mixer_stop() {
 bool mixer_play_sound(const std::string& filename) {
     ma_result r;
     r=ma_engine_play_sound(&sound_default_mixer, filename.c_str(), nullptr);
-    if (r != 0)
+    if (r != MA_SUCCESS)
         return  false;
     return true;
 }
