@@ -344,6 +344,7 @@ static char* StringCharAt(unsigned int i, string& str)
 		return 0;
 	}
 	una::ranges::utf8_view tempstr(str);
+	return &str[i];
 }
 	
 // AngelScript signature:
