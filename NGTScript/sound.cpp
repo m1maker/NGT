@@ -890,7 +890,7 @@ bool mixer_play_sound(const std::string& filename) {
         return  false;
     return true;
 }
-    class sound {
+class sound {
 public:
     bool is_3d_;
     bool playing = false, paused = false, active = false;
@@ -953,13 +953,22 @@ public:
             ma_sound_init_from_file(&sound_default_mixer, result.c_str(), MA_SOUND_FLAG_DECODE, NULL, NULL, &handle_);
         else
             ma_sound_init_from_file(&sound_default_mixer, result.c_str(), MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_DECODE, NULL, NULL, &handle_);
-        ma_sound_set_rolloff(&handle_, 0.1);
-            active = true;
+        active = true;
             return true;
         }
     bool load_from_memory(const std::string& data, bool set3d) {
-        return false;
+        ma_sound_config c;
 
+        ma_decoder decoder;
+        ma_decoder_init_memory(data.c_str(), data.size(), NULL, &decoder);
+        c=ma_sound_config_init();
+        c.pDataSource=& decoder;
+
+        if(!set3d)
+c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
+        ma_sound_init_ex(&sound_default_mixer, &c, &handle_);
+        active = true;
+        return active;
     }
     void set_faid_time(float volume_beg, float volume_end, float time) {
         ma_sound_set_fade_in_milliseconds(&handle_, volume_beg/100, volume_end/100, static_cast<ma_uint64>(time));
@@ -1165,17 +1174,26 @@ public:
             sound_hrtf = true;
         }
     }
-    void set_reverb(float dry, float wet, float time) {
+    void set_volume_step(float volume_step) {
+        if (!active)return;
+        ma_sound_set_rolloff(&handle_, volume_step);
     }
-
-        bool seek(double new_position) {
+    void set_pan_step(float pan_step) {
+        if (!active)return;
+        ma_sound_set_directional_attenuation_factor(&handle_, pan_step);
+}
+    void set_pitch_step(float pitch_step) {
+        if (!active)return;
+        ma_sound_set_doppler_factor(&handle_, pitch_step);
+}
+    bool seek(double new_position) {
         if (!active)return false;
-        ma_sound_seek_to_pcm_frame(&handle_, static_cast<ma_uint64>(new_position * 100));
+        if (new_position > this->get_length())
+            return false;
+ma_sound_seek_to_pcm_frame(&handle_, static_cast<ma_uint64>(new_position * 100));
         return true;
     }
 
-    void cancel_reverb() {
-    }
     double get_pan() const {
         if (!active)return -17435;
 
@@ -1241,7 +1259,10 @@ public:
         return static_cast<double>(length/100);
     }
     void set_length(double length = 0.0) {
-        ma_sound_set_stop_time_in_pcm_frames(&handle_, static_cast<ma_uint64>(length * 100));
+        if (!active)return;
+        if (length > this->get_length())
+            return;
+ma_sound_set_stop_time_in_pcm_frames(&handle_, static_cast<ma_uint64>(length * 100));
     }
     double get_sample_rate() const {
         float rate = 0;
@@ -1272,15 +1293,16 @@ void register_sound(asIScriptEngine* engine) {
     engine->RegisterObjectMethod("sound", "bool play_wait()const", asMETHOD(sound, play_wait), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool stop()const", asMETHOD(sound, stop), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool close()const", asMETHOD(sound, close), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "void set_fx(const string &in, float=0)const", asMETHOD(sound, set_fx), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void set_fx(const string &in, int=0)const", asMETHOD(sound, set_fx), asCALL_THISCALL);
 
     engine->RegisterObjectMethod("sound", "void set_position(float, float, float, float, float, float)const", asMETHODPR(sound, set_position, (float, float, float, float, float, float), void), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "void set_position(vector@=null, vector@=null)const", asMETHODPR(sound, set_position, (ngtvector*, ngtvector*), void), asCALL_THISCALL);
 
-    engine->RegisterObjectMethod("sound", "void set_reverb(float, float, float)const", asMETHOD(sound, set_reverb), asCALL_THISCALL);
-        engine->RegisterObjectMethod("sound", "void set_hrtf(bool)const property", asMETHOD(sound, set_hrtf), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "bool seek(double)const", asMETHOD(sound, seek), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "void cancel_reverb()const", asMETHOD(sound, cancel_reverb), asCALL_THISCALL);
+        engine->RegisterObjectMethod("sound", "void set_hrtf(bool=true)const property", asMETHOD(sound, set_hrtf), asCALL_THISCALL);
+        engine->RegisterObjectMethod("sound", "void set_volume_step(float)const property", asMETHOD(sound, set_volume_step), asCALL_THISCALL);
+        engine->RegisterObjectMethod("sound", "void set_pan_step(float)const property", asMETHOD(sound, set_pan_step), asCALL_THISCALL);
+        engine->RegisterObjectMethod("sound", "void set_pitch_step(float)const property", asMETHOD(sound, set_pitch_step), asCALL_THISCALL);
+        engine->RegisterObjectMethod("sound", "bool seek(double)const", asMETHOD(sound, seek), asCALL_THISCALL);
 
     engine->RegisterObjectMethod("sound", "double get_pan() const property", asMETHOD(sound, get_pan), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "void set_pan(double)const property", asMETHOD(sound, set_pan), asCALL_THISCALL);
