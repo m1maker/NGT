@@ -970,6 +970,7 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
         active = true;
         return active;
     }
+
     void set_faid_time(float volume_beg, float volume_end, float time) {
         ma_sound_set_fade_in_milliseconds(&handle_, volume_beg/100, volume_end/100, static_cast<ma_uint64>(time));
     }

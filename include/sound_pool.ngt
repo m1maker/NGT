@@ -96,12 +96,12 @@ set_sound_storage(packname);
 handle.load(filename);
 set_sound_storage(old_storage);
 }
-//else handle.load_from_memory(filename);
+else handle.load_from_memory(filename);
 if(handle.active==true)
 {
 if(start_offset>0)
 {
-//handle.seek(start_offset);
+handle.seek(start_offset);
 }
 update_listener_position(listener_x, listener_y, listener_z, rotation);
 if(paused==false)
@@ -293,14 +293,13 @@ items[slot].start_pitch=start_pitch;
 items[slot].persistent=persistent;
 if(!memory)
 items[slot].handle.load(items[slot].filename);
-items[slot].handle.set_fx(global_fx);
-/*
 else
 {
 items[slot].memoryplaying=true;
 items[slot].handle.load_from_memory(items[slot].filename);
 }
-*/
+
+items[slot].handle.set_fx(global_fx);
 if(items[slot].handle.active==false)
 {
 items[slot].reset();
@@ -308,7 +307,7 @@ return -1;
 }
 if(items[slot].start_offset>0)
 {
-//items[slot].handle.seek(items[slot].start_offset);
+items[slot].handle.seek(items[slot].start_offset);
 }
 if(start_pan!=0.0)
 {
@@ -382,14 +381,15 @@ return slot;
 }
 if(!memory)
 items[slot].handle.load(items[slot].filename, true);
-items[slot].handle.set_fx(global_fx);
-/*
 else
 {
 items[slot].memoryplaying=true;
 items[slot].handle.load_from_memory(items[slot].filename);
 }
-*/
+
+
+items[slot].handle.set_fx(global_fx);
+
 if(items[slot].handle.active==false)
 {
 items[slot].reset();
@@ -397,7 +397,7 @@ return -1;
 }
 if(items[slot].start_offset>0)
 {
-//items[slot].handle.seek(items[slot].start_offset);
+items[slot].handle.seek(items[slot].start_offset);
 }
 items[slot].handle.set_pitch(start_pitch);
 last_listener_x=listener_x;
@@ -465,15 +465,14 @@ return slot;
 }
 if(!memory)
 items[slot].handle.load(items[slot].filename, true);
-items[slot].handle.set_fx(global_fx);
-items[slot].handle.set_hrtf(use_hrtf);
-/*
 else
 {
 items[slot].memoryplaying=true;
 items[slot].handle.load_from_memory(items[slot].filename);
 }
-*/
+
+items[slot].handle.set_fx(global_fx);
+items[slot].handle.set_hrtf(use_hrtf);
 if(items[slot].handle.active==false)
 {
 items[slot].reset();
@@ -481,7 +480,7 @@ return -1;
 }
 if(items[slot].start_offset>0)
 {
-//items[slot].handle.seek(items[slot].start_offset);
+items[slot].handle.seek(items[slot].start_offset);
 }
 last_listener_x=listener_x;
 last_listener_y=listener_y;
@@ -554,15 +553,14 @@ return slot;
 }
 if(!memory)
 items[slot].handle.load(items[slot].filename, true);
-items[slot].handle.set_fx(global_fx);
-items[slot].handle.set_hrtf(use_hrtf);
-/*
 else
 {
 items[slot].memoryplaying=true;
 items[slot].handle.load_from_memory(items[slot].filename);
 }
-*/
+
+items[slot].handle.set_fx(global_fx);
+items[slot].handle.set_hrtf(use_hrtf);
 if(items[slot].handle.active==false)
 {
 items[slot].reset();
@@ -570,7 +568,7 @@ return -1;
 }
 if(items[slot].start_offset>0)
 {
-//items[slot].handle.seek(items[slot].start_offset);
+items[slot].handle.seek(items[slot].start_offset);
 }
 last_listener_x=listener_x;
 last_listener_y=listener_y;
