@@ -890,7 +890,7 @@ bool mixer_play_sound(const std::string& filename) {
         return  false;
     return true;
 }
-    class sound {
+class sound {
 public:
     bool is_3d_;
     bool playing = false, paused = false, active = false;
@@ -957,8 +957,18 @@ public:
             return true;
         }
     bool load_from_memory(const std::string& data, bool set3d) {
-        return false;
+        ma_sound_config c;
 
+        ma_decoder decoder;
+        ma_decoder_init_memory(data.c_str(), data.size(), NULL, &decoder);
+        c=ma_sound_config_init();
+        c.pDataSource=& decoder;
+
+        if(!set3d)
+c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
+        ma_sound_init_ex(&sound_default_mixer, &c, &handle_);
+        active = true;
+        return active;
     }
     void set_faid_time(float volume_beg, float volume_end, float time) {
         ma_sound_set_fade_in_milliseconds(&handle_, volume_beg/100, volume_end/100, static_cast<ma_uint64>(time));

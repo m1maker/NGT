@@ -131,7 +131,7 @@ static void StringReplace_Generic(asIScriptGeneric *gen)
 	// Return the replaced string
 	new (gen->GetAddressOfReturnLocation()) string(StringReplace(*from, *to, *str));
 }
-
+	
 static string StringCapitalize(const string &inp)
 {
 	// check the given string's length
@@ -141,9 +141,8 @@ static string StringCapitalize(const string &inp)
 	{
 		std::string temp = una::cases::to_uppercase_utf8(str);
 		una::ranges::utf8_view tempstr(temp);
-//		std::replace(tempstr.begin(), tempstr.end(), str[0], tempstr.begin());
+		return std::string(tempstr.begin(), tempstr.end());
 	}
-	return str;
 }
 
 static void StringCapitalize_Generic(asIScriptGeneric *gen)
