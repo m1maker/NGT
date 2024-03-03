@@ -38,8 +38,8 @@ void init_engine(){
     if (!Tolk_HasSpeech()) {
         Tolk_PreferSAPI(true);
 }
-}
-void set_library_path(const std::string& path) {
+}   
+    void set_library_path(const std::string& path) {
     if (Tolk_IsLoaded())Tolk_Unload();
     std::filesystem::path current_dir = std::filesystem::current_path();
     std::filesystem::path new_dir= std::filesystem::current_path()/path;
