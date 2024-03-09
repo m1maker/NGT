@@ -629,6 +629,7 @@ typedef struct
     float* ppBuffersIn[2];      /* Each buffer is an offset of _pHeap. */
     float* ppBuffersOut[2];     /* Each buffer is an offset of _pHeap. */
     void* _pHeap;
+    ma_sound handle_;
 } ma_steamaudio_binaural_node;
 
 MA_API ma_result ma_steamaudio_binaural_node_init(ma_node_graph* pNodeGraph, const ma_steamaudio_binaural_node_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_steamaudio_binaural_node* pBinauralNode);
@@ -664,19 +665,20 @@ static void ma_steamaudio_binaural_node_process_pcm_frames(ma_node* pNode, const
     binauralParams.direction.y = pBinauralNode->direction.y;
     binauralParams.direction.z = pBinauralNode->direction.z;
     binauralParams.interpolation = IPL_HRTFINTERPOLATION_NEAREST;
-    ma_vec3f listener = ma_engine_listener_get_position(&sound_default_mixer, 0);
+    ma_vec3f listener = ma_engine_listener_get_position(&sound_default_mixer, ma_sound_get_listener_index(&pBinauralNode->handle_));
 
     float distance = sqrt((listener.x + binauralParams.direction.x) * (listener.x + binauralParams.direction.x) +
         (listener.y + binauralParams.direction.y) * (listener.y + binauralParams.direction.y) +
         (listener.z - binauralParams.direction.z) * (listener.z - binauralParams.direction.z));
-    float maxDistance = 3.0f;
+    float maxDistance = 2.0f;
 
     float normalizedDistance = distance / maxDistance; 
     binauralParams.spatialBlend = std::min(0.0f + normalizedDistance, 1.0f);
     if (binauralParams.spatialBlend > 1.0f)
+
     binauralParams.spatialBlend = 1.0f;
     binauralParams.hrtf = pBinauralNode->iplHRTF;
-    binauralParams.peakDelays = NULL;
+    binauralParams.peakDelays=NULL;
     inputBufferDesc.numChannels = (IPLint32)ma_node_get_input_channels(pNode, 0);
     
     /* We'll run this in a loop just in case our deinterleaved buffers are too small. */
@@ -884,12 +886,21 @@ void mixer_stop() {
     ma_engine_stop(&sound_default_mixer);
 }
 bool mixer_play_sound(const std::string& filename) {
+    std::string result;
+    if (sound_path != "") {
+        result = sound_path + "/" + filename.c_str();
+    }
+    else {
+        result = filename;
+    }
+
     ma_result r;
-    r=ma_engine_play_sound(&sound_default_mixer, filename.c_str(), nullptr);
+    r=ma_engine_play_sound(&sound_default_mixer, result.c_str(), nullptr);
     if (r != MA_SUCCESS)
         return  false;
     return true;
 }
+bool sound_global_hrtf = false;
 class sound {
 public:
     bool is_3d_;
@@ -954,9 +965,17 @@ public:
         else
             ma_sound_init_from_file(&sound_default_mixer, result.c_str(), MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_DECODE, NULL, NULL, &handle_);
         active = true;
-            return true;
+        if (sound_global_hrtf)
+            this->set_hrtf(true);
+        
+        this->set_position(0, 0, 0, 0, 0, 0);
+        return true;
         }
     bool load_from_memory(const std::string& data, bool set3d) {
+        if (active) {
+            this->close();
+            active = false;
+        }
         ma_sound_config c;
 
         ma_decoder decoder;
@@ -968,7 +987,34 @@ public:
 c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
         ma_sound_init_ex(&sound_default_mixer, &c, &handle_);
         active = true;
+        if (sound_global_hrtf)
+            this->set_hrtf(true);
+        this->set_position(0, 0, 0, 0, 0, 0);
+
         return active;
+    }
+    bool stream(const std::string& filename, bool set3d) {
+        std::string result;
+        if (sound_path != "") {
+            result = sound_path + "/" + filename.c_str();
+        }
+        else {
+            result = filename;
+        }
+        if (active) {
+            this->close();
+            active = false;
+        }
+        if (set3d)
+            ma_sound_init_from_file(&sound_default_mixer, result.c_str(), MA_SOUND_FLAG_STREAM, NULL, NULL, &handle_);
+        else
+            ma_sound_init_from_file(&sound_default_mixer, result.c_str(), MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_STREAM, NULL, NULL, &handle_);
+        active = true;
+        if (sound_global_hrtf)
+            this->set_hrtf(true);
+        this->set_position(0, 0, 0, 0, 0, 0);
+
+        return true;
     }
 
     void set_faid_time(float volume_beg, float volume_end, float time) {
@@ -1125,12 +1171,9 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
         if (!active)return;
 
         ma_vec3f direction;
-        ma_engine_listener_set_position(&sound_default_mixer, 0, l_x, l_y, l_z);
+        ma_engine_listener_set_position(&sound_default_mixer, ma_sound_get_listener_index(&handle_), l_x, l_y, l_z);
         ma_sound_set_position(&handle_, s_x, s_y, s_z);
         ma_vec3f relativePos;
-            direction=ma_vec3f_init_3f(0, 0, 0);
-
-            direction=ma_vec3f_init_3f(0, 0, 0);
             ma_spatializer_get_relative_position_and_direction(&handle_.engineNode.spatializer, &sound_default_mixer.listeners[ma_sound_get_listener_index(&handle_)], &relativePos, NULL);
 
         direction=ma_vec3f_normalize(relativePos);
@@ -1142,12 +1185,9 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
         if (!active)return;
         ma_vec3f direction;
 
-        ma_engine_listener_set_position(&sound_default_mixer, 0, listener->x, listener->y, listener->z);
+        ma_engine_listener_set_position(&sound_default_mixer, ma_sound_get_listener_index(&handle_), listener->x, listener->y, listener->z);
         ma_sound_set_position(&handle_, source->x, source->y, source->z);
         ma_vec3f relativePos;
-        direction = ma_vec3f_init_3f(0, 0, 0);
-
-        direction = ma_vec3f_init_3f(0, 0, 0);
         ma_spatializer_get_relative_position_and_direction(&handle_.engineNode.spatializer, &sound_default_mixer.listeners[ma_sound_get_listener_index(&handle_)], &relativePos, NULL);
 
         direction = ma_vec3f_normalize(relativePos);
@@ -1165,6 +1205,7 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
                 ma_steamaudio_binaural_node_uninit(&g_binauralNode, NULL);
                 sound_hrtf = false;
             }
+            g_binauralNode.handle_ = this->handle_;
             ma_steamaudio_binaural_node_init(ma_engine_get_node_graph(&sound_default_mixer), &binauralNodeConfig, NULL, &g_binauralNode);
             /* Connect the output of the delay node to the input of the endpoint. */
             ma_node_attach_output_bus(&g_binauralNode, 0, ma_engine_get_endpoint(&sound_default_mixer), 0);
@@ -1173,6 +1214,14 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
 
             ma_sound_set_directional_attenuation_factor(&handle_, 0);
             sound_hrtf = true;
+        }
+        else {
+            if (sound_hrtf == true) {
+
+                ma_steamaudio_binaural_node_uninit(&g_binauralNode, NULL);
+                sound_hrtf = false;
+            }
+
         }
     }
     void set_volume_step(float volume_step) {
@@ -1249,7 +1298,7 @@ ma_sound_seek_to_pcm_frame(&handle_, static_cast<ma_uint64>(new_position * 100))
         if (!active)return -17435;
 
         double position=0;
-        position=ma_sound_get_positioning(&handle_);
+        position=ma_sound_get_time_in_milliseconds(&handle_);
         return position;
     }
 
@@ -1271,6 +1320,12 @@ ma_sound_set_stop_time_in_pcm_frames(&handle_, static_cast<ma_uint64>(length * 1
     }
 
 };
+void set_sound_global_hrtf(bool hrtf) {
+    sound_global_hrtf = hrtf;
+}
+bool get_sound_global_hrtf() {
+    return sound_global_hrtf;
+}
 sound* fsound(const std::string& filename, bool set3d) { return new sound(filename, set3d); }
 void register_sound(asIScriptEngine* engine) {
     engine->RegisterGlobalFunction("void set_sound_storage(const string &in)property", asFUNCTION(set_sound_storage), asCALL_CDECL);
@@ -1286,6 +1341,8 @@ void register_sound(asIScriptEngine* engine) {
     engine->RegisterObjectBehaviour("sound", asBEHAVE_FACTORY, "sound@ s(const string &in=\"\", bool=false)", asFUNCTION(fsound), asCALL_CDECL);
     engine->RegisterObjectMethod("sound", "bool load(const string &in, bool=false)const", asMETHOD(sound, load), asCALL_THISCALL);
         engine->RegisterObjectMethod("sound", "bool load_from_memory(const string &in, bool=false)const", asMETHOD(sound, load_from_memory), asCALL_THISCALL);
+        engine->RegisterObjectMethod("sound", "bool stream(const string &in, bool=false)const", asMETHOD(sound, stream), asCALL_THISCALL);
+
         engine->RegisterObjectMethod("sound", "void set_faid_time(float, float, float)const", asMETHOD(sound, set_faid_time), asCALL_THISCALL);
 
         engine->RegisterObjectMethod("sound", "bool play()const", asMETHOD(sound, play), asCALL_THISCALL);
@@ -1319,5 +1376,7 @@ void register_sound(asIScriptEngine* engine) {
     engine->RegisterObjectMethod("sound", "void set_length(double=0.0) const property", asMETHOD(sound, set_length), asCALL_THISCALL);
 
     engine->RegisterObjectMethod("sound", "double get_sample_rate() const property", asMETHOD(sound, get_sample_rate), asCALL_THISCALL);
+    engine->RegisterGlobalFunction("void set_sound_global_hrtf(bool)property", asFUNCTION(set_sound_global_hrtf), asCALL_CDECL);
+    engine->RegisterGlobalFunction("bool get_sound_global_hrtf()property", asFUNCTION(get_sound_global_hrtf), asCALL_CDECL);
 
 }

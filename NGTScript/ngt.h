@@ -57,6 +57,9 @@ int question(const std::string& title, const std::string &text);
 void wait(int);
 void delay(int);
 std::string read_environment_variable(const std::string&);
+std::string serialize(CScriptDictionary* the_data);
+CScriptDictionary* deserialize(const std::string &serialized_data);
+
 class timer {
 public:
 
@@ -157,7 +160,7 @@ public:
 	void construct();
 	void destruct();
 	bool load(const std::string &);
-	CScriptHandle get_function(std::string function_address, std::string function_signature);
+	CScriptHandle get_function(std::string function_address, std::string function_signature, int call_type=0);
 	void unload();
 };
 class instance {

@@ -321,6 +321,22 @@ void delay(int ms)
 {
 SDL_Delay(ms);
 }
+std::string serialize(CScriptDictionary* the_data) {
+    std::string result;
+    for (auto it : *the_data)
+    {
+        std::string keyName = it.GetKey();
+        int typeId = it.GetTypeId();
+        const void* addressOfValue = it.GetAddressOfValue();
+        std::stringstream ss;
+        ss << keyName << ":" << typeId << ":" << reinterpret_cast<const char*>(addressOfValue) << ";";
+        result += ss.str();
+    }
+    return result;
+}
+CScriptDictionary* deserialize(const std::string& serialized_data) {
+    return nullptr;
+}
 void timer::construct() {
 }
 
@@ -436,20 +452,19 @@ bool timer::is_running() {
 
 
     void library::construct() {}
-                void library::destruct() {
-                }                bool library::load(const std::string & libname) {
-                    lib = LoadLibraryA(libname.c_str());
-                    if (lib != NULL)
-                        return true;
-                    return false;
+    void library::destruct() {}
+                                bool library::load(const std::string& libname) {
+                    std::wstring wideLibName = wstr(libname);
+                    lib = LoadLibraryExW(wideLibName.c_str(), NULL, 0);
+                    return lib != NULL;
                 }
-                      CScriptHandle library::get_function(std::string function_address, std::string function_signature){
+                                CScriptHandle library::get_function(std::string function_address, std::string function_signature, int call_type){
                 FARPROC procAddress = GetProcAddress(lib, function_address.c_str());
-              if (procAddress) {
+                if (procAddress) {
                 typedef void* (*FunctionType)(...);
                       FunctionType function = reinterpret_cast<FunctionType>(procAddress);               asIScriptContext* ctx = asGetActiveContext();
                         asIScriptEngine* engine = ctx->GetEngine();
-                            asUINT func_id=                        engine->RegisterGlobalFunction(function_signature.c_str(), asFUNCTION(function), asCALL_CDECL);
+                        asUINT func_id=                        engine->RegisterGlobalFunction(function_signature.c_str(), asFUNCTION(function), call_type);
                                   asIScriptFunction* f = engine->GetFunctionById(func_id);
                               CScriptHandle h;
                               h.Set(f, engine->GetTypeInfoById(f->GetTypeId()));                                return h;

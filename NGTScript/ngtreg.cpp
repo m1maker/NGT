@@ -14,7 +14,8 @@ HWND g_hwndEdit;
 HWND hwnd;
 HWND buttonc;
 WNDPROC originalEditProc;
-
+const int as_CDECL = 0;
+const int AS_STD_CALL = 1;
 const int AS_SDLK_UNKNOWN = SDLK_UNKNOWN;
 const int AS_SDLK_BACKSPACE = SDLK_BACKSPACE;
 const int AS_SDLK_TAB = SDLK_TAB;
@@ -416,9 +417,27 @@ void MessageCallback(const asSMessageInfo* msg, void* param)
     ouou = wstr(output);
     result_message  += ouou+L"\r\n";
 }
+
+
+void Print(const char* format, ...)
+{
+
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);
+    va_end(args);
+}
+
 void RegisterFunctions(asIScriptEngine* engine)
 {
     engine->SetEngineProperty(asEP_ALLOW_MULTILINE_STRINGS, true);
+    engine->RegisterTypedef("long", "int64");
+    engine->RegisterTypedef("ulong", "uint64");
+    engine->RegisterTypedef("short", "int8");
+    engine->RegisterTypedef("ushort", "uint8");
+    engine->RegisterTypedef("dword", "uint64");
+    engine->RegisterTypedef("word", "uint8");
+    engine->RegisterTypedef("size_t", "uint64");
     engine->RegisterObjectType("vector", sizeof(ngtvector), asOBJ_REF);
     engine->RegisterObjectBehaviour("vector", asBEHAVE_FACTORY, "vector@ v()", asFUNCTION(fngtvector), asCALL_CDECL);
     engine->RegisterObjectBehaviour("vector", asBEHAVE_ADDREF, "void f()", asMETHOD(ngtvector, construct), asCALL_THISCALL);
@@ -426,16 +445,15 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectProperty("vector", "float x", asOFFSET(ngtvector, x));
     engine->RegisterObjectProperty("vector", "float y", asOFFSET(ngtvector, y));
     engine->RegisterObjectProperty("vector", "float z", asOFFSET(ngtvector, z));
-
-    engine->RegisterGlobalFunction("uint64 get_time_stamp_millis()", asFUNCTION(get_time_stamp_millis), asCALL_CDECL);
-    engine->RegisterGlobalFunction("uint64 get_time_stamp_seconds()", asFUNCTION(get_time_stamp_seconds), asCALL_CDECL);
+    engine->RegisterGlobalFunction("uint64 get_time_stamp_millis()property", asFUNCTION(get_time_stamp_millis), asCALL_CDECL);
+    engine->RegisterGlobalFunction("uint64 get_time_stamp_seconds()property", asFUNCTION(get_time_stamp_seconds), asCALL_CDECL);
     engine->RegisterGlobalFunction("void set_library_path(const string &in)", asFUNCTION(set_library_path), asCALL_CDECL);
 
-    engine->RegisterGlobalFunction("int random(int, int)", asFUNCTIONPR(random, (long, long), long), asCALL_CDECL);
+    engine->RegisterGlobalFunction("long random(long, long)", asFUNCTIONPR(random, (long, long), long), asCALL_CDECL);
     engine->RegisterGlobalFunction("double random(double, double)", asFUNCTIONPR(randomDouble, (double, double), double), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool random_bool()", asFUNCTION(random_bool), asCALL_CDECL);
-    engine->RegisterGlobalFunction("void printf(const string &in format, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null)", asFUNCTION(printf), asCALL_CDECL);
-    engine->RegisterGlobalFunction("void scanf(const string &in format, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null)", asFUNCTION(scanf_s), asCALL_CDECL);
+    engine->RegisterGlobalFunction("int printf(const ? & in format, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null)", asFUNCTION(Print), asCALL_CDECL);
+    engine->RegisterGlobalFunction("int scanf(const string &in format, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null)", asFUNCTION(scanf_s), asCALL_CDECL);
     engine->RegisterGlobalFunction("int get_last_error()", asFUNCTION(get_last_error), asCALL_CDECL);
 
     engine->RegisterGlobalFunction("void speak(const string &in, bool=true)", asFUNCTION(speak), asCALL_CDECL);
@@ -471,6 +489,9 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterGlobalFunction("void wait(int)", asFUNCTION(wait), asCALL_CDECL);
     engine->RegisterGlobalFunction("void delay(int)",asFUNCTION(delay),asCALL_CDECL);
     engine->RegisterGlobalFunction("string read_environment_variable(const string&in)", asFUNCTION(read_environment_variable), asCALL_CDECL);
+    engine->RegisterGlobalFunction("string serialize(dictionary@=null)", asFUNCTION(serialize), asCALL_CDECL);
+    engine->RegisterGlobalFunction("dictionary@ deserialize(const string &in)", asFUNCTION(deserialize), asCALL_CDECL);
+
     register_sound(engine);
     engine->RegisterObjectType("user_idle", sizeof(user_idle), asOBJ_REF | asOBJ_NOCOUNT);
     engine->RegisterObjectBehaviour("user_idle", asBEHAVE_FACTORY, "user_idle@ u()", asFUNCTION(fuser_idle), asCALL_CDECL);
@@ -510,7 +531,7 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectBehaviour("library", asBEHAVE_ADDREF, "void f()", asMETHOD(library, construct), asCALL_THISCALL);
     engine->RegisterObjectBehaviour("library", asBEHAVE_RELEASE, "void f()", asMETHOD(library, destruct), asCALL_THISCALL);
     engine->RegisterObjectMethod("library", "bool load(const string&in)", asMETHOD(library, load), asCALL_THISCALL);
-    engine->RegisterObjectMethod("library", "ref@ get_function(const string&in, const string &in)", asMETHOD(library, get_function), asCALL_THISCALL);
+    engine->RegisterObjectMethod("library", "ref@ get_function(const string&in, const string &in, int=0)", asMETHOD(library, get_function), asCALL_THISCALL);
     engine->RegisterObjectMethod("library", "void unload()", asMETHOD(library, unload), asCALL_THISCALL);
     engine->RegisterObjectType("instance", sizeof(instance), asOBJ_REF);
     engine->RegisterObjectBehaviour("instance", asBEHAVE_FACTORY, "instance@ i(const string&in)", asFUNCTION(finstance), asCALL_CDECL);
@@ -840,5 +861,7 @@ engine->RegisterGlobalProperty("const int SDLK_SLEEP", (void*)&AS_SDLK_SLEEP);
 engine->RegisterGlobalProperty("const int MESSAGEBOX_ERROR", (void* )& AS_MESSAGEBOX_ERROR);
 engine->RegisterGlobalProperty("const int MESSAGEBOX_WARN", (void*)&AS_MESSAGEBOX_WARN);
 engine->RegisterGlobalProperty("const int MESSAGEBOX_INFO", (void*)&AS_MESSAGEBOX_INFO);
+engine->RegisterGlobalProperty("const int CDECL", (void*)&as_CDECL);
+engine->RegisterGlobalProperty("const int STD_CALL", (void*)&AS_STD_CALL);
 }
 
