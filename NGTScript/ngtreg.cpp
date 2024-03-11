@@ -531,7 +531,7 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectBehaviour("library", asBEHAVE_ADDREF, "void f()", asMETHOD(library, construct), asCALL_THISCALL);
     engine->RegisterObjectBehaviour("library", asBEHAVE_RELEASE, "void f()", asMETHOD(library, destruct), asCALL_THISCALL);
     engine->RegisterObjectMethod("library", "bool load(const string&in)", asMETHOD(library, load), asCALL_THISCALL);
-    engine->RegisterObjectMethod("library", "ref@ get_function(const string&in, const string &in, int=0)", asMETHOD(library, get_function), asCALL_THISCALL);
+    engine->RegisterObjectMethod("library", "int call(const string&in, const string &in, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null)", asMETHOD(library, call), asCALL_THISCALL);
     engine->RegisterObjectMethod("library", "void unload()", asMETHOD(library, unload), asCALL_THISCALL);
     engine->RegisterObjectType("instance", sizeof(instance), asOBJ_REF);
     engine->RegisterObjectBehaviour("instance", asBEHAVE_FACTORY, "instance@ i(const string&in)", asFUNCTION(finstance), asCALL_CDECL);

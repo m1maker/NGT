@@ -9,10 +9,6 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="angelscript.h">
@@ -628,6 +624,105 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="pack.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource1.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource2.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dyncall.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dyncall_alloc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dyncall_callf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dyncall_callvm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dyncall_callvm_arm32_arm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dyncall_callvm_arm32_arm_armhf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dyncall_callvm_arm32_thumb.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dyncall_callvm_arm64.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dyncall_callvm_mips.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dyncall_callvm_mips_eabi.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dyncall_callvm_mips_n32.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dyncall_callvm_mips_n64.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dyncall_callvm_mips_o32.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dyncall_callvm_ppc32.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dyncall_callvm_ppc64.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dyncall_callvm_sparc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dyncall_callvm_sparc64.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dyncall_callvm_x64.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dyncall_callvm_x86.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dyncall_config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dyncall_macros.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dyncall_signature.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dyncall_struct.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dyncall_types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dyncall_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dyncall_value.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dyncall_vector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dynload.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dyn\dynload_alloc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="fx\verblib.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

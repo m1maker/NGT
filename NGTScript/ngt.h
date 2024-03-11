@@ -1,5 +1,7 @@
 #pragma once
 #define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
+#include "dyn/dyncall.h"
+#include "dyn/dynload.h"
 #include <Windows.h>
 #include "enet/enet.h"
 #include <fcntl.h>
@@ -156,12 +158,12 @@ private:
 };
 class library {
 public:
-	HMODULE lib;
+	DLLib* lib;
 	void construct();
 	void destruct();
 	bool load(const std::string &);
-	CScriptHandle get_function(std::string function_address, std::string function_signature, int call_type=0);
-	void unload();
+	void* call(std::string function_name, const std::string& signature, ...);
+		void unload();
 };
 class instance {
 private:
