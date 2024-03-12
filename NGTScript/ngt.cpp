@@ -321,6 +321,17 @@ void delay(int ms)
 {
 SDL_Delay(ms);
 }
+std::string serialize(CScriptDictionary* the_data) {
+    std::string result;
+    return NULL;
+}
+CScriptDictionary* deserialize(const std::string& data) {
+    asIScriptContext* ctx = asGetActiveContext();
+    asIScriptEngine* engine = ctx->GetEngine();
+
+    CScriptDictionary* result = CScriptDictionary::Create(engine);
+        return result;
+    }
 void timer::construct() {
 }
 
@@ -433,32 +444,116 @@ bool timer::is_running() {
         }
         return false;
     }
-
-
     void library::construct() {}
-                void library::destruct() {
-                }                bool library::load(const std::string & libname) {
-                    lib = LoadLibraryA(libname.c_str());
-                    if (lib != NULL)
-                        return true;
-                    return false;
-                }
-                      CScriptHandle library::get_function(std::string function_address, std::string function_signature){
-                FARPROC procAddress = GetProcAddress(lib, function_address.c_str());
-              if (procAddress) {
-                typedef void* (*FunctionType)(...);
-                      FunctionType function = reinterpret_cast<FunctionType>(procAddress);               asIScriptContext* ctx = asGetActiveContext();
-                        asIScriptEngine* engine = ctx->GetEngine();
-                            asUINT func_id=                        engine->RegisterGlobalFunction(function_signature.c_str(), asFUNCTION(function), asCALL_CDECL);
-                                  asIScriptFunction* f = engine->GetFunctionById(func_id);
-                              CScriptHandle h;
-                              h.Set(f, engine->GetTypeInfoById(f->GetTypeId()));                                return h;
-              }
-              }
+    void library::destruct() {}
+                                bool library::load(const std::string& libname) {
+                                    lib = dlLoadLibrary(libname.c_str());
+                                    return lib == NULL;
+                                }
+                                void* library::call(std::string function_name, const std::string& signature, ...) {
+                                    void* sym;
+                                    va_list args;
+                                    const char* signature_c_str = signature.c_str();
+                                    va_start(args, signature_c_str);
 
-                void library::unload() {
-                    FreeLibrary(lib);
-                }
+                                                                                                                               
+                                                                            sym = dlFindSymbol(lib, function_name.c_str());
+                                                                  if (!sym) {
+                                                              va_end(args);
+                                        return nullptr;
+                                    }
+                                    DCCallVM* vm = dcNewCallVM(4096); // error checking
+                                    dcReset(vm);
+
+                                    int arg_index = 0;
+                                    int sig_index = 0;
+                                    while (signature[sig_index] != '\0') {
+                                        switch (signature[sig_index]) {
+                                        case DC_SIGCHAR_INT:
+                                            dcArgInt(vm, va_arg(args, int));
+                                            break;
+                                        case DC_SIGCHAR_FLOAT:
+                                            dcArgFloat(vm, va_arg(args, float));
+                                            break;
+                                        case DC_SIGCHAR_DOUBLE:
+                                            dcArgDouble(vm, va_arg(args, double));
+                                            break;
+                                        case DC_SIGCHAR_CHAR:
+                                            dcArgChar(vm, va_arg(args, char));
+                                            break;
+                                        case DC_SIGCHAR_POINTER:
+                                            dcArgPointer(vm, va_arg(args, void*));
+                                            break;
+                                        case DC_SIGCHAR_BOOL:
+                                            dcArgBool(vm, (DCbool)atoi(va_arg(args, char*)));
+                                            break;
+                                        case DC_SIGCHAR_UCHAR:
+                                            dcArgChar(vm, (DCuchar)atoi(va_arg(args, char*)));
+                                            break;
+                                        case DC_SIGCHAR_SHORT:
+                                            dcArgShort(vm, (DCshort)atoi(va_arg(args, char*)));
+                                            break;
+                                        case DC_SIGCHAR_USHORT:
+                                            dcArgShort(vm, (DCushort)atoi(va_arg(args, char*)));
+                                            break;
+                                        case DC_SIGCHAR_UINT:
+                                            dcArgInt(vm, (DCint)(DCuint)strtoul(va_arg(args, char*), NULL, 10));
+                                            break;
+                                        case DC_SIGCHAR_LONG:
+                                            dcArgLong(vm, (DClong)strtol(va_arg(args, char*), NULL, 10));
+                                            break;
+                                        case DC_SIGCHAR_ULONG:
+                                            dcArgLong(vm, (DCulong)strtoul(va_arg(args, char*), NULL, 10));
+                                            break;
+                                        case DC_SIGCHAR_LONGLONG:
+                                            dcArgLongLong(vm, (DClonglong)strtoll(va_arg(args, char*), NULL, 10));
+                                            break;
+                                        case DC_SIGCHAR_ULONGLONG:
+                                            dcArgLongLong(vm, (DCulonglong)strtoull(va_arg(args, char*), NULL, 10));
+                                            break;
+                                        case DC_SIGCHAR_STRING:
+                                            dcArgPointer(vm, (DCpointer)va_arg(args, char*));
+                                            break;
+
+                                        default:
+                                            break;
+                                        }
+                                        ++arg_index;
+                                        ++sig_index;
+                                    }
+
+                                    // Call the function based on return type
+                                    switch (signature[arg_index]) {
+                                    case DC_SIGCHAR_VOID:
+                                        dcCallVoid(vm, sym);
+                                        break;
+                                    case DC_SIGCHAR_INT:
+                                        dcCallInt(vm, sym);
+                                        break;
+                                    case DC_SIGCHAR_FLOAT:
+                                        dcCallFloat(vm, sym);
+                                        break;
+                                    case DC_SIGCHAR_DOUBLE:
+                                        dcCallDouble(vm, sym);
+                                        break;
+                                    case DC_SIGCHAR_CHAR:
+                                        dcCallChar(vm, sym);
+                                        break;
+                                    case DC_SIGCHAR_POINTER:
+                                        dcCallPointer(vm, sym);
+                                        break;
+                                        // Add more cases for other return types as needed
+                                    default:
+                                        break;
+                                    }
+
+                                    dcFree(vm);
+                                    va_end(args);
+                                    return sym;
+                                }
+                                void library::unload() {
+                                    dlFreeLibrary(lib);
+                                }
                 void instance::construct() {}
                 void instance::destruct() {  }
 

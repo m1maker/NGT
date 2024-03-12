@@ -1,4 +1,5 @@
-﻿#define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
+﻿#pragma section(".NGT")
+#define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
 #include <Windows.h>
 #include "ngtreg.h"
 #include "scriptbuilder/scriptbuilder.h"
@@ -17,6 +18,14 @@
 #include "datetime/datetime.h"
 #include "scriptmath/scriptmath.h"
 #include <thread>
+
+struct NGT {
+    std::vector<asBYTE> code;
+};
+
+__declspec(allocate(".NGT")) NGT ngt = { {0x0, 2, 3, 1, 1} };
+
+
 CScriptBuilder builder;
 void crypt(std::vector<asBYTE>& bytes) {
     for (size_t i = 0; i < bytes.size(); ++i) {
@@ -199,6 +208,7 @@ int scriptArg=0;
 std::string this_exe;
 
 auto main(int argc, char* argv[])->int {
+    cout << ngt.code.data();
     this_exe = get_exe();
     std::fstream read_file(this_exe.c_str(), std::ios::binary | std::ios::in);
         read_file.seekg(0, std::ios::end);

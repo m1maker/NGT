@@ -1,5 +1,7 @@
 //NGTAUDIO
 #define NOMINMAX
+#define CURL_STATICLIB
+#include "curl/curl.h"
 #include "sound.h"
 #include "ngt.h"
 #include <thread>
@@ -8,7 +10,6 @@
 #include <stdint.h> /* Required for uint32_t which is used by STEAMAUDIO_VERSION. That dependency needs to be removed from Steam Audio - use IPLuint32 or "unsigned int" instead! */
 #include<algorithm>
 #include "phonon.h" /* Steam Audio */
-
 #define FORMAT      ma_format_f32   /* Must be floating point. */
 #define CHANNELS    2               /* Must be stereo for this example. */
 #define SAMPLE_RATE 44100
@@ -53,7 +54,7 @@ extern "C" {
 #endif
 
 
-MA_API ma_reverb_node_config ma_reverb_node_config_init(ma_uint32 channels, ma_uint32 sampleRate)
+MA_API ma_reverb_node_config ma_reverb_node_config_init(ma_uint32 channels, ma_uint32 sampleRate, float dry, float wet, float room_size)
 {
     ma_reverb_node_config config;
 
@@ -61,11 +62,11 @@ MA_API ma_reverb_node_config ma_reverb_node_config_init(ma_uint32 channels, ma_u
     config.nodeConfig = ma_node_config_init();  /* Input and output channels will be set in ma_reverb_node_init(). */
     config.channels = channels;
     config.sampleRate = sampleRate;
-    config.roomSize = verblib_initialroom;
+    config.roomSize = room_size;
     config.damping = verblib_initialdamp;
     config.width = verblib_initialwidth;
-    config.wetVolume = verblib_initialwet;
-    config.dryVolume = verblib_initialdry;
+    config.wetVolume = wet;
+    config.dryVolume = dry;
     config.mode = verblib_initialmode;
 
     return config;
@@ -87,7 +88,7 @@ static ma_node_vtable g_ma_reverb_node_vtable =
     NULL,
     1,  /* 1 input channel. */
     1,  /* 1 output channel. */
-    MA_NODE_FLAG_CONTINUOUS_PROCESSING  /* Reverb requires continuous processing to ensure the tail get's processed. */
+0
 };
 
 MA_API ma_result ma_reverb_node_init(ma_node_graph* pNodeGraph, const ma_reverb_node_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_reverb_node* pReverbNode)
@@ -629,6 +630,7 @@ typedef struct
     float* ppBuffersIn[2];      /* Each buffer is an offset of _pHeap. */
     float* ppBuffersOut[2];     /* Each buffer is an offset of _pHeap. */
     void* _pHeap;
+    ma_sound handle_;
 } ma_steamaudio_binaural_node;
 
 MA_API ma_result ma_steamaudio_binaural_node_init(ma_node_graph* pNodeGraph, const ma_steamaudio_binaural_node_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_steamaudio_binaural_node* pBinauralNode);
@@ -659,24 +661,23 @@ static void ma_steamaudio_binaural_node_process_pcm_frames(ma_node* pNode, const
     IPLAudioBuffer outputBufferDesc;
     ma_uint32 totalFramesToProcess = *pFrameCountOut;
     ma_uint32 totalFramesProcessed = 0;
-
     binauralParams.direction.x = pBinauralNode->direction.x;
-    binauralParams.direction.y = pBinauralNode->direction.y;
-    binauralParams.direction.z = pBinauralNode->direction.z;
+    binauralParams.direction.y = pBinauralNode->direction.z;
+    binauralParams.direction.z = pBinauralNode->direction.y;
     binauralParams.interpolation = IPL_HRTFINTERPOLATION_NEAREST;
-    ma_vec3f listener = ma_engine_listener_get_position(&sound_default_mixer, 0);
+    ma_vec3f listener = ma_engine_listener_get_position(&sound_default_mixer, ma_sound_get_listener_index(&pBinauralNode->handle_));
 
     float distance = sqrt((listener.x + binauralParams.direction.x) * (listener.x + binauralParams.direction.x) +
         (listener.y + binauralParams.direction.y) * (listener.y + binauralParams.direction.y) +
         (listener.z - binauralParams.direction.z) * (listener.z - binauralParams.direction.z));
-    float maxDistance = 3.0f;
+    float maxDistance = 2.0f;
 
     float normalizedDistance = distance / maxDistance; 
     binauralParams.spatialBlend = std::min(0.0f + normalizedDistance, 1.0f);
     if (binauralParams.spatialBlend > 1.0f)
     binauralParams.spatialBlend = 1.0f;
     binauralParams.hrtf = pBinauralNode->iplHRTF;
-    binauralParams.peakDelays = NULL;
+    binauralParams.peakDelays=NULL;
     inputBufferDesc.numChannels = (IPLint32)ma_node_get_input_channels(pNode, 0);
     
     /* We'll run this in a loop just in case our deinterleaved buffers are too small. */
@@ -827,7 +828,7 @@ MA_API ma_result ma_steamaudio_binaural_node_set_direction(ma_steamaudio_binaura
     }
 
     pBinauralNode->direction.x = x;
-    pBinauralNode->direction.y = y;
+    pBinauralNode->direction.y = -y;
     pBinauralNode->direction.z = z;
 
     return MA_SUCCESS;
@@ -884,12 +885,81 @@ void mixer_stop() {
     ma_engine_stop(&sound_default_mixer);
 }
 bool mixer_play_sound(const std::string& filename) {
+    std::string result;
+    if (sound_path != "") {
+        result = sound_path + "/" + filename.c_str();
+    }
+    else {
+        result = filename;
+    }
+
     ma_result r;
-    r=ma_engine_play_sound(&sound_default_mixer, filename.c_str(), nullptr);
+    r=ma_engine_play_sound(&sound_default_mixer, result.c_str(), nullptr);
     if (r != MA_SUCCESS)
         return  false;
     return true;
 }
+void mixer_reinit() {
+    soundsystem_free();
+    soundsystem_init();
+}
+bool sound_global_hrtf = false;
+struct MemoryStruct {
+    char* memory;
+    size_t size;
+};
+
+static size_t write_memory_callback(void* contents, size_t size, size_t nmemb, void* userp) {
+    size_t realsize = size * nmemb;
+    struct MemoryStruct* mem = (struct MemoryStruct*)userp;
+
+    char* ptr = (char*)realloc(mem->memory, mem->size + realsize + 1);
+    if (ptr == NULL) {
+        return 0;
+    }
+
+    mem->memory = ptr;
+    memcpy(&(mem->memory[mem->size]), contents, realsize);
+    mem->size += realsize;
+    mem->memory[mem->size] = 0;
+
+    return realsize;
+}
+
+std::vector<float> load_audio_from_url(const char* url) {
+    CURL* curl_handle;
+    CURLcode res;
+    struct MemoryStruct chunk;
+
+    chunk.memory = (char*)malloc(1);
+    chunk.size = 0;
+
+    curl_global_init(CURL_GLOBAL_ALL);
+    curl_handle = curl_easy_init();
+
+    curl_easy_setopt(curl_handle, CURLOPT_URL, url);
+
+    curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_memory_callback);
+    curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void*)&chunk);
+
+    res = curl_easy_perform(curl_handle);
+
+    if (res != CURLE_OK) {
+        free(chunk.memory);
+        return std::vector<float>();
+    }
+
+    std::vector<float> audioData(chunk.size / sizeof(float));
+    memcpy(audioData.data(), chunk.memory, chunk.size);
+
+    free(chunk.memory);
+    curl_easy_cleanup(curl_handle);
+    curl_global_cleanup();
+
+    return audioData;
+}
+
+
 class sound {
 public:
     bool is_3d_;
@@ -925,6 +995,7 @@ public:
     bool notchf = false;
     ma_steamaudio_binaural_node_config binauralNodeConfig;
     bool sound_hrtf = false;
+    ma_node* current_fx = nullptr;
     sound(const std::string  &filename="", bool set3d=false) {
         if (!inited) {
             soundsystem_init();
@@ -932,6 +1003,7 @@ public:
         }
         if (filename != "")
             this->load(filename, set3d);
+        current_fx = ma_engine_get_endpoint(&sound_default_mixer);
     }
     ~sound() {
         if (this->active)this->close();
@@ -954,9 +1026,15 @@ public:
         else
             ma_sound_init_from_file(&sound_default_mixer, result.c_str(), MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_DECODE, NULL, NULL, &handle_);
         active = true;
-            return true;
+        if (sound_global_hrtf)
+            this->set_hrtf(true);
+    return true;
         }
     bool load_from_memory(const std::string& data, bool set3d) {
+        if (active) {
+            this->close();
+            active = false;
+        }
         ma_sound_config c;
 
         ma_decoder decoder;
@@ -968,7 +1046,58 @@ public:
 c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
         ma_sound_init_ex(&sound_default_mixer, &c, &handle_);
         active = true;
+        if (sound_global_hrtf)
+            this->set_hrtf(true);
+
         return active;
+    }
+    bool stream(const std::string& filename, bool set3d) {
+        std::string result;
+        if (sound_path != "") {
+            result = sound_path + "/" + filename.c_str();
+        }
+        else {
+            result = filename;
+        }
+        if (active) {
+            this->close();
+            active = false;
+        }
+        if (set3d)
+            ma_sound_init_from_file(&sound_default_mixer, result.c_str(), MA_SOUND_FLAG_STREAM, NULL, NULL, &handle_);
+        else
+            ma_sound_init_from_file(&sound_default_mixer, result.c_str(), MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_STREAM, NULL, NULL, &handle_);
+        active = true;
+        if (sound_global_hrtf)
+            this->set_hrtf(true);
+
+        return true;
+    }
+    bool load_url(const std::string& url, bool set3d) {
+
+        if (active) {
+            this->close();
+            active = false;
+        }
+        ma_sound_config c;
+
+        ma_decoder decoder;
+        std::vector<float> audio = load_audio_from_url(url.c_str());
+        ma_decoder_init_memory(audio.data(), audio.size(), NULL, &decoder);
+        c = ma_sound_config_init();
+        c.pDataSource = &decoder;
+
+        if (!set3d)
+            c.flags |= MA_SOUND_FLAG_NO_SPATIALIZATION;
+        ma_sound_init_ex(&sound_default_mixer, &c, &handle_);
+        active = true;
+        if (sound_global_hrtf)
+            this->set_hrtf(true);
+
+        return active;
+    }
+    std::string push_memory() {
+        return NULL;
     }
     void set_faid_time(float volume_beg, float volume_end, float time) {
         ma_sound_set_fade_in_milliseconds(&handle_, volume_beg/100, volume_end/100, static_cast<ma_uint64>(time));
@@ -1018,48 +1147,58 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
     void set_fx(const std::string& fx) {
         if (!active)return;
         if (fx == "reverb") {
-            reverbNodeConfig = ma_reverb_node_config_init(engineConfig.channels, engineConfig.sampleRate);
+            reverbNodeConfig = ma_reverb_node_config_init(engineConfig.channels, engineConfig.sampleRate, 100, 100, 100);
             if (reverb) {
+                current_fx = ma_engine_get_endpoint(&sound_default_mixer);
                 ma_reverb_node_uninit(&g_reverbNode, NULL);
                 reverb = false;
             }
             ma_reverb_node_init(ma_engine_get_node_graph(&sound_default_mixer), &reverbNodeConfig, NULL, &g_reverbNode);
-            ma_node_attach_output_bus(&g_reverbNode, 0, ma_engine_get_endpoint(&sound_default_mixer), 0);
+            ma_node_attach_output_bus(&g_reverbNode, 0, current_fx, 0);
             ma_node_attach_output_bus(&handle_, 0, &g_reverbNode, 0);
+            current_fx = &g_reverbNode;
             reverb = true;
         }
         if (fx == "vocoder") {
             vocoderNodeConfig = ma_vocoder_node_config_init(engineConfig.channels, engineConfig.sampleRate);
             if (vocoder) {
+                current_fx = ma_engine_get_endpoint(&sound_default_mixer);
+
                 ma_vocoder_node_uninit(&g_vocoderNode, NULL);
                 vocoder = false;
             }
             ma_vocoder_node_init(ma_engine_get_node_graph(&sound_default_mixer), &vocoderNodeConfig, NULL, &g_vocoderNode);
-            ma_node_attach_output_bus(&g_vocoderNode, 0, ma_engine_get_endpoint(&sound_default_mixer), 0);
+            ma_node_attach_output_bus(&g_vocoderNode, 0, current_fx, 0);
             ma_node_attach_output_bus(&handle_, 0, &g_vocoderNode, 1);
+            current_fx = &g_vocoderNode;
             vocoder = true;
         }
         if (fx == "delay") {
             delayNodeConfig = ma_delay_node_config_init(engineConfig.channels, engineConfig.sampleRate, (100 * engineConfig.sampleRate) / 1000, 0.5f);
             if (delayf) {
+                current_fx = ma_engine_get_endpoint(&sound_default_mixer);
                 ma_delay_node_uninit(&g_delayNode, NULL);
                 delayf = false;
             }
             ma_delay_node_init(ma_engine_get_node_graph(&sound_default_mixer), &delayNodeConfig, NULL, &g_delayNode);
-            ma_node_attach_output_bus(&g_delayNode, 0, ma_engine_get_endpoint(&sound_default_mixer), 0);
+            ma_node_attach_output_bus(&g_delayNode, 0, current_fx, 0);
             ma_node_attach_output_bus(&handle_, 0, &g_delayNode, 0);
+            current_fx = &g_delayNode;
             delayf = true;
         }
         if (fx == "ltrim") {
             trimNodeConfig = ma_ltrim_node_config_init(engineConfig.channels, 0);
             trimNodeConfig.threshold = 0.3;
             if (ltrim) {
+                current_fx = ma_engine_get_endpoint(&sound_default_mixer);
                 ma_ltrim_node_uninit(&g_trimNode, NULL);
                 ltrim = false;
             }
             ma_ltrim_node_init(ma_engine_get_node_graph(&sound_default_mixer), &trimNodeConfig, NULL, &g_trimNode);
-            ma_node_attach_output_bus(&g_trimNode, 0, ma_engine_get_endpoint(&sound_default_mixer), 0);
+            ma_node_attach_output_bus(&g_trimNode, 0, current_fx, 0);
             ma_node_attach_output_bus(&handle_, 0, &g_trimNode, 0);
+            current_fx = &g_trimNode;
+
             ltrim = true;
         }
         if (fx == "channelsplit") {
@@ -1088,48 +1227,63 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
         if (fx == "highpass") {
             highpassConfig = ma_hpf_node_config_init(engineConfig.channels, engineConfig.sampleRate, 600, -10);
             if (hp) {
+                current_fx = ma_engine_get_endpoint(&sound_default_mixer);
+
                 ma_hpf_node_uninit(&highpass, NULL);
                 hp = false;
             }
             ma_hpf_node_init(ma_engine_get_node_graph(&sound_default_mixer), &highpassConfig, NULL, &highpass);
-            ma_node_attach_output_bus(&highpass, 0, ma_engine_get_endpoint(&sound_default_mixer), 0);
+            ma_node_attach_output_bus(&highpass, 0, current_fx, 0);
             ma_node_attach_output_bus(&handle_, 0, &highpass, 0);
+            current_fx = &highpass;
+
             hp = true;
         }
         if (fx == "lowpass") {
             lowpassConfig = ma_lpf_node_config_init(engineConfig.channels, engineConfig.sampleRate, 600, -10);
             if (lp) {
+                current_fx = ma_engine_get_endpoint(&sound_default_mixer);
+
                 ma_lpf_node_uninit(&lowpass, NULL);
                 lp = false;
             }
             ma_lpf_node_init(ma_engine_get_node_graph(&sound_default_mixer), &lowpassConfig, NULL, &lowpass);
-            ma_node_attach_output_bus(&lowpass, 0, ma_engine_get_endpoint(&sound_default_mixer), 0);
+            ma_node_attach_output_bus(&lowpass, 0, current_fx, 0);
             ma_node_attach_output_bus(&handle_, 0, &lowpass, 0);
+            current_fx = &lowpass;
+
             lp = true;
         }
         if (fx == "notch") {
             notchConfig=ma_notch_node_config_init(engineConfig.channels, engineConfig.sampleRate, 0, 300);
             if (notchf) {
+                current_fx = ma_engine_get_endpoint(&sound_default_mixer);
+
                 ma_notch_node_uninit(&notch, NULL);
                 notchf = false;
             }
             ma_notch_node_init(ma_engine_get_node_graph(&sound_default_mixer), &notchConfig, NULL, &notch);
-            ma_node_attach_output_bus(&notch, 0, ma_engine_get_endpoint(&sound_default_mixer), 0);
+            ma_node_attach_output_bus(&notch, 0, current_fx, 0);
             ma_node_attach_output_bus(&handle_, 0, &notch, 0);
+            current_fx = &notch;
+
             notchf = true;
         }
-
+    }
+    void set_reverb_parameters(float dry, float wet, float room_size, float damping, float mode) {
+        verblib_set_dry(&g_reverbNode.reverb, dry);
+        verblib_set_wet(&g_reverbNode.reverb, wet);
+        verblib_set_room_size(&g_reverbNode.reverb, room_size);
+        verblib_set_damping(&g_reverbNode.reverb, damping);
+        verblib_set_mode(&g_reverbNode.reverb, mode);
     }
     void set_position(float l_x, float l_y, float l_z, float s_x, float s_y, float s_z) {
         if (!active)return;
 
         ma_vec3f direction;
-        ma_engine_listener_set_position(&sound_default_mixer, 0, l_x, l_y, l_z);
+        ma_engine_listener_set_position(&sound_default_mixer, ma_sound_get_listener_index(&handle_), l_x, l_y, l_z);
         ma_sound_set_position(&handle_, s_x, s_y, s_z);
         ma_vec3f relativePos;
-            direction=ma_vec3f_init_3f(0, 0, 0);
-
-            direction=ma_vec3f_init_3f(0, 0, 0);
             ma_spatializer_get_relative_position_and_direction(&handle_.engineNode.spatializer, &sound_default_mixer.listeners[ma_sound_get_listener_index(&handle_)], &relativePos, NULL);
 
         direction=ma_vec3f_normalize(relativePos);
@@ -1137,16 +1291,13 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
         ma_steamaudio_binaural_node_set_direction(&g_binauralNode, direction.x, direction.y, direction.z);
 
     }
-    void set_position(ngtvector* listener, ngtvector* source) {
+    void set_position(const ngtvector* listener=nullptr, const ngtvector* source=nullptr) {
         if (!active)return;
         ma_vec3f direction;
 
-        ma_engine_listener_set_position(&sound_default_mixer, 0, listener->x, listener->y, listener->z);
+        ma_engine_listener_set_position(&sound_default_mixer, ma_sound_get_listener_index(&handle_), listener->x, listener->y, listener->z);
         ma_sound_set_position(&handle_, source->x, source->y, source->z);
         ma_vec3f relativePos;
-        direction = ma_vec3f_init_3f(0, 0, 0);
-
-        direction = ma_vec3f_init_3f(0, 0, 0);
         ma_spatializer_get_relative_position_and_direction(&handle_.engineNode.spatializer, &sound_default_mixer.listeners[ma_sound_get_listener_index(&handle_)], &relativePos, NULL);
 
         direction = ma_vec3f_normalize(relativePos);
@@ -1160,18 +1311,27 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
 
             binauralNodeConfig = ma_steamaudio_binaural_node_config_init(CHANNELS, iplAudioSettings, iplContext, iplHRTF);
             if (sound_hrtf == true) {
+                current_fx = ma_engine_get_endpoint(&sound_default_mixer);
 
                 ma_steamaudio_binaural_node_uninit(&g_binauralNode, NULL);
                 sound_hrtf = false;
             }
+            g_binauralNode.handle_ = this->handle_;
             ma_steamaudio_binaural_node_init(ma_engine_get_node_graph(&sound_default_mixer), &binauralNodeConfig, NULL, &g_binauralNode);
             /* Connect the output of the delay node to the input of the endpoint. */
-            ma_node_attach_output_bus(&g_binauralNode, 0, ma_engine_get_endpoint(&sound_default_mixer), 0);
-
+            ma_node_attach_output_bus(&g_binauralNode, 0, current_fx, 0);
             ma_node_attach_output_bus(&handle_, 0, &g_binauralNode, 0);
-
+            current_fx = &g_binauralNode;
             ma_sound_set_directional_attenuation_factor(&handle_, 0);
             sound_hrtf = true;
+        }
+        else {
+            if (sound_hrtf == true) {
+
+                ma_steamaudio_binaural_node_uninit(&g_binauralNode, NULL);
+                sound_hrtf = false;
+            }
+
         }
     }
     void set_volume_step(float volume_step) {
@@ -1248,7 +1408,7 @@ ma_sound_seek_to_pcm_frame(&handle_, static_cast<ma_uint64>(new_position * 100))
         if (!active)return -17435;
 
         double position=0;
-        position=ma_sound_get_positioning(&handle_);
+        position=ma_sound_get_time_in_milliseconds(&handle_);
         return position;
     }
 
@@ -1270,6 +1430,12 @@ ma_sound_set_stop_time_in_pcm_frames(&handle_, static_cast<ma_uint64>(length * 1
     }
 
 };
+void set_sound_global_hrtf(bool hrtf) {
+    sound_global_hrtf = hrtf;
+}
+bool get_sound_global_hrtf() {
+    return sound_global_hrtf;
+}
 sound* fsound(const std::string& filename, bool set3d) { return new sound(filename, set3d); }
 void register_sound(asIScriptEngine* engine) {
     engine->RegisterGlobalFunction("void set_sound_storage(const string &in)property", asFUNCTION(set_sound_storage), asCALL_CDECL);
@@ -1280,11 +1446,17 @@ void register_sound(asIScriptEngine* engine) {
     engine->RegisterGlobalFunction("void mixer_start()", asFUNCTION(mixer_start), asCALL_CDECL);
     engine->RegisterGlobalFunction("void mixer_stop()", asFUNCTION(mixer_stop), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool mixer_play_sound(const string &in)", asFUNCTION(mixer_play_sound), asCALL_CDECL);
+    engine->RegisterGlobalFunction("void mixer_reinit()", asFUNCTION(mixer_reinit), asCALL_CDECL);
 
     engine->RegisterObjectType("sound", sizeof(sound), asOBJ_REF | asOBJ_NOCOUNT);
     engine->RegisterObjectBehaviour("sound", asBEHAVE_FACTORY, "sound@ s(const string &in=\"\", bool=false)", asFUNCTION(fsound), asCALL_CDECL);
     engine->RegisterObjectMethod("sound", "bool load(const string &in, bool=false)const", asMETHOD(sound, load), asCALL_THISCALL);
         engine->RegisterObjectMethod("sound", "bool load_from_memory(const string &in, bool=false)const", asMETHOD(sound, load_from_memory), asCALL_THISCALL);
+        engine->RegisterObjectMethod("sound", "bool stream(const string &in, bool=false)const", asMETHOD(sound, stream), asCALL_THISCALL);
+        engine->RegisterObjectMethod("sound", "bool load_url(const string &in, bool=false)const", asMETHOD(sound, load_url), asCALL_THISCALL);
+
+        engine->RegisterObjectMethod("sound", "string push_memory()const", asMETHOD(sound, push_memory), asCALL_THISCALL);
+
         engine->RegisterObjectMethod("sound", "void set_faid_time(float, float, float)const", asMETHOD(sound, set_faid_time), asCALL_THISCALL);
 
         engine->RegisterObjectMethod("sound", "bool play()const", asMETHOD(sound, play), asCALL_THISCALL);
@@ -1294,9 +1466,10 @@ void register_sound(asIScriptEngine* engine) {
     engine->RegisterObjectMethod("sound", "bool stop()const", asMETHOD(sound, stop), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool close()const", asMETHOD(sound, close), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "void set_fx(const string &in, int=0)const", asMETHOD(sound, set_fx), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void set_reverb_parameters(float, float, float, float, float)const", asMETHOD(sound, set_reverb_parameters), asCALL_THISCALL);
 
     engine->RegisterObjectMethod("sound", "void set_position(float, float, float, float, float, float)const", asMETHODPR(sound, set_position, (float, float, float, float, float, float), void), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "void set_position(vector@=null, vector@=null)const", asMETHODPR(sound, set_position, (ngtvector*, ngtvector*), void), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void set_position(const vector@=null, const vector@=null)const", asMETHODPR(sound, set_position, (const ngtvector*, const ngtvector*), void), asCALL_THISCALL);
 
         engine->RegisterObjectMethod("sound", "void set_hrtf(bool=true)const property", asMETHOD(sound, set_hrtf), asCALL_THISCALL);
         engine->RegisterObjectMethod("sound", "void set_volume_step(float)const property", asMETHOD(sound, set_volume_step), asCALL_THISCALL);
@@ -1318,5 +1491,7 @@ void register_sound(asIScriptEngine* engine) {
     engine->RegisterObjectMethod("sound", "void set_length(double=0.0) const property", asMETHOD(sound, set_length), asCALL_THISCALL);
 
     engine->RegisterObjectMethod("sound", "double get_sample_rate() const property", asMETHOD(sound, get_sample_rate), asCALL_THISCALL);
+    engine->RegisterGlobalFunction("void set_sound_global_hrtf(bool)property", asFUNCTION(set_sound_global_hrtf), asCALL_CDECL);
+    engine->RegisterGlobalFunction("bool get_sound_global_hrtf()property", asFUNCTION(get_sound_global_hrtf), asCALL_CDECL);
 
 }

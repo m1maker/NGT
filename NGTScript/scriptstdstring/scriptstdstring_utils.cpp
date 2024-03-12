@@ -137,12 +137,9 @@ static string StringCapitalize(const string &inp)
 	// check the given string's length
 	// create new string to return, default value with the given string
 	string str = inp;
-	if (inp.length())
-	{
-		std::string temp = una::cases::to_uppercase_utf8(str);
-		una::ranges::utf8_view tempstr(temp);
-		return std::string(tempstr.begin(), tempstr.end());
-	}
+std::string temp= una::cases::to_uppercase_utf8(str);
+str[0] = temp[0];
+return str;
 }
 
 static void StringCapitalize_Generic(asIScriptGeneric *gen)

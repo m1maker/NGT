@@ -70,6 +70,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <GenerateManifest>false</GenerateManifest>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -124,19 +127,26 @@
       <TranslateIncludes>false</TranslateIncludes>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <Optimization>Disabled</Optimization>
+      <StringPooling>
+      </StringPooling>
+      <DisableSpecificWarnings>
+      </DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);angelscript64.lib;tolk.lib;SDL2main.lib;SDL2.lib;winmm.lib;imm32.lib;version.lib;setupapi.lib;libcmt.lib;ws2_32.lib;iphlpapi.lib;enet64.lib;phonon.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);angelscript64.lib;tolk.lib;SDL2main.lib;SDL2.lib;winmm.lib;imm32.lib;version.lib;setupapi.lib;libcmt.lib;ws2_32.lib;iphlpapi.lib;enet64.lib;phonon.lib;libcurl.lib;libdyncall_s.lib;libdynload_s.lib;Wldap32.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>
       </IgnoreAllDefaultLibraries>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
     </Link>
+    <Xdcmake>
+      <DocumentLibraryDependencies>false</DocumentLibraryDependencies>
+    </Xdcmake>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="AL\al.h" />
@@ -149,6 +159,35 @@
     <ClInclude Include="autowrapper\aswrappedcall.h" />
     <ClInclude Include="datetime\datetime.h" />
     <ClInclude Include="debugger\debugger.h" />
+    <ClInclude Include="dyn\dyncall.h" />
+    <ClInclude Include="dyn\dyncall_alloc.h" />
+    <ClInclude Include="dyn\dyncall_callf.h" />
+    <ClInclude Include="dyn\dyncall_callvm.h" />
+    <ClInclude Include="dyn\dyncall_callvm_arm32_arm.h" />
+    <ClInclude Include="dyn\dyncall_callvm_arm32_arm_armhf.h" />
+    <ClInclude Include="dyn\dyncall_callvm_arm32_thumb.h" />
+    <ClInclude Include="dyn\dyncall_callvm_arm64.h" />
+    <ClInclude Include="dyn\dyncall_callvm_mips.h" />
+    <ClInclude Include="dyn\dyncall_callvm_mips_eabi.h" />
+    <ClInclude Include="dyn\dyncall_callvm_mips_n32.h" />
+    <ClInclude Include="dyn\dyncall_callvm_mips_n64.h" />
+    <ClInclude Include="dyn\dyncall_callvm_mips_o32.h" />
+    <ClInclude Include="dyn\dyncall_callvm_ppc32.h" />
+    <ClInclude Include="dyn\dyncall_callvm_ppc64.h" />
+    <ClInclude Include="dyn\dyncall_callvm_sparc.h" />
+    <ClInclude Include="dyn\dyncall_callvm_sparc64.h" />
+    <ClInclude Include="dyn\dyncall_callvm_x64.h" />
+    <ClInclude Include="dyn\dyncall_callvm_x86.h" />
+    <ClInclude Include="dyn\dyncall_config.h" />
+    <ClInclude Include="dyn\dyncall_macros.h" />
+    <ClInclude Include="dyn\dyncall_signature.h" />
+    <ClInclude Include="dyn\dyncall_struct.h" />
+    <ClInclude Include="dyn\dyncall_types.h" />
+    <ClInclude Include="dyn\dyncall_utils.h" />
+    <ClInclude Include="dyn\dyncall_value.h" />
+    <ClInclude Include="dyn\dyncall_vector.h" />
+    <ClInclude Include="dyn\dynload.h" />
+    <ClInclude Include="dyn\dynload_alloc.h" />
     <ClInclude Include="enet\callbacks.h" />
     <ClInclude Include="enet\enet.h" />
     <ClInclude Include="enet\list.h" />
@@ -161,6 +200,7 @@
     <ClInclude Include="ffi.h" />
     <ClInclude Include="ffi_cfi.h" />
     <ClInclude Include="ffi_common.h" />
+    <ClInclude Include="fx\verblib.h" />
     <ClInclude Include="LabSound.h" />
     <ClInclude Include="LabSound\backends\AudioDevice_Miniaudio.h" />
     <ClInclude Include="LabSound\backends\AudioDevice_RtAudio.h" />
@@ -243,6 +283,9 @@
     <ClInclude Include="phonon_interfaces.h" />
     <ClInclude Include="phonon_version.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="resource1.h" />
+    <ClInclude Include="resource2.h" />
+    <ClInclude Include="resource3.h" />
     <ClInclude Include="reverb\verblib.h" />
     <ClInclude Include="scriptany\scriptany.h" />
     <ClInclude Include="scriptarray\scriptarray.h" />
