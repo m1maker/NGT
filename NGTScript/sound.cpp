@@ -1169,7 +1169,7 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
             }
             ma_vocoder_node_init(ma_engine_get_node_graph(&sound_default_mixer), &vocoderNodeConfig, NULL, &g_vocoderNode);
             ma_node_attach_output_bus(&g_vocoderNode, 0, current_fx, 0);
-            ma_node_attach_output_bus(&handle_, 0, &g_vocoderNode, 1);
+            ma_node_attach_output_bus(&handle_, 0, &g_vocoderNode, 0);
             current_fx = &g_vocoderNode;
             vocoder = true;
         }
@@ -1270,12 +1270,97 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
             notchf = true;
         }
     }
+    void delete_fx(const std::string& fx) {
+        if (!active)return;
+        if (fx == "reverb") {
+            if (reverb) {
+                current_fx = ma_engine_get_endpoint(&sound_default_mixer);
+                ma_reverb_node_uninit(&g_reverbNode, NULL);
+                reverb = false;
+            }
+            ma_node_attach_output_bus(&handle_, 0, current_fx, 0);
+        }
+        if (fx == "vocoder") {
+            if (vocoder) {
+                current_fx = ma_engine_get_endpoint(&sound_default_mixer);
+
+                ma_vocoder_node_uninit(&g_vocoderNode, NULL);
+                vocoder = false;
+            }
+            ma_node_attach_output_bus(&handle_, 0, current_fx, 0);
+        }
+        if (fx == "delay") {
+            if (delayf) {
+                current_fx = ma_engine_get_endpoint(&sound_default_mixer);
+                ma_delay_node_uninit(&g_delayNode, NULL);
+                delayf = false;
+            }
+            ma_node_attach_output_bus(&handle_, 0, current_fx, 0);
+        }
+        if (fx == "ltrim") {
+            if (ltrim) {
+                current_fx = ma_engine_get_endpoint(&sound_default_mixer);
+                ma_ltrim_node_uninit(&g_trimNode, NULL);
+                ltrim = false;
+            }
+            ma_node_attach_output_bus(&handle_, 0, current_fx, 0);
+        }
+        if (fx == "channelsplit") {
+            combinerNodeConfig = ma_channel_combiner_node_config_init(engineConfig.channels);
+            if (combiner) {
+                ma_channel_combiner_node_uninit(&g_combinerNode, NULL);
+                combiner = false;
+            }
+            if (separator) {
+                ma_channel_separator_node_uninit(&g_separatorNode, NULL);
+                separator = false;
+            }
+        }
+        if (fx == "highpass") {
+            if (hp) {
+                current_fx = ma_engine_get_endpoint(&sound_default_mixer);
+
+                ma_hpf_node_uninit(&highpass, NULL);
+                hp = false;
+            }
+            ma_node_attach_output_bus(&handle_, 0, current_fx, 0);
+
+        }
+        if (fx == "lowpass") {
+            if (lp) {
+                current_fx = ma_engine_get_endpoint(&sound_default_mixer);
+
+                ma_lpf_node_uninit(&lowpass, NULL);
+                lp = false;
+            }
+            ma_node_attach_output_bus(&handle_, 0, current_fx, 0);
+
+        }
+        if (fx == "notch") {
+            if (notchf) {
+                current_fx = ma_engine_get_endpoint(&sound_default_mixer);
+
+                ma_notch_node_uninit(&notch, NULL);
+                notchf = false;
+            }
+            ma_node_attach_output_bus(&handle_, 0, current_fx, 0);
+
+        }
+    }
+
     void set_reverb_parameters(float dry, float wet, float room_size, float damping, float mode) {
+        if (!active)return;
         verblib_set_dry(&g_reverbNode.reverb, dry);
         verblib_set_wet(&g_reverbNode.reverb, wet);
         verblib_set_room_size(&g_reverbNode.reverb, room_size);
         verblib_set_damping(&g_reverbNode.reverb, damping);
         verblib_set_mode(&g_reverbNode.reverb, mode);
+    }
+    void set_delay_parameters(float dry, float wet, float dcay) {
+        if (!active)return;
+        ma_delay_node_set_dry(&g_delayNode, dry);
+        ma_delay_node_set_wet(&g_delayNode, wet);
+        ma_delay_node_set_decay(&g_delayNode, dcay);
     }
     void set_position(float l_x, float l_y, float l_z, float s_x, float s_y, float s_z) {
         if (!active)return;
@@ -1330,6 +1415,11 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
 
                 ma_steamaudio_binaural_node_uninit(&g_binauralNode, NULL);
                 sound_hrtf = false;
+                ma_sound_set_directional_attenuation_factor(&handle_, 1);
+
+                current_fx = ma_engine_get_endpoint(&sound_default_mixer);
+                ma_node_attach_output_bus(&handle_, 0, current_fx, 0);
+
             }
 
         }
@@ -1466,7 +1556,10 @@ void register_sound(asIScriptEngine* engine) {
     engine->RegisterObjectMethod("sound", "bool stop()const", asMETHOD(sound, stop), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool close()const", asMETHOD(sound, close), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "void set_fx(const string &in, int=0)const", asMETHOD(sound, set_fx), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void delete_fx(const string &in, int=0)const", asMETHOD(sound, delete_fx), asCALL_THISCALL);
+
     engine->RegisterObjectMethod("sound", "void set_reverb_parameters(float, float, float, float, float)const", asMETHOD(sound, set_reverb_parameters), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void set_delay_parameters(float, float, float)const", asMETHOD(sound, set_delay_parameters), asCALL_THISCALL);
 
     engine->RegisterObjectMethod("sound", "void set_position(float, float, float, float, float, float)const", asMETHODPR(sound, set_position, (float, float, float, float, float, float), void), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "void set_position(const vector@=null, const vector@=null)const", asMETHODPR(sound, set_position, (const ngtvector*, const ngtvector*), void), asCALL_THISCALL);
