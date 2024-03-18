@@ -652,7 +652,6 @@ MA_API ma_steamaudio_binaural_node_config ma_steamaudio_binaural_node_config_ini
     return config;
 }
 
-
 static void ma_steamaudio_binaural_node_process_pcm_frames(ma_node* pNode, const float** ppFramesIn, ma_uint32* pFrameCountIn, float** ppFramesOut, ma_uint32* pFrameCountOut)
 {
     ma_steamaudio_binaural_node* pBinauralNode = (ma_steamaudio_binaural_node*)pNode;
@@ -854,7 +853,7 @@ void soundsystem_init() {
     /* IPLHRTF */
     MA_ZERO_OBJECT(&iplHRTFSettings);
     iplHRTFSettings.type = IPL_HRTFTYPE_DEFAULT;
-    iplHRTFSettings.volume = 1.0f;
+        iplHRTFSettings.volume = 1.0f;
     ma_result_from_IPLerror(iplHRTFCreate(iplContext, &iplAudioSettings, &iplHRTFSettings, &iplHRTF));
 }
 void soundsystem_free() {
@@ -958,8 +957,103 @@ std::vector<float> load_audio_from_url(const char* url) {
 
     return audioData;
 }
+typedef struct
+{
+    ma_node_config nodeConfig;
+    ma_uint32 channels;         /* The number of channels of the source, which will be the same as the output. Must be 1 or 2. */
+    ma_uint32 sampleRate;
+    float playbackSpeed;       /* Playback speed multiplier. */
+} ma_playback_speed_node_config;
+typedef struct
+{
+    ma_node_base baseNode;
+    ma_playback_speed_node_config conf;
+} ma_playback_speed_node;
 
 
+MA_API ma_playback_speed_node_config ma_playback_speed_node_config_init(ma_uint32 channels, ma_uint32 sampleRate)
+{
+    ma_playback_speed_node_config config;
+
+    MA_ZERO_OBJECT(&config);
+    config.nodeConfig = ma_node_config_init();  /* Input and output channels will be set in ma_reverb_node_init(). */
+    config.channels = channels;
+    config.sampleRate = sampleRate;
+
+    return config;
+}
+
+static void ma_playback_speed_node_process_pcm_frames(ma_node* pNode, const float** ppFramesIn, ma_uint32* pFrameCountIn, float** ppFramesOut, ma_uint32* pFrameCountOut)
+{
+    ma_playback_speed_node* pPlaybackSpeedNode = (ma_playback_speed_node*)pNode;
+
+    float playbackSpeed = pPlaybackSpeedNode->conf.playbackSpeed;
+
+    for (ma_uint32 i = 0; i < *pFrameCountOut; i++) {
+        float t = (float)i / playbackSpeed;
+        int index = (int)t;
+        float fraction = t - index;
+
+        for (ma_uint32 j = 0; j < pPlaybackSpeedNode->conf.channels; j++) {
+            int inputIndex1 = index * pPlaybackSpeedNode->conf.channels + j;
+            int inputIndex2 = (index + 1) * pPlaybackSpeedNode->conf.channels + j;
+            int outputIndex = i * pPlaybackSpeedNode->conf.channels + j;
+
+            *ppFramesOut[outputIndex] = *ppFramesIn[inputIndex1] + fraction * (ppFramesIn[inputIndex2] - ppFramesIn[inputIndex1]);
+        }
+    }
+
+}
+
+static ma_node_vtable g_ma_playback_speed_node_vtable =
+{
+    ma_playback_speed_node_process_pcm_frames,
+    NULL,
+    1,  /* 1 input channel. */
+    1,  /* 1 output channel. */
+    MA_NODE_FLAG_CONTINUOUS_PROCESSING};
+MA_API ma_result ma_playback_speed_node_init(ma_node_graph* pNodeGraph, const ma_playback_speed_node_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_playback_speed_node* pPlaybackSpeedNode)
+{
+    ma_result result;
+    ma_node_config baseConfig;
+
+    if (pPlaybackSpeedNode == NULL) {
+        return MA_INVALID_ARGS;
+    }
+
+    MA_ZERO_OBJECT(pPlaybackSpeedNode);
+
+    if (pConfig == NULL) {
+        return MA_INVALID_ARGS;
+    }
+
+    baseConfig = pConfig->nodeConfig;
+    baseConfig.vtable = &g_ma_playback_speed_node_vtable;
+    baseConfig.pInputChannels = &pConfig->channels;
+    baseConfig.pOutputChannels = &pConfig->channels;
+
+    result = ma_node_init(pNodeGraph, &baseConfig, pAllocationCallbacks, &pPlaybackSpeedNode->baseNode);
+    if (result != MA_SUCCESS) {
+        return result;
+    }
+
+    return MA_SUCCESS;
+}
+
+MA_API void ma_playback_speed_node_uninit(ma_playback_speed_node* pPlaybackSpeedNode, const ma_allocation_callbacks* pAllocationCallbacks)
+{
+    /* The base node is always uninitialized first. */
+    ma_node_uninit(pPlaybackSpeedNode, pAllocationCallbacks);
+}
+
+
+
+
+
+class  mixer {
+public:
+    ma_engine engine;
+};
 class sound {
 public:
     bool is_3d_;
@@ -993,6 +1087,9 @@ public:
     ma_notch_node notch;
     ma_notch_node_config notchConfig;
     bool notchf = false;
+    ma_playback_speed_node g_playback_speed_node;
+    ma_playback_speed_node_config g_speed_config;
+    bool speeding = false;
     ma_steamaudio_binaural_node_config binauralNodeConfig;
     bool sound_hrtf = false;
     ma_node* current_fx = nullptr;
@@ -1009,7 +1106,7 @@ public:
         if (this->active)this->close();
     }
 
-    bool load(const std::string& filename, bool set3d) {
+    bool load(const std::string& filename, bool set3d, ma_sound_end_proc sound_end_callback=nullptr) {
         std::string result;
         if (sound_path != "") {
             result = sound_path + "/" + filename.c_str();
@@ -1028,7 +1125,10 @@ public:
         active = true;
         if (sound_global_hrtf)
             this->set_hrtf(true);
-    return true;
+if(sound_end_callback!=nullptr)
+        ma_sound_set_end_callback(&handle_, sound_end_callback, NULL);
+ma_sound_set_rolloff(&handle_, 2);
+return true;
         }
     bool load_from_memory(const std::string& data, bool set3d) {
         if (active) {
@@ -1436,28 +1536,35 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
         if (!active)return;
         ma_sound_set_doppler_factor(&handle_, pitch_step);
 }
-    bool seek(double new_position) {
+    bool seek(float new_position) {
         if (!active)return false;
         if (new_position > this->get_length())
             return false;
 ma_sound_seek_to_pcm_frame(&handle_, static_cast<ma_uint64>(new_position * 100));
         return true;
     }
-
-    double get_pan() const {
+    void set_looping(bool looping) {
+        if (!active)return;
+        ma_sound_set_looping(&handle_, looping);
+    }
+    bool get_looping()const {
+        if (!active)return false;
+        return ma_sound_is_looping(&handle_);
+    }
+    float get_pan() const {
         if (!active)return -17435;
 
-        double pan=0;
+        float pan=0;
         pan = ma_sound_get_pan(&handle_);
         return pan * 100;
     }
 
-    void set_pan(double pan) {
+    void set_pan(float pan) {
         if (!active)return;
         ma_sound_set_pan(&handle_, pan / 100);
     }
 
-    double get_volume() const {
+    float get_volume() const {
         if (!active)return -17435;
 
         float volume = 0;
@@ -1465,22 +1572,36 @@ ma_sound_seek_to_pcm_frame(&handle_, static_cast<ma_uint64>(new_position * 100))
         volume = ma_sound_get_volume(&handle_);
         return ma_volume_linear_to_db(volume);
     }
-            void set_volume(double volume) {
+            void set_volume(float volume) {
         if (!active)return;
         if (volume > 0 or volume < -100)return;
             ma_sound_set_volume(&handle_, ma_volume_db_to_linear(volume));
         }
-        double get_pitch() const {
+        float get_pitch() const {
         if (!active)return -17435;
         float pitch = 0;
             pitch = ma_sound_get_pitch(&handle_);
         return pitch * 100;
     }
 
-        void set_pitch(double pitch) {
+        void set_pitch(float pitch) {
             if (!active)return;
             ma_sound_set_pitch(&handle_, pitch / 100);
         }
+        void set_speed(float speed) {
+            if (!speeding) {
+                g_speed_config= ma_playback_speed_node_config_init(engineConfig.channels, engineConfig.sampleRate);
+                ma_playback_speed_node_init(ma_engine_get_node_graph(&sound_default_mixer), &g_speed_config, NULL, &g_playback_speed_node);
+            ma_node_attach_output_bus(&g_playback_speed_node, 0, current_fx, 0);
+            ma_node_attach_output_bus(&handle_, 0, &g_playback_speed_node, 0);
+            current_fx = &g_playback_speed_node;
+            speeding = true;
+        }
+            g_speed_config.playbackSpeed = speed / 100;
+}
+        float get_speed()const {
+            return g_speed_config.playbackSpeed * 100;
+}
         bool is_active() const {
         return active;
     }
@@ -1494,31 +1615,28 @@ ma_sound_seek_to_pcm_frame(&handle_, static_cast<ma_uint64>(new_position * 100))
         if (!active)return false;
     }
 
-    double get_position()  {
+    float get_position()  {
         if (!active)return -17435;
-
-        double position=0;
+        float position=0;
         position=ma_sound_get_time_in_milliseconds(&handle_);
         return position;
     }
 
-    double get_length()  {
+    float get_length()  {
         if (!active)return-17435;
         ma_uint64 length = 0;
         ma_sound_get_length_in_pcm_frames(&handle_, &length);
-        return static_cast<double>(length/100);
+        return static_cast<float>(length/100);
     }
-    void set_length(double length = 0.0) {
+    void set_length(float length = 0.0) {
         if (!active)return;
-        if (length > this->get_length())
-            return;
+        if (length > this->get_length())            return;
 ma_sound_set_stop_time_in_pcm_frames(&handle_, static_cast<ma_uint64>(length * 100));
     }
-    double get_sample_rate() const {
+    float get_sample_rate() const {
         float rate = 0;
         return rate;
     }
-
 };
 void set_sound_global_hrtf(bool hrtf) {
     sound_global_hrtf = hrtf;
@@ -1527,7 +1645,9 @@ bool get_sound_global_hrtf() {
     return sound_global_hrtf;
 }
 sound* fsound(const std::string& filename, bool set3d) { return new sound(filename, set3d); }
+mixer* fmixer() { return new mixer; }
 void register_sound(asIScriptEngine* engine) {
+    engine->RegisterFuncdef("void sound_end_callback(string=\"\")");
     engine->RegisterGlobalFunction("void set_sound_storage(const string &in)property", asFUNCTION(set_sound_storage), asCALL_CDECL);
 
     engine->RegisterGlobalFunction("string get_sound_storage()property", asFUNCTION(get_sound_storage), asCALL_CDECL);
@@ -1537,19 +1657,19 @@ void register_sound(asIScriptEngine* engine) {
     engine->RegisterGlobalFunction("void mixer_stop()", asFUNCTION(mixer_stop), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool mixer_play_sound(const string &in)", asFUNCTION(mixer_play_sound), asCALL_CDECL);
     engine->RegisterGlobalFunction("void mixer_reinit()", asFUNCTION(mixer_reinit), asCALL_CDECL);
-
+    engine->RegisterObjectType("mixer", sizeof(mixer), asOBJ_REF | asOBJ_NOCOUNT);
+    engine->RegisterObjectBehaviour("mixer", asBEHAVE_FACTORY, "mixer @m()", asFUNCTION(fmixer), asCALL_CDECL);
     engine->RegisterObjectType("sound", sizeof(sound), asOBJ_REF | asOBJ_NOCOUNT);
     engine->RegisterObjectBehaviour("sound", asBEHAVE_FACTORY, "sound@ s(const string &in=\"\", bool=false)", asFUNCTION(fsound), asCALL_CDECL);
-    engine->RegisterObjectMethod("sound", "bool load(const string &in, bool=false)const", asMETHOD(sound, load), asCALL_THISCALL);
-        engine->RegisterObjectMethod("sound", "bool load_from_memory(const string &in, bool=false)const", asMETHOD(sound, load_from_memory), asCALL_THISCALL);
-        engine->RegisterObjectMethod("sound", "bool stream(const string &in, bool=false)const", asMETHOD(sound, stream), asCALL_THISCALL);
-        engine->RegisterObjectMethod("sound", "bool load_url(const string &in, bool=false)const", asMETHOD(sound, load_url), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "bool load(const string &in, bool=false, sound_end_callback@=null)const", asMETHOD(sound, load), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "bool load_from_memory(const string &in, bool=false)const", asMETHOD(sound, load_from_memory), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "bool stream(const string &in, bool=false)const", asMETHOD(sound, stream), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "bool load_url(const string &in, bool=false)const", asMETHOD(sound, load_url), asCALL_THISCALL);
 
-        engine->RegisterObjectMethod("sound", "string push_memory()const", asMETHOD(sound, push_memory), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "string push_memory()const", asMETHOD(sound, push_memory), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void set_faid_time(float, float, float)const", asMETHOD(sound, set_faid_time), asCALL_THISCALL);
 
-        engine->RegisterObjectMethod("sound", "void set_faid_time(float, float, float)const", asMETHOD(sound, set_faid_time), asCALL_THISCALL);
-
-        engine->RegisterObjectMethod("sound", "bool play()const", asMETHOD(sound, play), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "bool play()const", asMETHOD(sound, play), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool play_looped()const", asMETHOD(sound, play_looped), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool pause()const", asMETHOD(sound, pause), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool play_wait()const", asMETHOD(sound, play_wait), asCALL_THISCALL);
@@ -1564,27 +1684,32 @@ void register_sound(asIScriptEngine* engine) {
     engine->RegisterObjectMethod("sound", "void set_position(float, float, float, float, float, float)const", asMETHODPR(sound, set_position, (float, float, float, float, float, float), void), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "void set_position(const vector@=null, const vector@=null)const", asMETHODPR(sound, set_position, (const ngtvector*, const ngtvector*), void), asCALL_THISCALL);
 
-        engine->RegisterObjectMethod("sound", "void set_hrtf(bool=true)const property", asMETHOD(sound, set_hrtf), asCALL_THISCALL);
-        engine->RegisterObjectMethod("sound", "void set_volume_step(float)const property", asMETHOD(sound, set_volume_step), asCALL_THISCALL);
-        engine->RegisterObjectMethod("sound", "void set_pan_step(float)const property", asMETHOD(sound, set_pan_step), asCALL_THISCALL);
-        engine->RegisterObjectMethod("sound", "void set_pitch_step(float)const property", asMETHOD(sound, set_pitch_step), asCALL_THISCALL);
-        engine->RegisterObjectMethod("sound", "bool seek(double)const", asMETHOD(sound, seek), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void set_hrtf(bool=true)const property", asMETHOD(sound, set_hrtf), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void set_volume_step(float)const property", asMETHOD(sound, set_volume_step), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void set_pan_step(float)const property", asMETHOD(sound, set_pan_step), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void set_pitch_step(float)const property", asMETHOD(sound, set_pitch_step), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "bool seek(float)const", asMETHOD(sound, seek), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "bool get_looping() const property", asMETHOD(sound, get_looping), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void set_looping(bool)const property", asMETHOD(sound, set_looping), asCALL_THISCALL);
 
-    engine->RegisterObjectMethod("sound", "double get_pan() const property", asMETHOD(sound, get_pan), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "void set_pan(double)const property", asMETHOD(sound, set_pan), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "double get_volume() const property", asMETHOD(sound, get_volume), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "void set_volume(double)const property", asMETHOD(sound, set_volume), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "double get_pitch() const property", asMETHOD(sound, get_pitch), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "void set_pitch(double)const property", asMETHOD(sound, set_pitch), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "float get_pan() const property", asMETHOD(sound, get_pan), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void set_pan(float)const property", asMETHOD(sound, set_pan), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "float get_volume() const property", asMETHOD(sound, get_volume), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void set_volume(float)const property", asMETHOD(sound, set_volume), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "float get_pitch() const property", asMETHOD(sound, get_pitch), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void set_pitch(float)const property", asMETHOD(sound, set_pitch), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "float get_speed() const property", asMETHOD(sound, get_speed), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void set_speed(float)const property", asMETHOD(sound, set_speed), asCALL_THISCALL);
+
     engine->RegisterObjectMethod("sound", "bool get_active() const property", asMETHOD(sound, is_active), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool get_playing() const property", asMETHOD(sound, is_playing), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "bool get_paused() const property", asMETHOD(sound, is_paused), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "double get_position() const property", asMETHOD(sound, get_position), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "double get_length() const property", asMETHOD(sound, get_length), asCALL_THISCALL);
-    engine->RegisterObjectMethod("sound", "void set_length(double=0.0) const property", asMETHOD(sound, set_length), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "float get_position() const property", asMETHOD(sound, get_position), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "float get_length() const property", asMETHOD(sound, get_length), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void set_length(float=0.0) const property", asMETHOD(sound, set_length), asCALL_THISCALL);
 
-    engine->RegisterObjectMethod("sound", "double get_sample_rate() const property", asMETHOD(sound, get_sample_rate), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "float get_sample_rate() const property", asMETHOD(sound, get_sample_rate), asCALL_THISCALL);
     engine->RegisterGlobalFunction("void set_sound_global_hrtf(bool)property", asFUNCTION(set_sound_global_hrtf), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool get_sound_global_hrtf()property", asFUNCTION(get_sound_global_hrtf), asCALL_CDECL);
-
+    engine->RegisterGlobalProperty("mixer@ sound_default_mixer", (void*)&sound_default_mixer);
 }
