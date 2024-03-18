@@ -26,7 +26,7 @@ std::wstring wstr(const std::string& utf8String)
     return converter.from_bytes(utf8String);
 }
 std::wstring reader;
-std::unordered_map<SDL_Keycode, bool> keys;
+std::unordered_map<SDL_Scancode, bool> keys;
 bool keyhook = false;
 std::string inputtext;
 void init_engine(){
@@ -159,12 +159,17 @@ void update_game_window()
 
         if (e.type == SDL_KEYDOWN)
         {
-            keys[e.key.keysym.sym] = true;
+            keys[e.key.keysym.scancode] = true;
         }
         if (e.type == SDL_KEYUP)
         {
-            keys[e.key.keysym.sym] = false;
+            auto it = keys.find(e.key.keysym.scancode);
+            if (it != keys.end())
+            {
+                it->second = false;
+            }
         }
+
         if (e.type == SDL_WINDOWEVENT_FOCUS_GAINED)
             window_is_focused == true;
         if (e.type == SDL_WINDOWEVENT_FOCUS_LOST)
@@ -220,38 +225,38 @@ std::string get_input() {
     inputtext="";
     return temp;
 }
-bool key_pressed(SDL_Keycode key_code)
+bool key_pressed(SDL_Scancode key_code)
 {
     if (e.key.state == SDL_PRESSED)
     {
-        if (e.key.keysym.sym == key_code and e.key.repeat==0){
+        if (e.key.keysym.scancode == key_code and e.key.repeat==0){
             return true;
     }
     }
 return false;
 }
-bool key_released(SDL_Keycode key_code)
+bool key_released(SDL_Scancode key_code)
 {
     if (e.key.state== SDL_RELEASED)
     {
-if(e.key.keysym.sym==key_code){
+if(e.key.keysym.scancode==key_code){
     return true;
 }
     }
     return false;
 }
-bool key_down(SDL_Keycode key_code)
+bool key_down(SDL_Scancode key_code)
 {
     if (keys.find(key_code) != keys.begin()or keys.find(key_code) != keys.end()) {
         return keys[key_code];
     }
 return false;
 }
-bool key_repeat(SDL_Keycode key_code)
+bool key_repeat(SDL_Scancode key_code)
 {
     if (e.type == SDL_KEYDOWN)
     {
-if(e.key.keysym.sym==key_code){
+if(e.key.keysym.scancode==key_code){
     return true;
 }
     }
