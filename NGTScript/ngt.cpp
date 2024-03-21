@@ -262,6 +262,19 @@ if(e.key.keysym.scancode==key_code){
     }
     return false;
 }
+std::string string_encrypt(std::string the_string, std::string encryption_key) {
+    std::string encrypted_string = the_string;
+    for (size_t i = 0; i < the_string.length(); ++i) {
+        encrypted_string[i] = the_string[i] ^ encryption_key[i % encryption_key.length()];
+    }
+    return encrypted_string;
+}
+
+std::string string_decrypt(std::string the_string, std::string encryption_key) {
+    return string_encrypt(the_string, encryption_key); // Для дешифровки используем тот же метод, что и для шифрования
+}
+
+
 bool alert(const std::string & title, const std::string & text, const std::string &button_name)
 {
     SDL_MessageBoxButtonData buttons[] = {

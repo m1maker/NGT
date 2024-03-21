@@ -12,6 +12,7 @@
 #include <type_traits>
 #include<chrono>
 #include <string>
+//#define SDL_MAIN_HANDLED
 #include"sdl/SDL.h"
 #include <iostream>
 #include <vector>
@@ -58,6 +59,8 @@ SDL_Keycode* keys_pressed();
 SDL_Keycode* keys_released();
 SDL_Keycode* keys_down();
 SDL_Keycode* keys_repeat();
+std::string string_encrypt(std::string the_string, std::string encryption_key);
+std::string string_decrypt(std::string the_string, std::string encryption_key);
 bool alert(const std::string &	 title, const std::string &	 text, const std::string &button_name="OK");
 int question(const std::string& title, const std::string &text);
 void wait(int);

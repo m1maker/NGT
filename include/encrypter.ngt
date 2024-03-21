@@ -1,0 +1,24 @@
+namespace encrypter{
+void file_encrypt(string filename, string key){
+file source;
+file encrypted;
+source.open(filename, "r");
+string data=source.read(source.get_size());
+source.close();
+encrypted.open(filename, "w");
+string final=string_encrypt(data, key);
+encrypted.write(final);
+encrypted.close();
+}
+void file_decrypt(string filename, string key){
+file source;
+file encrypted;
+source.open(filename, "r");
+string data=source.read(source.get_size());
+source.close();
+encrypted.open(filename, "w");
+string final=string_decrypt(data, key);
+encrypted.write(final);
+encrypted.close();
+}
+}
