@@ -1,5 +1,20 @@
 #pragma once
 #define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
+#include "Poco/URI.h"
+#include "Poco/URIStreamOpener.h"
+#include "Poco/StreamCopier.h"
+#include "Poco/Net/HTTPClientSession.h"
+#include "Poco/Net/HTTPRequest.h"
+#include "Poco/Net/HTTPResponse.h"
+#include "Poco/Base64Encoder.h"
+#include "Poco/Base64Decoder.h"
+#include "Poco/HexBinaryEncoder.h"
+#include "Poco/HexBinaryDecoder.h"
+#include "Poco/String.h"
+#include "Poco/NumberFormatter.h"
+
+using namespace Poco;
+using namespace Poco::Net;
 #include "dyn/dyncall.h"
 #include "dyn/dynload.h"
 #include <Windows.h>
@@ -12,6 +27,7 @@
 #include <type_traits>
 #include<chrono>
 #include <string>
+//#define SDL_MAIN_HANDLED
 #include"sdl/SDL.h"
 #include <iostream>
 #include <vector>
@@ -58,6 +74,19 @@ SDL_Keycode* keys_pressed();
 SDL_Keycode* keys_released();
 SDL_Keycode* keys_down();
 SDL_Keycode* keys_repeat();
+std::string string_encrypt(std::string the_string, std::string encryption_key);
+std::string string_decrypt(std::string the_string, std::string encryption_key);
+std::string url_decode(const std::string& url);
+std::string url_encode(const std::string& url);
+std::string url_get(const std::string& url);
+std::string url_post(const std::string& url, const std::string& parameters);
+std::string ascii_to_character(int the_ascii_code);
+int character_to_ascii(std::string the_character);
+std::string hex_to_string(std::string the_hexadecimal_sequence);
+std::string number_to_hex_string(double the_number);
+std::string string_base64_decode(std::string base64_string);
+std::string string_base64_encode(std::string the_string);
+std::string string_to_hex(std::string the_string);
 bool alert(const std::string &	 title, const std::string &	 text, const std::string &button_name="OK");
 int question(const std::string& title, const std::string &text);
 void wait(int);

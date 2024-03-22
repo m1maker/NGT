@@ -262,6 +262,108 @@ if(e.key.keysym.scancode==key_code){
     }
     return false;
 }
+std::string string_encrypt(std::string the_string, std::string encryption_key) {
+    std::string encrypted_string = the_string;
+    for (size_t i = 0; i < the_string.length(); ++i) {
+        encrypted_string[i] = the_string[i] ^ encryption_key[i % encryption_key.length()];
+    }
+    return encrypted_string;
+}
+
+std::string string_decrypt(std::string the_string, std::string encryption_key) {
+    return string_encrypt(the_string, encryption_key); // Для дешифровки используем тот же метод, что и для шифрования
+}
+
+std::string url_decode(const std::string& url) {
+    URI uri(url);
+    return uri.getPathEtc();
+}
+
+std::string url_encode(const std::string& url) {
+    URI uri;
+    uri.setPathEtc(url);
+    return uri.toString();
+}
+
+std::string url_get(const std::string& url) {
+    HTTPClientSession session(url);
+    HTTPRequest request(HTTPRequest::HTTP_GET, "/");
+    session.sendRequest(request);
+    HTTPResponse response;
+    std::istream& rs = session.receiveResponse(response);
+    std::string result;
+    StreamCopier::copyToString(rs, result);
+    return result;
+}
+
+std::string url_post(const std::string& url, const std::string& parameters) {
+    HTTPClientSession session(url);
+    HTTPRequest request(HTTPRequest::HTTP_POST, "/");
+    request.setContentType("application/x-www-form-urlencoded");
+    request.setContentLength(parameters.length());
+    std::ostream& os = session.sendRequest(request);
+    os << parameters;
+    HTTPResponse response;
+    std::istream& rs = session.receiveResponse(response);
+    std::string result;
+    StreamCopier::copyToString(rs, result);
+    return result;
+}
+
+std::string ascii_to_character(int the_ascii_code) {
+    return std::string(1, static_cast<char>(the_ascii_code));
+}
+
+int character_to_ascii(std::string the_character) {
+    if (the_character.length() == 1) {
+        return static_cast<int>(the_character[0]);
+    }
+    else {
+        return -1; // Error: input string must be of length 1
+    }
+}
+
+std::string hex_to_string(std::string the_hexadecimal_sequence) {
+    std::string decoded;
+    std::istringstream iss(the_hexadecimal_sequence);
+    std::ostringstream oss;
+    Poco::HexBinaryDecoder decoder(iss);
+    decoder >> decoded;
+    return decoded;
+}
+
+
+std::string number_to_hex_string(double the_number) {
+    return Poco::NumberFormatter::formatHex(static_cast<unsigned int>(the_number));
+}
+
+std::string string_base64_decode(std::string base64_string) {
+    std::istringstream iss(base64_string);
+    std::ostringstream oss;
+    Poco::Base64Decoder decoder(iss);
+    decoder >> oss.rdbuf();
+    return oss.str();
+}
+
+
+std::string string_base64_encode(std::string the_string) {
+    std::istringstream iss(the_string);
+    std::ostringstream oss;
+    Poco::Base64Encoder encoder(oss);
+    encoder << iss.rdbuf();
+    encoder.close();
+    return oss.str();
+}
+
+std::string string_to_hex(std::string the_string) {
+    std::ostringstream oss;
+    Poco::HexBinaryEncoder encoder(oss);
+    encoder << the_string;
+    encoder.close();
+    return oss.str();
+}
+
+
 bool alert(const std::string & title, const std::string & text, const std::string &button_name)
 {
     SDL_MessageBoxButtonData buttons[] = {
@@ -328,14 +430,67 @@ SDL_Delay(ms);
 }
 std::string serialize(CScriptDictionary* the_data) {
     std::string result;
-    return NULL;
+    for (auto it : *the_data)
+    {
+        std::string keyName = it.GetKey();
+        int typeId = it.GetTypeId();
+        const void* addressOfValue = it.GetAddressOfValue();
+        // Serialize keyName
+        result += keyName + "|";
+
+        // Serialize typeId
+        result += std::to_string(typeId) + "|";
+
+        // Serialize value based on typeId
+        switch (typeId)
+        {
+        case asTYPEID_DOUBLE:
+            result += std::to_string(*(double*)addressOfValue) + "|";
+            break;
+        case asTYPEID_FLOAT:
+            result += std::to_string(*(float*)addressOfValue) + "|";
+            break;
+        case asTYPEID_INT64:
+            result += std::to_string(*(int64_t*)addressOfValue) + "|";
+            break;
+        case asTYPEID_INT32:
+            result += std::to_string(*(int32_t*)addressOfValue) + "|";
+            break;
+        case asTYPEID_INT16:
+            result += std::to_string(*(int16_t*)addressOfValue) + "|";
+            break;
+        case asTYPEID_INT8:
+            result += std::to_string(*(int8_t*)addressOfValue) + "|";
+            break;
+        case asTYPEID_UINT64:
+            result += std::to_string(*(uint64_t*)addressOfValue) + "|";
+            break;
+        case asTYPEID_UINT32:
+            result += std::to_string(*(uint32_t*)addressOfValue) + "|";
+            break;
+        case asTYPEID_UINT16:
+            result += std::to_string(*(uint16_t*)addressOfValue) + "|";
+            break;
+        case asTYPEID_UINT8:
+            result += std::to_string(*(uint8_t*)addressOfValue) + "|";
+            break;
+        case asTYPEID_BOOL:
+            result += *(bool*)addressOfValue + "|";
+            break;
+
+            // if it is not a const value, use cached type_id (type_id defined at AS engine runtime)
+        default:break;
+        }
+        }
+        return result;
 }
 CScriptDictionary* deserialize(const std::string& data) {
     asIScriptContext* ctx = asGetActiveContext();
     asIScriptEngine* engine = ctx->GetEngine();
 
     CScriptDictionary* result = CScriptDictionary::Create(engine);
-        return result;
+
+    return result;
     }
 void timer::construct() {
 }

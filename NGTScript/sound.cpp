@@ -626,6 +626,7 @@ typedef struct
     IPLContext iplContext;
     IPLHRTF iplHRTF;
     IPLBinauralEffect iplEffect;
+    IPLDirectEffect effect;
     ma_vec3f direction;
     float* ppBuffersIn[2];      /* Each buffer is an offset of _pHeap. */
     float* ppBuffersOut[2];     /* Each buffer is an offset of _pHeap. */
@@ -651,11 +652,13 @@ MA_API ma_steamaudio_binaural_node_config ma_steamaudio_binaural_node_config_ini
 
     return config;
 }
+IPLSimulationOutputs outputs{};
 
 static void ma_steamaudio_binaural_node_process_pcm_frames(ma_node* pNode, const float** ppFramesIn, ma_uint32* pFrameCountIn, float** ppFramesOut, ma_uint32* pFrameCountOut)
 {
     ma_steamaudio_binaural_node* pBinauralNode = (ma_steamaudio_binaural_node*)pNode;
     IPLBinauralEffectParams binauralParams;
+    IPLDirectEffectParams params=outputs.direct;
     IPLAudioBuffer inputBufferDesc;
     IPLAudioBuffer outputBufferDesc;
     ma_uint32 totalFramesToProcess = *pFrameCountOut;
@@ -665,7 +668,6 @@ static void ma_steamaudio_binaural_node_process_pcm_frames(ma_node* pNode, const
     binauralParams.direction.z = pBinauralNode->direction.y;
     binauralParams.interpolation = IPL_HRTFINTERPOLATION_NEAREST;
     ma_vec3f listener = ma_engine_listener_get_position(&sound_default_mixer, ma_sound_get_listener_index(&pBinauralNode->handle_));
-
     float distance = sqrt((listener.x + binauralParams.direction.x) * (listener.x + binauralParams.direction.x) +
         (listener.y + binauralParams.direction.y) * (listener.y + binauralParams.direction.y) +
         (listener.z - binauralParams.direction.z) * (listener.z - binauralParams.direction.z));
@@ -704,7 +706,7 @@ static void ma_steamaudio_binaural_node_process_pcm_frames(ma_node* pNode, const
 
         /* Apply the effect. */
         iplBinauralEffectApply(pBinauralNode->iplEffect, &binauralParams, &inputBufferDesc, &outputBufferDesc);
-
+        //iplDirectEffectApply(pBinauralNode->effect, &params, &inputBufferDesc, &outputBufferDesc);
         /* Interleave straight into the output buffer. */
         ma_interleave_pcm_frames(ma_format_f32, 2, framesToProcessThisIteration, (const void**)pBinauralNode->ppBuffersOut, ma_offset_pcm_frames_ptr_f32(ppFramesOut[0], totalFramesProcessed, 2));
 
@@ -723,6 +725,8 @@ static ma_node_vtable g_ma_steamaudio_binaural_node_vtable =
 1    ,  /* 1 output channel. */
     0
 };
+IPLCoordinateSpace3 listenerCoordinates; // the world-space position and orientation of the listener
+IPLCoordinateSpace3 sourceCoordinates; // the world-space position and orientation of the source;
 
 MA_API ma_result ma_steamaudio_binaural_node_init(ma_node_graph* pNodeGraph, const ma_steamaudio_binaural_node_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_steamaudio_binaural_node* pBinauralNode)
 {
@@ -731,6 +735,7 @@ MA_API ma_result ma_steamaudio_binaural_node_init(ma_node_graph* pNodeGraph, con
     ma_uint32 channelsIn;
     ma_uint32 channelsOut;
     IPLBinauralEffectSettings iplBinauralEffectSettings;
+    IPLDirectEffectSettings effectSettings{};
     size_t heapSizeInBytes;
 
     if (pBinauralNode == NULL) {
@@ -772,7 +777,42 @@ MA_API ma_result ma_steamaudio_binaural_node_init(ma_node_graph* pNodeGraph, con
         ma_node_uninit(&pBinauralNode->baseNode, pAllocationCallbacks);
         return result;
     }
+    MA_ZERO_OBJECT(&effectSettings);
+    effectSettings.numChannels = 1; // input and output buffers will have 1 channel
+    result = ma_result_from_IPLerror(iplDirectEffectCreate(pBinauralNode->iplContext, &pBinauralNode->iplAudioSettings, &effectSettings, &pBinauralNode->effect));
+    if (result != MA_SUCCESS) {
+        ma_node_uninit(&pBinauralNode->baseNode, pAllocationCallbacks);
+        return result;
+    }
 
+    IPLSimulationSettings simulationSettings{};
+    simulationSettings.flags = IPL_SIMULATIONFLAGS_DIRECT; // this enables occlusion/transmission simulation
+    simulationSettings.sceneType = IPL_SCENETYPE_DEFAULT;
+    // see below for examples of how to initialize the remaining fields of this structure
+
+    IPLSimulator simulator = nullptr;
+    iplSimulatorCreate(pBinauralNode->iplContext, &simulationSettings, &simulator);
+    IPLSourceSettings sourceSettings;
+    sourceSettings.flags = IPL_SIMULATIONFLAGS_DIRECT; // this enables occlusion/transmission simulator 
+    IPLSource source = nullptr;
+    iplSourceCreate(simulator, &sourceSettings, &source);
+    iplSourceAdd(source, simulator);
+    iplSimulatorCommit(simulator);
+
+    IPLSimulationInputs inputs;
+    inputs.flags = IPL_SIMULATIONFLAGS_DIRECT;
+    inputs.directFlags = static_cast<IPLDirectSimulationFlags>(IPL_DIRECTSIMULATIONFLAGS_OCCLUSION | IPL_DIRECTSIMULATIONFLAGS_TRANSMISSION);
+    inputs.source = sourceCoordinates;
+    inputs.occlusionType = IPL_OCCLUSIONTYPE_RAYCAST;
+
+    iplSourceSetInputs(source, IPL_SIMULATIONFLAGS_DIRECT, &inputs);
+    IPLSimulationSharedInputs sharedInputs{};
+    sharedInputs.listener = listenerCoordinates;
+
+    iplSimulatorSetSharedInputs(simulator, IPL_SIMULATIONFLAGS_DIRECT, &sharedInputs);
+    iplSourceGetOutputs(source, IPL_SIMULATIONFLAGS_DIRECT, &outputs);
+
+    IPLDirectEffectParams params = outputs.direct; // this can be passed to a direct effect
     heapSizeInBytes = 0;
 
     /*
@@ -1463,20 +1503,36 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
         ma_delay_node_set_decay(&g_delayNode, dcay);
     }
     void set_position(float l_x, float l_y, float l_z, float s_x, float s_y, float s_z) {
-        if (!active)return;
+        if (!active) return;
+
+        float min_x = 0.0f;
+        float max_x = 1.0f;
+        float min_y = 0.0f; 
+        float max_y = 1.0f; 
+        float min_z = 0.0f;
+        float max_z = 1.0f;
+
+        float norm_l_x = (l_x - min_x) / (max_x - min_x);
+        float norm_l_y = (l_y - min_y) / (max_y - min_y);
+        float norm_l_z = (l_z - min_z) / (max_z - min_z);
+        float norm_s_x = (s_x - min_x) / (max_x - min_x);
+        float norm_s_y = (s_y - min_y) / (max_y - min_y);
+        float norm_s_z = (s_z - min_z) / (max_z - min_z);
+
+        ma_vec3f listener_position(norm_l_x, norm_l_y, norm_l_z);
+        ma_vec3f sound_position(norm_s_x, norm_s_y, norm_s_z);
 
         ma_vec3f direction;
-        ma_engine_listener_set_position(&sound_default_mixer, ma_sound_get_listener_index(&handle_), l_x, l_y, l_z);
-        ma_sound_set_position(&handle_, s_x, s_y, s_z);
-        ma_vec3f relativePos;
-            ma_spatializer_get_relative_position_and_direction(&handle_.engineNode.spatializer, &sound_default_mixer.listeners[ma_sound_get_listener_index(&handle_)], &relativePos, NULL);
 
-        direction=ma_vec3f_normalize(relativePos);
-
+        ma_engine_listener_set_position(&sound_default_mixer, ma_sound_get_listener_index(&handle_), norm_l_x, norm_l_y, norm_l_z);
+        ma_sound_set_position(&handle_, norm_s_x, norm_s_y, norm_s_z);
+        ma_vec3f relativePos = ma_vec3f_sub(sound_position, listener_position);
+        direction = ma_vec3f_normalize(relativePos);
         ma_steamaudio_binaural_node_set_direction(&g_binauralNode, direction.x, direction.y, direction.z);
-
     }
-    void set_position(const ngtvector* listener=nullptr, const ngtvector* source=nullptr) {
+
+
+        void set_position(const ngtvector* listener=nullptr, const ngtvector* source=nullptr) {
         if (!active)return;
         ma_vec3f direction;
 
@@ -1628,6 +1684,7 @@ ma_sound_seek_to_pcm_frame(&handle_, static_cast<ma_uint64>(new_position * 100))
         ma_sound_get_length_in_pcm_frames(&handle_, &length);
         return static_cast<float>(length/100);
     }
+
     void set_length(float length = 0.0) {
         if (!active)return;
         if (length > this->get_length())            return;
