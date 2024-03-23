@@ -201,6 +201,7 @@
     <ClInclude Include="ffi_cfi.h" />
     <ClInclude Include="ffi_common.h" />
     <ClInclude Include="fx\verblib.h" />
+    <ClInclude Include="http.h" />
     <ClInclude Include="LabSound.h" />
     <ClInclude Include="LabSound\backends\AudioDevice_Miniaudio.h" />
     <ClInclude Include="LabSound\backends\AudioDevice_RtAudio.h" />
@@ -391,6 +392,7 @@
   <ItemGroup>
     <ClCompile Include="datetime\datetime.cpp" />
     <ClCompile Include="debugger\debugger.cpp" />
+    <ClCompile Include="http.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ngt.cpp" />
     <ClCompile Include="ngtreg.cpp" />

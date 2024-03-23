@@ -431,7 +431,7 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterGlobalFunction("bool random_bool()", asFUNCTION(random_bool), asCALL_CDECL);
     engine->RegisterGlobalFunction("int printf(const ? & in format, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null)", asFUNCTION(Print), asCALL_CDECL);
     engine->RegisterGlobalFunction("int scanf(const string &in format, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null)", asFUNCTION(scanf_s), asCALL_CDECL);
-    engine->RegisterGlobalFunction("int get_last_error()", asFUNCTION(get_last_error), asCALL_CDECL);
+    engine->RegisterGlobalFunction("int get_last_error()property", asFUNCTION(get_last_error), asCALL_CDECL);
 
     engine->RegisterGlobalFunction("void speak(const string &in, bool=true)", asFUNCTION(speak), asCALL_CDECL);
     engine->RegisterGlobalFunction("void speak_wait(const string &in, bool=true)", asFUNCTION(speak_wait), asCALL_CDECL);
@@ -501,15 +501,15 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectMethod("timer", "uint64 get_elapsed_millis()const property", asMETHOD(timer, elapsed_millis), asCALL_THISCALL);
     engine->RegisterObjectMethod("timer", "uint64 get_elapsed_micros()const property", asMETHOD(timer, elapsed_micros), asCALL_THISCALL);
     engine->RegisterObjectMethod("timer", "uint64 get_elapsed_nanos()const property", asMETHOD(timer, elapsed_nanos), asCALL_THISCALL);
-    engine->RegisterObjectMethod("timer", "void force_seconds(uint64)", asMETHOD(timer, force_seconds), asCALL_THISCALL);
-    engine->RegisterObjectMethod("timer", "void force_minutes(uint64)", asMETHOD(timer, force_minutes), asCALL_THISCALL);
-    engine->RegisterObjectMethod("timer", "void force_hours(uint64)", asMETHOD(timer, force_hours), asCALL_THISCALL);
-    engine->RegisterObjectMethod("timer", "void force_millis(uint64)", asMETHOD(timer, force_millis), asCALL_THISCALL);
-    engine->RegisterObjectMethod("timer", "void force_micros(uint64)", asMETHOD(timer, force_micros), asCALL_THISCALL);
-    engine->RegisterObjectMethod("timer", "void force_nanos(uint64)", asMETHOD(timer, force_nanos), asCALL_THISCALL);
-    engine->RegisterObjectMethod("timer", "void restart()", asMETHOD(timer, restart), asCALL_THISCALL);
-    engine->RegisterObjectMethod("timer", "void pause()", asMETHOD(timer, pause), asCALL_THISCALL);
-    engine->RegisterObjectMethod("timer", "void resume()", asMETHOD(timer, resume), asCALL_THISCALL);
+    engine->RegisterObjectMethod("timer", "void force_seconds(uint64)const", asMETHOD(timer, force_seconds), asCALL_THISCALL);
+    engine->RegisterObjectMethod("timer", "void force_minutes(uint64)const", asMETHOD(timer, force_minutes), asCALL_THISCALL);
+    engine->RegisterObjectMethod("timer", "void force_hours(uint64)const", asMETHOD(timer, force_hours), asCALL_THISCALL);
+    engine->RegisterObjectMethod("timer", "void force_millis(uint64)const", asMETHOD(timer, force_millis), asCALL_THISCALL);
+    engine->RegisterObjectMethod("timer", "void force_micros(uint64)const", asMETHOD(timer, force_micros), asCALL_THISCALL);
+    engine->RegisterObjectMethod("timer", "void force_nanos(uint64)const", asMETHOD(timer, force_nanos), asCALL_THISCALL);
+    engine->RegisterObjectMethod("timer", "void restart()const", asMETHOD(timer, restart), asCALL_THISCALL);
+    engine->RegisterObjectMethod("timer", "void pause()const", asMETHOD(timer, pause), asCALL_THISCALL);
+    engine->RegisterObjectMethod("timer", "void resume()const", asMETHOD(timer, resume), asCALL_THISCALL);
     engine->RegisterObjectMethod("timer", "bool get_running()const property", asMETHOD(timer, is_running), asCALL_THISCALL);
     engine->RegisterObjectType("script_function", sizeof(asIScriptFunction), asOBJ_REF);
     engine->RegisterObjectBehaviour("script_function", asBEHAVE_FACTORY, "script_function@ asIScriptFunction()", asFUNCTION(fscript_function), asCALL_CDECL);
@@ -519,9 +519,9 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectBehaviour("library", asBEHAVE_FACTORY, "library@ l()", asFUNCTION(flibrary), asCALL_CDECL);
     engine->RegisterObjectBehaviour("library", asBEHAVE_ADDREF, "void f()", asMETHOD(library, construct), asCALL_THISCALL);
     engine->RegisterObjectBehaviour("library", asBEHAVE_RELEASE, "void f()", asMETHOD(library, destruct), asCALL_THISCALL);
-    engine->RegisterObjectMethod("library", "bool load(const string&in)", asMETHOD(library, load), asCALL_THISCALL);
-    engine->RegisterObjectMethod("library", "void call(const string&in, const string &in, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null)", asMETHOD(library, call), asCALL_THISCALL);
-    engine->RegisterObjectMethod("library", "void unload()", asMETHOD(library, unload), asCALL_THISCALL);
+    engine->RegisterObjectMethod("library", "bool load(const string&in)const", asMETHOD(library, load), asCALL_THISCALL);
+    engine->RegisterObjectMethod("library", "void call(const string&in, const string &in, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null)const", asMETHOD(library, call), asCALL_THISCALL);
+    engine->RegisterObjectMethod("library", "void unload()const", asMETHOD(library, unload), asCALL_THISCALL);
     engine->RegisterObjectType("instance", sizeof(instance), asOBJ_REF);
     engine->RegisterObjectBehaviour("instance", asBEHAVE_FACTORY, "instance@ i(const string&in)", asFUNCTION(finstance), asCALL_CDECL);
     engine->RegisterObjectBehaviour("instance", asBEHAVE_ADDREF, "void f()", asMETHOD(instance, construct), asCALL_THISCALL);

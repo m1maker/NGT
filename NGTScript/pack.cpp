@@ -3,11 +3,11 @@
 #include "scriptarray/scriptarray.h"
 using namespace std;
 typedef unsigned int uint;
-typedef struct NGTHEADER{
+struct NGTHEADER{
     const std::string main_header = "NGTPACK";
     const double version = 0.0;
     const unsigned long header0x3c = 0x2545486784561511;
-}NGTPACK;
+}const;
 
 class Pack
 {

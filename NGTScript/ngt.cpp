@@ -85,7 +85,7 @@ void speak(const std::string & text, bool stop) {
 void speak_wait(const std::string & text, bool stop) {
     speak(text, stop);
     while (Tolk_IsSpeaking()) {
-        update_game_window();
+        SDL_PollEvent(&e);
     }
 }
 
@@ -420,7 +420,7 @@ void wait(int time) {
     timer waittimer;
     int el = 0;
     while (el < time) {
-        update_game_window();
+        SDL_PollEvent(&e);
         el = waittimer.elapsed_millis();
     }
 }
@@ -592,7 +592,7 @@ bool timer::is_running() {
         if (peer == NULL) {
             return 0; // Connection failed
         }
-
+        current_peer_id = peer->incomingPeerID;
         return peer->incomingPeerID;
     }
 
@@ -603,6 +603,49 @@ bool timer::is_running() {
             return true;
         }
         return false;
+    }
+    bool network::disconnect_peer(unsigned int peer_id) {
+        if (host) {
+            enet_peer_disconnect(&host->peers[peer_id], 0);
+            return true;
+        }
+        return false;
+    }
+    bool network::disconnect_peer_forcefully(unsigned int peer_id) {
+        if (host) {
+            enet_peer_reset(&host->peers[peer_id]);
+            return true;
+        }
+        return false;
+
+}
+    std::string network::get_peer_address(unsigned int peer_id) {
+        char addressStr[64];
+        enet_address_get_host_ip(&host->peers[peer_id].address, addressStr, sizeof(addressStr));
+        return std::string(addressStr);
+    }
+    double network::get_peer_average_round_trip_time(unsigned int peerId) {
+        return host->peers[peerId].roundTripTime;
+    }
+    CScriptArray* network::get_peer_list() {
+        asIScriptContext* ctx = asGetActiveContext();
+        asIScriptEngine* engine = ctx->GetEngine();
+        asITypeInfo* arrayType = engine->GetTypeInfoById(engine->GetTypeIdByDecl("array<uint>"));
+        CScriptArray* peers = CScriptArray::Create(arrayType, (asUINT)0);
+        for (UINT i = 0; i < host->connectedPeers; i++) {
+            peers->InsertLast(&host->peers[i]);
+        }
+        return peers;
+    }
+    network_event* network::request() {
+        ENetEvent event;
+        network_event* handle;
+        enet_host_service(host, &event, 1000);
+        handle->m_type = event.type;
+        handle->m_channel = event.channelID;
+        handle->m_message = event.data;
+        handle->m_peerId = event.peer->incomingPeerID;
+        return handle;
     }
     void library::construct() {}
     void library::destruct() {}
