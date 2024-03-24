@@ -527,7 +527,6 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectBehaviour("instance", asBEHAVE_ADDREF, "void f()", asMETHOD(instance, construct), asCALL_THISCALL);
     engine->RegisterObjectBehaviour("instance", asBEHAVE_RELEASE, "void f()", asMETHOD(instance, destruct), asCALL_THISCALL);
     engine->RegisterObjectMethod("instance", "bool is_running()", asMETHOD(instance, is_running), asCALL_THISCALL);
-/*
     engine->RegisterObjectType("network_event", sizeof(network_event), asOBJ_REF);
     engine->RegisterObjectBehaviour("network_event", asBEHAVE_FACTORY, "network_event@ e()", asFUNCTION(fnetwork_event), asCALL_CDECL);
     engine->RegisterObjectBehaviour("network_event", asBEHAVE_ADDREF, "void f()", asMETHOD(network_event, construct), asCALL_THISCALL);
@@ -537,7 +536,7 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectProperty("network_event", "const int EVENT_RECEIVE", asOFFSET(network_event, EVENT_RECEIVE));
     engine->RegisterObjectProperty("network_event", "const int EVENT_DISCONNECT", asOFFSET(network_event, EVENT_DISCONNECT));
     engine->RegisterObjectProperty("network_event", "const int type", asOFFSET(network_event, m_type));
-    engine->RegisterObjectProperty("network_event", "const uint peerId", asOFFSET(network_event, m_peerId));
+    engine->RegisterObjectProperty("network_event", "const uint peer_id", asOFFSET(network_event, m_peerId));
     engine->RegisterObjectProperty("network_event", "const int channel", asOFFSET(network_event, m_channel));
     engine->RegisterObjectProperty("network_event", "const string message", asOFFSET(network_event, m_message));
 
@@ -550,10 +549,10 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectMethod("network", "bool destroy()", asMETHOD(network, destroy), asCALL_THISCALL);
     engine->RegisterObjectMethod("network", "bool disconnect_peer(uint)", asMETHOD(network, disconnect_peer), asCALL_THISCALL);
     engine->RegisterObjectMethod("network", "bool disconnect_peer_forcefully(uint)", asMETHOD(network, disconnect_peer_forcefully), asCALL_THISCALL);
-    engine->RegisterObjectMethod("network", "bool disconnect_peer_softly(uint)", asMETHOD(network, disconnect_peer_softly), asCALL_THISCALL);
+//    engine->RegisterObjectMethod("network", "bool disconnect_peer_softly(uint)", asMETHOD(network, disconnect_peer_softly), asCALL_THISCALL);
     engine->RegisterObjectMethod("network", "string get_peer_address(uint)const property", asMETHOD(network, get_peer_address), asCALL_THISCALL);
     engine->RegisterObjectMethod("network", "double get_peer_average_round_trip_time(uint)const property", asMETHOD(network, get_peer_average_round_trip_time), asCALL_THISCALL);
-//    engine->RegisterObjectMethod("network", "array<uint> get_peer_list()", asMETHOD(network, get_peer_list), asCALL_THISCALL);
+    engine->RegisterObjectMethod("network", "uint[]@ get_peer_list()", asMETHOD(network, get_peer_list), asCALL_THISCALL);
     engine->RegisterObjectMethod("network", "network_event@ request()", asMETHOD(network, request), asCALL_THISCALL);
     engine->RegisterObjectMethod("network", "bool send_reliable(uint, string&in, int)", asMETHOD(network, send_reliable), asCALL_THISCALL);
     engine->RegisterObjectMethod("network", "bool send_unreliable(uint, string&in, int)", asMETHOD(network, send_unreliable), asCALL_THISCALL);
@@ -563,7 +562,6 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectMethod("network", "int get_connected_peers() const property", asMETHOD(network, get_connected_peers), asCALL_THISCALL);
     engine->RegisterObjectMethod("network", "double get_bytes_sent() const property", asMETHOD(network, get_bytes_sent), asCALL_THISCALL);
     engine->RegisterObjectMethod("network", "double get_bytes_received() const property", asMETHOD(network, get_bytes_received), asCALL_THISCALL);
-*/
     engine->RegisterFuncdef("int sqlite3authorizer(string, int, string, string, string, string)");
     engine->RegisterObjectType("sqlite3statement", sizeof(sqlite3statement), asOBJ_REF);
     engine->RegisterObjectBehaviour("sqlite3statement", asBEHAVE_FACTORY, "sqlite3statement@ s()", asFUNCTION(fsqlite3statement), asCALL_CDECL);

@@ -192,13 +192,14 @@ private:
 };
 class library {
 public:
-	DLLib* lib;
+	HMODULE lib;
 	void construct();
 	void destruct();
 	bool load(const std::string &);
-	void* call(std::string function_name, const std::string& signature, ...);
+	CScriptDictionary* call(std::string function_name, ...);
 		void unload();
 };
+
 class instance {
 private:
 	HANDLE mutex;
