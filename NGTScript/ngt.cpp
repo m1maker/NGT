@@ -638,16 +638,27 @@ bool timer::is_running() {
         return peers;
     }
     network_event* network::request() {
-        ENetEvent event;
-        if (enet_host_service(host, &event, 1000) > 0) {
-            network_event handle_;
-            handle_.m_type = event.type;
-            handle_.m_channel = event.channelID;
-            handle_.m_message = std::string(reinterpret_cast<char*>(event.packet->data));
-            handle_.m_peerId = event.peer->incomingPeerID;
-            return &handle_;
-        }
-        return nullptr;
+        network_event* handle_ = new network_event;
+
+        std::thread t([this, handle_]() {
+            ENetEvent event;
+            enet_host_service(host, &event, 0);
+
+            handle_->m_type = event.type;
+            handle_->m_channel = event.channelID;
+
+            if (event.packet != nullptr) {
+                handle_->m_message = std::string(reinterpret_cast<char*>(event.packet->data));
+            }
+
+            if (event.peer != nullptr) {
+                handle_->m_peerId = event.peer->incomingPeerID;
+            }
+            });
+
+        t.detach();
+        return handle_;
+
     }
 
     bool network::send_reliable(unsigned int peer_id, const std::string& packet, int channel) {
