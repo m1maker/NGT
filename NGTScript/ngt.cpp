@@ -643,9 +643,10 @@ bool timer::is_running() {
         std::thread t([this, handle_]() {
             ENetEvent event;
             enet_host_service(host, &event, 0);
-
+if(event.type!=NULL)
             handle_->m_type = event.type;
-            handle_->m_channel = event.channelID;
+if(event.channelID!=0)
+handle_->m_channel = event.channelID;
 
             if (event.packet != nullptr) {
                 handle_->m_message = std::string(reinterpret_cast<char*>(event.packet->data));
