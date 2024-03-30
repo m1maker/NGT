@@ -149,7 +149,31 @@ static void StringCapitalize_Generic(asIScriptGeneric *gen)
 	// Return the Capitalized string
 	new (gen->GetAddressOfReturnLocation()) string(StringCapitalize(*str));
 }
+static string StringUpper(const string &inp)
+{
+// Convert the entire string to uppercase
+return una::cases::to_uppercase_utf8(inp);
+}
+static void StringUpper_Generic(asIScriptGeneric *gen)
+{
+// Get the arguments
+string *str = (string *)gen->GetObject();
+// Return the uppercased string
+new (gen->GetAddressOfReturnLocation()) string(StringUpper(*str));
+}
+static string StringLower(const string &inp)
+{
+// Convert the entire string to lowercase using your custom library
+return una::cases::to_lowercase_utf8(inp);
+}
 
+static void StringLower_Generic(asIScriptGeneric *gen)
+{
+// Get the arguments
+string *str = (string *)gen->GetObject();
+// Return the lowercased string
+new (gen->GetAddressOfReturnLocation()) string(StringLower(*str));
+}
 static CScriptArray *StringSplitLines(const string &str)
 {
 	return StringSplit("\n", StringReplace("\r", "", str.c_str()));
@@ -222,7 +246,19 @@ static void is_upper_Generic(asIScriptGeneric *gen)
 	bool result = is_upper(*str);
 	*(bool *)gen->GetAddressOfReturnLocation() = result;
 }
+static bool is_lower(const string &s)
+{
+	una::ranges::utf8_view temp(s);
+	return std::all_of(temp.begin(), temp.end(), [](auto c)
+					   { return una::codepoint::is_lowercase(c); });
+}
 
+static void is_lower_Generic(asIScriptGeneric *gen)
+{
+	string *str = (string *)gen->GetObject();
+	bool result = is_lower(*str);
+	*(bool *)gen->GetAddressOfReturnLocation() = result;
+}
 // This is where the utility functions are registered.
 // The string type must have been registered first.
 void RegisterStdStringUtils(asIScriptEngine *engine)
@@ -239,6 +275,10 @@ void RegisterStdStringUtils(asIScriptEngine *engine)
 		assert(r >= 0);
 		r = engine->RegisterObjectMethod("string", "string capitalize() const", asFUNCTION(StringCapitalize_Generic), asCALL_GENERIC);
 		assert(r >= 0);
+		r = engine->RegisterObjectMethod("string", "string upper() const", asFUNCTION(StringUpper_Generic), asCALL_GENERIC);
+		assert(r >= 0);
+		r = engine->RegisterObjectMethod("string", "string lower() const", asFUNCTION(StringLower_Generic), asCALL_GENERIC);
+		assert(r >= 0);
 		r = engine->RegisterObjectMethod("string", "array<string>@ split_lines() const", asFUNCTION(StringSplitLines_Generic), asCALL_GENERIC);
 		assert(r >= 0);
 		r = engine->RegisterObjectMethod("string", "bool ends_with(const string &in) const", asFUNCTION(StringEndsWith_Generic), asCALL_GENERIC);
@@ -248,6 +288,8 @@ void RegisterStdStringUtils(asIScriptEngine *engine)
 		r = engine->RegisterObjectMethod("string", "bool contains(const string &in) const", asFUNCTION(StringContains_Generic), asCALL_GENERIC);
 		assert(r >= 0);
 		r = engine->RegisterObjectMethod("string", "bool is_upper() const", asFUNCTION(is_upper_Generic), asCALL_GENERIC);
+		assert(r >= 0);
+		r = engine->RegisterObjectMethod("string", "bool is_lower() const", asFUNCTION(is_lower_Generic), asCALL_GENERIC);
 		assert(r >= 0);
 	}
 	else
@@ -260,6 +302,11 @@ void RegisterStdStringUtils(asIScriptEngine *engine)
 		assert(r >= 0);
 		r = engine->RegisterObjectMethod("string", "string capitalize() const", asFUNCTION(StringCapitalize), asCALL_CDECL_OBJLAST);
 		assert(r >= 0);
+		r = engine->RegisterObjectMethod("string", "string upper() const", asFUNCTION(StringUpper), asCALL_CDECL_OBJLAST);
+		assert(r >= 0);
+
+		r = engine->RegisterObjectMethod("string", "string lower() const", asFUNCTION(StringLower), asCALL_CDECL_OBJLAST);
+		assert(r >= 0);
 		r = engine->RegisterObjectMethod("string", "array<string>@ split_lines() const", asFUNCTION(StringSplitLines), asCALL_CDECL_OBJLAST);
 		assert(r >= 0);
 		r = engine->RegisterObjectMethod("string", "bool ends_with(const string &in) const", asFUNCTION(StringEndsWith), asCALL_CDECL_OBJLAST);
@@ -269,6 +316,8 @@ void RegisterStdStringUtils(asIScriptEngine *engine)
 		r = engine->RegisterObjectMethod("string", "bool contains(const string &in) const", asFUNCTION(StringContains), asCALL_CDECL_OBJLAST);
 		assert(r >= 0);
 		r = engine->RegisterObjectMethod("string", "bool is_upper() const", asFUNCTION(is_upper), asCALL_CDECL_OBJLAST);
+		assert(r >= 0);
+		r = engine->RegisterObjectMethod("string", "bool is_lower() const", asFUNCTION(is_lower), asCALL_CDECL_OBJLAST);
 		assert(r >= 0);
 	}
 }
