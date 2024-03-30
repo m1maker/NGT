@@ -373,6 +373,7 @@ timer* ftimer() { return new timer; }
 user_idle* fuser_idle() { return new user_idle; }
 asIScriptFunction* fscript_function() { asIScriptFunction* r =nullptr; return r; }
 library* flibrary() { return new library; }
+tts_voice* ftts_voice() { return new tts_voice(); }
 instance* finstance(std::string app) { return new instance(app); }
 network_event* fnetwork_event() { return new network_event; }
 ngtvector* fngtvector() { return new ngtvector; }
@@ -466,7 +467,7 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterGlobalFunction("string url_get(const string &in)", asFUNCTION(url_get), asCALL_CDECL);
     engine->RegisterGlobalFunction("string url_post(const string &in, const string &in)", asFUNCTION(url_post), asCALL_CDECL);
     engine->RegisterGlobalFunction("string ascii_to_character(int)", asFUNCTION(ascii_to_character), asCALL_CDECL);
-    engine->RegisterGlobalFunction("int character_to_ascii(const string  &in)", asFUNCTION(character_to_ascii), asCALL_CDECL);
+    engine->RegisterGlobalFunction("int character_to_ascii(const string      &in)", asFUNCTION(character_to_ascii), asCALL_CDECL);
     engine->RegisterGlobalFunction("string hex_to_string(const string& in)", asFUNCTION(hex_to_string), asCALL_CDECL);
     engine->RegisterGlobalFunction("string number_to_hex_string(double)", asFUNCTION(number_to_hex_string), asCALL_CDECL);
     engine->RegisterGlobalFunction("string string_base64_decode(const string &in)", asFUNCTION(string_base64_decode), asCALL_CDECL);
@@ -482,6 +483,19 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterGlobalFunction("dictionary@ deserialize(const string &in)", asFUNCTION(deserialize), asCALL_CDECL);
 
     register_sound(engine);
+    engine->RegisterObjectType("tts_voice", sizeof(tts_voice), asOBJ_REF);
+    engine->RegisterObjectBehaviour("tts_voice", asBEHAVE_FACTORY, "tts_voice@ v()", asFUNCTION(ftts_voice), asCALL_CDECL);
+    engine->RegisterObjectBehaviour("tts_voice", asBEHAVE_ADDREF, "void f()", asMETHOD(tts_voice, construct), asCALL_THISCALL);
+    engine->RegisterObjectBehaviour("tts_voice", asBEHAVE_RELEASE, "void f()", asMETHOD(tts_voice, destruct), asCALL_THISCALL);
+
+    
+    engine->RegisterObjectMethod("tts_voice", "void speak(const string& in)", asMETHOD(tts_voice, speak), asCALL_THISCALL);
+    engine->RegisterObjectMethod("tts_voice", "void speak_wait(const string& in)", asMETHOD(tts_voice, speak_wait), asCALL_THISCALL);
+    engine->RegisterObjectMethod("tts_voice", "void speak_interrupt(const string& in)", asMETHOD(tts_voice, speak_interrupt), asCALL_THISCALL);
+    engine->RegisterObjectMethod("tts_voice", "void speak_interrupt_wait(const string& in)", asMETHOD(tts_voice, speak_interrupt_wait), asCALL_THISCALL);
+    engine->RegisterObjectMethod("tts_voice", "int get_rate()const property", asMETHOD(tts_voice, get_rate), asCALL_THISCALL);
+    engine->RegisterObjectMethod("tts_voice", "void set_rate(int rate)property", asMETHOD(tts_voice, set_rate), asCALL_THISCALL);
+
     engine->RegisterObjectType("user_idle", sizeof(user_idle), asOBJ_REF | asOBJ_NOCOUNT);
     engine->RegisterObjectBehaviour("user_idle", asBEHAVE_FACTORY, "user_idle@ u()", asFUNCTION(fuser_idle), asCALL_CDECL);
     engine->RegisterObjectMethod("user_idle", "uint64 get_elapsed_millis()const property", asMETHOD(user_idle, elapsed_millis), asCALL_THISCALL);
