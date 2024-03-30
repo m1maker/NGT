@@ -121,7 +121,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);_HAS_STD_BYTE=0</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <TranslateIncludes>false</TranslateIncludes>
@@ -131,6 +131,7 @@
       </StringPooling>
       <DisableSpecificWarnings>
       </DisableSpecificWarnings>
+      <AdditionalOptions>/wd4996 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -287,6 +288,8 @@
     <ClInclude Include="resource2.h" />
     <ClInclude Include="resource3.h" />
     <ClInclude Include="reverb\verblib.h" />
+    <ClInclude Include="sapi\SpeechEngine.h" />
+    <ClInclude Include="sapi\Voice.h" />
     <ClInclude Include="scriptany\scriptany.h" />
     <ClInclude Include="scriptarray\scriptarray.h" />
     <ClInclude Include="scriptbuilder\scriptbuilder.h" />
@@ -382,6 +385,7 @@
     <ClInclude Include="sound.h" />
     <ClInclude Include="sqlite3.h" />
     <ClInclude Include="Tolk.h" />
+    <ClInclude Include="tts_voice.h" />
     <ClInclude Include="uni_algo.h" />
     <ClInclude Include="vorbisfile.h" />
     <ClInclude Include="vorbis\codec.h" />
@@ -395,6 +399,8 @@
     <ClCompile Include="ngt.cpp" />
     <ClCompile Include="ngtreg.cpp" />
     <ClCompile Include="pack.cpp" />
+    <ClCompile Include="sapi\SpeechEngine.cpp" />
+    <ClCompile Include="sapi\Voice.cpp" />
     <ClCompile Include="scriptany\scriptany.cpp" />
     <ClCompile Include="scriptarray\scriptarray.cpp" />
     <ClCompile Include="scriptbuilder\scriptbuilder.cpp" />
@@ -413,6 +419,7 @@
     <ClCompile Include="sqlite3.c" />
     <ClCompile Include="stb_vorbis.c" />
     <ClCompile Include="stb_vorbis.h" />
+    <ClCompile Include="tts_voice.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ogg\config_types.h.in" />

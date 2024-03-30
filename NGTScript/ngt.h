@@ -12,7 +12,7 @@
 #include "Poco/HexBinaryDecoder.h"
 #include "Poco/String.h"
 #include "Poco/NumberFormatter.h"
-
+#include"tts_voice.h"
 using namespace Poco;
 using namespace Poco::Net;
 #include "dyn/dyncall.h"

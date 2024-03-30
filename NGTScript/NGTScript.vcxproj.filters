@@ -725,6 +725,15 @@
     <ClInclude Include="fx\verblib.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="sapi\SpeechEngine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sapi\Voice.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tts_voice.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ngt.cpp">
@@ -797,6 +806,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="pack.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sapi\SpeechEngine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="sapi\Voice.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="tts_voice.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
