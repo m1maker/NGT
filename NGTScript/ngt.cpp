@@ -19,6 +19,7 @@
 #include <cstring>
 bool engine_is_active= false;
 SDL_Window* win = NULL;
+
 SDL_Event e;
 bool window_is_focused;
 std::wstring wstr(const std::string& utf8String)
@@ -32,6 +33,7 @@ bool keyhook = false;
 std::string inputtext;
 void init_engine(){
     Tolk_Load();
+
     SDL_Init(SDL_INIT_EVERYTHING);
     enet_initialize();
     Tolk_TrySAPI(true);
@@ -671,7 +673,7 @@ handle_->m_channel = event.channelID;
         return false;
     }
     bool network::send_unreliable(unsigned int peer_id, const std::string& packet, int channel) {
-        ENetPacket* p = enet_packet_create(packet.c_str(), strlen(packet.c_str()), ENET_PACKET_FLAG_UNRELIABLE_FRAGMENT);
+        ENetPacket* p = enet_packet_create(packet.c_str(), strlen(packet.c_str()), 0);
         int result = enet_peer_send(&host->peers[peer_id], channel, p);
         enet_packet_destroy(p);
         if (result == 0)

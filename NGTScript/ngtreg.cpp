@@ -441,15 +441,17 @@ void RegisterFunctions(asIScriptEngine* engine)
 
     engine->RegisterGlobalFunction("void show_console()", asFUNCTION(show_console), asCALL_CDECL);
     engine->RegisterGlobalFunction("void hide_console()", asFUNCTION(hide_console), asCALL_CDECL);
+    engine->RegisterObjectType("hwnd", sizeof(HWND), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); 
     engine->RegisterGlobalFunction("bool show_game_window(const string &in,int=640,int=480, bool=true)", asFUNCTION(show_game_window), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool focus_game_window()", asFUNCTION(focus_game_window), asCALL_CDECL);
-
     engine->RegisterGlobalFunction("void hide_game_window()", asFUNCTION(hide_game_window), asCALL_CDECL);
-    engine->RegisterGlobalFunction("void set_game_window_title(const string &in)", asFUNCTION(set_game_window_title), asCALL_CDECL);
-    engine->RegisterGlobalFunction("void set_game_window_closable(bool)", asFUNCTION(set_game_window_closable), asCALL_CDECL);
+    engine->RegisterGlobalFunction("void set_game_window_title(const string &in)property", asFUNCTION(set_game_window_title), asCALL_CDECL);
+    engine->RegisterGlobalFunction("void set_game_window_closable(bool)property", asFUNCTION(set_game_window_closable), asCALL_CDECL);
 
     engine->RegisterGlobalFunction("void update_game_window()", asFUNCTION(update_game_window), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool is_game_window_active()", asFUNCTION(is_game_window_active), asCALL_CDECL);
+    engine->RegisterGlobalFunction("hwnd get_focused_window()", asFUNCTION(GetFocus), asCALL_STDCALL);
+    engine->RegisterGlobalFunction("hwnd set_focused_window(hwnd)", asFUNCTION(SetFocus), asCALL_STDCALL);
     engine->RegisterGlobalFunction("void exit(int=0)",asFUNCTION(exit_engine),asCALL_CDECL);
     engine->RegisterGlobalFunction("bool clipboard_copy_text(const string &in)", asFUNCTION(clipboard_copy_text), asCALL_CDECL);
     engine->RegisterGlobalFunction("string clipboard_read_text()", asFUNCTION(clipboard_read_text), asCALL_CDECL);
