@@ -160,6 +160,7 @@
     <ClInclude Include="autowrapper\aswrappedcall.h" />
     <ClInclude Include="datetime\datetime.h" />
     <ClInclude Include="debugger\debugger.h" />
+    <ClInclude Include="dlibrary.h" />
     <ClInclude Include="dyn\dyncall.h" />
     <ClInclude Include="dyn\dyncall_alloc.h" />
     <ClInclude Include="dyn\dyncall_callf.h" />
@@ -396,6 +397,7 @@
   <ItemGroup>
     <ClCompile Include="datetime\datetime.cpp" />
     <ClCompile Include="debugger\debugger.cpp" />
+    <ClCompile Include="dlibrary.cpp" />
     <ClCompile Include="http.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ngt.cpp" />

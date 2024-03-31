@@ -491,10 +491,10 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectBehaviour("tts_voice", asBEHAVE_RELEASE, "void f()", asMETHOD(tts_voice, destruct), asCALL_THISCALL);
 
     
-    engine->RegisterObjectMethod("tts_voice", "void speak(const string& in)", asMETHOD(tts_voice, speak), asCALL_THISCALL);
-    engine->RegisterObjectMethod("tts_voice", "void speak_wait(const string& in)", asMETHOD(tts_voice, speak_wait), asCALL_THISCALL);
-    engine->RegisterObjectMethod("tts_voice", "void speak_interrupt(const string& in)", asMETHOD(tts_voice, speak_interrupt), asCALL_THISCALL);
-    engine->RegisterObjectMethod("tts_voice", "void speak_interrupt_wait(const string& in)", asMETHOD(tts_voice, speak_interrupt_wait), asCALL_THISCALL);
+    engine->RegisterObjectMethod("tts_voice", "void speak(const string& in)const", asMETHOD(tts_voice, speak), asCALL_THISCALL);
+    engine->RegisterObjectMethod("tts_voice", "void speak_wait(const string& in)const", asMETHOD(tts_voice, speak_wait), asCALL_THISCALL);
+    engine->RegisterObjectMethod("tts_voice", "void speak_interrupt(const string& in)const", asMETHOD(tts_voice, speak_interrupt), asCALL_THISCALL);
+    engine->RegisterObjectMethod("tts_voice", "void speak_interrupt_wait(const string& in)const", asMETHOD(tts_voice, speak_interrupt_wait), asCALL_THISCALL);
     engine->RegisterObjectMethod("tts_voice", "int get_rate()const property", asMETHOD(tts_voice, get_rate), asCALL_THISCALL);
     engine->RegisterObjectMethod("tts_voice", "void set_rate(int rate)property", asMETHOD(tts_voice, set_rate), asCALL_THISCALL);
 

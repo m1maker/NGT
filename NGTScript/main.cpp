@@ -18,7 +18,6 @@
 #include "datetime/datetime.h"
 #include "scriptmath/scriptmath.h"
 #include <thread>
-
 struct NGT {
     std::vector<asBYTE> code;
 };
