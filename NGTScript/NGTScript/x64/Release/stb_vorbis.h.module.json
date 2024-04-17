@@ -5,14 +5,14 @@
         {
             "primary-output": "NGTScript\\x64\\Release\\stb_vorbis.h.obj",
             "outputs": [
-                "D:\\harry min khant\\github\\fork\\NGT\\NGTScript\\NGTScript\\x64\\Release\\vc143.pdb",
+                "D:\\harry min khant\\github\\fork\\NGT\\main\\NGTScript\\NGTScript\\x64\\Release\\vc143.pdb",
                 "NGTScript\\x64\\Release\\",
-                "D:\\harry min khant\\github\\fork\\NGT\\NGTScript\\NGTScript\\x64\\Release\\stb_vorbis.h.ifc"
+                "D:\\harry min khant\\github\\fork\\NGT\\main\\NGTScript\\NGTScript\\x64\\Release\\stb_vorbis.h.ifc"
             ],
             "provides": [
                 {
                     "logical-name": "stb_vorbis.h",
-                    "source-path": "d:\\harry min khant\\github\\fork\\ngt\\ngtscript\\stb_vorbis.h",
+                    "source-path": "d:\\harry min khant\\github\\fork\\ngt\\main\\ngtscript\\stb_vorbis.h",
                     "lookup-method": "absolute"
                 }
             ],
