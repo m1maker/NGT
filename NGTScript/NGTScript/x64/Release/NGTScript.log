@@ -1,19 +1,24 @@
 ﻿  Scanning sources for module dependencies...
+  stb_vorbis.h
+  Compiling...
+  stb_vorbis.h
+  datetime.cpp
+  debugger.cpp
   main.cpp
-C:\Users\Parker\Documents\GitHub\NGT\NGTScript\sdl\SDL_messagebox.h(45,1): warning C4091: 'typedef ': ignored on left of '<unnamed-enum-SDL_MESSAGEBOX_ERROR>' when no variable is declared
+D:\harry min khant\github\fork\NGT\main\NGTScript\sdl\SDL_messagebox.h(45,1): warning C4091: 'typedef ': ignored on left of '<unnamed-enum-SDL_MESSAGEBOX_ERROR>' when no variable is declared
   (compiling source file 'main.cpp')
   
-C:\Users\Parker\Documents\GitHub\NGT\NGTScript\main.cpp(42,68): warning C4267: 'argument': conversion from 'size_t' to 'DWORD', possible loss of data
-C:\Users\Parker\Documents\GitHub\NGT\NGTScript\main.cpp(55,68): warning C4267: 'argument': conversion from 'size_t' to 'DWORD', possible loss of data
-C:\Users\Parker\Documents\GitHub\NGT\NGTScript\main.cpp(215,24): warning C4244: 'initializing': conversion from 'std::streamoff' to 'long', possible loss of data
-C:\Users\Parker\Documents\GitHub\NGT\NGTScript\main.cpp(289,28): warning C4244: 'initializing': conversion from 'std::streamoff' to 'long', possible loss of data
-C:\Users\Parker\Documents\GitHub\NGT\NGTScript\main.cpp(293,38): warning C4267: '=': conversion from 'size_t' to 'asUINT', possible loss of data
-C:\Users\Parker\Documents\GitHub\NGT\NGTScript\main.cpp(423,36): warning C4244: 'initializing': conversion from 'std::streamoff' to 'long', possible loss of data
+D:\harry min khant\github\fork\NGT\main\NGTScript\main.cpp(42,68): warning C4267: 'argument': conversion from 'size_t' to 'DWORD', possible loss of data
+D:\harry min khant\github\fork\NGT\main\NGTScript\main.cpp(55,68): warning C4267: 'argument': conversion from 'size_t' to 'DWORD', possible loss of data
+D:\harry min khant\github\fork\NGT\main\NGTScript\main.cpp(215,24): warning C4244: 'initializing': conversion from 'std::streamoff' to 'long', possible loss of data
+D:\harry min khant\github\fork\NGT\main\NGTScript\main.cpp(289,28): warning C4244: 'initializing': conversion from 'std::streamoff' to 'long', possible loss of data
+D:\harry min khant\github\fork\NGT\main\NGTScript\main.cpp(293,38): warning C4267: '=': conversion from 'size_t' to 'asUINT', possible loss of data
+D:\harry min khant\github\fork\NGT\main\NGTScript\main.cpp(423,36): warning C4244: 'initializing': conversion from 'std::streamoff' to 'long', possible loss of data
 C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\xutility(4537,18): warning C4244: '=': conversion from 'wchar_t' to 'char', possible loss of data
   (compiling source file 'main.cpp')
   C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\xutility(4537,18):
   the template instantiation context (the oldest one first) is
-  	C:\Users\Parker\Documents\GitHub\NGT\NGTScript\main.cpp(48,23):
+  	D:\harry min khant\github\fork\NGT\main\NGTScript\main.cpp(48,23):
   	see reference to function template instantiation 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>::basic_string<std::_String_iterator<std::_String_val<std::_Simple_types<_Elem>>>,0>(_Iter,_Iter,const _Alloc &)' being compiled
           with
           [
@@ -21,7 +26,7 @@ C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.3351
               _Iter=std::_String_iterator<std::_String_val<std::_Simple_types<wchar_t>>>,
               _Alloc=std::allocator<char>
           ]
-  		C:\Users\Parker\Documents\GitHub\NGT\NGTScript\main.cpp(48,5):
+  		D:\harry min khant\github\fork\NGT\main\NGTScript\main.cpp(48,5):
   		see the first reference to 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>::basic_string' in 'get_exe'
   	C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\xstring(2600,17):
   	see reference to function template instantiation 'void std::basic_string<char,std::char_traits<char>,std::allocator<char>>::_Construct_from_iter<wchar_t*,wchar_t*,_Size_type>(_Iter,const _Sent,_Size)' being compiled
@@ -43,19 +48,19 @@ C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.3351
           ]
   
   ngt.cpp
-C:\Users\Parker\Documents\GitHub\NGT\NGTScript\sdl\SDL_messagebox.h(45,1): warning C4091: 'typedef ': ignored on left of '<unnamed-enum-SDL_MESSAGEBOX_ERROR>' when no variable is declared
+D:\harry min khant\github\fork\NGT\main\NGTScript\sdl\SDL_messagebox.h(45,1): warning C4091: 'typedef ': ignored on left of '<unnamed-enum-SDL_MESSAGEBOX_ERROR>' when no variable is declared
   (compiling source file 'ngt.cpp')
   
-C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(174,31): warning C4553: '==': result of expression not used; did you intend '='?
-C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(176,31): warning C4553: '==': result of expression not used; did you intend '='?
-C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(424,38): warning C4244: '=': conversion from 'uint64_t' to 'int', possible loss of data
-C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(781,150): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(788,150): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+D:\harry min khant\github\fork\NGT\main\NGTScript\ngt.cpp(174,31): warning C4553: '==': result of expression not used; did you intend '='?
+D:\harry min khant\github\fork\NGT\main\NGTScript\ngt.cpp(176,31): warning C4553: '==': result of expression not used; did you intend '='?
+D:\harry min khant\github\fork\NGT\main\NGTScript\ngt.cpp(424,38): warning C4244: '=': conversion from 'uint64_t' to 'int', possible loss of data
+D:\harry min khant\github\fork\NGT\main\NGTScript\ngt.cpp(781,150): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+D:\harry min khant\github\fork\NGT\main\NGTScript\ngt.cpp(788,150): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
 C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\xutility(4537,18): warning C4244: '=': conversion from 'wchar_t' to 'char', possible loss of data
   (compiling source file 'ngt.cpp')
   C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\xutility(4537,18):
   the template instantiation context (the oldest one first) is
-  	C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(97,23):
+  	D:\harry min khant\github\fork\NGT\main\NGTScript\ngt.cpp(97,23):
   	see reference to function template instantiation 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>::basic_string<std::_String_iterator<std::_String_val<std::_Simple_types<_Elem>>>,0>(_Iter,_Iter,const _Alloc &)' being compiled
           with
           [
@@ -63,7 +68,7 @@ C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.3351
               _Iter=std::_String_iterator<std::_String_val<std::_Simple_types<wchar_t>>>,
               _Alloc=std::allocator<char>
           ]
-  		C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(97,5):
+  		D:\harry min khant\github\fork\NGT\main\NGTScript\ngt.cpp(97,5):
   		see the first reference to 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>::basic_string' in 'screen_reader_detect'
   	C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\xstring(2600,17):
   	see reference to function template instantiation 'void std::basic_string<char,std::char_traits<char>,std::allocator<char>>::_Construct_from_iter<wchar_t*,wchar_t*,_Size_type>(_Iter,const _Sent,_Size)' being compiled
@@ -85,23 +90,49 @@ C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.3351
           ]
   
   ngtreg.cpp
-C:\Users\Parker\Documents\GitHub\NGT\NGTScript\sdl\SDL_messagebox.h(45,1): warning C4091: 'typedef ': ignored on left of '<unnamed-enum-SDL_MESSAGEBOX_ERROR>' when no variable is declared
+D:\harry min khant\github\fork\NGT\main\NGTScript\sdl\SDL_messagebox.h(45,1): warning C4091: 'typedef ': ignored on left of '<unnamed-enum-SDL_MESSAGEBOX_ERROR>' when no variable is declared
   (compiling source file 'ngtreg.cpp')
   
+  pack.cpp
+D:\harry min khant\github\fork\NGT\main\NGTScript\pack.cpp(9,38): warning C4305: 'initializing': truncation from '__int64' to 'const unsigned long'
+D:\harry min khant\github\fork\NGT\main\NGTScript\pack.cpp(9,38): warning C4309: 'initializing': truncation of constant value
+  SpeechEngine.cpp
+  Voice.cpp
+  scriptany.cpp
+  scriptarray.cpp
+  scriptbuilder.cpp
+  scriptdictionary.cpp
+  scriptfile.cpp
+  scriptfilesystem.cpp
+  scriptgrid.cpp
+  scripthandle.cpp
+  scripthelper.cpp
+  scriptmath.cpp
+  scriptmathcomplex.cpp
+  scriptstdstring.cpp
+D:\harry min khant\github\fork\NGT\main\NGTScript\scriptstdstring\scriptstdstring.cpp(378,23): warning C4244: 'return': conversion from '__int64' to 'int', possible loss of data
+D:\harry min khant\github\fork\NGT\main\NGTScript\scriptstdstring\scriptstdstring.cpp(395,23): warning C4244: 'return': conversion from '__int64' to 'int', possible loss of data
+D:\harry min khant\github\fork\NGT\main\NGTScript\scriptstdstring\scriptstdstring.cpp(415,23): warning C4244: 'return': conversion from '__int64' to 'int', possible loss of data
+D:\harry min khant\github\fork\NGT\main\NGTScript\scriptstdstring\scriptstdstring.cpp(456,23): warning C4244: 'return': conversion from '__int64' to 'int', possible loss of data
+  Compiling...
+  scriptstdstring_utils.cpp
+  serializer.cpp
   sound.cpp
-C:\Users\Parker\Documents\GitHub\NGT\NGTScript\sdl\SDL_messagebox.h(45,1): warning C4091: 'typedef ': ignored on left of '<unnamed-enum-SDL_MESSAGEBOX_ERROR>' when no variable is declared
+D:\harry min khant\github\fork\NGT\main\NGTScript\sdl\SDL_messagebox.h(45,1): warning C4091: 'typedef ': ignored on left of '<unnamed-enum-SDL_MESSAGEBOX_ERROR>' when no variable is declared
   (compiling source file 'sound.cpp')
   
-C:\Users\Parker\Documents\GitHub\NGT\NGTScript\sound.cpp(1331,40): warning C4305: '=': truncation from 'double' to 'float'
-C:\Users\Parker\Documents\GitHub\NGT\NGTScript\sound.cpp(1677,51): warning C4244: '=': conversion from 'ma_uint64' to 'float', possible loss of data
+D:\harry min khant\github\fork\NGT\main\NGTScript\sound.cpp(1331,40): warning C4305: '=': truncation from 'double' to 'float'
+D:\harry min khant\github\fork\NGT\main\NGTScript\sound.cpp(1677,51): warning C4244: '=': conversion from 'ma_uint64' to 'float', possible loss of data
   tts_voice.cpp
-     Creating library C:\Users\Parker\Documents\GitHub\NGT\NGTScript\x64\Release\NGTScript.lib and object C:\Users\Parker\Documents\GitHub\NGT\NGTScript\x64\Release\NGTScript.exp
+  sqlite3.c
+  stb_vorbis.c
+     Creating library D:\harry min khant\github\fork\NGT\main\NGTScript\x64\Release\NGTScript.lib and object D:\harry min khant\github\fork\NGT\main\NGTScript\x64\Release\NGTScript.exp
   Generating code
   Not all modules are compiled with -Gy (function comdat), build without incremental LTCG.
-C:\Users\Parker\Documents\GitHub\NGT\NGTScript\sound.cpp(1672): warning C4715: 'sound::is_paused': not all control paths return a value
-C:\Users\Parker\Documents\GitHub\NGT\NGTScript\sound.cpp(1280): warning C4715: 'sound::stop': not all control paths return a value
-C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngtreg.cpp(356): warning C4715: 'WndProc': not all control paths return a value
-C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(617): warning C5082: second argument to 'va_start' is not the last named parameter
+D:\harry min khant\github\fork\NGT\main\NGTScript\sound.cpp(1672): warning C4715: 'sound::is_paused': not all control paths return a value
+D:\harry min khant\github\fork\NGT\main\NGTScript\sound.cpp(1280): warning C4715: 'sound::stop': not all control paths return a value
+D:\harry min khant\github\fork\NGT\main\NGTScript\ngtreg.cpp(356): warning C4715: 'WndProc': not all control paths return a value
+D:\harry min khant\github\fork\NGT\main\NGTScript\ngt.cpp(617): warning C5082: second argument to 'va_start' is not the last named parameter
   Finished generating code
 SDL2.lib(SDL_dynapi.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_dynapi.obj)' or at ''; linking object as if no debug info
 SDL2.lib(SDL_error.obj) : warning LNK4099: PDB '' was not found with 'SDL2.lib(SDL_error.obj)' or at ''; linking object as if no debug info
@@ -402,4 +433,4 @@ angelscript64.lib(as_bytecode.obj) : warning LNK4099: PDB '' was not found with 
 angelscript64.lib(as_scriptcode.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_scriptcode.obj)' or at ''; linking object as if no debug info
 angelscript64.lib(as_restore.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_restore.obj)' or at ''; linking object as if no debug info
 angelscript64.lib(as_variablescope.obj) : warning LNK4099: PDB '' was not found with 'angelscript64.lib(as_variablescope.obj)' or at ''; linking object as if no debug info
-  NGTScript.vcxproj -> C:\Users\Parker\Documents\GitHub\NGT\NGTScript\x64\Release\NGTScript.exe
+  NGTScript.vcxproj -> D:\harry min khant\github\fork\NGT\main\NGTScript\x64\Release\NGTScript.exe

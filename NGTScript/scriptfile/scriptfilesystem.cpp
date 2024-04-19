@@ -43,9 +43,9 @@ void RegisterScriptFileSystem_Native(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("filesystem", "bool file_exists(const string &in)", asMETHOD(CScriptFileSystem, FileExists), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("filesystem", "bool dir_exists(const string &in)", asMETHOD(CScriptFileSystem, DirExists), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("filesystem", "bool change_current_path(const string &in)", asMETHOD(CScriptFileSystem, ChangeCurrentPath), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("filesystem", "string get_current_path() const", asMETHOD(CScriptFileSystem, GetCurrentPath), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("filesystem", "array<string> @get_dirs() const", asMETHOD(CScriptFileSystem, GetDirs), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("filesystem", "array<string> @get_files() const", asMETHOD(CScriptFileSystem, GetFiles), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("filesystem", "string get_current_path() const property", asMETHOD(CScriptFileSystem, GetCurrentPath), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("filesystem", "array<string> @get_dirs() const property", asMETHOD(CScriptFileSystem, GetDirs), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("filesystem", "array<string> @get_files() const property", asMETHOD(CScriptFileSystem, GetFiles), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("filesystem", "bool is_dir(const string &in) const", asMETHOD(CScriptFileSystem, IsDir), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("filesystem", "bool is_link(const string &in) const", asMETHOD(CScriptFileSystem, IsLink), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("filesystem", "int64 get_size(const string &in) const", asMETHOD(CScriptFileSystem, GetSize), asCALL_THISCALL); assert(r >= 0);
@@ -74,9 +74,9 @@ void RegisterScriptFileSystem_Generic(asIScriptEngine *engine)
 	r = engine->RegisterObjectMethod("filesystem", "bool dir_exists(const string &in)", WRAP_MFN(CScriptFileSystem, DirExists), asCALL_GENERIC); assert(r >= 0);
 
 	r = engine->RegisterObjectMethod("filesystem", "bool change_current_path(const string &in)", WRAP_MFN(CScriptFileSystem, ChangeCurrentPath), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("filesystem", "string get_current_path() const", WRAP_MFN(CScriptFileSystem, GetCurrentPath), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("filesystem", "array<string> @get_dirs() const", WRAP_MFN(CScriptFileSystem, GetDirs), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("filesystem", "array<string> @get_files() const", WRAP_MFN(CScriptFileSystem, GetFiles), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("filesystem", "string get_current_path() const property", WRAP_MFN(CScriptFileSystem, GetCurrentPath), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("filesystem", "array<string> @get_dirs() const property", WRAP_MFN(CScriptFileSystem, GetDirs), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("filesystem", "array<string> @get_files() const property", WRAP_MFN(CScriptFileSystem, GetFiles), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("filesystem", "bool is_dir(const string &in) const", WRAP_MFN(CScriptFileSystem, IsDir), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("filesystem", "bool is_link(const string &in) const", WRAP_MFN(CScriptFileSystem, IsLink), asCALL_GENERIC); assert(r >= 0);
 	r = engine->RegisterObjectMethod("filesystem", "int64 get_size(const string &in) const", WRAP_MFN(CScriptFileSystem, GetSize), asCALL_GENERIC); assert(r >= 0);
