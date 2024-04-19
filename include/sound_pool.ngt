@@ -387,6 +387,7 @@ items[slot].memoryplaying=true;
 items[slot].handle.load_from_memory(items[slot].filename);
 }
 
+items[slot].handle.set_hrtf(use_hrtf);
 
 items[slot].handle.set_fx(global_fx);
 
