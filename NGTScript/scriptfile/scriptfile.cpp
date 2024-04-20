@@ -121,14 +121,14 @@ void RegisterScriptFile_Native(asIScriptEngine *engine)
 
     r = engine->RegisterObjectMethod("file", "int open(const string &in, const string &in)", asMETHOD(CScriptFile,Open), asCALL_THISCALL); assert( r >= 0 );
     r = engine->RegisterObjectMethod("file", "int close()", asMETHOD(CScriptFile,Close), asCALL_THISCALL); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("file", "int get_size() const", asMETHOD(CScriptFile,GetSize), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("file", "int get_size() const property", asMETHOD(CScriptFile,GetSize), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("file", "bool is_end_of_file() const", asMETHOD(CScriptFile,IsEOF), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("file", "string read(uint)", asMETHOD(CScriptFile,Read), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("file", "string read_line()", asMETHOD(CScriptFile,ReadLine), asCALL_THISCALL); assert( r >= 0 );
 #if AS_WRITE_OPS == 1
 	r = engine->RegisterObjectMethod("file", "int write(const string &in)", asMETHOD(CScriptFile,Write), asCALL_THISCALL); assert( r >= 0 );
 #endif
-	r = engine->RegisterObjectMethod("file", "int get_pos() const", asMETHOD(CScriptFile,GetPos), asCALL_THISCALL); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("file", "int get_pos() const property", asMETHOD(CScriptFile,GetPos), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("file", "int set_pos(int)", asMETHOD(CScriptFile,SetPos), asCALL_THISCALL); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("file", "int move_pos(int)", asMETHOD(CScriptFile,MovePos), asCALL_THISCALL); assert( r >= 0 );
 
@@ -146,14 +146,14 @@ void RegisterScriptFile_Generic(asIScriptEngine *engine)
 
     r = engine->RegisterObjectMethod("file", "int open(const string &in, const string &in)", asFUNCTION(ScriptFile_Open_Generic), asCALL_GENERIC); assert( r >= 0 );
     r = engine->RegisterObjectMethod("file", "int close()", asFUNCTION(ScriptFile_Close_Generic), asCALL_GENERIC); assert( r >= 0 );
-	r = engine->RegisterObjectMethod("file", "int get_size() const", asFUNCTION(ScriptFile_GetSize_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("file", "int get_size() const property", asFUNCTION(ScriptFile_GetSize_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("file", "bool is_end_of_file() const", asFUNCTION(ScriptFile_IsEOF_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("file", "string read(uint)", asFUNCTION(ScriptFile_Read_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("file", "string read_line()", asFUNCTION(ScriptFile_ReadLine_Generic), asCALL_GENERIC); assert( r >= 0 );
 #if AS_WRITE_OPS == 1
 	r = engine->RegisterObjectMethod("file", "int write(const string &in)", asFUNCTION(ScriptFile_Write_Generic), asCALL_GENERIC); assert( r >= 0 );
 #endif
-	r = engine->RegisterObjectMethod("file", "int get_pos() const", asFUNCTION(ScriptFile_GetPos_Generic), asCALL_GENERIC); assert( r >= 0 );
+	r = engine->RegisterObjectMethod("file", "int get_pos() const property", asFUNCTION(ScriptFile_GetPos_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("file", "int set_pos(int)", asFUNCTION(ScriptFile_SetPos_Generic), asCALL_GENERIC); assert( r >= 0 );
 	r = engine->RegisterObjectMethod("file", "int move_pos(int)", asFUNCTION(ScriptFile_MovePos_Generic), asCALL_GENERIC); assert( r >= 0 );
 

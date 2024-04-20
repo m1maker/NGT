@@ -126,10 +126,10 @@ public:
 };
 class network_event {
 public:
-    const int EVENT_NONE = 0;
-    const int EVENT_CONNECT = 1;
-    const int EVENT_RECEIVE = 2;
-    const int EVENT_DISCONNECT = 3;
+    const int EVENT_NONE = ENET_EVENT_TYPE_NONE;
+    const int EVENT_CONNECT = ENET_EVENT_TYPE_CONNECT;
+    const int EVENT_RECEIVE = ENET_EVENT_TYPE_RECEIVE;
+    const int EVENT_DISCONNECT = ENET_EVENT_TYPE_DISCONNECT;
 	void construct();
 	void destruct();
     int get_type() const {
@@ -184,6 +184,7 @@ public:
 private:
 	ENetAddress address;
 	ENetHost* host;
+	unsigned int current_peer_id;
 	int m_connectedPeers;
 	double m_bytesSent;
 	double m_bytesReceived;
@@ -191,13 +192,14 @@ private:
 };
 class library {
 public:
-	DLLib* lib;
+	HMODULE lib;
 	void construct();
 	void destruct();
 	bool load(const std::string &);
-	void* call(std::string function_name, const std::string& signature, ...);
+	CScriptDictionary* call(std::string function_name, ...);
 		void unload();
 };
+
 class instance {
 private:
 	HANDLE mutex;

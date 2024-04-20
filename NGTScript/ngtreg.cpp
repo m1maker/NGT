@@ -432,7 +432,7 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterGlobalFunction("bool random_bool()", asFUNCTION(random_bool), asCALL_CDECL);
     engine->RegisterGlobalFunction("int printf(const ? & in format, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null)", asFUNCTION(Print), asCALL_CDECL);
     engine->RegisterGlobalFunction("int scanf(const string &in format, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null)", asFUNCTION(scanf_s), asCALL_CDECL);
-    engine->RegisterGlobalFunction("int get_last_error()", asFUNCTION(get_last_error), asCALL_CDECL);
+    engine->RegisterGlobalFunction("int get_last_error()property", asFUNCTION(get_last_error), asCALL_CDECL);
 
     engine->RegisterGlobalFunction("void speak(const string &in, bool=true)", asFUNCTION(speak), asCALL_CDECL);
     engine->RegisterGlobalFunction("void speak_wait(const string &in, bool=true)", asFUNCTION(speak_wait), asCALL_CDECL);
@@ -442,15 +442,17 @@ void RegisterFunctions(asIScriptEngine* engine)
 
     engine->RegisterGlobalFunction("void show_console()", asFUNCTION(show_console), asCALL_CDECL);
     engine->RegisterGlobalFunction("void hide_console()", asFUNCTION(hide_console), asCALL_CDECL);
+    engine->RegisterObjectType("hwnd", sizeof(HWND), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); 
     engine->RegisterGlobalFunction("bool show_game_window(const string &in,int=640,int=480, bool=true)", asFUNCTION(show_game_window), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool focus_game_window()", asFUNCTION(focus_game_window), asCALL_CDECL);
-
     engine->RegisterGlobalFunction("void hide_game_window()", asFUNCTION(hide_game_window), asCALL_CDECL);
-    engine->RegisterGlobalFunction("void set_game_window_title(const string &in)", asFUNCTION(set_game_window_title), asCALL_CDECL);
-    engine->RegisterGlobalFunction("void set_game_window_closable(bool)", asFUNCTION(set_game_window_closable), asCALL_CDECL);
+    engine->RegisterGlobalFunction("void set_game_window_title(const string &in)property", asFUNCTION(set_game_window_title), asCALL_CDECL);
+    engine->RegisterGlobalFunction("void set_game_window_closable(bool)property", asFUNCTION(set_game_window_closable), asCALL_CDECL);
 
     engine->RegisterGlobalFunction("void update_game_window()", asFUNCTION(update_game_window), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool is_game_window_active()", asFUNCTION(is_game_window_active), asCALL_CDECL);
+    engine->RegisterGlobalFunction("hwnd get_focused_window()", asFUNCTION(GetFocus), asCALL_STDCALL);
+    engine->RegisterGlobalFunction("hwnd set_focused_window(hwnd)", asFUNCTION(SetFocus), asCALL_STDCALL);
     engine->RegisterGlobalFunction("void exit(int=0)",asFUNCTION(exit_engine),asCALL_CDECL);
     engine->RegisterGlobalFunction("bool clipboard_copy_text(const string &in)", asFUNCTION(clipboard_copy_text), asCALL_CDECL);
     engine->RegisterGlobalFunction("string clipboard_read_text()", asFUNCTION(clipboard_read_text), asCALL_CDECL);
@@ -489,10 +491,10 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectBehaviour("tts_voice", asBEHAVE_RELEASE, "void f()", asMETHOD(tts_voice, destruct), asCALL_THISCALL);
 
     
-    engine->RegisterObjectMethod("tts_voice", "void speak(const string& in)", asMETHOD(tts_voice, speak), asCALL_THISCALL);
-    engine->RegisterObjectMethod("tts_voice", "void speak_wait(const string& in)", asMETHOD(tts_voice, speak_wait), asCALL_THISCALL);
-    engine->RegisterObjectMethod("tts_voice", "void speak_interrupt(const string& in)", asMETHOD(tts_voice, speak_interrupt), asCALL_THISCALL);
-    engine->RegisterObjectMethod("tts_voice", "void speak_interrupt_wait(const string& in)", asMETHOD(tts_voice, speak_interrupt_wait), asCALL_THISCALL);
+    engine->RegisterObjectMethod("tts_voice", "void speak(const string& in)const", asMETHOD(tts_voice, speak), asCALL_THISCALL);
+    engine->RegisterObjectMethod("tts_voice", "void speak_wait(const string& in)const", asMETHOD(tts_voice, speak_wait), asCALL_THISCALL);
+    engine->RegisterObjectMethod("tts_voice", "void speak_interrupt(const string& in)const", asMETHOD(tts_voice, speak_interrupt), asCALL_THISCALL);
+    engine->RegisterObjectMethod("tts_voice", "void speak_interrupt_wait(const string& in)const", asMETHOD(tts_voice, speak_interrupt_wait), asCALL_THISCALL);
     engine->RegisterObjectMethod("tts_voice", "int get_rate()const property", asMETHOD(tts_voice, get_rate), asCALL_THISCALL);
     engine->RegisterObjectMethod("tts_voice", "void set_rate(int rate)property", asMETHOD(tts_voice, set_rate), asCALL_THISCALL);
 
@@ -515,15 +517,15 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectMethod("timer", "uint64 get_elapsed_millis()const property", asMETHOD(timer, elapsed_millis), asCALL_THISCALL);
     engine->RegisterObjectMethod("timer", "uint64 get_elapsed_micros()const property", asMETHOD(timer, elapsed_micros), asCALL_THISCALL);
     engine->RegisterObjectMethod("timer", "uint64 get_elapsed_nanos()const property", asMETHOD(timer, elapsed_nanos), asCALL_THISCALL);
-    engine->RegisterObjectMethod("timer", "void force_seconds(uint64)", asMETHOD(timer, force_seconds), asCALL_THISCALL);
-    engine->RegisterObjectMethod("timer", "void force_minutes(uint64)", asMETHOD(timer, force_minutes), asCALL_THISCALL);
-    engine->RegisterObjectMethod("timer", "void force_hours(uint64)", asMETHOD(timer, force_hours), asCALL_THISCALL);
-    engine->RegisterObjectMethod("timer", "void force_millis(uint64)", asMETHOD(timer, force_millis), asCALL_THISCALL);
-    engine->RegisterObjectMethod("timer", "void force_micros(uint64)", asMETHOD(timer, force_micros), asCALL_THISCALL);
-    engine->RegisterObjectMethod("timer", "void force_nanos(uint64)", asMETHOD(timer, force_nanos), asCALL_THISCALL);
-    engine->RegisterObjectMethod("timer", "void restart()", asMETHOD(timer, restart), asCALL_THISCALL);
-    engine->RegisterObjectMethod("timer", "void pause()", asMETHOD(timer, pause), asCALL_THISCALL);
-    engine->RegisterObjectMethod("timer", "void resume()", asMETHOD(timer, resume), asCALL_THISCALL);
+    engine->RegisterObjectMethod("timer", "void force_seconds(uint64)const", asMETHOD(timer, force_seconds), asCALL_THISCALL);
+    engine->RegisterObjectMethod("timer", "void force_minutes(uint64)const", asMETHOD(timer, force_minutes), asCALL_THISCALL);
+    engine->RegisterObjectMethod("timer", "void force_hours(uint64)const", asMETHOD(timer, force_hours), asCALL_THISCALL);
+    engine->RegisterObjectMethod("timer", "void force_millis(uint64)const", asMETHOD(timer, force_millis), asCALL_THISCALL);
+    engine->RegisterObjectMethod("timer", "void force_micros(uint64)const", asMETHOD(timer, force_micros), asCALL_THISCALL);
+    engine->RegisterObjectMethod("timer", "void force_nanos(uint64)const", asMETHOD(timer, force_nanos), asCALL_THISCALL);
+    engine->RegisterObjectMethod("timer", "void restart()const", asMETHOD(timer, restart), asCALL_THISCALL);
+    engine->RegisterObjectMethod("timer", "void pause()const", asMETHOD(timer, pause), asCALL_THISCALL);
+    engine->RegisterObjectMethod("timer", "void resume()const", asMETHOD(timer, resume), asCALL_THISCALL);
     engine->RegisterObjectMethod("timer", "bool get_running()const property", asMETHOD(timer, is_running), asCALL_THISCALL);
     engine->RegisterObjectType("script_function", sizeof(asIScriptFunction), asOBJ_REF);
     engine->RegisterObjectBehaviour("script_function", asBEHAVE_FACTORY, "script_function@ asIScriptFunction()", asFUNCTION(fscript_function), asCALL_CDECL);
@@ -533,15 +535,14 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectBehaviour("library", asBEHAVE_FACTORY, "library@ l()", asFUNCTION(flibrary), asCALL_CDECL);
     engine->RegisterObjectBehaviour("library", asBEHAVE_ADDREF, "void f()", asMETHOD(library, construct), asCALL_THISCALL);
     engine->RegisterObjectBehaviour("library", asBEHAVE_RELEASE, "void f()", asMETHOD(library, destruct), asCALL_THISCALL);
-    engine->RegisterObjectMethod("library", "bool load(const string&in)", asMETHOD(library, load), asCALL_THISCALL);
-    engine->RegisterObjectMethod("library", "void call(const string&in, const string &in, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null)", asMETHOD(library, call), asCALL_THISCALL);
-    engine->RegisterObjectMethod("library", "void unload()", asMETHOD(library, unload), asCALL_THISCALL);
+    engine->RegisterObjectMethod("library", "bool load(const string&in)const", asMETHOD(library, load), asCALL_THISCALL);
+    engine->RegisterObjectMethod("library", "void call(const string&in, const string &in, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null)const", asMETHOD(library, call), asCALL_THISCALL);
+    engine->RegisterObjectMethod("library", "void unload()const", asMETHOD(library, unload), asCALL_THISCALL);
     engine->RegisterObjectType("instance", sizeof(instance), asOBJ_REF);
     engine->RegisterObjectBehaviour("instance", asBEHAVE_FACTORY, "instance@ i(const string&in)", asFUNCTION(finstance), asCALL_CDECL);
     engine->RegisterObjectBehaviour("instance", asBEHAVE_ADDREF, "void f()", asMETHOD(instance, construct), asCALL_THISCALL);
     engine->RegisterObjectBehaviour("instance", asBEHAVE_RELEASE, "void f()", asMETHOD(instance, destruct), asCALL_THISCALL);
     engine->RegisterObjectMethod("instance", "bool is_running()", asMETHOD(instance, is_running), asCALL_THISCALL);
-/*
     engine->RegisterObjectType("network_event", sizeof(network_event), asOBJ_REF);
     engine->RegisterObjectBehaviour("network_event", asBEHAVE_FACTORY, "network_event@ e()", asFUNCTION(fnetwork_event), asCALL_CDECL);
     engine->RegisterObjectBehaviour("network_event", asBEHAVE_ADDREF, "void f()", asMETHOD(network_event, construct), asCALL_THISCALL);
@@ -551,7 +552,7 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectProperty("network_event", "const int EVENT_RECEIVE", asOFFSET(network_event, EVENT_RECEIVE));
     engine->RegisterObjectProperty("network_event", "const int EVENT_DISCONNECT", asOFFSET(network_event, EVENT_DISCONNECT));
     engine->RegisterObjectProperty("network_event", "const int type", asOFFSET(network_event, m_type));
-    engine->RegisterObjectProperty("network_event", "const uint peerId", asOFFSET(network_event, m_peerId));
+    engine->RegisterObjectProperty("network_event", "const uint peer_id", asOFFSET(network_event, m_peerId));
     engine->RegisterObjectProperty("network_event", "const int channel", asOFFSET(network_event, m_channel));
     engine->RegisterObjectProperty("network_event", "const string message", asOFFSET(network_event, m_message));
 
@@ -564,10 +565,10 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectMethod("network", "bool destroy()", asMETHOD(network, destroy), asCALL_THISCALL);
     engine->RegisterObjectMethod("network", "bool disconnect_peer(uint)", asMETHOD(network, disconnect_peer), asCALL_THISCALL);
     engine->RegisterObjectMethod("network", "bool disconnect_peer_forcefully(uint)", asMETHOD(network, disconnect_peer_forcefully), asCALL_THISCALL);
-    engine->RegisterObjectMethod("network", "bool disconnect_peer_softly(uint)", asMETHOD(network, disconnect_peer_softly), asCALL_THISCALL);
+//    engine->RegisterObjectMethod("network", "bool disconnect_peer_softly(uint)", asMETHOD(network, disconnect_peer_softly), asCALL_THISCALL);
     engine->RegisterObjectMethod("network", "string get_peer_address(uint)const property", asMETHOD(network, get_peer_address), asCALL_THISCALL);
     engine->RegisterObjectMethod("network", "double get_peer_average_round_trip_time(uint)const property", asMETHOD(network, get_peer_average_round_trip_time), asCALL_THISCALL);
-//    engine->RegisterObjectMethod("network", "array<uint> get_peer_list()", asMETHOD(network, get_peer_list), asCALL_THISCALL);
+    engine->RegisterObjectMethod("network", "uint[]@ get_peer_list()", asMETHOD(network, get_peer_list), asCALL_THISCALL);
     engine->RegisterObjectMethod("network", "network_event@ request()", asMETHOD(network, request), asCALL_THISCALL);
     engine->RegisterObjectMethod("network", "bool send_reliable(uint, string&in, int)", asMETHOD(network, send_reliable), asCALL_THISCALL);
     engine->RegisterObjectMethod("network", "bool send_unreliable(uint, string&in, int)", asMETHOD(network, send_unreliable), asCALL_THISCALL);
@@ -577,7 +578,6 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectMethod("network", "int get_connected_peers() const property", asMETHOD(network, get_connected_peers), asCALL_THISCALL);
     engine->RegisterObjectMethod("network", "double get_bytes_sent() const property", asMETHOD(network, get_bytes_sent), asCALL_THISCALL);
     engine->RegisterObjectMethod("network", "double get_bytes_received() const property", asMETHOD(network, get_bytes_received), asCALL_THISCALL);
-*/
     engine->RegisterFuncdef("int sqlite3authorizer(string, int, string, string, string, string)");
     engine->RegisterObjectType("sqlite3statement", sizeof(sqlite3statement), asOBJ_REF);
     engine->RegisterObjectBehaviour("sqlite3statement", asBEHAVE_FACTORY, "sqlite3statement@ s()", asFUNCTION(fsqlite3statement), asCALL_CDECL);

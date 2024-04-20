@@ -19,6 +19,8 @@
 #include <cstring>
 bool engine_is_active= false;
 SDL_Window* win = NULL;
+
+SDL_Event e;
 bool window_is_focused;
 std::wstring wstr(const std::string& utf8String)
 {
@@ -31,6 +33,7 @@ bool keyhook = false;
 std::string inputtext;
 void init_engine(){
     Tolk_Load();
+
     SDL_Init(SDL_INIT_EVERYTHING);
     enet_initialize();
     Tolk_TrySAPI(true);
@@ -85,7 +88,7 @@ void speak(const std::string & text, bool stop) {
 void speak_wait(const std::string & text, bool stop) {
     speak(text, stop);
     while (Tolk_IsSpeaking()) {
-        update_game_window();
+        SDL_PollEvent(&e);
     }
 }
 
@@ -97,7 +100,6 @@ std::string screen_reader_detect() {
     return std::string(reader.begin(), reader.end());
 }
 bool window_closable;
-SDL_Event e;
 void show_console() {
     if (AllocConsole())
     {
@@ -420,7 +422,7 @@ void wait(int time) {
     timer waittimer;
     int el = 0;
     while (el < time) {
-        update_game_window();
+        SDL_PollEvent(&e);
         el = waittimer.elapsed_millis();
     }
 }
@@ -592,7 +594,7 @@ bool timer::is_running() {
         if (peer == NULL) {
             return 0; // Connection failed
         }
-
+        current_peer_id = peer->incomingPeerID;
         return peer->incomingPeerID;
     }
 
@@ -604,115 +606,153 @@ bool timer::is_running() {
         }
         return false;
     }
+    bool network::disconnect_peer(unsigned int peer_id) {
+        if (host) {
+            enet_peer_disconnect(&host->peers[peer_id], 0);
+            return true;
+        }
+        return false;
+    }
+    bool network::disconnect_peer_forcefully(unsigned int peer_id) {
+        if (host) {
+            enet_peer_reset(&host->peers[peer_id]);
+            return true;
+        }
+        return false;
+
+}
+    std::string network::get_peer_address(unsigned int peer_id) {
+        char addressStr[64];
+        enet_address_get_host_ip(&host->peers[peer_id].address, addressStr, sizeof(addressStr));
+        return std::string(addressStr);
+    }
+    double network::get_peer_average_round_trip_time(unsigned int peerId) {
+        return host->peers[peerId].roundTripTime;
+    }
+    CScriptArray* network::get_peer_list() {
+        asIScriptContext* ctx = asGetActiveContext();
+        asIScriptEngine* engine = ctx->GetEngine();
+        asITypeInfo* arrayType = engine->GetTypeInfoById(engine->GetTypeIdByDecl("array<uint>"));
+        CScriptArray* peers = CScriptArray::Create(arrayType, (asUINT)0);
+        for (UINT i = 0; i < host->connectedPeers; i++) {
+            peers->InsertLast(&host->peers[i]);
+        }
+        return peers;
+    }
+    network_event* network::request() {
+        network_event* handle_ = new network_event;
+
+        std::thread t([this, handle_]() {
+            ENetEvent event;
+            enet_host_service(host, &event, 0);
+if(event.type!=NULL)
+            handle_->m_type = event.type;
+if(event.channelID!=0)
+handle_->m_channel = event.channelID;
+
+            if (event.packet != nullptr) {
+                handle_->m_message = std::string(reinterpret_cast<char*>(event.packet->data));
+            }
+
+            if (event.peer != nullptr) {
+                handle_->m_peerId = event.peer->incomingPeerID;
+            }
+            });
+
+        t.detach();
+        return handle_;
+
+    }
+
+    bool network::send_reliable(unsigned int peer_id, const std::string& packet, int channel) {
+        ENetPacket* p = enet_packet_create(packet.c_str(), strlen(packet.c_str()), ENET_PACKET_FLAG_RELIABLE);
+        int result=enet_peer_send(&host->peers[peer_id], channel, p);
+        enet_packet_destroy(p);
+        if (result == 0)
+            return true;
+        return false;
+    }
+    bool network::send_unreliable(unsigned int peer_id, const std::string& packet, int channel) {
+        ENetPacket* p = enet_packet_create(packet.c_str(), strlen(packet.c_str()), 0);
+        int result = enet_peer_send(&host->peers[peer_id], channel, p);
+        enet_packet_destroy(p);
+        if (result == 0)
+            return true;
+        return false;
+    }
+    bool network::set_bandwidth_limits(double incomingBandwidth, double outgoingBandwidth) {
+        enet_host_bandwidth_limit(host, incomingBandwidth, outgoingBandwidth);
+        return true;
+    }
+
+    bool network::setup_client(int channels, int maxPeers) {
+        address.host = ENET_HOST_ANY;
+        address.port = 0; // Let the system choose a port
+
+        host = enet_host_create(NULL, 1, channels, 0, 0);
+
+        if (host == NULL) {
+            return false; // Failed to create host
+        }
+
+        m_active = true;
+
+        return true;
+    }
+
+    bool network::setup_server(int listeningPort, int channels, int maxPeers) {
+        address.host = ENET_HOST_ANY;
+        address.port = listeningPort;
+
+        host = enet_host_create(&address, maxPeers, channels, 0, 0);
+
+        if (host == NULL) {
+            return false; // Failed to create host
+        }
+
+        m_active = true;
+
+        return true;
+    }
+
+    int network::get_connected_peers() const {
+        return host ? host->connectedPeers : 0;
+    }
+
+    double network::get_bytes_sent() const {
+        return m_bytesSent;
+    }
+
+    double network::get_bytes_received() const {
+        return m_bytesReceived;
+    }
+
+    bool network::is_active() const {
+        return m_active;
+    }
+
     void library::construct() {}
     void library::destruct() {}
-                                bool library::load(const std::string& libname) {
-                                    lib = dlLoadLibrary(libname.c_str());
+    bool library::load(const std::string& libname) {
+                                    lib = LoadLibraryW(std::wstring(libname.begin(), libname.end()).c_str());
                                     return lib == NULL;
                                 }
-                                void* library::call(std::string function_name, const std::string& signature, ...) {
-                                    void* sym;
-                                    va_list args;
-                                    const char* signature_c_str = signature.c_str();
-                                    va_start(args, signature_c_str);
+    CScriptDictionary* library::call(std::string function_name, ...) {
+        asIScriptContext* ctx = asGetActiveContext();
+        asIScriptEngine* engine = ctx->GetEngine();
+        CScriptDictionary* dict = CScriptDictionary::Create(engine);
 
-                                                                                                                               
-                                                                            sym = dlFindSymbol(lib, function_name.c_str());
-                                                                  if (!sym) {
-                                                              va_end(args);
-                                        return nullptr;
-                                    }
-                                    DCCallVM* vm = dcNewCallVM(4096); // error checking
-                                    dcReset(vm);
-
-                                    int arg_index = 0;
-                                    int sig_index = 0;
-                                    while (signature[sig_index] != '\0') {
-                                        switch (signature[sig_index]) {
-                                        case DC_SIGCHAR_INT:
-                                            dcArgInt(vm, va_arg(args, int));
-                                            break;
-                                        case DC_SIGCHAR_FLOAT:
-                                            dcArgFloat(vm, va_arg(args, float));
-                                            break;
-                                        case DC_SIGCHAR_DOUBLE:
-                                            dcArgDouble(vm, va_arg(args, double));
-                                            break;
-                                        case DC_SIGCHAR_CHAR:
-                                            dcArgChar(vm, va_arg(args, char));
-                                            break;
-                                        case DC_SIGCHAR_POINTER:
-                                            dcArgPointer(vm, va_arg(args, void*));
-                                            break;
-                                        case DC_SIGCHAR_BOOL:
-                                            dcArgBool(vm, (DCbool)atoi(va_arg(args, char*)));
-                                            break;
-                                        case DC_SIGCHAR_UCHAR:
-                                            dcArgChar(vm, (DCuchar)atoi(va_arg(args, char*)));
-                                            break;
-                                        case DC_SIGCHAR_SHORT:
-                                            dcArgShort(vm, (DCshort)atoi(va_arg(args, char*)));
-                                            break;
-                                        case DC_SIGCHAR_USHORT:
-                                            dcArgShort(vm, (DCushort)atoi(va_arg(args, char*)));
-                                            break;
-                                        case DC_SIGCHAR_UINT:
-                                            dcArgInt(vm, (DCint)(DCuint)strtoul(va_arg(args, char*), NULL, 10));
-                                            break;
-                                        case DC_SIGCHAR_LONG:
-                                            dcArgLong(vm, (DClong)strtol(va_arg(args, char*), NULL, 10));
-                                            break;
-                                        case DC_SIGCHAR_ULONG:
-                                            dcArgLong(vm, (DCulong)strtoul(va_arg(args, char*), NULL, 10));
-                                            break;
-                                        case DC_SIGCHAR_LONGLONG:
-                                            dcArgLongLong(vm, (DClonglong)strtoll(va_arg(args, char*), NULL, 10));
-                                            break;
-                                        case DC_SIGCHAR_ULONGLONG:
-                                            dcArgLongLong(vm, (DCulonglong)strtoull(va_arg(args, char*), NULL, 10));
-                                            break;
-                                        case DC_SIGCHAR_STRING:
-                                            dcArgPointer(vm, (DCpointer)va_arg(args, char*));
-                                            break;
-
-                                        default:
-                                            break;
-                                        }
-                                        ++arg_index;
-                                        ++sig_index;
-                                    }
-
-                                    // Call the function based on return type
-                                    switch (signature[arg_index]) {
-                                    case DC_SIGCHAR_VOID:
-                                        dcCallVoid(vm, sym);
-                                        break;
-                                    case DC_SIGCHAR_INT:
-                                        dcCallInt(vm, sym);
-                                        break;
-                                    case DC_SIGCHAR_FLOAT:
-                                        dcCallFloat(vm, sym);
-                                        break;
-                                    case DC_SIGCHAR_DOUBLE:
-                                        dcCallDouble(vm, sym);
-                                        break;
-                                    case DC_SIGCHAR_CHAR:
-                                        dcCallChar(vm, sym);
-                                        break;
-                                    case DC_SIGCHAR_POINTER:
-                                        dcCallPointer(vm, sym);
-                                        break;
-                                        // Add more cases for other return types as needed
-                                    default:
-                                        break;
-                                    }
-
-                                    dcFree(vm);
-                                    va_end(args);
-                                    return sym;
-                                }
+        va_list args;
+        va_start(args, function_name);
+        FARPROC address = GetProcAddress(lib, function_name.c_str());
+        typedef void* (*function_signature)(...);
+        function_signature function = reinterpret_cast<function_signature>(address);
+            void* return_result=function(args);
+        va_end(args);
+        return nullptr;
+    }
                                 void library::unload() {
-                                    dlFreeLibrary(lib);
+                                    FreeLibrary(lib);
                                 }
                 void instance::construct() {}
                 void instance::destruct() {  }

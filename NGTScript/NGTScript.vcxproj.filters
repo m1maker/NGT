@@ -1,826 +1,282 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
+    <ClCompile Include="datetime\datetime.cpp" />
+    <ClCompile Include="debugger\debugger.cpp" />
+    <ClCompile Include="http.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="ngt.cpp" />
+    <ClCompile Include="ngtreg.cpp" />
+    <ClCompile Include="pack.cpp" />
+    <ClCompile Include="sapi\SpeechEngine.cpp" />
+    <ClCompile Include="sapi\Voice.cpp" />
+    <ClCompile Include="scriptany\scriptany.cpp" />
+    <ClCompile Include="scriptarray\scriptarray.cpp" />
+    <ClCompile Include="scriptbuilder\scriptbuilder.cpp" />
+    <ClCompile Include="scriptdictionary\scriptdictionary.cpp" />
+    <ClCompile Include="scriptfile\scriptfile.cpp" />
+    <ClCompile Include="scriptfile\scriptfilesystem.cpp" />
+    <ClCompile Include="scriptgrid\scriptgrid.cpp" />
+    <ClCompile Include="scripthandle\scripthandle.cpp" />
+    <ClCompile Include="scripthelper\scripthelper.cpp" />
+    <ClCompile Include="scriptmath\scriptmath.cpp" />
+    <ClCompile Include="scriptmath\scriptmathcomplex.cpp" />
+    <ClCompile Include="scriptstdstring\scriptstdstring.cpp" />
+    <ClCompile Include="scriptstdstring\scriptstdstring_utils.cpp" />
+    <ClCompile Include="serializer\serializer.cpp" />
+    <ClCompile Include="sound.cpp" />
+    <ClCompile Include="sqlite3.c" />
+    <ClCompile Include="stb_vorbis.c" />
+    <ClCompile Include="stb_vorbis.h" />
+    <ClCompile Include="tts_voice.cpp" />
+    <ClCompile Include="dlibrary.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="angelscript.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ngt.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="scriptstdstring\scriptstdstring.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="scriptbuilder\scriptbuilder.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ngtreg.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="datetime\datetime.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="scriptany\scriptany.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="scriptarray\scriptarray.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="scriptdictionary\scriptdictionary.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="scriptfile\scriptfile.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="scriptfile\scriptfilesystem.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="scriptgrid\scriptgrid.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="scripthandle\scripthandle.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="scripthelper\scripthelper.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="scriptmath\scriptmathcomplex.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="scriptmath\scriptmath.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="serializer\serializer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="autowrapper\aswrappedcall.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Tolk.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SDL_net.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\begin_code.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_assert.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_atomic.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_audio.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_bits.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_blendmode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_clipboard.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_config.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_cpuinfo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_egl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_endian.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_error.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_events.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_filesystem.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_gamecontroller.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_gesture.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_guid.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_haptic.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_hidapi.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_hints.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_joystick.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_keyboard.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_keycode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_loadso.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_locale.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_log.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_main.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_messagebox.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_metal.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_misc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_mouse.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_mutex.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_name.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_opengl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_opengl_glext.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_opengles.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_opengles2.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_opengles2_gl2.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_opengles2_gl2ext.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_opengles2_gl2platform.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_opengles2_khrplatform.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_pixels.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_platform.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_power.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_quit.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_rect.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_render.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_revision.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_rwops.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_scancode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_sensor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_shape.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_stdinc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_surface.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_system.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_syswm.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_test.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_test_assert.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_test_common.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_test_compare.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_test_crc32.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_test_font.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_test_fuzzer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_test_harness.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_test_images.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_test_log.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_test_md5.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_test_memory.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_test_random.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_thread.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_timer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_touch.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_types.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_version.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_video.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sdl\SDL_vulkan.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vorbisfile.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vorbis\codec.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vorbis\vorbisenc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="vorbis\vorbisfile.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ogg\ogg.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ogg\os_types.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ffi.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ffi_cfi.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ffi_common.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="uni_algo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="AL\al.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="AL\alc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="AL\alext.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="AL\efx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="AL\efx-creative.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="AL\efx-presets.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sndfile.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="enet\callbacks.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="enet\enet.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="enet\list.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="enet\protocol.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="enet\time.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="enet\types.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="enet\unix.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="enet\utility.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="enet\win32.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="reverb\verblib.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sqlite3.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sound.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="phonon.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="phonon_interfaces.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="phonon_version.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="debugger\debugger.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\backends\AudioDevice_Miniaudio.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\backends\AudioDevice_RtAudio.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\AnalyserNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\AudioArray.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\AudioBasicInspectorNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\AudioBasicProcessorNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\AudioBus.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\AudioChannel.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\AudioContext.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\AudioDevice.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\AudioHardwareInputNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\AudioListener.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\AudioNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\AudioNodeDescriptor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\AudioNodeInput.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\AudioNodeOutput.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\AudioNodeScheduler.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\AudioParam.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\AudioParamDescriptor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\AudioParamTimeline.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\AudioProcessor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\AudioScheduledSourceNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\AudioSetting.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\AudioSettingDescriptor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\AudioSourceProvider.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\AudioSummingJunction.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\BiquadFilterNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\ChannelMergerNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\ChannelSplitterNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\ConcurrentQueue.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\ConstantSourceNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\ConvolverNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\DelayNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\DynamicsCompressorNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\FloatPoint3D.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\GainNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\Macros.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\Mixing.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\OscillatorNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\PannerNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\PeriodicWave.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\Profiler.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\SampledAudioNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\StereoPannerNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\WaveShaperNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\core\WindowFunctions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\extended\ADSRNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\extended\AudioContextLock.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\extended\AudioFileReader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\extended\BPMDelayNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\extended\ClipNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\extended\DiodeNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\extended\FunctionNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\extended\GranulationNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\extended\Logging.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\extended\NoiseNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\extended\PdNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\extended\PeakCompNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\extended\PingPongDelayNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\extended\PolyBLEPNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\extended\PowerMonitorNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\extended\PWMNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\extended\RealtimeAnalyser.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\extended\RecorderNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\extended\Registry.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\extended\SfxrNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\extended\SpatializationNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\extended\SpectralMonitorNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\extended\SupersawNode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\extended\Util.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LabSound\extended\VectorMath.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="miniaudio.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="pack.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="resource1.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="resource2.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="resource3.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dyncall.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dyncall_alloc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dyncall_callf.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dyncall_callvm.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dyncall_callvm_arm32_arm.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dyncall_callvm_arm32_arm_armhf.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dyncall_callvm_arm32_thumb.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dyncall_callvm_arm64.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dyncall_callvm_mips.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dyncall_callvm_mips_eabi.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dyncall_callvm_mips_n32.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dyncall_callvm_mips_n64.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dyncall_callvm_mips_o32.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dyncall_callvm_ppc32.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dyncall_callvm_ppc64.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dyncall_callvm_sparc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dyncall_callvm_sparc64.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dyncall_callvm_x64.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dyncall_callvm_x86.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dyncall_config.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dyncall_macros.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dyncall_signature.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dyncall_struct.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dyncall_types.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dyncall_utils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dyncall_value.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dyncall_vector.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dynload.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="dyn\dynload_alloc.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="fx\verblib.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sapi\SpeechEngine.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="sapi\Voice.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="tts_voice.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <ClInclude Include="AL\al.h" />
+    <ClInclude Include="AL\alc.h" />
+    <ClInclude Include="AL\alext.h" />
+    <ClInclude Include="AL\efx-creative.h" />
+    <ClInclude Include="AL\efx-presets.h" />
+    <ClInclude Include="AL\efx.h" />
+    <ClInclude Include="angelscript.h" />
+    <ClInclude Include="autowrapper\aswrappedcall.h" />
+    <ClInclude Include="datetime\datetime.h" />
+    <ClInclude Include="debugger\debugger.h" />
+    <ClInclude Include="dyn\dyncall.h" />
+    <ClInclude Include="dyn\dyncall_alloc.h" />
+    <ClInclude Include="dyn\dyncall_callf.h" />
+    <ClInclude Include="dyn\dyncall_callvm.h" />
+    <ClInclude Include="dyn\dyncall_callvm_arm32_arm.h" />
+    <ClInclude Include="dyn\dyncall_callvm_arm32_arm_armhf.h" />
+    <ClInclude Include="dyn\dyncall_callvm_arm32_thumb.h" />
+    <ClInclude Include="dyn\dyncall_callvm_arm64.h" />
+    <ClInclude Include="dyn\dyncall_callvm_mips.h" />
+    <ClInclude Include="dyn\dyncall_callvm_mips_eabi.h" />
+    <ClInclude Include="dyn\dyncall_callvm_mips_n32.h" />
+    <ClInclude Include="dyn\dyncall_callvm_mips_n64.h" />
+    <ClInclude Include="dyn\dyncall_callvm_mips_o32.h" />
+    <ClInclude Include="dyn\dyncall_callvm_ppc32.h" />
+    <ClInclude Include="dyn\dyncall_callvm_ppc64.h" />
+    <ClInclude Include="dyn\dyncall_callvm_sparc.h" />
+    <ClInclude Include="dyn\dyncall_callvm_sparc64.h" />
+    <ClInclude Include="dyn\dyncall_callvm_x64.h" />
+    <ClInclude Include="dyn\dyncall_callvm_x86.h" />
+    <ClInclude Include="dyn\dyncall_config.h" />
+    <ClInclude Include="dyn\dyncall_macros.h" />
+    <ClInclude Include="dyn\dyncall_signature.h" />
+    <ClInclude Include="dyn\dyncall_struct.h" />
+    <ClInclude Include="dyn\dyncall_types.h" />
+    <ClInclude Include="dyn\dyncall_utils.h" />
+    <ClInclude Include="dyn\dyncall_value.h" />
+    <ClInclude Include="dyn\dyncall_vector.h" />
+    <ClInclude Include="dyn\dynload.h" />
+    <ClInclude Include="dyn\dynload_alloc.h" />
+    <ClInclude Include="enet\callbacks.h" />
+    <ClInclude Include="enet\enet.h" />
+    <ClInclude Include="enet\list.h" />
+    <ClInclude Include="enet\protocol.h" />
+    <ClInclude Include="enet\time.h" />
+    <ClInclude Include="enet\types.h" />
+    <ClInclude Include="enet\unix.h" />
+    <ClInclude Include="enet\utility.h" />
+    <ClInclude Include="enet\win32.h" />
+    <ClInclude Include="ffi.h" />
+    <ClInclude Include="ffi_cfi.h" />
+    <ClInclude Include="ffi_common.h" />
+    <ClInclude Include="fx\verblib.h" />
+    <ClInclude Include="http.h" />
+    <ClInclude Include="LabSound.h" />
+    <ClInclude Include="LabSound\backends\AudioDevice_Miniaudio.h" />
+    <ClInclude Include="LabSound\backends\AudioDevice_RtAudio.h" />
+    <ClInclude Include="LabSound\core\AnalyserNode.h" />
+    <ClInclude Include="LabSound\core\AudioArray.h" />
+    <ClInclude Include="LabSound\core\AudioBasicInspectorNode.h" />
+    <ClInclude Include="LabSound\core\AudioBasicProcessorNode.h" />
+    <ClInclude Include="LabSound\core\AudioBus.h" />
+    <ClInclude Include="LabSound\core\AudioChannel.h" />
+    <ClInclude Include="LabSound\core\AudioContext.h" />
+    <ClInclude Include="LabSound\core\AudioDevice.h" />
+    <ClInclude Include="LabSound\core\AudioHardwareInputNode.h" />
+    <ClInclude Include="LabSound\core\AudioListener.h" />
+    <ClInclude Include="LabSound\core\AudioNode.h" />
+    <ClInclude Include="LabSound\core\AudioNodeDescriptor.h" />
+    <ClInclude Include="LabSound\core\AudioNodeInput.h" />
+    <ClInclude Include="LabSound\core\AudioNodeOutput.h" />
+    <ClInclude Include="LabSound\core\AudioNodeScheduler.h" />
+    <ClInclude Include="LabSound\core\AudioParam.h" />
+    <ClInclude Include="LabSound\core\AudioParamDescriptor.h" />
+    <ClInclude Include="LabSound\core\AudioParamTimeline.h" />
+    <ClInclude Include="LabSound\core\AudioProcessor.h" />
+    <ClInclude Include="LabSound\core\AudioScheduledSourceNode.h" />
+    <ClInclude Include="LabSound\core\AudioSetting.h" />
+    <ClInclude Include="LabSound\core\AudioSettingDescriptor.h" />
+    <ClInclude Include="LabSound\core\AudioSourceProvider.h" />
+    <ClInclude Include="LabSound\core\AudioSummingJunction.h" />
+    <ClInclude Include="LabSound\core\BiquadFilterNode.h" />
+    <ClInclude Include="LabSound\core\ChannelMergerNode.h" />
+    <ClInclude Include="LabSound\core\ChannelSplitterNode.h" />
+    <ClInclude Include="LabSound\core\ConcurrentQueue.h" />
+    <ClInclude Include="LabSound\core\ConstantSourceNode.h" />
+    <ClInclude Include="LabSound\core\ConvolverNode.h" />
+    <ClInclude Include="LabSound\core\DelayNode.h" />
+    <ClInclude Include="LabSound\core\DynamicsCompressorNode.h" />
+    <ClInclude Include="LabSound\core\FloatPoint3D.h" />
+    <ClInclude Include="LabSound\core\GainNode.h" />
+    <ClInclude Include="LabSound\core\Macros.h" />
+    <ClInclude Include="LabSound\core\Mixing.h" />
+    <ClInclude Include="LabSound\core\OscillatorNode.h" />
+    <ClInclude Include="LabSound\core\PannerNode.h" />
+    <ClInclude Include="LabSound\core\PeriodicWave.h" />
+    <ClInclude Include="LabSound\core\Profiler.h" />
+    <ClInclude Include="LabSound\core\SampledAudioNode.h" />
+    <ClInclude Include="LabSound\core\StereoPannerNode.h" />
+    <ClInclude Include="LabSound\core\WaveShaperNode.h" />
+    <ClInclude Include="LabSound\core\WindowFunctions.h" />
+    <ClInclude Include="LabSound\extended\ADSRNode.h" />
+    <ClInclude Include="LabSound\extended\AudioContextLock.h" />
+    <ClInclude Include="LabSound\extended\AudioFileReader.h" />
+    <ClInclude Include="LabSound\extended\BPMDelayNode.h" />
+    <ClInclude Include="LabSound\extended\ClipNode.h" />
+    <ClInclude Include="LabSound\extended\DiodeNode.h" />
+    <ClInclude Include="LabSound\extended\FunctionNode.h" />
+    <ClInclude Include="LabSound\extended\GranulationNode.h" />
+    <ClInclude Include="LabSound\extended\Logging.h" />
+    <ClInclude Include="LabSound\extended\NoiseNode.h" />
+    <ClInclude Include="LabSound\extended\PdNode.h" />
+    <ClInclude Include="LabSound\extended\PeakCompNode.h" />
+    <ClInclude Include="LabSound\extended\PingPongDelayNode.h" />
+    <ClInclude Include="LabSound\extended\PolyBLEPNode.h" />
+    <ClInclude Include="LabSound\extended\PowerMonitorNode.h" />
+    <ClInclude Include="LabSound\extended\PWMNode.h" />
+    <ClInclude Include="LabSound\extended\RealtimeAnalyser.h" />
+    <ClInclude Include="LabSound\extended\RecorderNode.h" />
+    <ClInclude Include="LabSound\extended\Registry.h" />
+    <ClInclude Include="LabSound\extended\SfxrNode.h" />
+    <ClInclude Include="LabSound\extended\SpatializationNode.h" />
+    <ClInclude Include="LabSound\extended\SpectralMonitorNode.h" />
+    <ClInclude Include="LabSound\extended\SupersawNode.h" />
+    <ClInclude Include="LabSound\extended\Util.h" />
+    <ClInclude Include="LabSound\extended\VectorMath.h" />
+    <ClInclude Include="miniaudio.h" />
+    <ClInclude Include="ngt.h" />
+    <ClInclude Include="ngtreg.h" />
+    <ClInclude Include="ogg\ogg.h" />
+    <ClInclude Include="ogg\os_types.h" />
+    <ClInclude Include="pack.h" />
+    <ClInclude Include="phonon.h" />
+    <ClInclude Include="phonon_interfaces.h" />
+    <ClInclude Include="phonon_version.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="resource1.h" />
+    <ClInclude Include="resource2.h" />
+    <ClInclude Include="resource3.h" />
+    <ClInclude Include="reverb\verblib.h" />
+    <ClInclude Include="sapi\SpeechEngine.h" />
+    <ClInclude Include="sapi\Voice.h" />
+    <ClInclude Include="scriptany\scriptany.h" />
+    <ClInclude Include="scriptarray\scriptarray.h" />
+    <ClInclude Include="scriptbuilder\scriptbuilder.h" />
+    <ClInclude Include="scriptdictionary\scriptdictionary.h" />
+    <ClInclude Include="scriptfile\scriptfile.h" />
+    <ClInclude Include="scriptfile\scriptfilesystem.h" />
+    <ClInclude Include="scriptgrid\scriptgrid.h" />
+    <ClInclude Include="scripthandle\scripthandle.h" />
+    <ClInclude Include="scripthelper\scripthelper.h" />
+    <ClInclude Include="scriptmath\scriptmath.h" />
+    <ClInclude Include="scriptmath\scriptmathcomplex.h" />
+    <ClInclude Include="scriptstdstring\scriptstdstring.h" />
+    <ClInclude Include="sdl\begin_code.h" />
+    <ClInclude Include="sdl\SDL.h" />
+    <ClInclude Include="sdl\SDL_assert.h" />
+    <ClInclude Include="sdl\SDL_atomic.h" />
+    <ClInclude Include="sdl\SDL_audio.h" />
+    <ClInclude Include="sdl\SDL_bits.h" />
+    <ClInclude Include="sdl\SDL_blendmode.h" />
+    <ClInclude Include="sdl\SDL_clipboard.h" />
+    <ClInclude Include="sdl\SDL_config.h" />
+    <ClInclude Include="sdl\SDL_cpuinfo.h" />
+    <ClInclude Include="sdl\SDL_egl.h" />
+    <ClInclude Include="sdl\SDL_endian.h" />
+    <ClInclude Include="sdl\SDL_error.h" />
+    <ClInclude Include="sdl\SDL_events.h" />
+    <ClInclude Include="sdl\SDL_filesystem.h" />
+    <ClInclude Include="sdl\SDL_gamecontroller.h" />
+    <ClInclude Include="sdl\SDL_gesture.h" />
+    <ClInclude Include="sdl\SDL_guid.h" />
+    <ClInclude Include="sdl\SDL_haptic.h" />
+    <ClInclude Include="sdl\SDL_hidapi.h" />
+    <ClInclude Include="sdl\SDL_hints.h" />
+    <ClInclude Include="sdl\SDL_joystick.h" />
+    <ClInclude Include="sdl\SDL_keyboard.h" />
+    <ClInclude Include="sdl\SDL_keycode.h" />
+    <ClInclude Include="sdl\SDL_loadso.h" />
+    <ClInclude Include="sdl\SDL_locale.h" />
+    <ClInclude Include="sdl\SDL_log.h" />
+    <ClInclude Include="sdl\SDL_main.h" />
+    <ClInclude Include="sdl\SDL_messagebox.h" />
+    <ClInclude Include="sdl\SDL_metal.h" />
+    <ClInclude Include="sdl\SDL_misc.h" />
+    <ClInclude Include="sdl\SDL_mouse.h" />
+    <ClInclude Include="sdl\SDL_mutex.h" />
+    <ClInclude Include="sdl\SDL_name.h" />
+    <ClInclude Include="sdl\SDL_opengl.h" />
+    <ClInclude Include="sdl\SDL_opengles.h" />
+    <ClInclude Include="sdl\SDL_opengles2.h" />
+    <ClInclude Include="sdl\SDL_opengles2_gl2.h" />
+    <ClInclude Include="sdl\SDL_opengles2_gl2ext.h" />
+    <ClInclude Include="sdl\SDL_opengles2_gl2platform.h" />
+    <ClInclude Include="sdl\SDL_opengles2_khrplatform.h" />
+    <ClInclude Include="sdl\SDL_opengl_glext.h" />
+    <ClInclude Include="sdl\SDL_pixels.h" />
+    <ClInclude Include="sdl\SDL_platform.h" />
+    <ClInclude Include="sdl\SDL_power.h" />
+    <ClInclude Include="sdl\SDL_quit.h" />
+    <ClInclude Include="sdl\SDL_rect.h" />
+    <ClInclude Include="sdl\SDL_render.h" />
+    <ClInclude Include="sdl\SDL_revision.h" />
+    <ClInclude Include="sdl\SDL_rwops.h" />
+    <ClInclude Include="sdl\SDL_scancode.h" />
+    <ClInclude Include="sdl\SDL_sensor.h" />
+    <ClInclude Include="sdl\SDL_shape.h" />
+    <ClInclude Include="sdl\SDL_stdinc.h" />
+    <ClInclude Include="sdl\SDL_surface.h" />
+    <ClInclude Include="sdl\SDL_system.h" />
+    <ClInclude Include="sdl\SDL_syswm.h" />
+    <ClInclude Include="sdl\SDL_test.h" />
+    <ClInclude Include="sdl\SDL_test_assert.h" />
+    <ClInclude Include="sdl\SDL_test_common.h" />
+    <ClInclude Include="sdl\SDL_test_compare.h" />
+    <ClInclude Include="sdl\SDL_test_crc32.h" />
+    <ClInclude Include="sdl\SDL_test_font.h" />
+    <ClInclude Include="sdl\SDL_test_fuzzer.h" />
+    <ClInclude Include="sdl\SDL_test_harness.h" />
+    <ClInclude Include="sdl\SDL_test_images.h" />
+    <ClInclude Include="sdl\SDL_test_log.h" />
+    <ClInclude Include="sdl\SDL_test_md5.h" />
+    <ClInclude Include="sdl\SDL_test_memory.h" />
+    <ClInclude Include="sdl\SDL_test_random.h" />
+    <ClInclude Include="sdl\SDL_thread.h" />
+    <ClInclude Include="sdl\SDL_timer.h" />
+    <ClInclude Include="sdl\SDL_touch.h" />
+    <ClInclude Include="sdl\SDL_types.h" />
+    <ClInclude Include="sdl\SDL_version.h" />
+    <ClInclude Include="sdl\SDL_video.h" />
+    <ClInclude Include="sdl\SDL_vulkan.h" />
+    <ClInclude Include="SDL_net.h" />
+    <ClInclude Include="serializer\serializer.h" />
+    <ClInclude Include="sndfile.h" />
+    <ClInclude Include="sound.h" />
+    <ClInclude Include="sqlite3.h" />
+    <ClInclude Include="Tolk.h" />
+    <ClInclude Include="tts_voice.h" />
+    <ClInclude Include="uni_algo.h" />
+    <ClInclude Include="vorbisfile.h" />
+    <ClInclude Include="vorbis\codec.h" />
+    <ClInclude Include="vorbis\vorbisenc.h" />
+    <ClInclude Include="vorbis\vorbisfile.h" />
+    <ClInclude Include="dlibrary.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ngt.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ngtreg.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="scriptstdstring\scriptstdstring.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="scriptbuilder\scriptbuilder.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="datetime\datetime.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="scriptany\scriptany.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="scriptarray\scriptarray.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="scriptdictionary\scriptdictionary.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="scriptfile\scriptfile.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="scriptfile\scriptfilesystem.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="scriptgrid\scriptgrid.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="scripthandle\scripthandle.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="scripthelper\scripthelper.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="scriptmath\scriptmath.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="serializer\serializer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="scriptmath\scriptmathcomplex.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="scriptstdstring\scriptstdstring_utils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="stb_vorbis.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="stb_vorbis.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
-    <ClCompile Include="sqlite3.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="sound.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="debugger\debugger.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="pack.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="sapi\SpeechEngine.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="sapi\Voice.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="tts_voice.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="ogg\config_types.h.in">
-      <Filter>Header Files</Filter>
-    </None>
+    <None Include="ogg\config_types.h.in" />
   </ItemGroup>
 </Project>

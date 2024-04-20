@@ -88,7 +88,7 @@ static ma_node_vtable g_ma_reverb_node_vtable =
     NULL,
     1,  /* 1 input channel. */
     1,  /* 1 output channel. */
-0
+MA_NODE_FLAG_CONTINUOUS_PROCESSING
 };
 
 MA_API ma_result ma_reverb_node_init(ma_node_graph* pNodeGraph, const ma_reverb_node_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_reverb_node* pReverbNode)
@@ -1094,6 +1094,9 @@ class  mixer {
 public:
     ma_engine engine;
 };
+void at_stop(ma_node* fx, ma_sound* hndl) {
+//    ma_node_detach_output_bus(fx, 0);
+}
 class sound {
 public:
     bool is_3d_;
@@ -1146,7 +1149,7 @@ public:
         if (this->active)this->close();
     }
 
-    bool load(const std::string& filename, bool set3d, ma_sound_end_proc sound_end_callback=nullptr) {
+    bool load(const std::string& filename, bool set3d) {
         std::string result;
         if (sound_path != "") {
             result = sound_path + "/" + filename.c_str();
@@ -1165,9 +1168,8 @@ public:
         active = true;
         if (sound_global_hrtf)
             this->set_hrtf(true);
-if(sound_end_callback!=nullptr)
-        ma_sound_set_end_callback(&handle_, sound_end_callback, NULL);
 ma_sound_set_rolloff(&handle_, 2);
+ma_sound_set_end_callback(&handle_, at_stop, current_fx);
 return true;
         }
     bool load_from_memory(const std::string& data, bool set3d) {
@@ -1188,6 +1190,7 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
         active = true;
         if (sound_global_hrtf)
             this->set_hrtf(true);
+        ma_sound_set_end_callback(&handle_, at_stop, current_fx);
 
         return active;
     }
@@ -1210,6 +1213,7 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
         active = true;
         if (sound_global_hrtf)
             this->set_hrtf(true);
+        ma_sound_set_end_callback(&handle_, at_stop, current_fx);
 
         return true;
     }
@@ -1233,6 +1237,7 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
         active = true;
         if (sound_global_hrtf)
             this->set_hrtf(true);
+        ma_sound_set_end_callback(&handle_, at_stop, current_fx);
 
         return active;
     }
@@ -1280,7 +1285,49 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
         }
     bool close() {
         if (!active)return false;
+            if (reverb) {
+                ma_reverb_node_uninit(&g_reverbNode, NULL);
+                reverb = false;
+        }
+            if (vocoder) {
+
+                ma_vocoder_node_uninit(&g_vocoderNode, NULL);
+                vocoder = false;
+        }
+            if (delayf) {
+                ma_delay_node_uninit(&g_delayNode, NULL);
+                delayf = false;
+        }
+            if (ltrim) {
+                ma_ltrim_node_uninit(&g_trimNode, NULL);
+                ltrim = false;
+        }
+            if (combiner) {
+                ma_channel_combiner_node_uninit(&g_combinerNode, NULL);
+                combiner = false;
+            }
+            if (separator) {
+                ma_channel_separator_node_uninit(&g_separatorNode, NULL);
+                separator = false;
+            }
+            if (hp) {
+                ma_hpf_node_uninit(&highpass, NULL);
+                hp = false;
+
+        }
+            if (lp) {
+                ma_lpf_node_uninit(&lowpass, NULL);
+                lp = false;
+
+        }
+            if (notchf) {
+
+                ma_notch_node_uninit(&notch, NULL);
+                notchf = false;
+            }
+        current_fx = nullptr;
         ma_sound_uninit(&handle_);
+
         active = false;
         return true;
     }
@@ -1502,48 +1549,83 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
         ma_delay_node_set_wet(&g_delayNode, wet);
         ma_delay_node_set_decay(&g_delayNode, dcay);
     }
-    void set_position(float l_x, float l_y, float l_z, float s_x, float s_y, float s_z) {
+    void set_position(float listener_x, float listener_y, float listener_z, float source_x, float source_y, float source_z, double theta, float pan_step, float volume_step, float behind_pitch_decrease, float start_pan, float start_volume, float start_pitch) {
         if (!active) return;
-
-        float min_x = 0.0f;
-        float max_x = 1.0f;
-        float min_y = 0.0f; 
-        float max_y = 1.0f; 
-        float min_z = 0.0f;
-        float max_z = 1.0f;
-
-        float norm_l_x = (l_x - min_x) / (max_x - min_x);
-        float norm_l_y = (l_y - min_y) / (max_y - min_y);
-        float norm_l_z = (l_z - min_z) / (max_z - min_z);
-        float norm_s_x = (s_x - min_x) / (max_x - min_x);
-        float norm_s_y = (s_y - min_y) / (max_y - min_y);
-        float norm_s_z = (s_z - min_z) / (max_z - min_z);
-
-        ma_vec3f listener_position(norm_l_x, norm_l_y, norm_l_z);
-        ma_vec3f sound_position(norm_s_x, norm_s_y, norm_s_z);
-
-        ma_vec3f direction;
-
-        ma_engine_listener_set_position(&sound_default_mixer, ma_sound_get_listener_index(&handle_), norm_l_x, norm_l_y, norm_l_z);
-        ma_sound_set_position(&handle_, norm_s_x, norm_s_y, norm_s_z);
-        ma_vec3f relativePos = ma_vec3f_sub(sound_position, listener_position);
-        direction = ma_vec3f_normalize(relativePos);
-        ma_steamaudio_binaural_node_set_direction(&g_binauralNode, direction.x, direction.y, direction.z);
+        float delta_x = 0;
+        float delta_y = 0;
+        float delta_z = 0;
+        float final_pan = start_pan;
+        float final_volume = start_volume;
+        float final_pitch = start_pitch;
+        float rotational_source_x = source_x;
+        float rotational_source_y = source_y;
+        // First, we calculate the x and y based on the theta the listener is facing. 
+        if (theta > 0.0)
+        {
+            rotational_source_x = (cos(theta) * (source_x - listener_x)) - (sin(theta) * (source_y - listener_y)) + listener_x;
+            rotational_source_y = (sin(theta) * (source_x - listener_x)) + (cos(theta) * (source_y - listener_y)) + listener_y;
+            source_x = rotational_source_x;
+            source_y = rotational_source_y;
+        }
+        // Next, we calculate the delta between the listener and the source.
+        if (source_x < listener_x)
+        {
+            delta_x = listener_x - source_x;
+            final_pan -= (delta_x * pan_step);
+            final_volume -= (delta_x * volume_step);
+        }
+        if (source_x > listener_x)
+        {
+            delta_x = source_x - listener_x;
+            final_pan += (delta_x * pan_step);
+            final_volume -= (delta_x * volume_step);
+        }
+        if (source_y < listener_y)
+        {
+            final_pitch -= abs(behind_pitch_decrease);
+            delta_y = listener_y - source_y;
+            final_volume -= (delta_y * volume_step);
+        }
+        if (source_y > listener_y)
+        {
+            delta_y = source_y - listener_y;
+            final_volume -= (delta_y * volume_step);
+        }
+        if (source_z < listener_z)
+        {
+            final_pitch -= abs(behind_pitch_decrease);
+            delta_z = listener_z - source_z;
+            final_volume -= (delta_z * volume_step);
+        }
+        if (source_z > listener_z)
+        {
+            delta_z = source_z - listener_z;
+            final_volume -= (delta_z * volume_step);
+        }
+        // Then we check if the calculated values are out of range, and fix them if that's the case.
+        if (final_pan < -100)
+        {
+            final_pan = -100;
+        }
+        if (final_pan > 100)
+        {
+            final_pan = 100;
+        }
+        if (final_volume < -100)
+        {
+            final_volume = -100;
+        }
+        // Now we set the properties on the sound, provided that they are not already correct.
+        ma_steamaudio_binaural_node_set_direction(&g_binauralNode, source_x-listener_x, source_y-listener_y, source_z-listener_z);
+        if (this->get_pan() != final_pan)
+            this->set_pan(  final_pan);
+        if (this->get_volume() != final_volume)
+            this->set_volume(  final_volume);
+        if (this->get_pitch() != final_pitch)
+            this->set_pitch(  final_pitch);
     }
-
-
-        void set_position(const ngtvector* listener=nullptr, const ngtvector* source=nullptr) {
+    void set_position(const ngtvector* listener=nullptr, const ngtvector* source=nullptr) {
         if (!active)return;
-        ma_vec3f direction;
-
-        ma_engine_listener_set_position(&sound_default_mixer, ma_sound_get_listener_index(&handle_), listener->x, listener->y, listener->z);
-        ma_sound_set_position(&handle_, source->x, source->y, source->z);
-        ma_vec3f relativePos;
-        ma_spatializer_get_relative_position_and_direction(&handle_.engineNode.spatializer, &sound_default_mixer.listeners[ma_sound_get_listener_index(&handle_)], &relativePos, NULL);
-
-        direction = ma_vec3f_normalize(relativePos);
-
-        ma_steamaudio_binaural_node_set_direction(&g_binauralNode, direction.x, direction.y, direction.z);
 
     }
     void set_hrtf(bool hrtf) {
@@ -1738,7 +1820,7 @@ void register_sound(asIScriptEngine* engine) {
     engine->RegisterObjectMethod("sound", "void set_reverb_parameters(float, float, float, float, float)const", asMETHOD(sound, set_reverb_parameters), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "void set_delay_parameters(float, float, float)const", asMETHOD(sound, set_delay_parameters), asCALL_THISCALL);
 
-    engine->RegisterObjectMethod("sound", "void set_position(float, float, float, float, float, float)const", asMETHODPR(sound, set_position, (float, float, float, float, float, float), void), asCALL_THISCALL);
+    engine->RegisterObjectMethod("sound", "void set_position(float, float, float, float, float, float, double=0.0, float=5, float=0.6, float=0, float=0, float=0, float=0)const", asMETHODPR(sound, set_position, (float listener_x, float listener_y, float listener_z, float source_x, float source_y, float source_z, double theta, float pan_step, float volume_step, float behind_pitch_decrease, float start_pan, float start_volume, float start_pitch), void), asCALL_THISCALL);
     engine->RegisterObjectMethod("sound", "void set_position(const vector@=null, const vector@=null)const", asMETHODPR(sound, set_position, (const ngtvector*, const ngtvector*), void), asCALL_THISCALL);
 
     engine->RegisterObjectMethod("sound", "void set_hrtf(bool=true)const property", asMETHOD(sound, set_hrtf), asCALL_THISCALL);
