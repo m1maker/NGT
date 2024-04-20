@@ -3,11 +3,17 @@
 #include "sound.h"
 #include "ngtreg.h"
 #include <filesystem>
+#include<vector>
 #include <thread>
 #include "Tolk.h"
 #include <chrono>
 #include <string>
 #include"sdl/SDL.h"
+#define BL_NUMWORDS_IMPLEMENTATION
+extern "C"
+{
+#include"bl_number_to_words.h"
+}
 #include<map>
 #include <stdio.h>
 #include "NGT.H"
@@ -192,6 +198,17 @@ enet_deinitialize();
 Tolk_Unload();
 SDL_Quit();
 exit(return_number);
+}
+std::string number_to_words(uint64_t num, bool include_and)
+{
+    std::vector<char> buf(1024);
+    int use_and = (include_and ? 1 : 0);
+    size_t bufsize = bl_number_to_words(num, buf.data(), buf.size(), use_and);
+    if (bufsize > buf.size())
+    {
+        return "";
+    }
+    return std::string(buf.data());
 }
 std::string read_environment_variable(const std::string& path) {
 #ifdef _WIN32
