@@ -807,6 +807,17 @@ uint64_t get_time_stamp_seconds() {
 }
 void ngtvector::construct() {}
 void ngtvector::destruct() {}
+float ngtvector::get_length()const {
+    return sqrt(x * x + y * y + z * z);
+}
+ngtvector& ngtvector::operator=(const ngtvector new_vector) {
+    this->x = new_vector.x;
+    this->y = new_vector.y;
+    this->z = new_vector.z;
+
+    return *this;
+}
+
 void sqlite3statement::construct() {}
 void sqlite3statement::destruct() {}
 void ngtsqlite3::construct() {}

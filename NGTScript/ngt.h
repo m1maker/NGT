@@ -37,6 +37,8 @@ public:
 	void construct();
 	void destruct();
 	float x, y, z;
+	float get_length()const;
+	ngtvector& operator=(const ngtvector);
 };
 
 
