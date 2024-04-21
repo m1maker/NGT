@@ -1,0 +1,22 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "NGTScript\\x64\\Debug\\stb_vorbis.h.obj",
+            "outputs": [
+                "C:\\Users\\Parker\\Documents\\GitHub\\NGT\\NGTScript\\NGTScript\\x64\\Debug\\vc143.pdb",
+                "NGTScript\\x64\\Debug\\",
+                "C:\\Users\\Parker\\Documents\\GitHub\\NGT\\NGTScript\\NGTScript\\x64\\Debug\\stb_vorbis.h.ifc"
+            ],
+            "provides": [
+                {
+                    "logical-name": "stb_vorbis.h",
+                    "source-path": "c:\\users\\parker\\documents\\github\\ngt\\ngtscript\\stb_vorbis.h",
+                    "lookup-method": "absolute"
+                }
+            ],
+            "requires": []
+        }
+    ]
+}

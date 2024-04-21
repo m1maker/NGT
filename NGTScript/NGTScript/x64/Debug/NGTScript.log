@@ -1,0 +1,183 @@
+﻿  Scanning sources for module dependencies...
+  stb_vorbis.h
+  Compiling...
+  stb_vorbis.h
+  datetime.cpp
+  debugger.cpp
+  dlibrary.cpp
+  http.cpp
+  main.cpp
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\sapi\SpeechEngine.h(13,35): error C4996: 'std::codecvt_utf8_utf16<wchar_t,1114111,(std::codecvt_mode)0>': warning STL4017: std::wbuffer_convert, std::wstring_convert, and the <codecvt> header (containing std::codecvt_mode, std::codecvt_utf8, std::codecvt_utf16, and std::codecvt_utf8_utf16) are deprecated in C++17. (The std::codecvt class template is NOT deprecated.) The C++ Standard doesn't provide equivalent non-deprecated functionality; consider using MultiByteToWideChar() and WideCharToMultiByte() from <Windows.h> instead. You can define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING or _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS to suppress this warning.
+  (compiling source file 'main.cpp')
+  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\codecvt(442,39):
+  see declaration of 'std::codecvt_utf8_utf16'
+  
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\sapi\SpeechEngine.h(13,14): error C4996: 'std::wstring_convert<std::codecvt_utf8_utf16<wchar_t,1114111,(std::codecvt_mode)0>,wchar_t,std::allocator<wchar_t>,std::allocator<char>>': warning STL4017: std::wbuffer_convert, std::wstring_convert, and the <codecvt> header (containing std::codecvt_mode, std::codecvt_utf8, std::codecvt_utf16, and std::codecvt_utf8_utf16) are deprecated in C++17. (The std::codecvt class template is NOT deprecated.) The C++ Standard doesn't provide equivalent non-deprecated functionality; consider using MultiByteToWideChar() and WideCharToMultiByte() from <Windows.h> instead. You can define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING or _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS to suppress this warning.
+  (compiling source file 'main.cpp')
+  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\xlocbuf(303,39):
+  see declaration of 'std::wstring_convert'
+  
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\sdl\SDL_messagebox.h(45,1): warning C4091: 'typedef ': ignored on left of '<unnamed-enum-SDL_MESSAGEBOX_ERROR>' when no variable is declared
+  (compiling source file 'main.cpp')
+  
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\main.cpp(41,68): warning C4267: 'argument': conversion from 'size_t' to 'DWORD', possible loss of data
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\main.cpp(54,68): warning C4267: 'argument': conversion from 'size_t' to 'DWORD', possible loss of data
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\main.cpp(214,24): warning C4244: 'initializing': conversion from 'std::streamoff' to 'long', possible loss of data
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\main.cpp(288,28): warning C4244: 'initializing': conversion from 'std::streamoff' to 'long', possible loss of data
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\main.cpp(292,38): warning C4267: '=': conversion from 'size_t' to 'asUINT', possible loss of data
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\main.cpp(422,36): warning C4244: 'initializing': conversion from 'std::streamoff' to 'long', possible loss of data
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\xutility(4537,18): warning C4244: '=': conversion from 'wchar_t' to 'char', possible loss of data
+  (compiling source file 'main.cpp')
+  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\xutility(4537,18):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\Parker\Documents\GitHub\NGT\NGTScript\main.cpp(47,23):
+  	see reference to function template instantiation 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>::basic_string<std::_String_iterator<std::_String_val<std::_Simple_types<_Elem>>>,0>(_Iter,_Iter,const _Alloc &)' being compiled
+          with
+          [
+              _Elem=wchar_t,
+              _Iter=std::_String_iterator<std::_String_val<std::_Simple_types<wchar_t>>>,
+              _Alloc=std::allocator<char>
+          ]
+  		C:\Users\Parker\Documents\GitHub\NGT\NGTScript\main.cpp(47,5):
+  		see the first reference to 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>::basic_string' in 'get_exe'
+  	C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\xstring(2600,17):
+  	see reference to function template instantiation 'void std::basic_string<char,std::char_traits<char>,std::allocator<char>>::_Construct_from_iter<wchar_t*,wchar_t*,_Size_type>(_Iter,const _Sent,_Size)' being compiled
+          with
+          [
+              _Size_type=unsigned __int64,
+              _Iter=wchar_t *,
+              _Sent=wchar_t *,
+              _Size=unsigned __int64
+          ]
+  	C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\xstring(2756,18):
+  	see reference to function template instantiation '_OutIt *std::_Copy_n_unchecked4<wchar_t*,_Size,char*>(_InIt,_SizeTy,_OutIt)' being compiled
+          with
+          [
+              _OutIt=char *,
+              _Size=unsigned __int64,
+              _InIt=wchar_t *,
+              _SizeTy=unsigned __int64
+          ]
+  
+  ngt.cpp
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\sdl\SDL_messagebox.h(45,1): warning C4091: 'typedef ': ignored on left of '<unnamed-enum-SDL_MESSAGEBOX_ERROR>' when no variable is declared
+  (compiling source file 'ngt.cpp')
+  
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.22000.0\ucrt\assert.h(33,27): warning C4273: '_wassert': inconsistent dll linkage
+  (compiling source file 'ngt.cpp')
+  C:\Program Files (x86)\Windows Kits\10\Include\10.0.22000.0\ucrt\assert.h(33,27):
+  see previous definition of '_wassert'
+  
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(182,31): warning C4553: '==': result of expression not used; did you intend '='?
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(184,31): warning C4553: '==': result of expression not used; did you intend '='?
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(443,38): warning C4244: '=': conversion from 'uint64_t' to 'int', possible loss of data
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(701,60): warning C4244: 'argument': conversion from 'double' to 'enet_uint32', possible loss of data
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(701,41): warning C4244: 'argument': conversion from 'double' to 'enet_uint32', possible loss of data
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(736,16): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(838,150): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(845,150): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\xutility(4537,18): warning C4244: '=': conversion from 'wchar_t' to 'char', possible loss of data
+  (compiling source file 'ngt.cpp')
+  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\xutility(4537,18):
+  the template instantiation context (the oldest one first) is
+  	C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(106,23):
+  	see reference to function template instantiation 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>::basic_string<std::_String_iterator<std::_String_val<std::_Simple_types<_Elem>>>,0>(_Iter,_Iter,const _Alloc &)' being compiled
+          with
+          [
+              _Elem=wchar_t,
+              _Iter=std::_String_iterator<std::_String_val<std::_Simple_types<wchar_t>>>,
+              _Alloc=std::allocator<char>
+          ]
+  		C:\Users\Parker\Documents\GitHub\NGT\NGTScript\ngt.cpp(106,5):
+  		see the first reference to 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>::basic_string' in 'screen_reader_detect'
+  	C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\xstring(2600,17):
+  	see reference to function template instantiation 'void std::basic_string<char,std::char_traits<char>,std::allocator<char>>::_Construct_from_iter<wchar_t*,wchar_t*,_Size_type>(_Iter,const _Sent,_Size)' being compiled
+          with
+          [
+              _Size_type=unsigned __int64,
+              _Iter=wchar_t *,
+              _Sent=wchar_t *,
+              _Size=unsigned __int64
+          ]
+  	C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\xstring(2756,18):
+  	see reference to function template instantiation '_OutIt *std::_Copy_n_unchecked4<wchar_t*,_Size,char*>(_InIt,_SizeTy,_OutIt)' being compiled
+          with
+          [
+              _OutIt=char *,
+              _Size=unsigned __int64,
+              _InIt=wchar_t *,
+              _SizeTy=unsigned __int64
+          ]
+  
+  ngtreg.cpp
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\sapi\SpeechEngine.h(13,35): error C4996: 'std::codecvt_utf8_utf16<wchar_t,1114111,(std::codecvt_mode)0>': warning STL4017: std::wbuffer_convert, std::wstring_convert, and the <codecvt> header (containing std::codecvt_mode, std::codecvt_utf8, std::codecvt_utf16, and std::codecvt_utf8_utf16) are deprecated in C++17. (The std::codecvt class template is NOT deprecated.) The C++ Standard doesn't provide equivalent non-deprecated functionality; consider using MultiByteToWideChar() and WideCharToMultiByte() from <Windows.h> instead. You can define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING or _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS to suppress this warning.
+  (compiling source file 'ngtreg.cpp')
+  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\codecvt(442,39):
+  see declaration of 'std::codecvt_utf8_utf16'
+  
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\sapi\SpeechEngine.h(13,14): error C4996: 'std::wstring_convert<std::codecvt_utf8_utf16<wchar_t,1114111,(std::codecvt_mode)0>,wchar_t,std::allocator<wchar_t>,std::allocator<char>>': warning STL4017: std::wbuffer_convert, std::wstring_convert, and the <codecvt> header (containing std::codecvt_mode, std::codecvt_utf8, std::codecvt_utf16, and std::codecvt_utf8_utf16) are deprecated in C++17. (The std::codecvt class template is NOT deprecated.) The C++ Standard doesn't provide equivalent non-deprecated functionality; consider using MultiByteToWideChar() and WideCharToMultiByte() from <Windows.h> instead. You can define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING or _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS to suppress this warning.
+  (compiling source file 'ngtreg.cpp')
+  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\xlocbuf(303,39):
+  see declaration of 'std::wstring_convert'
+  
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\sdl\SDL_messagebox.h(45,1): warning C4091: 'typedef ': ignored on left of '<unnamed-enum-SDL_MESSAGEBOX_ERROR>' when no variable is declared
+  (compiling source file 'ngtreg.cpp')
+  
+  pack.cpp
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\pack.cpp(9,38): warning C4305: 'initializing': truncation from '__int64' to 'const unsigned long'
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\pack.cpp(9,38): warning C4309: 'initializing': truncation of constant value
+  SpeechEngine.cpp
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.22000.0\um\sphelper.h(1319,13): error C4996: 'GetVersionExW': was declared deprecated
+  (compiling source file 'sapi/SpeechEngine.cpp')
+  
+  Voice.cpp
+  scriptany.cpp
+  scriptarray.cpp
+  scriptbuilder.cpp
+  scriptdictionary.cpp
+  scriptfile.cpp
+  scriptfilesystem.cpp
+  scriptgrid.cpp
+  scripthandle.cpp
+  scripthelper.cpp
+  scriptmath.cpp
+  Generating Code...
+  Compiling...
+  scriptmathcomplex.cpp
+  scriptstdstring.cpp
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\scriptstdstring\scriptstdstring.cpp(378,23): warning C4244: 'return': conversion from '__int64' to 'int', possible loss of data
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\scriptstdstring\scriptstdstring.cpp(395,23): warning C4244: 'return': conversion from '__int64' to 'int', possible loss of data
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\scriptstdstring\scriptstdstring.cpp(415,23): warning C4244: 'return': conversion from '__int64' to 'int', possible loss of data
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\scriptstdstring\scriptstdstring.cpp(456,23): warning C4244: 'return': conversion from '__int64' to 'int', possible loss of data
+  scriptstdstring_utils.cpp
+  serializer.cpp
+  sound.cpp
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\sapi\SpeechEngine.h(13,35): error C4996: 'std::codecvt_utf8_utf16<wchar_t,1114111,(std::codecvt_mode)0>': warning STL4017: std::wbuffer_convert, std::wstring_convert, and the <codecvt> header (containing std::codecvt_mode, std::codecvt_utf8, std::codecvt_utf16, and std::codecvt_utf8_utf16) are deprecated in C++17. (The std::codecvt class template is NOT deprecated.) The C++ Standard doesn't provide equivalent non-deprecated functionality; consider using MultiByteToWideChar() and WideCharToMultiByte() from <Windows.h> instead. You can define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING or _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS to suppress this warning.
+  (compiling source file 'sound.cpp')
+  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\codecvt(442,39):
+  see declaration of 'std::codecvt_utf8_utf16'
+  
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\sapi\SpeechEngine.h(13,14): error C4996: 'std::wstring_convert<std::codecvt_utf8_utf16<wchar_t,1114111,(std::codecvt_mode)0>,wchar_t,std::allocator<wchar_t>,std::allocator<char>>': warning STL4017: std::wbuffer_convert, std::wstring_convert, and the <codecvt> header (containing std::codecvt_mode, std::codecvt_utf8, std::codecvt_utf16, and std::codecvt_utf8_utf16) are deprecated in C++17. (The std::codecvt class template is NOT deprecated.) The C++ Standard doesn't provide equivalent non-deprecated functionality; consider using MultiByteToWideChar() and WideCharToMultiByte() from <Windows.h> instead. You can define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING or _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS to suppress this warning.
+  (compiling source file 'sound.cpp')
+  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\xlocbuf(303,39):
+  see declaration of 'std::wstring_convert'
+  
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\sdl\SDL_messagebox.h(45,1): warning C4091: 'typedef ': ignored on left of '<unnamed-enum-SDL_MESSAGEBOX_ERROR>' when no variable is declared
+  (compiling source file 'sound.cpp')
+  
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\sound.cpp(1378,40): warning C4305: '=': truncation from 'double' to 'float'
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\sound.cpp(1565,115): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\sound.cpp(1566,115): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\sound.cpp(1759,51): warning C4244: '=': conversion from 'ma_uint64' to 'float', possible loss of data
+  tts_voice.cpp
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\sapi\SpeechEngine.h(13,35): error C4996: 'std::codecvt_utf8_utf16<wchar_t,1114111,(std::codecvt_mode)0>': warning STL4017: std::wbuffer_convert, std::wstring_convert, and the <codecvt> header (containing std::codecvt_mode, std::codecvt_utf8, std::codecvt_utf16, and std::codecvt_utf8_utf16) are deprecated in C++17. (The std::codecvt class template is NOT deprecated.) The C++ Standard doesn't provide equivalent non-deprecated functionality; consider using MultiByteToWideChar() and WideCharToMultiByte() from <Windows.h> instead. You can define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING or _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS to suppress this warning.
+  (compiling source file 'tts_voice.cpp')
+  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\codecvt(442,39):
+  see declaration of 'std::codecvt_utf8_utf16'
+  
+C:\Users\Parker\Documents\GitHub\NGT\NGTScript\sapi\SpeechEngine.h(13,14): error C4996: 'std::wstring_convert<std::codecvt_utf8_utf16<wchar_t,1114111,(std::codecvt_mode)0>,wchar_t,std::allocator<wchar_t>,std::allocator<char>>': warning STL4017: std::wbuffer_convert, std::wstring_convert, and the <codecvt> header (containing std::codecvt_mode, std::codecvt_utf8, std::codecvt_utf16, and std::codecvt_utf8_utf16) are deprecated in C++17. (The std::codecvt class template is NOT deprecated.) The C++ Standard doesn't provide equivalent non-deprecated functionality; consider using MultiByteToWideChar() and WideCharToMultiByte() from <Windows.h> instead. You can define _SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING or _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS to suppress this warning.
+  (compiling source file 'tts_voice.cpp')
+  C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Tools\MSVC\14.39.33519\include\xlocbuf(303,39):
+  see declaration of 'std::wstring_convert'
+  
+  Generating Code...
