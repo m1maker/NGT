@@ -454,6 +454,7 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterGlobalFunction("hwnd get_focused_window()", asFUNCTION(GetFocus), asCALL_STDCALL);
     engine->RegisterGlobalFunction("hwnd set_focused_window(hwnd)", asFUNCTION(SetFocus), asCALL_STDCALL);
     engine->RegisterGlobalFunction("void exit(int=0)",asFUNCTION(exit_engine),asCALL_CDECL);
+    engine->RegisterGlobalFunction("string number_to_words(uint64, bool)", asFUNCTION(number_to_words), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool clipboard_copy_text(const string &in)", asFUNCTION(clipboard_copy_text), asCALL_CDECL);
     engine->RegisterGlobalFunction("string clipboard_read_text()", asFUNCTION(clipboard_read_text), asCALL_CDECL);
     engine->RegisterGlobalFunction("string get_input()", asFUNCTION(get_input), asCALL_CDECL);
@@ -496,8 +497,7 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectMethod("tts_voice", "void speak_interrupt(const string& in)const", asMETHOD(tts_voice, speak_interrupt), asCALL_THISCALL);
     engine->RegisterObjectMethod("tts_voice", "void speak_interrupt_wait(const string& in)const", asMETHOD(tts_voice, speak_interrupt_wait), asCALL_THISCALL);
     engine->RegisterObjectMethod("tts_voice", "int get_rate()const property", asMETHOD(tts_voice, get_rate), asCALL_THISCALL);
-    engine->RegisterObjectMethod("tts_voice", "void set_rate(int rate)property", asMETHOD(tts_voice, set_rate), asCALL_THISCALL);
-
+    engine->RegisterObjectMethod("tts_voice", "void set_rate(int)property", asMETHOD(tts_voice, set_rate), asCALL_THISCALL);
     engine->RegisterObjectType("user_idle", sizeof(user_idle), asOBJ_REF | asOBJ_NOCOUNT);
     engine->RegisterObjectBehaviour("user_idle", asBEHAVE_FACTORY, "user_idle@ u()", asFUNCTION(fuser_idle), asCALL_CDECL);
     engine->RegisterObjectMethod("user_idle", "uint64 get_elapsed_millis()const property", asMETHOD(user_idle, elapsed_millis), asCALL_THISCALL);

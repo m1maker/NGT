@@ -63,6 +63,7 @@ void set_game_window_closable(bool);
 bool is_game_window_active();
 void update_game_window();
 void exit_engine(int=0);
+std::string number_to_words(uint64_t, bool);
 bool clipboard_copy_text(const std::string&);
 std::string clipboard_read_text();
 std::string get_input();

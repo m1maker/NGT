@@ -275,6 +275,7 @@
     <ClInclude Include="vorbis\vorbisenc.h" />
     <ClInclude Include="vorbis\vorbisfile.h" />
     <ClInclude Include="dlibrary.h" />
+    <ClInclude Include="bl_number_to_words.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ogg\config_types.h.in" />

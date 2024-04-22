@@ -158,6 +158,7 @@
     <ClInclude Include="AL\efx.h" />
     <ClInclude Include="angelscript.h" />
     <ClInclude Include="autowrapper\aswrappedcall.h" />
+    <ClInclude Include="bl_number_to_words.h" />
     <ClInclude Include="datetime\datetime.h" />
     <ClInclude Include="debugger\debugger.h" />
     <ClInclude Include="dlibrary.h" />
