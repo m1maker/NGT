@@ -3,11 +3,28 @@
 #include "scriptarray/scriptarray.h"
 using namespace std;
 typedef unsigned int uint;
-struct NGTHEADER{
-    const std::string main_header = "NGTPACK";
-    const double version = 0.0;
-    const unsigned long header0x3c = 0x2545486784561511;
-}const;
+struct ngt_pack_header{
+    const char* header = "NGTDATA";
+    long e_magic[4264];
+    long e_cblp[1];
+    long e_cp[2];
+    long e_crlc[4];
+    long e_cparhdr[8];
+    long e_minalloc;
+    long e_maxalloc;
+    long e_ss;
+    long e_sp;
+    long e_csum;
+    long e_ip;
+    long e_cs;
+    long e_lfarlc;
+    long e_ovno;
+    long e_res[4];
+    long e_oemid;
+    long e_oeminfo;
+    long e_res2[10];
+    long   e_lfanew;
+};
 
 class Pack
 {

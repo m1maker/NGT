@@ -737,19 +737,10 @@ handle_->m_channel = event.channelID;
                                     lib = LoadLibraryW(std::wstring(libname.begin(), libname.end()).c_str());
                                     return lib == NULL;
                                 }
-    CScriptDictionary* library::call(std::string function_name, ...) {
+    void library::call(asIScriptGeneric* gen) {
         asIScriptContext* ctx = asGetActiveContext();
         asIScriptEngine* engine = ctx->GetEngine();
         CScriptDictionary* dict = CScriptDictionary::Create(engine);
-
-        va_list args;
-        va_start(args, function_name);
-        FARPROC address = GetProcAddress(lib, function_name.c_str());
-        typedef void* (*function_signature)(...);
-        function_signature function = reinterpret_cast<function_signature>(address);
-            void* return_result=function(args);
-        va_end(args);
-        return nullptr;
     }
                                 void library::unload() {
                                     FreeLibrary(lib);

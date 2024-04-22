@@ -198,7 +198,7 @@ public:
 	void construct();
 	void destruct();
 	bool load(const std::string &);
-	CScriptDictionary* call(std::string function_name, ...);
+	void call(asIScriptGeneric* gen);
 		void unload();
 };
 
