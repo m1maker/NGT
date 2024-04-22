@@ -37,6 +37,8 @@ public:
 	void construct();
 	void destruct();
 	float x, y, z;
+	float get_length()const;
+	ngtvector& operator=(const ngtvector);
 };
 
 
@@ -197,7 +199,7 @@ public:
 	void construct();
 	void destruct();
 	bool load(const std::string &);
-	CScriptDictionary* call(std::string function_name, ...);
+	void call(asIScriptGeneric* gen);
 		void unload();
 };
 

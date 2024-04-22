@@ -754,19 +754,10 @@ handle_->m_channel = event.channelID;
                                     lib = LoadLibraryW(std::wstring(libname.begin(), libname.end()).c_str());
                                     return lib == NULL;
                                 }
-    CScriptDictionary* library::call(std::string function_name, ...) {
+    void library::call(asIScriptGeneric* gen) {
         asIScriptContext* ctx = asGetActiveContext();
         asIScriptEngine* engine = ctx->GetEngine();
         CScriptDictionary* dict = CScriptDictionary::Create(engine);
-
-        va_list args;
-        va_start(args, function_name);
-        FARPROC address = GetProcAddress(lib, function_name.c_str());
-        typedef void* (*function_signature)(...);
-        function_signature function = reinterpret_cast<function_signature>(address);
-            void* return_result=function(args);
-        va_end(args);
-        return nullptr;
     }
                                 void library::unload() {
                                     FreeLibrary(lib);
@@ -824,6 +815,17 @@ uint64_t get_time_stamp_seconds() {
 }
 void ngtvector::construct() {}
 void ngtvector::destruct() {}
+float ngtvector::get_length()const {
+    return sqrt(x * x + y * y + z * z);
+}
+ngtvector& ngtvector::operator=(const ngtvector new_vector) {
+    this->x = new_vector.x;
+    this->y = new_vector.y;
+    this->z = new_vector.z;
+
+    return *this;
+}
+
 void sqlite3statement::construct() {}
 void sqlite3statement::destruct() {}
 void ngtsqlite3::construct() {}
