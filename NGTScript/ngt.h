@@ -45,6 +45,8 @@ public:
 std::wstring wstr(const std::string & utf8String);
 uint64_t get_time_stamp_millis();
 uint64_t get_time_stamp_seconds();
+void as_printf(asIScriptGeneric* gen);
+
 void init_engine();
 void set_library_path(const std::string& path);
 long random(long min, long max);

@@ -433,8 +433,8 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterGlobalFunction("long random(long, long)", asFUNCTIONPR(random, (long, long), long), asCALL_CDECL);
     engine->RegisterGlobalFunction("double random(double, double)", asFUNCTIONPR(randomDouble, (double, double), double), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool random_bool()", asFUNCTION(random_bool), asCALL_CDECL);
-    engine->RegisterGlobalFunction("int printf(const ? & in format, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null)", asFUNCTION(Print), asCALL_CDECL);
-    engine->RegisterGlobalFunction("int scanf(const string &in format, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null)", asFUNCTION(scanf_s), asCALL_CDECL);
+    engine->RegisterGlobalFunction("void printf(string &in, ?&in var = 0, ?&in var2 = 0, ?&in var3 = 0, ?&in var4 = 0, ?&in var5 = 0, ?&in var6 = 0, ?&in var7 = 0, ?&in var8 = 0, ?&in var9 = 0, ?&in var10 = 0, ?&in var11 = 0, ?&in var12 = 0, ?&in var13 = 0, ?&in var14 = 0, ?&in var15 = 0)", asFUNCTION(as_printf), asCALL_GENERIC);
+
     engine->RegisterGlobalFunction("int get_last_error()property", asFUNCTION(get_last_error), asCALL_CDECL);
 
     engine->RegisterGlobalFunction("void speak(const string &in, bool=true)", asFUNCTION(speak), asCALL_CDECL);

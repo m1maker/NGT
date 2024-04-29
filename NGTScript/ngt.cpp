@@ -16,7 +16,9 @@
 #include <codecvt>
 #include<fstream>
 #include <cstdlib>
+#include<algorithm>
 #include <cstring>
+using namespace std;
 bool engine_is_active= false;
 SDL_Window* win = NULL;
 
@@ -31,6 +33,102 @@ std::wstring reader;
 std::unordered_map<SDL_Scancode, bool> keys;
 bool keyhook = false;
 std::string inputtext;
+void replace(std::string& str, const std::string& from, const std::string& to) {
+    size_t start_pos = 0;
+    while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
+        str.replace(start_pos, from.length(), to);
+        start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
+    }
+}
+
+
+void as_printf(asIScriptGeneric* gen)
+{
+    void* ref = gen->GetArgAddress(0);
+    int typeId = gen->GetArgTypeId(0);
+
+    string format = *static_cast<string*>(ref);
+
+    for (int i = 1; i < 16; i++)
+    {
+        ref = gen->GetArgAddress(i);
+        typeId = gen->GetArgTypeId(i);
+
+        switch (typeId)
+        {
+        case 67108876: //string?
+        {
+            string local = *static_cast<string*>(ref);
+            replace(format, "%s", local);
+            break;
+        }
+        case 2:
+        {
+            char local = *static_cast<char*>(ref);
+            replace(format, "%d", to_string(local));
+            break;
+        }
+        case 3:
+        {
+            short local = *static_cast<short*>(ref);
+            replace(format, "%d", to_string(local));
+            break;
+        }
+        case 4:
+        {
+            int local = *static_cast<int*>(ref);
+            replace(format, "%d", to_string(local));
+            break;
+        }
+        case 5:
+        {
+            long long local = *static_cast<long long*>(ref);
+            replace(format, "%d", to_string(local));
+            break;
+        }
+        case 6:
+        {
+            unsigned char local = *static_cast<unsigned char*>(ref);
+            replace(format, "%d", to_string(local));
+            break;
+        }
+        case 7:
+        {
+            unsigned short local = *static_cast<unsigned short*>(ref);
+            replace(format, "%d", to_string(local));
+            break;
+        }
+        case 8:
+        {
+            unsigned int local = *static_cast<unsigned int*>(ref);
+            replace(format, "%d", to_string(local));
+            break;
+        }
+        case 9:
+        {
+            unsigned long long local = *static_cast<unsigned long long*>(ref);
+            replace(format, "%d", to_string(local));
+            break;
+        }
+        case 10:
+        {
+            float local = *static_cast<float*>(ref);
+            replace(format, "%f", to_string(local));
+            break;
+        }
+        case 11:
+        {
+            double local = *static_cast<double*>(ref);
+            replace(format, "%f", to_string(local));
+            break;
+        }
+        }
+    }
+
+    cout << format << endl;
+    return;
+}
+
 void init_engine(){
     Tolk_Load();
 
