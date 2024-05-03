@@ -1,13 +1,23 @@
 ﻿#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS 
+#include "openssl/aes.h"
+#include "openssl/rand.h"
+#include "openssl/evp.h"
+#include "openssl/err.h"
 #include <random>
 #include "sound.h"
 #include "ngtreg.h"
 #include <filesystem>
+#include<vector>
 #include <thread>
 #include "Tolk.h"
 #include <chrono>
 #include <string>
 #include"sdl/SDL.h"
+#define BL_NUMWORDS_IMPLEMENTATION
+extern "C"
+{
+#include"bl_number_to_words.h"
+}
 #include<map>
 #include <stdio.h>
 #include "NGT.H"
@@ -291,6 +301,17 @@ Tolk_Unload();
 SDL_Quit();
 exit(return_number);
 }
+std::string number_to_words(uint64_t num, bool include_and)
+{
+    std::vector<char> buf(1024);
+    int use_and = (include_and ? 1 : 0);
+    size_t bufsize = bl_number_to_words(num, buf.data(), buf.size(), use_and);
+    if (bufsize > buf.size())
+    {
+        return "";
+    }
+    return std::string(buf.data());
+}
 std::string read_environment_variable(const std::string& path) {
 #ifdef _WIN32
     // Use _dupenv_s on Windows
@@ -363,15 +384,37 @@ if(e.key.keysym.scancode==key_code){
     return false;
 }
 std::string string_encrypt(std::string the_string, std::string encryption_key) {
-    std::string encrypted_string = the_string;
-    for (size_t i = 0; i < the_string.length(); ++i) {
-        encrypted_string[i] = the_string[i] ^ encryption_key[i % encryption_key.length()];
+    AES_KEY aesKey;
+    if (AES_set_encrypt_key((const unsigned char*)encryption_key.c_str(), 256, &aesKey) != 0) {
+        return "";
     }
-    return encrypted_string;
+
+    std::string ciphertext;
+    unsigned char iv[AES_BLOCK_SIZE];
+    memset(iv, 0, AES_BLOCK_SIZE); // Initialize IV to zeros or use a secure random IV
+
+    // Create a buffer large enough to hold the encrypted data
+    ciphertext.resize(the_string.length() + AES_BLOCK_SIZE);
+
+    AES_cbc_encrypt((const unsigned char*)the_string.c_str(), (unsigned char*)&ciphertext[0], the_string.length(), &aesKey, iv, AES_ENCRYPT);
+    return ciphertext;
 }
 
 std::string string_decrypt(std::string the_string, std::string encryption_key) {
-    return string_encrypt(the_string, encryption_key); // Для дешифровки используем тот же метод, что и для шифрования
+    AES_KEY aesKey;
+    if (AES_set_decrypt_key((const unsigned char*)encryption_key.c_str(), 256, &aesKey) != 0) {
+        return "";
+    }
+
+    std::string decryptedtext;
+    unsigned char iv[AES_BLOCK_SIZE];
+    memset(iv, 0, AES_BLOCK_SIZE); // Assuming IV is all zeros
+
+    // Create a buffer large enough to hold the decrypted data
+    decryptedtext.resize(the_string.length());
+
+    AES_cbc_encrypt((const unsigned char*)the_string.c_str(), (unsigned char*)&decryptedtext[0], the_string.length(), &aesKey, iv, AES_DECRYPT);
+    return decryptedtext;
 }
 
 std::string url_decode(const std::string& url) {
