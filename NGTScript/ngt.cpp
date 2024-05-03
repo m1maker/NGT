@@ -835,10 +835,55 @@ handle_->m_channel = event.channelID;
                                     lib = LoadLibraryW(std::wstring(libname.begin(), libname.end()).c_str());
                                     return lib == NULL;
                                 }
-    void library::call(asIScriptGeneric* gen) {
+    void library_call(asIScriptGeneric* gen) {
+#undef GetObject
         asIScriptContext* ctx = asGetActiveContext();
-        asIScriptEngine* engine = ctx->GetEngine();
-        CScriptDictionary* dict = CScriptDictionary::Create(engine);
+        library* lib_obj = (library*)gen->GetObject();
+
+        void* ref = gen->GetArgAddress(0);
+        typedef void* (*func)(...);
+        std::string func_name= *static_cast<string*>(ref);
+        //Function signature parser:
+        std::vector<std::string> tokens;
+        std::string token;
+        for (char c : func_name) {
+            if (c == ' ' || c == '(' || c == ')' || c == ',' || c == ';') {
+                if (!token.empty()) {
+                    tokens.push_back(token);
+                    token.clear();
+                }
+            }
+            else {
+                token += c;
+            }
+        }
+
+        // First array: Return type and function name
+        std::vector<std::string> first;
+        first.push_back(tokens[0]);  // Return type
+        first.push_back(tokens[1]);  // Function name
+
+        // Second array: Parameters
+        std::vector<std::string> last;
+        for (size_t i = 2; i < tokens.size(); ++i) {
+            if (!tokens[i].empty()) {
+                last.push_back(tokens[i]);
+            }
+        }
+
+        FARPROC address = GetProcAddress(lib_obj->lib, first[1].c_str());
+        if (address == NULL) {
+            const char* name = first[1].c_str();
+            std::string message = "Signature parse error: GetProcAddress failed for '" + std::string(name) + "'";
+            ctx->SetException(message.c_str());
+            return;
+        }
+        func function = reinterpret_cast<func>(address);
+        for (int i = 1; i <= 10; i++) {
+            void* arg = gen->GetArgAddress(i);
+            int arg_count = i - 1;
+
+        }
     }
                                 void library::unload() {
                                     FreeLibrary(lib);

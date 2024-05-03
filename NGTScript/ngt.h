@@ -200,9 +200,9 @@ public:
 	void construct();
 	void destruct();
 	bool load(const std::string &);
-	void call(asIScriptGeneric* gen);
 		void unload();
 };
+void library_call(asIScriptGeneric* gen);
 
 class instance {
 private:
