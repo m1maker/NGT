@@ -882,7 +882,10 @@ handle_->m_channel = event.channelID;
         for (int i = 1; i <= 10; i++) {
             void* arg = gen->GetArgAddress(i);
             int arg_count = i - 1;
-
+            if (last[arg_count] == "void") {
+                ctx->SetException("The type ID can not be void");
+                return;
+            }
         }
     }
                                 void library::unload() {
