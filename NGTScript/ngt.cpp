@@ -959,7 +959,7 @@ handle_->m_channel = event.channelID;
                     float value = *static_cast<float*>(gen->GetArgAddress(i));
                     call_ctx->SetArgFloat(arg_count, value);
                 }
-                else if(last[arg_count]=="string"){
+                else if (last[arg_count] == "string") {
                     void* ref = gen->GetArgAddress(i);
                     std::string value = *static_cast<std::string*>(ref);
                     call_ctx->SetArgObject(arg_count, &value);
@@ -967,6 +967,16 @@ handle_->m_channel = event.channelID;
             }
         }
         call_ctx->Execute();
+        CScriptDictionary* dict = CScriptDictionary::Create(engine);
+        if (first[0] == "int" or first[0]=="int8" or first[0]=="int16" or first[0]=="int32" or first[0]=="int64" or first[0] == "uint" or first[0] == "uint8" or first[0] == "uint16" or first[0] == "uint32" or first[0] == "uint64" or first[0]=="short" or first[0]=="long") {
+            asINT64 value = call_ctx->GetReturnDWord();
+            dict->Set("0", value);
+}
+        if (first[0] == "double" or first[0] == "float") {
+            double value = call_ctx->GetReturnDouble();
+            dict->Set("0", value);
+}
+        gen->SetReturnObject(dict);
     }
         void library::unload() {
                                     FreeLibrary(lib);
