@@ -1097,6 +1097,7 @@ public:
 void at_stop(ma_node* fx, ma_sound* hndl) {
 //    ma_node_detach_output_bus(fx, 0);
 }
+std::map<std::string, ma_data_source*> sounds;
 class sound {
 public:
     bool is_3d_;
@@ -1164,10 +1165,20 @@ public:
             this->close();
             active = false;
         }
-        if (set3d)
+        bool cache = false;
+        auto it = sounds.find(result);
+        if (it != sounds.end()) {
+            ma_sound_init_from_data_source(&sound_default_mixer, it->second, 0, NULL, &handle_);
+        }
+        else {
+            cache = true;
             ma_sound_init_from_file(&sound_default_mixer, result.c_str(), MA_SOUND_FLAG_DECODE, NULL, NULL, &handle_);
-        else
-            ma_sound_init_from_file(&sound_default_mixer, result.c_str(), MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_DECODE, NULL, NULL, &handle_);
+        }
+        if (cache) {
+            ma_data_source* data = ma_sound_get_data_source(&handle_);
+            sounds[result] = data;
+            cache = false;
+        }
         active = true;
         if (sound_global_hrtf)
             this->set_hrtf(true);

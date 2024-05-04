@@ -871,21 +871,20 @@ handle_->m_channel = event.channelID;
     bool network::is_active() const {
         return m_active;
     }
-
     void library::construct() {}
     void library::destruct() {}
     bool library::load(const std::string& libname) {
                                     lib = LoadLibraryW(std::wstring(libname.begin(), libname.end()).c_str());
                                     return lib == NULL;
                                 }
+    typedef void* (*func)(void**, void**, void**, void**, void**, void**, void**, void**, void**, void**);
     void library_call(asIScriptGeneric* gen) {
 #undef GetObject
         asIScriptContext* ctx = asGetActiveContext();
         library* lib_obj = (library*)gen->GetObject();
 
         void* ref = gen->GetArgAddress(0);
-        typedef void* (*func)(...);
-        std::string func_name= *static_cast<string*>(ref);
+        std::string func_name = *static_cast<string*>(ref);
         //Function signature parser:
         std::vector<std::string> tokens;
         std::string token;
@@ -922,16 +921,54 @@ handle_->m_channel = event.channelID;
             return;
         }
         func function = reinterpret_cast<func>(address);
+        asIScriptEngine* engine = ctx->GetEngine();
+        int func_id = engine->RegisterGlobalFunction(func_name.c_str(), asFUNCTION(function), asCALL_CDECL);
+        asIScriptFunction* script_func = engine->GetFunctionById(func_id);
+        asIScriptContext* call_ctx = engine->CreateContext();
+        call_ctx->Prepare(script_func);
         for (int i = 1; i <= 10; i++) {
-            void* arg = gen->GetArgAddress(i);
             int arg_count = i - 1;
-            if (last[arg_count] == "void") {
-                ctx->SetException("The type ID can not be void");
-                return;
+            if (arg_count < last.size()) {
+                if (last[arg_count] == "void") {
+                    call_ctx->Release();
+                    call_ctx = NULL;
+                    ctx->SetException("A type ID can not be void");
+                    return;
+                }
+                else if (last[arg_count] == "int") {
+                    int value = *static_cast<int*>(gen->GetArgAddress(i));
+                    call_ctx->SetArgDWord(arg_count, value);
+                }
+                else if (last[arg_count] == "uint") {
+                    unsigned int value = *static_cast<unsigned int*>(gen->GetArgAddress(i));
+                    call_ctx->SetArgDWord(arg_count, value);
+                }
+                else if (last[arg_count] == "short") {
+                    short value = *static_cast<short*>(gen->GetArgAddress(i));
+                    call_ctx->SetArgWord(arg_count, value);
+                }
+                else if (last[arg_count] == "long") {
+                    long value = *static_cast<long*>(gen->GetArgAddress(i));
+                    call_ctx->SetArgQWord(arg_count, value);
+                }
+                else if (last[arg_count] == "double") {
+                    double value = *static_cast<double*>(gen->GetArgAddress(i));
+                    call_ctx->SetArgDouble(arg_count, value);
+                }
+                else if (last[arg_count] == "float") {
+                    float value = *static_cast<float*>(gen->GetArgAddress(i));
+                    call_ctx->SetArgFloat(arg_count, value);
+                }
+                else if(last[arg_count]=="string"){
+                    void* ref = gen->GetArgAddress(i);
+                    std::string value = *static_cast<std::string*>(ref);
+                    call_ctx->SetArgObject(arg_count, &value);
+                }
             }
         }
+        call_ctx->Execute();
     }
-                                void library::unload() {
+        void library::unload() {
                                     FreeLibrary(lib);
                                 }
                 void instance::construct() {}
