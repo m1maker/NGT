@@ -935,11 +935,11 @@ handle_->m_channel = event.channelID;
                     ctx->SetException("A type ID can not be void");
                     return;
                 }
-                else if (last[arg_count] == "int") {
-                    int value = *static_cast<int*>(gen->GetArgAddress(i));
+                else if (last[arg_count] == "int" or last[arg_count]=="int8" or last[arg_count]=="int16" or last[arg_count]=="int32" or last[arg_count]=="int64") {
+                    asINT64 value = *static_cast<asINT64*>(gen->GetArgAddress(i));
                     call_ctx->SetArgDWord(arg_count, value);
                 }
-                else if (last[arg_count] == "uint") {
+                else if (last[arg_count] == "uint" or last[arg_count] == "uint8" or last[arg_count] == "uint16" or last[arg_count] == "uint32" or last[arg_count] == "uint64") {
                     unsigned int value = *static_cast<unsigned int*>(gen->GetArgAddress(i));
                     call_ctx->SetArgDWord(arg_count, value);
                 }
@@ -964,6 +964,13 @@ handle_->m_channel = event.channelID;
                     std::string value = *static_cast<std::string*>(ref);
                     call_ctx->SetArgObject(arg_count, &value);
                 }
+                else if (last[arg_count] == "c_str") {
+                    void* ref = gen->GetArgAddress(i);
+                    std::string value = *static_cast<std::string*>(ref);
+                    const char* str = value.c_str();
+                    call_ctx->SetArgObject(arg_count, &str);
+                }
+
             }
         }
         call_ctx->Execute();
@@ -976,7 +983,27 @@ handle_->m_channel = event.channelID;
             double value = call_ctx->GetReturnDouble();
             dict->Set("0", value);
 }
-        gen->SetReturnObject(dict);
+        for (int i = 1; i <= 10; i++) {
+            int arg_count = i - 1;
+            if (arg_count < last.size()) {
+            if (last[arg_count] == "int" or last[arg_count] == "int8" or last[arg_count] == "int16" or last[arg_count] == "int32" or last[arg_count] == "int64" or last[arg_count] == "uint" or last[arg_count] == "uint8" or last[arg_count] == "uint16" or last[arg_count] == "uint32" or last[arg_count] == "uint64" or last[arg_count] == "short" or last[arg_count] == "long") {
+                asINT64 value = *static_cast<asINT64*>(gen->GetArgAddress(i));
+                dict->Set(std::to_string(i), value);
+            }
+            else if (last[arg_count] == "double" or last[arg_count] == "float") {
+                double value = *static_cast<double*>(gen->GetArgAddress(i));
+                dict->Set(std::to_string(i), value);
+
+            }
+            else if (last[arg_count] == "string") {
+                void* ref = gen->GetArgAddress(i);
+                std::string value = *static_cast<std::string*>(ref);
+                dict->Set(std::to_string(i), &value, asTYPEID_OBJHANDLE);
+            }
+
+            }
+        }
+            gen->SetReturnObject(dict);
     }
         void library::unload() {
                                     FreeLibrary(lib);

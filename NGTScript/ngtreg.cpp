@@ -420,6 +420,7 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterTypedef("dword", "uint64");
     engine->RegisterTypedef("word", "uint8");
     engine->RegisterTypedef("size_t", "uint64");
+    engine->RegisterTypedef("c_str", "int8");
     engine->RegisterObjectType("vector", sizeof(ngtvector), asOBJ_REF);
     engine->RegisterObjectBehaviour("vector", asBEHAVE_FACTORY, "vector@ v()", asFUNCTION(fngtvector), asCALL_CDECL);
     engine->RegisterObjectBehaviour("vector", asBEHAVE_ADDREF, "void f()", asMETHOD(ngtvector, construct), asCALL_THISCALL);
