@@ -377,6 +377,12 @@ timer* ftimer() { return new timer; }
 user_idle* fuser_idle() { return new user_idle; }
 asIScriptFunction* fscript_function() { asIScriptFunction* r =nullptr; return r; }
 library* flibrary() { return new library; }
+void fscript_thread(asIScriptGeneric* gen) {
+    asIScriptFunction* func = (asIScriptFunction*)gen->GetArgAddress(0);
+    CScriptDictionary* dict= (CScriptDictionary*)gen->GetArgAddress(1);
+    script_thread* th = new script_thread(func, dict);
+    gen->SetReturnObject(th);
+}
 tts_voice* ftts_voice() { return new tts_voice(); }
 instance* finstance(std::string app) { return new instance(app); }
 network_event* fnetwork_event() { return new network_event; }
@@ -546,6 +552,12 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectMethod("library", "bool load(const string&in)const", asMETHOD(library, load), asCALL_THISCALL);
     engine->RegisterObjectMethod("library", "dictionary@ call(const string&in, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null)const", asFUNCTION(library_call), asCALL_GENERIC);
     engine->RegisterObjectMethod("library", "void unload()const", asMETHOD(library, unload), asCALL_THISCALL);
+    engine->RegisterFuncdef("void thread_func()");
+    engine->RegisterObjectType("thread", sizeof(script_thread), asOBJ_REF | asOBJ_NOCOUNT);
+    engine->RegisterObjectBehaviour("thread", asBEHAVE_FACTORY, "thread@ t(thread_func@, dictionary@)", asFUNCTION(fscript_thread), asCALL_GENERIC);
+    engine->RegisterObjectMethod("thread", "void detach()const", asMETHOD(script_thread, detach), asCALL_THISCALL);
+    engine->RegisterObjectMethod("thread", "void join()const", asMETHOD(script_thread, join), asCALL_THISCALL);
+
     engine->RegisterObjectType("instance", sizeof(instance), asOBJ_REF);
     engine->RegisterObjectBehaviour("instance", asBEHAVE_FACTORY, "instance@ i(const string&in)", asFUNCTION(finstance), asCALL_CDECL);
     engine->RegisterObjectBehaviour("instance", asBEHAVE_ADDREF, "void f()", asMETHOD(instance, construct), asCALL_THISCALL);

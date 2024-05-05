@@ -973,7 +973,7 @@ handle_->m_channel = event.channelID;
 
             }
         }
-        call_ctx->Execute();
+            call_ctx->Execute();
         CScriptDictionary* dict = CScriptDictionary::Create(engine);
         if (first[0] == "int" or first[0]=="int8" or first[0]=="int16" or first[0]=="int32" or first[0]=="int64" or first[0] == "uint" or first[0] == "uint8" or first[0] == "uint16" or first[0] == "uint32" or first[0] == "uint64" or first[0]=="short" or first[0]=="long") {
             asINT64 value = call_ctx->GetReturnDWord();
@@ -997,8 +997,9 @@ handle_->m_channel = event.channelID;
             }
             else if (last[arg_count] == "string") {
                 void* ref = gen->GetArgAddress(i);
+
                 std::string value = *static_cast<std::string*>(ref);
-                dict->Set(std::to_string(i), &value, asTYPEID_OBJHANDLE);
+                dict->Set(std::to_string(i), &value, 67108876);
             }
 
             }
@@ -1008,7 +1009,36 @@ handle_->m_channel = event.channelID;
         void library::unload() {
                                     FreeLibrary(lib);
                                 }
-                void instance::construct() {}
+        script_thread::script_thread(asIScriptFunction* func, CScriptDictionary* args) {
+            function = func;
+            asIScriptContext* current_context = asGetActiveContext();
+            if (function == 0) {
+                current_context->SetException("Function is null");
+}
+            asIScriptEngine* current_engine = current_context->GetEngine();
+            context = current_engine->CreateContext();
+            alert("W", std::string(function->GetDeclaration()));
+            context->Prepare(function);
+            for (int i = 0; i < args->GetSize(); i++) {
+                void* arg=NULL;
+                args->Get(std::to_string(i), arg, args->GetTypeId(std::to_string(i)));
+                context->SetArgAddress(i, arg);
+            }
+        }
+        void script_thread::detach() {
+            std::thread t([this]() {
+                this->context->Execute();
+                });
+            t.detach();
+        }
+        void script_thread::join() {
+            std::thread t([this]() {
+                this->context->Execute();
+                });
+            t.join();
+        }
+
+        void instance::construct() {}
                 void instance::destruct() {  }
 
                 bool instance::is_running() {

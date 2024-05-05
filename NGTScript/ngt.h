@@ -30,6 +30,7 @@ using namespace Poco::Net;
 //#define SDL_MAIN_HANDLED
 #include"sdl/SDL.h"
 #include <iostream>
+#include<thread>
 #include <vector>
 #include "scriptdictionary/scriptdictionary.h"
 class ngtvector {
@@ -204,6 +205,17 @@ public:
 		void unload();
 };
 void library_call(asIScriptGeneric* gen);
+class script_thread {
+private:
+	asIScriptContext* context;
+	asIScriptFunction* function;
+	std::thread* th;
+public:
+	script_thread(asIScriptFunction* func, CScriptDictionary* args);
+	void join();
+	void detach();
+	void destroy();
+};
 
 class instance {
 private:
