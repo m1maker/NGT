@@ -236,6 +236,8 @@ SDL_StartTextInput();
 window_closable = closable;
 if (win!=NULL)
 {
+    SDL_SetHint(SDL_HINT_APP_NAME, "NGTWindow");
+
     update_game_window();
     return true;
 }
@@ -1017,7 +1019,6 @@ handle_->m_channel = event.channelID;
 }
             asIScriptEngine* current_engine = current_context->GetEngine();
             context = current_engine->CreateContext();
-            alert("W", std::string(function->GetDeclaration()));
             context->Prepare(function);
             for (int i = 0; i < args->GetSize(); i++) {
                 void* arg=NULL;

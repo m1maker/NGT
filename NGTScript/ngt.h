@@ -103,7 +103,7 @@ CScriptDictionary* deserialize(const std::string &serialized_data);
 
 class timer {
 public:
-
+	mutable int ref = 0;
 	std::chrono::time_point<std::chrono::steady_clock> inittime;
 	uint64_t pausedNanos = 0;
 
@@ -162,6 +162,7 @@ unsigned    int m_peerId;
 
 class network {
 public:
+	mutable int ref = 0;
 	void construct();
 	void destruct();
 	unsigned    int connect(const std::string& host, int port);
@@ -198,6 +199,7 @@ private:
 };
 class library {
 public:
+	mutable int ref = 0;
 	HMODULE lib;
 	void construct();
 	void destruct();
@@ -207,6 +209,7 @@ public:
 void library_call(asIScriptGeneric* gen);
 class script_thread {
 private:
+	mutable int ref = 0;
 	asIScriptContext* context;
 	asIScriptFunction* function;
 	std::thread* th;
@@ -219,6 +222,7 @@ public:
 
 class instance {
 private:
+	mutable int ref = 0;
 	HANDLE mutex;
 public:
 	instance(const std::string & application_name) {

@@ -1097,12 +1097,11 @@ public:
 void at_stop(ma_node* fx, ma_sound* hndl) {
 //    ma_node_detach_output_bus(fx, 0);
 }
-std::map<std::string, ma_data_source*> sounds;
 class sound {
 public:
     bool is_3d_;
     bool playing = false, paused = false, active = false;
-    ma_sound handle_;
+    ma_sound* handle_=nullptr;
     ma_steamaudio_binaural_node g_binauralNode;   /* The echo effect is achieved using a delay node. */
     ma_reverb_node      g_reverbNode;        /* The reverb node. */
     ma_reverb_node_config reverbNodeConfig;
@@ -1137,7 +1136,9 @@ public:
     ma_steamaudio_binaural_node_config binauralNodeConfig;
     bool sound_hrtf = false;
     ma_node* current_fx = nullptr;
+    mutable int ref = 0;
     sound(const std::string  &filename="", bool set3d=false) {
+        ref+= 1;
         if (!inited) {
             soundsystem_init();
             inited = true;
@@ -1150,10 +1151,15 @@ public:
         if (active)this->close();
     }
     void add() {
+        ref += 1;
     }
     void release() {
+        if (--ref == 0) {
+            if(!this->is_playing())
+            this->~sound();
         }
-    bool load(const std::string& filename, bool set3d) {
+        }
+        bool load(const std::string& filename, bool set3d) {
         std::string result;
         if (sound_path != "") {
             result = sound_path + "/" + filename.c_str();
@@ -1165,12 +1171,14 @@ public:
             this->close();
             active = false;
         }
-            ma_sound_init_from_file(&sound_default_mixer, result.c_str(), MA_SOUND_FLAG_DECODE, NULL, NULL, &handle_);
-                active = true;
+        handle_ = new ma_sound;
+        ma_sound_init_from_file(&sound_default_mixer, result.c_str(), 0, NULL, NULL, handle_);
+        active = true;
+
         if (sound_global_hrtf)
             this->set_hrtf(true);
-ma_sound_set_rolloff(&handle_, 2);
-ma_sound_set_end_callback(&handle_, at_stop, current_fx);
+ma_sound_set_rolloff(handle_, 2);
+ma_sound_set_end_callback(handle_, at_stop, current_fx);
 return true;
         }
     bool load_from_memory(const std::string& data, bool set3d) {
@@ -1178,6 +1186,7 @@ return true;
             this->close();
             active = false;
         }
+        handle_ = new ma_sound;
         ma_sound_config c;
 
         ma_decoder decoder;
@@ -1187,11 +1196,11 @@ return true;
 
         if(!set3d)
 c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
-        ma_sound_init_ex(&sound_default_mixer, &c, &handle_);
+        ma_sound_init_ex(&sound_default_mixer, &c, handle_);
         active = true;
         if (sound_global_hrtf)
             this->set_hrtf(true);
-        ma_sound_set_end_callback(&handle_, at_stop, current_fx);
+        ma_sound_set_end_callback(handle_, at_stop, current_fx);
 
         return active;
     }
@@ -1207,14 +1216,15 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
             this->close();
             active = false;
         }
+        handle_ = new ma_sound;
         if (set3d)
-            ma_sound_init_from_file(&sound_default_mixer, result.c_str(), MA_SOUND_FLAG_STREAM, NULL, NULL, &handle_);
+            ma_sound_init_from_file(&sound_default_mixer, result.c_str(), MA_SOUND_FLAG_STREAM, NULL, NULL, handle_);
         else
-            ma_sound_init_from_file(&sound_default_mixer, result.c_str(), MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_STREAM, NULL, NULL, &handle_);
+            ma_sound_init_from_file(&sound_default_mixer, result.c_str(), MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_STREAM, NULL, NULL, handle_);
         active = true;
         if (sound_global_hrtf)
             this->set_hrtf(true);
-        ma_sound_set_end_callback(&handle_, at_stop, current_fx);
+        ma_sound_set_end_callback(handle_, at_stop, current_fx);
 
         return true;
     }
@@ -1224,6 +1234,7 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
             this->close();
             active = false;
         }
+        handle_ = new ma_sound;
         ma_sound_config c;
 
         ma_decoder decoder;
@@ -1234,11 +1245,11 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
 
         if (!set3d)
             c.flags |= MA_SOUND_FLAG_NO_SPATIALIZATION;
-        ma_sound_init_ex(&sound_default_mixer, &c, &handle_);
+        ma_sound_init_ex(&sound_default_mixer, &c, handle_);
         active = true;
         if (sound_global_hrtf)
             this->set_hrtf(true);
-        ma_sound_set_end_callback(&handle_, at_stop, current_fx);
+        ma_sound_set_end_callback(handle_, at_stop, current_fx);
 
         return active;
     }
@@ -1246,24 +1257,24 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
         return NULL;
     }
     void set_faid_time(float volume_beg, float volume_end, float time) {
-        ma_sound_set_fade_in_milliseconds(&handle_, volume_beg/100, volume_end/100, static_cast<ma_uint64>(time));
+        ma_sound_set_fade_in_milliseconds(handle_, volume_beg/100, volume_end/100, static_cast<ma_uint64>(time));
     }
     bool play() {
         if (!active)return false;
-            ma_sound_set_looping(&handle_, false);
-            ma_sound_start(&handle_);
+            ma_sound_set_looping(handle_, false);
+            ma_sound_start(handle_);
             return true;
         }
     bool play_looped() {
         if (!active)return false;
 
-            ma_sound_set_looping(&handle_, true);
-            ma_sound_start(&handle_);
+            ma_sound_set_looping(handle_, true);
+            ma_sound_start(handle_);
             return true;
         }
     bool pause() {
         if (!active)return false;
-            ma_sound_stop(&handle_);
+            ma_sound_stop(handle_);
             return true;
         }
     bool play_wait() {
@@ -1281,8 +1292,8 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
 
     bool stop() {
         if (!active)return false;
-            ma_sound_stop(&handle_);
-            ma_sound_seek_to_pcm_frame(&handle_, 0);
+            ma_sound_stop(handle_);
+            ma_sound_seek_to_pcm_frame(handle_, 0);
         }
     bool close() {
         if (!active)return false;
@@ -1327,8 +1338,9 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
                 notchf = false;
             }
         current_fx = nullptr;
-        ma_sound_uninit(&handle_);
-
+        ma_sound_uninit(handle_);
+        delete handle_;
+        handle_ = nullptr;
         active = false;
         return true;
     }
@@ -1343,7 +1355,7 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
             }
             ma_reverb_node_init(ma_engine_get_node_graph(&sound_default_mixer), &reverbNodeConfig, NULL, &g_reverbNode);
             ma_node_attach_output_bus(&g_reverbNode, 0, current_fx, 0);
-            ma_node_attach_output_bus(&handle_, 0, &g_reverbNode, 0);
+            ma_node_attach_output_bus(handle_, 0, &g_reverbNode, 0);
             current_fx = &g_reverbNode;
             reverb = true;
         }
@@ -1357,7 +1369,7 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
             }
             ma_vocoder_node_init(ma_engine_get_node_graph(&sound_default_mixer), &vocoderNodeConfig, NULL, &g_vocoderNode);
             ma_node_attach_output_bus(&g_vocoderNode, 0, current_fx, 0);
-            ma_node_attach_output_bus(&handle_, 0, &g_vocoderNode, 0);
+            ma_node_attach_output_bus(handle_, 0, &g_vocoderNode, 0);
             current_fx = &g_vocoderNode;
             vocoder = true;
         }
@@ -1370,7 +1382,7 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
             }
             ma_delay_node_init(ma_engine_get_node_graph(&sound_default_mixer), &delayNodeConfig, NULL, &g_delayNode);
             ma_node_attach_output_bus(&g_delayNode, 0, current_fx, 0);
-            ma_node_attach_output_bus(&handle_, 0, &g_delayNode, 0);
+            ma_node_attach_output_bus(handle_, 0, &g_delayNode, 0);
             current_fx = &g_delayNode;
             delayf = true;
         }
@@ -1384,7 +1396,7 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
             }
             ma_ltrim_node_init(ma_engine_get_node_graph(&sound_default_mixer), &trimNodeConfig, NULL, &g_trimNode);
             ma_node_attach_output_bus(&g_trimNode, 0, current_fx, 0);
-            ma_node_attach_output_bus(&handle_, 0, &g_trimNode, 0);
+            ma_node_attach_output_bus(handle_, 0, &g_trimNode, 0);
             current_fx = &g_trimNode;
 
             ltrim = true;
@@ -1409,7 +1421,7 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
                 ma_node_attach_output_bus(&g_separatorNode, iChannel, &g_combinerNode, iChannel);
             }
 
-            ma_node_attach_output_bus(&handle_, 0, &g_separatorNode, 0);
+            ma_node_attach_output_bus(handle_, 0, &g_separatorNode, 0);
             separator = true;
         }
         if (fx == "highpass") {
@@ -1422,7 +1434,7 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
             }
             ma_hpf_node_init(ma_engine_get_node_graph(&sound_default_mixer), &highpassConfig, NULL, &highpass);
             ma_node_attach_output_bus(&highpass, 0, current_fx, 0);
-            ma_node_attach_output_bus(&handle_, 0, &highpass, 0);
+            ma_node_attach_output_bus(handle_, 0, &highpass, 0);
             current_fx = &highpass;
 
             hp = true;
@@ -1437,7 +1449,7 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
             }
             ma_lpf_node_init(ma_engine_get_node_graph(&sound_default_mixer), &lowpassConfig, NULL, &lowpass);
             ma_node_attach_output_bus(&lowpass, 0, current_fx, 0);
-            ma_node_attach_output_bus(&handle_, 0, &lowpass, 0);
+            ma_node_attach_output_bus(handle_, 0, &lowpass, 0);
             current_fx = &lowpass;
 
             lp = true;
@@ -1452,7 +1464,7 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
             }
             ma_notch_node_init(ma_engine_get_node_graph(&sound_default_mixer), &notchConfig, NULL, &notch);
             ma_node_attach_output_bus(&notch, 0, current_fx, 0);
-            ma_node_attach_output_bus(&handle_, 0, &notch, 0);
+            ma_node_attach_output_bus(handle_, 0, &notch, 0);
             current_fx = &notch;
 
             notchf = true;
@@ -1466,7 +1478,7 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
                 ma_reverb_node_uninit(&g_reverbNode, NULL);
                 reverb = false;
             }
-            ma_node_attach_output_bus(&handle_, 0, current_fx, 0);
+            ma_node_attach_output_bus(handle_, 0, current_fx, 0);
         }
         if (fx == "vocoder") {
             if (vocoder) {
@@ -1475,7 +1487,7 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
                 ma_vocoder_node_uninit(&g_vocoderNode, NULL);
                 vocoder = false;
             }
-            ma_node_attach_output_bus(&handle_, 0, current_fx, 0);
+            ma_node_attach_output_bus(handle_, 0, current_fx, 0);
         }
         if (fx == "delay") {
             if (delayf) {
@@ -1483,7 +1495,7 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
                 ma_delay_node_uninit(&g_delayNode, NULL);
                 delayf = false;
             }
-            ma_node_attach_output_bus(&handle_, 0, current_fx, 0);
+            ma_node_attach_output_bus(handle_, 0, current_fx, 0);
         }
         if (fx == "ltrim") {
             if (ltrim) {
@@ -1491,7 +1503,7 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
                 ma_ltrim_node_uninit(&g_trimNode, NULL);
                 ltrim = false;
             }
-            ma_node_attach_output_bus(&handle_, 0, current_fx, 0);
+            ma_node_attach_output_bus(handle_, 0, current_fx, 0);
         }
         if (fx == "channelsplit") {
             combinerNodeConfig = ma_channel_combiner_node_config_init(engineConfig.channels);
@@ -1511,7 +1523,7 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
                 ma_hpf_node_uninit(&highpass, NULL);
                 hp = false;
             }
-            ma_node_attach_output_bus(&handle_, 0, current_fx, 0);
+            ma_node_attach_output_bus(handle_, 0, current_fx, 0);
 
         }
         if (fx == "lowpass") {
@@ -1521,7 +1533,7 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
                 ma_lpf_node_uninit(&lowpass, NULL);
                 lp = false;
             }
-            ma_node_attach_output_bus(&handle_, 0, current_fx, 0);
+            ma_node_attach_output_bus(handle_, 0, current_fx, 0);
 
         }
         if (fx == "notch") {
@@ -1531,7 +1543,7 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
                 ma_notch_node_uninit(&notch, NULL);
                 notchf = false;
             }
-            ma_node_attach_output_bus(&handle_, 0, current_fx, 0);
+            ma_node_attach_output_bus(handle_, 0, current_fx, 0);
 
         }
     }
@@ -1640,13 +1652,13 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
                 ma_steamaudio_binaural_node_uninit(&g_binauralNode, NULL);
                 sound_hrtf = false;
             }
-            g_binauralNode.handle_ = this->handle_;
+            g_binauralNode.handle_ = *this->handle_;
             ma_steamaudio_binaural_node_init(ma_engine_get_node_graph(&sound_default_mixer), &binauralNodeConfig, NULL, &g_binauralNode);
             /* Connect the output of the delay node to the input of the endpoint. */
             ma_node_attach_output_bus(&g_binauralNode, 0, current_fx, 0);
-            ma_node_attach_output_bus(&handle_, 0, &g_binauralNode, 0);
+            ma_node_attach_output_bus(handle_, 0, &g_binauralNode, 0);
             current_fx = &g_binauralNode;
-            ma_sound_set_directional_attenuation_factor(&handle_, 0);
+            ma_sound_set_directional_attenuation_factor(handle_, 0);
             sound_hrtf = true;
         }
         else {
@@ -1654,10 +1666,10 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
 
                 ma_steamaudio_binaural_node_uninit(&g_binauralNode, NULL);
                 sound_hrtf = false;
-                ma_sound_set_directional_attenuation_factor(&handle_, 1);
+                ma_sound_set_directional_attenuation_factor(handle_, 1);
 
                 current_fx = ma_engine_get_endpoint(&sound_default_mixer);
-                ma_node_attach_output_bus(&handle_, 0, current_fx, 0);
+                ma_node_attach_output_bus(handle_, 0, current_fx, 0);
 
             }
 
@@ -1668,42 +1680,42 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
     }
     void set_volume_step(float volume_step) {
         if (!active)return;
-        ma_sound_set_rolloff(&handle_, volume_step);
+        ma_sound_set_rolloff(handle_, volume_step);
     }
     void set_pan_step(float pan_step) {
         if (!active)return;
-        ma_sound_set_directional_attenuation_factor(&handle_, pan_step);
+        ma_sound_set_directional_attenuation_factor(handle_, pan_step);
 }
     void set_pitch_step(float pitch_step) {
         if (!active)return;
-        ma_sound_set_doppler_factor(&handle_, pitch_step);
+        ma_sound_set_doppler_factor(handle_, pitch_step);
 }
     bool seek(float new_position) {
         if (!active)return false;
         if (new_position > this->get_length())
             return false;
-ma_sound_seek_to_pcm_frame(&handle_, static_cast<ma_uint64>(new_position * 100));
+ma_sound_seek_to_pcm_frame(handle_, static_cast<ma_uint64>(new_position * 100));
         return true;
     }
     void set_looping(bool looping) {
         if (!active)return;
-        ma_sound_set_looping(&handle_, looping);
+        ma_sound_set_looping(handle_, looping);
     }
     bool get_looping()const {
         if (!active)return false;
-        return ma_sound_is_looping(&handle_);
+        return ma_sound_is_looping(handle_);
     }
     float get_pan() const {
         if (!active)return -17435;
 
         float pan=0;
-        pan = ma_sound_get_pan(&handle_);
+        pan = ma_sound_get_pan(handle_);
         return pan * 100;
     }
 
     void set_pan(float pan) {
         if (!active)return;
-        ma_sound_set_pan(&handle_, pan / 100);
+        ma_sound_set_pan(handle_, pan / 100);
     }
 
     float get_volume() const {
@@ -1711,31 +1723,31 @@ ma_sound_seek_to_pcm_frame(&handle_, static_cast<ma_uint64>(new_position * 100))
 
         float volume = 0;
 
-        volume = ma_sound_get_volume(&handle_);
+        volume = ma_sound_get_volume(handle_);
         return ma_volume_linear_to_db(volume);
     }
             void set_volume(float volume) {
         if (!active)return;
         if (volume > 0 or volume < -100)return;
-            ma_sound_set_volume(&handle_, ma_volume_db_to_linear(volume));
+            ma_sound_set_volume(handle_, ma_volume_db_to_linear(volume));
         }
         float get_pitch() const {
         if (!active)return -17435;
         float pitch = 0;
-            pitch = ma_sound_get_pitch(&handle_);
+            pitch = ma_sound_get_pitch(handle_);
         return pitch * 100;
     }
 
         void set_pitch(float pitch) {
             if (!active)return;
-            ma_sound_set_pitch(&handle_, pitch / 100);
+            ma_sound_set_pitch(handle_, pitch / 100);
         }
         void set_speed(float speed) {
             if (!speeding) {
                 g_speed_config= ma_playback_speed_node_config_init(engineConfig.channels, engineConfig.sampleRate);
                 ma_playback_speed_node_init(ma_engine_get_node_graph(&sound_default_mixer), &g_speed_config, NULL, &g_playback_speed_node);
             ma_node_attach_output_bus(&g_playback_speed_node, 0, current_fx, 0);
-            ma_node_attach_output_bus(&handle_, 0, &g_playback_speed_node, 0);
+            ma_node_attach_output_bus(handle_, 0, &g_playback_speed_node, 0);
             current_fx = &g_playback_speed_node;
             speeding = true;
         }
@@ -1750,7 +1762,7 @@ ma_sound_seek_to_pcm_frame(&handle_, static_cast<ma_uint64>(new_position * 100))
 
     bool is_playing() const {
         if (!active)return false;
-            return ma_sound_is_playing(&handle_);
+            return ma_sound_is_playing(handle_);
         }
         
     bool is_paused() const {
@@ -1760,21 +1772,21 @@ ma_sound_seek_to_pcm_frame(&handle_, static_cast<ma_uint64>(new_position * 100))
     float get_position()  {
         if (!active)return -17435;
         float position=0;
-        position=ma_sound_get_time_in_milliseconds(&handle_);
+        position=ma_sound_get_time_in_milliseconds(handle_);
         return position;
     }
 
     float get_length()  {
         if (!active)return-17435;
         ma_uint64 length = 0;
-        ma_sound_get_length_in_pcm_frames(&handle_, &length);
+        ma_sound_get_length_in_pcm_frames(handle_, &length);
         return static_cast<float>(length/100);
     }
 
     void set_length(float length = 0.0) {
         if (!active)return;
         if (length > this->get_length())            return;
-ma_sound_set_stop_time_in_pcm_frames(&handle_, static_cast<ma_uint64>(length * 100));
+ma_sound_set_stop_time_in_pcm_frames(handle_, static_cast<ma_uint64>(length * 100));
     }
     float get_sample_rate() const {
         float rate = 0;

@@ -9,6 +9,7 @@
 #include <assert.h>  // assert()
 #include "angelscript.h"
 #include "ngt.h"
+#include "pack.h"
 #include "sound.h"
 HWND g_hwndEdit;
 HWND hwnd;
@@ -498,7 +499,7 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterGlobalFunction("string read_environment_variable(const string&in)", asFUNCTION(read_environment_variable), asCALL_CDECL);
     engine->RegisterGlobalFunction("string serialize(dictionary@=null)", asFUNCTION(serialize), asCALL_CDECL);
     engine->RegisterGlobalFunction("dictionary@ deserialize(const string &in)", asFUNCTION(deserialize), asCALL_CDECL);
-
+    register_pack(engine);
     register_sound(engine);
     engine->RegisterObjectType("tts_voice", sizeof(tts_voice), asOBJ_REF);
     engine->RegisterObjectBehaviour("tts_voice", asBEHAVE_FACTORY, "tts_voice@ v()", asFUNCTION(ftts_voice), asCALL_CDECL);
