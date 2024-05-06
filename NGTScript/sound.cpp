@@ -1167,7 +1167,6 @@ public:
         else {
             result = filename;
         }
-if(handle_==nullptr)
         handle_ = new ma_sound;
         ma_sound_init_from_file(&sound_default_mixer, result.c_str(), 0, NULL, NULL, handle_);
         active = true;
@@ -1179,7 +1178,6 @@ ma_sound_set_end_callback(handle_, at_stop, current_fx);
 return true;
         }
     bool load_from_memory(const std::string& data, bool set3d) {
-        if (handle_ == nullptr)
         handle_ = new ma_sound;
         ma_sound_config c;
 
@@ -1206,7 +1204,6 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
         else {
             result = filename;
         }
-        if (handle_ == nullptr)
         handle_ = new ma_sound;
         if (set3d)
             ma_sound_init_from_file(&sound_default_mixer, result.c_str(), MA_SOUND_FLAG_STREAM, NULL, NULL, handle_);
@@ -1220,7 +1217,6 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
         return true;
     }
     bool load_url(const std::string& url, bool set3d) {
-        if (handle_ == nullptr)
         handle_ = new ma_sound;
         ma_sound_config c;
 
