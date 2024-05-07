@@ -872,6 +872,7 @@ MA_API ma_result ma_steamaudio_binaural_node_set_direction(ma_steamaudio_binaura
 
     return MA_SUCCESS;
 }
+ma_resource_manager sounds;
 void soundsystem_init() {
     engineConfig = ma_engine_config_init();
     engineConfig.channels = CHANNELS;
@@ -879,6 +880,8 @@ void soundsystem_init() {
     engineConfig.periodSizeInFrames = 256;
 
     ma_engine_init(&engineConfig, &sound_default_mixer);
+    ma_resource_manager_config c = ma_resource_manager_config_init();
+    ma_resource_manager_init(&c, &sounds);
     MA_ZERO_OBJECT(&iplAudioSettings);
     iplAudioSettings.samplingRate = ma_engine_get_sample_rate(&sound_default_mixer);
 
@@ -1138,7 +1141,7 @@ public:
     ma_node* current_fx = nullptr;
     mutable int ref = 0;
     sound(const std::string  &filename="", bool set3d=false) {
-        ref+= 1;
+        ref= 1;
         if (!inited) {
             soundsystem_init();
             inited = true;
@@ -1155,9 +1158,10 @@ public:
     }
     void release() {
         if (--ref == 0) {
-            if(!this->is_playing())
-            this->~sound();
-        }
+            if (!this->is_playing()) {
+                delete this;
+            }
+            }
         }
         bool load(const std::string& filename, bool set3d) {
         std::string result;
@@ -1320,7 +1324,14 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
                 ma_notch_node_uninit(&notch, NULL);
                 notchf = false;
             }
-        current_fx = nullptr;
+            if (sound_hrtf == true) {
+
+                ma_steamaudio_binaural_node_uninit(&g_binauralNode, NULL);
+                sound_hrtf = false;
+
+
+            }
+            current_fx = nullptr;
         ma_sound_uninit(handle_);
         delete handle_;
         handle_ = nullptr;

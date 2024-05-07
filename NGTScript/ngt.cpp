@@ -226,7 +226,7 @@ bool show_game_window(const std::string & title,int width, int height, bool clos
         return false;
     if (reader == L"JAWS") {
         win = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN | SDL_WINDOW_KEYBOARD_GRABBED);
-        SDL_SetHint(SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED, "1");
+        SDL_SetHint(SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED, "true");
     }
     else
 win = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
@@ -257,6 +257,11 @@ void set_game_window_title(const std::string & new_title) {
 }
 void set_game_window_closable(bool set_closable) {
     window_closable = set_closable;
+}
+void garbage_collect() {
+    asIScriptContext* ctx = asGetActiveContext();
+    asIScriptEngine* engine = ctx->GetEngine();
+    engine->GarbageCollect(1|2, 1);
 }
 void update_game_window()
 {

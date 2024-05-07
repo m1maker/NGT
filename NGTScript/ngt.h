@@ -66,6 +66,7 @@ void hide_game_window();
 void set_game_window_title(const std::string & );
 void set_game_window_closable(bool);
 bool is_game_window_active();
+void garbage_collect();
 void update_game_window();
 void exit_engine(int=0);
 std::string number_to_words(uint64_t, bool);

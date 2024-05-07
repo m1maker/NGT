@@ -463,7 +463,7 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterGlobalFunction("void hide_game_window()", asFUNCTION(hide_game_window), asCALL_CDECL);
     engine->RegisterGlobalFunction("void set_game_window_title(const string &in)property", asFUNCTION(set_game_window_title), asCALL_CDECL);
     engine->RegisterGlobalFunction("void set_game_window_closable(bool)property", asFUNCTION(set_game_window_closable), asCALL_CDECL);
-
+    engine->RegisterGlobalFunction("void garbage_collect()", asFUNCTION(garbage_collect), asCALL_CDECL);
     engine->RegisterGlobalFunction("void update_game_window()", asFUNCTION(update_game_window), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool is_game_window_active()", asFUNCTION(is_game_window_active), asCALL_CDECL);
     engine->RegisterGlobalFunction("hwnd get_focused_window()", asFUNCTION(GetFocus), asCALL_STDCALL);

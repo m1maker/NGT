@@ -83,7 +83,7 @@ class CBytecodeStream : public asIBinaryStream
 {
 public:
     std::vector<asBYTE> Code;
-    int ReadPos, WritePos;
+        int ReadPos, WritePos;
 
 public:
     CBytecodeStream() : ReadPos(0), WritePos(0)
@@ -341,7 +341,6 @@ auto main(int argc, char* argv[])->int {
                 engine->Release();
                 return -1;
             }
-
             // We don't want to allow the script to hang the application, e.g. with an
             // infinite loop, so we'll use the line callback function to set a timeout
             // that will abort the script after a certain time. Before executing the 
