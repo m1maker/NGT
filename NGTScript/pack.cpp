@@ -1,4 +1,4 @@
-//Cartertemm's BGTPackFile. Edeted  and rewritten in C++ by M_maker at May 6, 2024
+//Cartertemm's BGTPackFile. Edeted  and rewritten in C++ by M_maker
 #include "pack.h"
 #include<stdio.h>
 #include <iostream>
@@ -74,22 +74,21 @@ private:
     std::vector<file> files;
     int mode = PF_CLOSED;
 
-    int _get_files_added() {
+    int get_files_added() {
         int orig_pos = fileobj.tellg();
         fileobj.seekg(8);
-        int data=0;
-        fileobj.read(reinterpret_cast<char*>(&data), sizeof(data));
+        int data = 0;
+        fileobj >> data;
         fileobj.seekg(orig_pos);
         return data;
     }
 
-    void _set_files_added(int num) {
-        int orig_pos = fileobj.tellg();
-        fileobj.seekg(8);
-        fileobj.write(reinterpret_cast<const char*>(&num), sizeof(num));
-        fileobj.seekg(orig_pos);
+    void set_files_added(int num) {
+        int orig_pos = fileobj.tellp();
+        fileobj.seekp(8);
+        fileobj << num;
+        fileobj.seekp(orig_pos);
     }
-
     file* _get_fileobj(const std::string& filename) {
         file* found = nullptr;
         for (auto& file : files) {
@@ -132,6 +131,7 @@ public:
         int size = f.tellg();
         f.seekg(0);
         //Put pointer to the end if we're not already there
+        fileobj.seekp(8);
         fileobj.seekp(0, std::ios::end);
         fileobj.write(header.c_str(), header.size());
                 int file_info[3] = { static_cast<int>(internal_name.size()), 0, size };
@@ -151,12 +151,6 @@ public:
         else {
             fileobj << f.rdbuf();
         }
-        //Update number of files in the header.
-        std::cout << _get_files_added();
-
-        int files_added = static_cast<int>(_get_files_added());
-        files_added+=1;
-        _set_files_added(files_added);
         return true;
     }
 

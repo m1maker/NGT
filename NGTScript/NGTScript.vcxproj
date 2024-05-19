@@ -539,6 +539,7 @@
     <ClInclude Include="vorbis\vorbisfile.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="aes256enc.c" />
     <ClCompile Include="datetime\datetime.cpp" />
     <ClCompile Include="debugger\debugger.cpp" />
     <ClCompile Include="dlibrary.cpp" />

@@ -82,7 +82,7 @@ SDL_Keycode* keys_released();
 SDL_Keycode* keys_down();
 SDL_Keycode* keys_repeat();
 std::string string_encrypt(std::string the_string, std::string encryption_key);
-std::string string_decrypt(std::string the_string, std::string encryption_key);
+std::string string_decrypt(std::string the_string, std::string encryption_key, int length);
 std::string url_decode(const std::string& url);
 std::string url_encode(const std::string& url);
 std::string url_get(const std::string& url);
@@ -96,12 +96,11 @@ std::string string_base64_encode(std::string the_string);
 std::string string_to_hex(std::string the_string);
 bool alert(const std::string &	 title, const std::string &	 text, const std::string &button_name="OK");
 int question(const std::string& title, const std::string &text);
-void wait(int);
+void wait(uint64_t);
 void delay(int);
 std::string read_environment_variable(const std::string&);
-std::string serialize(CScriptDictionary* the_data);
-CScriptDictionary* deserialize(const std::string &serialized_data);
-
+void serialize(asIScriptGeneric*);
+void deserialize(asIScriptGeneric*);
 class timer {
 public:
 	mutable int ref = 0;

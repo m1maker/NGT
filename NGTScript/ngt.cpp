@@ -1,8 +1,4 @@
 ﻿#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS 
-#include "openssl/aes.h"
-#include "openssl/rand.h"
-#include "openssl/evp.h"
-#include "openssl/err.h"
 #include <random>
 #include "sound.h"
 #include "ngtreg.h"
@@ -28,6 +24,84 @@ extern "C"
 #include <cstdlib>
 #include<algorithm>
 #include <cstring>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <openssl/evp.h>
+#include <openssl/aes.h>
+
+/**
+ * Create a 256 bit key and IV using the supplied key_data. salt can be added for taste.
+ * Fills in the encryption and decryption ctx objects and returns 0 on success
+ **/
+int aes_init(unsigned char* key_data, int key_data_len, unsigned char* salt, EVP_CIPHER_CTX* e_ctx,
+    EVP_CIPHER_CTX* d_ctx)
+{
+    int i, nrounds = 5;
+    unsigned char key[32], iv[32];
+
+    /*
+     * Gen key & IV for AES 256 CBC mode. A SHA1 digest is used to hash the supplied key material.
+     * nrounds is the number of times the we hash the material. More rounds are more secure but
+     * slower.
+     */
+    i = EVP_BytesToKey(EVP_aes_256_cbc(), EVP_sha1(), salt, key_data, key_data_len, nrounds, key, iv);
+    if (i != 32) {
+        printf("Key size is %d bits - should be 256 bits\n", i);
+        return -1;
+    }
+
+    EVP_CIPHER_CTX_init(e_ctx);
+    EVP_EncryptInit_ex(e_ctx, EVP_aes_256_cbc(), NULL, key, iv);
+    EVP_CIPHER_CTX_init(d_ctx);
+    EVP_DecryptInit_ex(d_ctx, EVP_aes_256_cbc(), NULL, key, iv);
+
+    return 0;
+}
+
+/*
+ * Encrypt *len bytes of data
+ * All data going in & out is considered binary (unsigned char[])
+ */
+unsigned char* aes_encrypt(EVP_CIPHER_CTX* e, unsigned char* plaintext, int* len)
+{
+    /* max ciphertext len for a n bytes of plaintext is n + AES_BLOCK_SIZE -1 bytes */
+    int c_len = *len + AES_BLOCK_SIZE, f_len = 0;
+    unsigned char* ciphertext = (unsigned char*)malloc(c_len);
+
+    /* allows reusing of 'e' for multiple encryption cycles */
+    EVP_EncryptInit_ex(e, NULL, NULL, NULL, NULL);
+
+    /* update ciphertext, c_len is filled with the length of ciphertext generated,
+      *len is the size of plaintext in bytes */
+    EVP_EncryptUpdate(e, ciphertext, &c_len, plaintext, *len);
+
+    /* update ciphertext with the final remaining bytes */
+    EVP_EncryptFinal_ex(e, ciphertext + c_len, &f_len);
+
+    *len = c_len + f_len;
+    return ciphertext;
+}
+
+/*
+ * Decrypt *len bytes of ciphertext
+ */
+unsigned char* aes_decrypt(EVP_CIPHER_CTX* e, unsigned char* ciphertext, int* len)
+{
+    /* plaintext will always be equal to or lesser than length of ciphertext*/
+    int p_len = *len, f_len = 0;
+    unsigned char* plaintext = (unsigned char*)malloc(p_len);
+
+    EVP_DecryptInit_ex(e, NULL, NULL, NULL, NULL);
+    EVP_DecryptUpdate(e, plaintext, &p_len, ciphertext, *len);
+    EVP_DecryptFinal_ex(e, plaintext + p_len, &f_len);
+
+    *len = p_len + f_len;
+    return plaintext;
+}
+
+
 using namespace std;
 bool engine_is_active= false;
 SDL_Window* win = NULL;
@@ -391,39 +465,55 @@ if(e.key.keysym.scancode==key_code){
     return false;
 }
 std::string string_encrypt(std::string the_string, std::string encryption_key) {
-    AES_KEY aesKey;
-    if (AES_set_encrypt_key((const unsigned char*)encryption_key.c_str(), 256, &aesKey) != 0) {
+    /* "opaque" encryption, decryption ctx structures that libcrypto uses to record
+       status of enc/dec operations */
+    EVP_CIPHER_CTX* en = EVP_CIPHER_CTX_new();
+    EVP_CIPHER_CTX* de = EVP_CIPHER_CTX_new();
+
+    /* 8 bytes to salt the key_data during key generation. This is an example of
+       compiled in salt. We just read the bit pattern created by these two 4 byte
+       integers on the stack as 64 bits of contigous salt material -
+       ofcourse this only works if sizeof(int) >= 4 */
+    unsigned int salt[] = { 12345, 54321 };
+    unsigned char* key_data;
+    int key_data_len, i;
+    key_data = (unsigned char*)encryption_key.c_str();
+    key_data_len = strlen((char*)key_data);
+    const char* str = the_string.c_str();
+    int len = strlen((char*)str);
+    /* gen key and iv. init the cipher ctx object */
+    if (aes_init(key_data, key_data_len, (unsigned char*)&salt, en, de)) {
         return "";
     }
-
-    std::string ciphertext;
-    unsigned char iv[AES_BLOCK_SIZE];
-    memset(iv, 0, AES_BLOCK_SIZE); // Initialize IV to zeros or use a secure random IV
-
-    // Create a buffer large enough to hold the encrypted data
-    ciphertext.resize(the_string.length() + AES_BLOCK_SIZE);
-
-    AES_cbc_encrypt((const unsigned char*)the_string.c_str(), (unsigned char*)&ciphertext[0], the_string.length(), &aesKey, iv, AES_ENCRYPT);
-    return ciphertext;
+    unsigned char* ciphertext = aes_encrypt(en, (unsigned char*)str, &len);
+    return std::string((const char*)ciphertext);
 }
 
-std::string string_decrypt(std::string the_string, std::string encryption_key) {
-    AES_KEY aesKey;
-    if (AES_set_decrypt_key((const unsigned char*)encryption_key.c_str(), 256, &aesKey) != 0) {
+std::string string_decrypt(std::string the_string, std::string encryption_key, int length) {
+    /* "opaque" encryption, decryption ctx structures that libcrypto uses to record
+       status of enc/dec operations */
+    EVP_CIPHER_CTX* en = EVP_CIPHER_CTX_new();
+    EVP_CIPHER_CTX* de = EVP_CIPHER_CTX_new();
+
+    /* 8 bytes to salt the key_data during key generation. This is an example of
+       compiled in salt. We just read the bit pattern created by these two 4 byte
+       integers on the stack as 64 bits of contigous salt material -
+       ofcourse this only works if sizeof(int) >= 4 */
+    unsigned int salt[] = { 12345, 54321 };
+    unsigned char* key_data;
+    int key_data_len, i;
+    key_data = (unsigned char*)encryption_key.c_str();
+    key_data_len = strlen((char*)key_data);
+    const char* str = the_string.c_str();
+    int len = length;
+    /* gen key and iv. init the cipher ctx object */
+    if (aes_init(key_data, key_data_len, (unsigned char*)&salt, en, de)) {
         return "";
     }
+    char* ciphertext = (char*)aes_decrypt(de, (unsigned char*)str, &len);
+    return std::string((const char*)ciphertext);
 
-    std::string decryptedtext;
-    unsigned char iv[AES_BLOCK_SIZE];
-    memset(iv, 0, AES_BLOCK_SIZE); // Assuming IV is all zeros
-
-    // Create a buffer large enough to hold the decrypted data
-    decryptedtext.resize(the_string.length());
-
-    AES_cbc_encrypt((const unsigned char*)the_string.c_str(), (unsigned char*)&decryptedtext[0], the_string.length(), &aesKey, iv, AES_DECRYPT);
-    return decryptedtext;
 }
-
 std::string url_decode(const std::string& url) {
     URI uri(url);
     return uri.getPathEtc();
@@ -566,7 +656,7 @@ int question(const std::string& title, const std::string& text) {
 }
 
 
-void wait(int time) {
+void wait(uint64_t time) {
     timer waittimer;
     int el = 0;
     while (el < time) {
@@ -578,70 +668,18 @@ void delay(int ms)
 {
 SDL_Delay(ms);
 }
-std::string serialize(CScriptDictionary* the_data) {
-    std::string result;
-    for (auto it : *the_data)
-    {
-        std::string keyName = it.GetKey();
-        int typeId = it.GetTypeId();
-        const void* addressOfValue = it.GetAddressOfValue();
-        // Serialize keyName
-        result += keyName + "|";
-
-        // Serialize typeId
-        result += std::to_string(typeId) + "|";
-
-        // Serialize value based on typeId
-        switch (typeId)
-        {
-        case asTYPEID_DOUBLE:
-            result += std::to_string(*(double*)addressOfValue) + "|";
-            break;
-        case asTYPEID_FLOAT:
-            result += std::to_string(*(float*)addressOfValue) + "|";
-            break;
-        case asTYPEID_INT64:
-            result += std::to_string(*(int64_t*)addressOfValue) + "|";
-            break;
-        case asTYPEID_INT32:
-            result += std::to_string(*(int32_t*)addressOfValue) + "|";
-            break;
-        case asTYPEID_INT16:
-            result += std::to_string(*(int16_t*)addressOfValue) + "|";
-            break;
-        case asTYPEID_INT8:
-            result += std::to_string(*(int8_t*)addressOfValue) + "|";
-            break;
-        case asTYPEID_UINT64:
-            result += std::to_string(*(uint64_t*)addressOfValue) + "|";
-            break;
-        case asTYPEID_UINT32:
-            result += std::to_string(*(uint32_t*)addressOfValue) + "|";
-            break;
-        case asTYPEID_UINT16:
-            result += std::to_string(*(uint16_t*)addressOfValue) + "|";
-            break;
-        case asTYPEID_UINT8:
-            result += std::to_string(*(uint8_t*)addressOfValue) + "|";
-            break;
-        case asTYPEID_BOOL:
-            result += *(bool*)addressOfValue + "|";
-            break;
-
-            // if it is not a const value, use cached type_id (type_id defined at AS engine runtime)
-        default:break;
-        }
-        }
-        return result;
+void serialize(asIScriptGeneric* gen) {
+    void* dict = gen->GetArgAddress(0);
+    char* dict_str = static_cast<char*>(dict);
+    std::string result(dict_str);
+    gen->SetReturnObject(&result);
 }
-CScriptDictionary* deserialize(const std::string& data) {
-    asIScriptContext* ctx = asGetActiveContext();
-    asIScriptEngine* engine = ctx->GetEngine();
+void deserialize(asIScriptGeneric* gen) {
+    CScriptDictionary*dict = (CScriptDictionary*)gen->GetArgAddress(0);
 
-    CScriptDictionary* result = CScriptDictionary::Create(engine);
+    gen->SetReturnObject(dict);
+}
 
-    return result;
-    }
 void timer::construct() {
 }
 

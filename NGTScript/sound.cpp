@@ -2,6 +2,7 @@
 #define NOMINMAX
 #define CURL_STATICLIB
 #include "curl/curl.h"
+#include "scriptarray/scriptarray.h"
 #include "sound.h"
 #include "ngt.h"
 #include <thread>
@@ -658,7 +659,11 @@ static void ma_steamaudio_binaural_node_process_pcm_frames(ma_node* pNode, const
 {
     ma_steamaudio_binaural_node* pBinauralNode = (ma_steamaudio_binaural_node*)pNode;
     IPLBinauralEffectParams binauralParams;
-    IPLDirectEffectParams params=outputs.direct;
+    IPLDirectEffectParams params;
+    params.occlusion = 0.4f;
+    params.transmission[0] = 0.3f;
+    params.transmission[1] = 0.2f;
+    params.transmission[2] = 0.1f;
     IPLAudioBuffer inputBufferDesc;
     IPLAudioBuffer outputBufferDesc;
     ma_uint32 totalFramesToProcess = *pFrameCountOut;
@@ -705,8 +710,8 @@ static void ma_steamaudio_binaural_node_process_pcm_frames(ma_node* pNode, const
         inputBufferDesc.numSamples = (IPLint32)framesToProcessThisIteration;
 
         /* Apply the effect. */
+//        iplDirectEffectApply(pBinauralNode->effect, &params, &inputBufferDesc, &outputBufferDesc);
         iplBinauralEffectApply(pBinauralNode->iplEffect, &binauralParams, &inputBufferDesc, &outputBufferDesc);
-        //iplDirectEffectApply(pBinauralNode->effect, &params, &inputBufferDesc, &outputBufferDesc);
         /* Interleave straight into the output buffer. */
         ma_interleave_pcm_frames(ma_format_f32, 2, framesToProcessThisIteration, (const void**)pBinauralNode->ppBuffersOut, ma_offset_pcm_frames_ptr_f32(ppFramesOut[0], totalFramesProcessed, 2));
 
@@ -1793,6 +1798,29 @@ void set_sound_global_hrtf(bool hrtf) {
 bool get_sound_global_hrtf() {
     return sound_global_hrtf;
 }
+void audio_recorder_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount)
+{
+    ma_encoder* pEncoder = (ma_encoder*)pDevice->pUserData;
+    MA_ASSERT(pEncoder != NULL);
+
+    ma_encoder_write_pcm_frames(pEncoder, pInput, frameCount, NULL);
+
+    (void)pOutput;
+}
+
+
+class audio_recorder {
+public:
+    ma_encoder_config encoderConfig;
+    ma_encoder encoder;
+    ma_device_config deviceConfig;
+    ma_device device;
+    audio_recorder() {
+        encoderConfig = ma_encoder_config_init(ma_encoding_format_wav, ma_format_f32, 2, 44100);
+
+}
+};
+
 sound* fsound(const std::string& filename, bool set3d) { return new sound(filename, set3d); }
 mixer* fmixer() { return new mixer; }
 void register_sound(asIScriptEngine* engine) {
@@ -1864,5 +1892,5 @@ void register_sound(asIScriptEngine* engine) {
     engine->RegisterObjectMethod("sound", "float get_sample_rate() const property", asMETHOD(sound, get_sample_rate), asCALL_THISCALL);
     engine->RegisterGlobalFunction("void set_sound_global_hrtf(bool)property", asFUNCTION(set_sound_global_hrtf), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool get_sound_global_hrtf()property", asFUNCTION(get_sound_global_hrtf), asCALL_CDECL);
-    engine->RegisterGlobalProperty("mixer@ sound_default_mixer", (void*)&sound_default_mixer);
+    engine->RegisterGlobalProperty("mixer sound_default_mixer", (void*)&sound_default_mixer);
 }

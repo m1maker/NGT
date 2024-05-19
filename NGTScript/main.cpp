@@ -497,6 +497,7 @@ auto main(int argc, char* argv[])->int {
 
 
         }
+        exit_engine();
         return EXIT_SUCCESS;
     }
 int ExecSystemCmd(const string& str, string& out)

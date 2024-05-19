@@ -31,6 +31,7 @@
     <ClCompile Include="tts_voice.cpp" />
     <ClCompile Include="dlibrary.cpp" />
     <ClCompile Include="openssl\applink.c" />
+    <ClCompile Include="aes256enc.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AL\al.h" />
