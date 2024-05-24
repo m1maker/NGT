@@ -313,6 +313,7 @@ if (win!=NULL)
     SDL_SetHint(SDL_HINT_APP_NAME, "NGTWindow");
 
     update_game_window();
+    window_is_focused = true;
     return true;
 }
 return false;
@@ -325,6 +326,7 @@ void hide_game_window() {
     SDL_StopTextInput();
 
     SDL_DestroyWindow(win);
+    window_is_focused = false;
 }
 void set_game_window_title(const std::string & new_title) {
     SDL_SetWindowTitle(win, new_title.c_str());
@@ -336,6 +338,12 @@ void garbage_collect() {
     asIScriptContext* ctx = asGetActiveContext();
     asIScriptEngine* engine = ctx->GetEngine();
     engine->GarbageCollect(1|2, 1);
+}
+std::string key_to_string(SDL_Scancode key) {
+    return std::string(SDL_GetScancodeName(key));
+}
+SDL_Scancode string_to_key(const std::string&key) {
+    return SDL_GetScancodeFromName(key.c_str());
 }
 void update_game_window()
 {
@@ -360,17 +368,55 @@ void update_game_window()
                 it->second = false;
             }
         }
+        if (e.type == SDL_WINDOWEVENT) {
+            if (e.window.event== SDL_WINDOWEVENT_FOCUS_GAINED)
+                window_is_focused = true;
+            if (e.window.event== SDL_WINDOWEVENT_FOCUS_LOST)
+                window_is_focused = false;
 
-        if (e.type == SDL_WINDOWEVENT_FOCUS_GAINED)
-            window_is_focused == true;
-        if (e.type == SDL_WINDOWEVENT_FOCUS_LOST)
-            window_is_focused == false;
+}
     }
 }
     bool is_game_window_active() {
     return window_is_focused;
 }
-void exit_engine(int return_number)
+    bool mouse_down(int button) {
+        return SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(button);
+    }
+
+    bool mouse_pressed(int button) {
+        static bool prev_state = false;
+        bool current_state = SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(button);
+        bool result = current_state && !prev_state;
+        prev_state = current_state;
+        return result;
+    }
+
+    bool mouse_update() {
+        SDL_PumpEvents();
+        return true;
+    }
+
+    int get_MOUSE_X() {
+        int x;
+        SDL_GetMouseState(&x, NULL);
+        return x;
+    }
+
+    int get_MOUSE_Y() {
+        int y;
+        SDL_GetMouseState(NULL, &y);
+        return y;
+    }
+
+    int get_MOUSE_Z() {
+        int x, y;
+        SDL_GetMouseState(NULL, NULL);
+        return 0; // SDL does not provide direct support for mouse wheel in this function
+    }
+
+
+    void exit_engine(int return_number)
 {
     soundsystem_free();
     SDL_StopTextInput();

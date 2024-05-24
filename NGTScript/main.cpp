@@ -17,6 +17,7 @@
 #include "scripthelper/scripthelper.h"
 #include "datetime/datetime.h"
 #include "scriptmath/scriptmath.h"
+#include "scriptany/scriptany.h"
 #include <thread>
 struct NGT {
     std::vector<asBYTE> code;
@@ -188,7 +189,7 @@ int Load(asIScriptEngine* engine, std::vector<asBYTE> code)
     r = mod->LoadByteCode(&stream);
     if (r < 0)
     {
-        engine->WriteMessage("Product.ngt", 0, 0, asMSGTYPE_ERROR, "Failed to write the bytecode");
+        engine->WriteMessage("Product.ngt", 0, 0, asMSGTYPE_ERROR, "Failed to read the bytecode");
 
         std::thread t(show_message);
         t.join();
@@ -243,6 +244,7 @@ auto main(int argc, char* argv[])->int {
             RegisterExceptionRoutines(engine);
             RegisterScriptMath(engine);
             RegisterScriptHandle(engine);
+            RegisterScriptAny(engine);
             RegisterFunctions(engine);
             engine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
             engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
@@ -312,6 +314,7 @@ auto main(int argc, char* argv[])->int {
             RegisterExceptionRoutines(engine);
             RegisterScriptMath(engine);
             RegisterScriptHandle(engine);
+            RegisterScriptAny(engine);
             RegisterFunctions(engine);
             engine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
             engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
@@ -403,6 +406,7 @@ auto main(int argc, char* argv[])->int {
             RegisterExceptionRoutines(engine);
             RegisterScriptMath(engine);
             RegisterScriptHandle(engine);
+            RegisterScriptAny(engine);
             RegisterFunctions(engine);
             engine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
             engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
