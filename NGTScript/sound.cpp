@@ -1272,7 +1272,7 @@ c.flags|=MA_SOUND_FLAG_NO_SPATIALIZATION;
     bool play_wait() {
         this->play();
         while (true) {
-            update_game_window();
+            update_window();
             delay(5);
             bool ac = sound::is_playing();
             if (ac == false) {

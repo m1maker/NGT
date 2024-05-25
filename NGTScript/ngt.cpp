@@ -294,7 +294,7 @@ void hide_console() {
     FreeConsole();
 }
 
-bool show_game_window(const std::string & title,int width, int height, bool closable)
+bool show_window(const std::string & title,int width, int height, bool closable)
 {
     if (win != NULL)
         return false;
@@ -312,26 +312,26 @@ if (win!=NULL)
 {
     SDL_SetHint(SDL_HINT_APP_NAME, "NGTWindow");
 
-    update_game_window();
+    update_window();
     window_is_focused = true;
     return true;
 }
 return false;
 }
-bool focus_game_window() {
+bool focus_window() {
     SDL_SetWindowInputFocus(win);
     return true;
 }
-void hide_game_window() {
+void hide_window() {
     SDL_StopTextInput();
 
     SDL_DestroyWindow(win);
     window_is_focused = false;
 }
-void set_game_window_title(const std::string & new_title) {
+void set_window_title(const std::string & new_title) {
     SDL_SetWindowTitle(win, new_title.c_str());
 }
-void set_game_window_closable(bool set_closable) {
+void set_window_closable(bool set_closable) {
     window_closable = set_closable;
 }
 void garbage_collect() {
@@ -345,11 +345,14 @@ std::string key_to_string(SDL_Scancode key) {
 SDL_Scancode string_to_key(const std::string&key) {
     return SDL_GetScancodeFromName(key.c_str());
 }
-void update_game_window()
+void update_window(bool wait_event)
 {
     if (win != nullptr) {
+if(!wait_event)
         SDL_PollEvent(&e);
-        if (e.type == SDL_QUIT and window_closable == true)
+else
+SDL_WaitEvent(&e);
+if (e.type == SDL_QUIT and window_closable == true)
         {
             exit_engine();
         }
@@ -377,7 +380,7 @@ void update_game_window()
 }
     }
 }
-    bool is_game_window_active() {
+    bool get_window_active() {
     return window_is_focused;
 }
     bool mouse_down(int button) {
@@ -509,6 +512,27 @@ if(e.key.keysym.scancode==key_code){
 }
     }
     return false;
+}
+bool force_key_down(SDL_Scancode keycode) {
+    e.type = SDL_KEYDOWN;
+    e.key.keysym.scancode = keycode;
+        keys[e.key.keysym.scancode] = true;
+    return SDL_PushEvent(&e);
+}
+bool force_key_up(SDL_Scancode keycode) {
+    e.type = SDL_KEYUP;
+    e.key.keysym.scancode = keycode;
+    keys[e.key.keysym.scancode] = false;
+    return SDL_PushEvent(&e);
+}
+void reset_all_forced_keys() {
+    for (int i = 0; i < keys.size(); i++) {
+        e.type = SDL_KEYUP;
+
+        keys[e.key.keysym.scancode] = false;
+        SDL_PushEvent(&e);
+
+}
 }
 std::string string_encrypt(std::string the_string, std::string encryption_key) {
     /* "opaque" encryption, decryption ctx structures that libcrypto uses to record

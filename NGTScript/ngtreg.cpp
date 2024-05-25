@@ -429,6 +429,7 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterTypedef("word", "uint8");
     engine->RegisterTypedef("size_t", "uint64");
     engine->RegisterTypedef("c_str", "int8");
+    engine->RegisterTypedef("hwnd", "uint8");
     engine->RegisterObjectType("vector", sizeof(ngtvector), asOBJ_REF);
     engine->RegisterObjectBehaviour("vector", asBEHAVE_FACTORY, "vector@ v()", asFUNCTION(fngtvector), asCALL_CDECL);
     engine->RegisterObjectBehaviour("vector", asBEHAVE_ADDREF, "void f()", asMETHOD(ngtvector, construct), asCALL_THISCALL);
@@ -458,16 +459,15 @@ void RegisterFunctions(asIScriptEngine* engine)
 
     engine->RegisterGlobalFunction("void show_console()", asFUNCTION(show_console), asCALL_CDECL);
     engine->RegisterGlobalFunction("void hide_console()", asFUNCTION(hide_console), asCALL_CDECL);
-    engine->RegisterObjectType("hwnd", sizeof(HWND), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_PRIMITIVE); 
-    engine->RegisterGlobalFunction("bool show_game_window(const string &in,int=640,int=480, bool=true)", asFUNCTION(show_game_window), asCALL_CDECL);
-    engine->RegisterGlobalFunction("bool focus_game_window()", asFUNCTION(focus_game_window), asCALL_CDECL);
-    engine->RegisterGlobalFunction("void hide_game_window()", asFUNCTION(hide_game_window), asCALL_CDECL);
-    engine->RegisterGlobalFunction("void set_game_window_title(const string &in)property", asFUNCTION(set_game_window_title), asCALL_CDECL);
-    engine->RegisterGlobalFunction("void set_game_window_closable(bool)property", asFUNCTION(set_game_window_closable), asCALL_CDECL);
+    engine->RegisterGlobalFunction("bool show_window(const string &in,int=640,int=480, bool=true)", asFUNCTION(show_window), asCALL_CDECL);
+    engine->RegisterGlobalFunction("bool focus_window()", asFUNCTION(focus_window), asCALL_CDECL);
+    engine->RegisterGlobalFunction("void hide_window()", asFUNCTION(hide_window), asCALL_CDECL);
+    engine->RegisterGlobalFunction("void set_window_title(const string &in)property", asFUNCTION(set_window_title), asCALL_CDECL);
+    engine->RegisterGlobalFunction("void set_window_closable(bool)property", asFUNCTION(set_window_closable), asCALL_CDECL);
     engine->RegisterGlobalFunction("void garbage_collect()", asFUNCTION(garbage_collect), asCALL_CDECL);
 
-    engine->RegisterGlobalFunction("void update_game_window()", asFUNCTION(update_game_window), asCALL_CDECL);
-    engine->RegisterGlobalFunction("bool is_game_window_active()", asFUNCTION(is_game_window_active), asCALL_CDECL);
+    engine->RegisterGlobalFunction("void update_window(bool=false)", asFUNCTION(update_window), asCALL_CDECL);
+    engine->RegisterGlobalFunction("bool get_window_active()property", asFUNCTION(get_window_active), asCALL_CDECL);
     engine->RegisterGlobalFunction("hwnd get_focused_window()", asFUNCTION(GetFocus), asCALL_STDCALL);
     engine->RegisterGlobalFunction("hwnd set_focused_window(hwnd)", asFUNCTION(SetFocus), asCALL_STDCALL);
     engine->RegisterGlobalFunction("bool mouse_pressed(int &in)", asFUNCTION(mouse_pressed), asCALL_CDECL);
@@ -489,6 +489,9 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterGlobalFunction("bool key_repeat(keycode)", asFUNCTION(key_repeat), asCALL_CDECL);
     engine->RegisterGlobalFunction("string key_to_string(const keycode&in)", asFUNCTION(key_to_string), asCALL_CDECL);
     engine->RegisterGlobalFunction("keycode string_to_key(const string&in)", asFUNCTION(string_to_key), asCALL_CDECL);
+    engine->RegisterGlobalFunction("bool force_key_down(keycode)", asFUNCTION(force_key_down), asCALL_CDECL);
+    engine->RegisterGlobalFunction("bool force_key_up(keycode)", asFUNCTION(force_key_up), asCALL_CDECL);
+    engine->RegisterGlobalFunction("void reset_all_forced_keys()", asFUNCTION(reset_all_forced_keys), asCALL_CDECL);
 
     engine->RegisterGlobalFunction("string string_encrypt(const string &in, const string &in)", asFUNCTION(string_encrypt), asCALL_CDECL);
     engine->RegisterGlobalFunction("string string_decrypt(const string &in, const string &in, int)", asFUNCTION(string_decrypt), asCALL_CDECL);
