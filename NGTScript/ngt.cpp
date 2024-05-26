@@ -903,26 +903,25 @@ bool timer::is_running() {
         }
         return peers;
     }
-    network_event* network::request() {
+    network_event* network::request(int timeout, int* out_host_result) {
         network_event* handle_ = new network_event;
+        std::thread t([this, handle_, timeout, out_host_result]() {
 
-        std::thread t([this, handle_]() {
             ENetEvent event;
-            enet_host_service(host, &event, 0);
-if(event.type!=NULL)
+            int result= enet_host_service(host, &event, timeout);
+            if (result > 0){
             handle_->m_type = event.type;
-if(event.channelID!=0)
-handle_->m_channel = event.channelID;
+                handle_->m_channel = event.channelID;
 
-            if (event.packet != nullptr) {
-                handle_->m_message = std::string(reinterpret_cast<char*>(event.packet->data));
+                if (event.packet != nullptr) {
+                    handle_->m_message = std::string(reinterpret_cast<char*>(event.packet->data));
+                    enet_packet_destroy(event.packet);
+                }
+                if (event.peer != nullptr)
+                    handle_->m_peerId = event.peer->incomingPeerID;
             }
-
-            if (event.peer != nullptr) {
-                handle_->m_peerId = event.peer->incomingPeerID;
-            }
+            *out_host_result = result;
             });
-
         t.detach();
         return handle_;
 
@@ -931,7 +930,6 @@ handle_->m_channel = event.channelID;
     bool network::send_reliable(unsigned int peer_id, const std::string& packet, int channel) {
         ENetPacket* p = enet_packet_create(packet.c_str(), strlen(packet.c_str()), ENET_PACKET_FLAG_RELIABLE);
         int result=enet_peer_send(&host->peers[peer_id], channel, p);
-        enet_packet_destroy(p);
         if (result == 0)
             return true;
         return false;
@@ -939,7 +937,6 @@ handle_->m_channel = event.channelID;
     bool network::send_unreliable(unsigned int peer_id, const std::string& packet, int channel) {
         ENetPacket* p = enet_packet_create(packet.c_str(), strlen(packet.c_str()), 0);
         int result = enet_peer_send(&host->peers[peer_id], channel, p);
-        enet_packet_destroy(p);
         if (result == 0)
             return true;
         return false;
@@ -997,7 +994,7 @@ handle_->m_channel = event.channelID;
     void library::construct() {}
     void library::destruct() {}
     bool library::load(const std::string& libname) {
-                                    lib = LoadLibraryW(std::wstring(libname.begin(), libname.end()).c_str());
+        lib = SDL_LoadObject(libname.c_str());
                                     return lib == NULL;
                                 }
     typedef void* (*func)(void**, void**, void**, void**, void**, void**, void**, void**, void**, void**);
@@ -1036,7 +1033,7 @@ handle_->m_channel = event.channelID;
             }
         }
 
-        FARPROC address = GetProcAddress(lib_obj->lib, first[1].c_str());
+        void*address = SDL_LoadFunction(lib_obj->lib, first[1].c_str());
         if (address == NULL) {
             const char* name = first[1].c_str();
             std::string message = "Signature parse error: GetProcAddress failed for '" + std::string(name) + "'";
@@ -1130,7 +1127,7 @@ handle_->m_channel = event.channelID;
             gen->SetReturnObject(dict);
     }
         void library::unload() {
-                                    FreeLibrary(lib);
+                                    SDL_UnloadObject(lib);
                                 }
         script_thread::script_thread(asIScriptFunction* func, CScriptDictionary* args) {
             function = func;

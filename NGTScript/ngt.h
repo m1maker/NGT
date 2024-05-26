@@ -185,7 +185,7 @@ public:
 	std::string get_peer_address(unsigned int);
 	double get_peer_average_round_trip_time(unsigned int);
 	CScriptArray* get_peer_list();
-	network_event* request();
+	network_event* request(int timeout=30000, int *out_host_result=nullptr);
 	bool send_reliable(unsigned int peerId, const std::string& packet, int channel);
 	bool send_unreliable(unsigned int peerId, const std::string& packet, int channel);
 	bool set_bandwidth_limits(double incomingBandwidth, double outgoingBandwidth);
@@ -212,7 +212,7 @@ private:
 class library {
 public:
 	mutable int ref = 0;
-	HMODULE lib;
+	void* lib;
 	void construct();
 	void destruct();
 	bool load(const std::string &);
