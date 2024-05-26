@@ -443,6 +443,9 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectProperty("vector", "float z", asOFFSET(ngtvector, z));
     engine->RegisterObjectMethod("vector", "float get_length()const property", asMETHOD(ngtvector, get_length), asCALL_THISCALL);
     engine->RegisterObjectMethod("vector", "vector &opAssign(const vector&in)", asMETHOD(ngtvector, operator=), asCALL_THISCALL);
+    engine->RegisterGlobalFunction("int get_cpu_count()property", asFUNCTION(get_cpu_count), asCALL_CDECL);
+    engine->RegisterGlobalFunction("int get_system_ram()property", asFUNCTION(get_system_ram), asCALL_CDECL);
+    engine->RegisterGlobalFunction("string get_platform()property", asFUNCTION(get_platform), asCALL_CDECL);
 
     engine->RegisterGlobalFunction("uint64 get_time_stamp_millis()property", asFUNCTION(get_time_stamp_millis), asCALL_CDECL);
     engine->RegisterGlobalFunction("uint64 get_time_stamp_seconds()property", asFUNCTION(get_time_stamp_seconds), asCALL_CDECL);

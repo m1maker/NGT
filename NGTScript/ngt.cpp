@@ -214,7 +214,15 @@ void as_printf(asIScriptGeneric* gen)
     cout << format << endl;
     return;
 }
-
+int get_cpu_count() {
+    return SDL_GetCPUCount();
+}
+int get_system_ram() {
+    return SDL_GetSystemRAM();
+}
+std::string get_platform() {
+    return std::string(SDL_GetPlatform());
+}
 void init_engine(){
     Tolk_Load();
 
@@ -301,18 +309,21 @@ bool show_window(const std::string & title,int width, int height, bool closable)
     if (win != NULL)
         return false;
     if (reader == L"JAWS") {
+        SDL_SetHint(SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED, "1");
         win = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN | SDL_WINDOW_KEYBOARD_GRABBED);
-        SDL_SetHint(SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED, "true");
+        SDL_RegisterApp("NGTWindow", 0x450, GetModuleHandle(NULL));
+
     }
     else
-win = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
-SDL_RegisterApp("NGTWindow", 0, win);
+        SDL_SetHint(SDL_HINT_APP_NAME, "NGTGame");
+    SDL_RegisterApp("NGTWindow", 0x450, GetModuleHandle(NULL));
+
+        win = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
 
 SDL_StartTextInput();
 window_closable = closable;
 if (win!=NULL)
 {
-    SDL_SetHint(SDL_HINT_APP_NAME, "NGTWindow");
 
     update_window();
     window_is_focused = true;
