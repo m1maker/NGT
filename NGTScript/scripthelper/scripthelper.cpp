@@ -984,12 +984,12 @@ void RegisterExceptionRoutines(asIScriptEngine *engine)
 	if (strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY") == 0)
 	{
 		r = engine->RegisterGlobalFunction("void throw(const string &in)", asFUNCTION(ScriptThrow), asCALL_CDECL); assert(r >= 0);
-		r = engine->RegisterGlobalFunction("string getExceptionInfo()", asFUNCTION(ScriptGetExceptionInfo), asCALL_CDECL); assert(r >= 0);
+		r = engine->RegisterGlobalFunction("string get_exception_info()", asFUNCTION(ScriptGetExceptionInfo), asCALL_CDECL); assert(r >= 0);
 	}
 	else
 	{
 		r = engine->RegisterGlobalFunction("void throw(const string &in)", WRAP_FN(ScriptThrow), asCALL_GENERIC); assert(r >= 0);
-		r = engine->RegisterGlobalFunction("string getExceptionInfo()", WRAP_FN(ScriptGetExceptionInfo), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterGlobalFunction("string get_exception_info()", WRAP_FN(ScriptGetExceptionInfo), asCALL_GENERIC); assert(r >= 0);
 	}
 }
 

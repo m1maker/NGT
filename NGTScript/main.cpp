@@ -501,6 +501,30 @@ auto main(int argc, char* argv[])->int {
 
 
         }
+else if (flag == "-i") {
+    asIScriptEngine* engine = asCreateScriptEngine();
+    engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
+
+    RegisterStdString(engine);
+    RegisterScriptArray(engine, true);
+    RegisterStdStringUtils(engine);
+    RegisterScriptDictionary(engine);
+    RegisterScriptDateTime(engine);
+    RegisterScriptFile(engine);
+    RegisterScriptFileSystem(engine);
+    RegisterExceptionRoutines(engine);
+    RegisterScriptMath(engine);
+    RegisterScriptHandle(engine);
+    RegisterScriptAny(engine);
+    RegisterFunctions(engine);
+    engine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
+    engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
+    engine->RegisterGlobalFunction("int exec(const string &in, string &out)", asFUNCTIONPR(ExecSystemCmd, (const string&, string&), int), asCALL_CDECL);
+    engine->RegisterGlobalProperty("const bool SCRIPT_COMPILED", (void*)&SCRIPT_COMPILED);
+    WriteConfigToFile(engine, filename.c_str());
+    engine->ShutDownAndRelease();
+
+}
         exit_engine();
         return EXIT_SUCCESS;
     }

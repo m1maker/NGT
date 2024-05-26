@@ -270,6 +270,7 @@ bool random_bool() {
 int get_last_error() {
     return 0;
 }
+
 void speak(const std::string & text, bool stop) {
     std::wstring textstr = wstr(text);
     std::thread speakingThread([textstr, stop]() {
@@ -1145,15 +1146,11 @@ bool timer::is_running() {
             asIScriptContext* current_context = asGetActiveContext();
             if (function == 0) {
                 current_context->SetException("Function is null");
-}
+                thread_args = args;
+            }
             asIScriptEngine* current_engine = current_context->GetEngine();
             context = current_engine->CreateContext();
             context->Prepare(function);
-            for (int i = 0; i < args->GetSize(); i++) {
-                void* arg=NULL;
-                args->Get(std::to_string(i), arg, args->GetTypeId(std::to_string(i)));
-                context->SetArgAddress(i, arg);
-            }
         }
         void script_thread::detach() {
             std::thread t([this]() {

@@ -227,6 +227,7 @@ private:
 	asIScriptContext* context;
 	asIScriptFunction* function;
 	std::thread* th;
+	CScriptDictionary* thread_args ;
 public:
 	script_thread(asIScriptFunction* func, CScriptDictionary* args);
 	void join();
