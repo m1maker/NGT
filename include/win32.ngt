@@ -1,0 +1,74 @@
+/*
+ * MessageBox() Flags
+ */
+const int MB_OK =   0x00000000;
+const int MB_OKCANCEL =         0x00000001;
+const int MB_ABORTRETRYIGNORE = 0x00000002;
+const int MB_YESNOCANCEL =      0x00000003;
+const int MB_YESNO  =   0x00000004;
+const int MB_RETRYCANCEL =      0x00000005;
+const int MB_CANCELTRYCONTINUE       = 0x00000006;
+
+
+const int MB_ICONHAND =         0x00000010;
+const int MB_ICONQUESTION =     0x00000020;
+const int MB_ICONEXCLAMATION =  0x00000030;
+const int MB_ICONASTERISK =     0x00000040;
+const int MB_USERICON =         0x00000080;
+const int MB_ICONWARNING =      MB_ICONEXCLAMATION;
+const int MB_ICONERROR =        MB_ICONHAND;
+
+const int MB_ICONINFORMATION =  MB_ICONASTERISK;
+const int MB_ICONSTOP =         MB_ICONHAND;
+
+const int MB_DEFBUTTON1 =       0x00000000;
+const int MB_DEFBUTTON2 =       0x00000100;
+const int MB_DEFBUTTON3 =       0x00000200;
+const int MB_DEFBUTTON4 =       0x00000300;
+
+const int MB_APPLMODAL =        0x00000000;
+const int MB_SYSTEMMODAL =      0x00001000;
+const int MB_TASKMODAL =        0x00002000;
+const int MB_HELP =      0x00004000; // Help Button
+
+const int MB_NOFOCUS =   0x00008000;
+const int MB_SETFOREGROUND =    0x00010000;
+const int MB_DEFAULT_DESKTOP_ONLY    = 0x00020000;
+
+const int MB_TOPMOST   = 0x00040000;
+const int MB_RIGHT =     0x00080000;
+const int MB_RTLREADING =       0x00100000;
+
+
+const int MB_SERVICE_NOTIFICATION =  0x00040000;
+const int MB_SERVICE_NOTIFICATION_NT3X   =  0x00040000;
+
+const int MB_TYPEMASK =         0x0000000F;
+const int MB_ICONMASK =         0x000000F0;
+const int MB_DEFMASK   = 0x00000F00;
+const int MB_MODEMASK =         0x00003000;
+const int MB_MISCMASK =         0x0000C000;
+
+
+library user32;
+library kernel32;
+void win32_init(void){
+user32.load("C:/windows/system32/user32.dll");
+kernel32.load("C:/windows/system32/kernel32.dll");
+}
+int MessageBox(int window_handle, string&in message, string&in title, dword flags){
+dictionary@ call_result=user32.call("int MessageBoxA(int, string, string, int)", window_handle, title, message, flags);
+int result;
+call_result.get("0", result);
+return result;
+}
+int Beep(int freq, int dur){
+dictionary@ call_result=kernel32.call("int Beep(int, int)", freq, dur);
+int result;
+call_result.get("0", result);
+return result;
+}
+void Sleep(int milliseconds){
+kernel32.call("void Sleep(int)", milliseconds);
+}
+
