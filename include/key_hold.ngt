@@ -1,13 +1,13 @@
 class key_hold
 {
 bool status;
-int key_flag=0;
-int key_code;
-int repeat_time;
-int setting_1;
-int setting_2;
+short key_flag=0;
+keycode key_code;
+int64 repeat_time;
+int64 setting_1;
+int64 setting_2;
 timer key_timer;
-key_hold(int _key_code, int _setting_1, int _setting_2)
+key_hold(keycode _key_code, int64 _setting_1, int64 _setting_2)
 {
 key_code=_key_code;
 setting_1=_setting_1;

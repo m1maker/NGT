@@ -68,7 +68,7 @@ int result;
 call_result.get("0", result);
 return result;
 }
-void Sleep(int milliseconds){
+void Sleep(dword milliseconds){
 kernel32.call("void Sleep(int)", milliseconds);
 }
 

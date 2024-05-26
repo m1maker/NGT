@@ -3,7 +3,8 @@ void dlg(string message)
 speak(message);
 while(true)
 {
-update_game_window();
+delay(5);
+update_window();
 if (key_pressed(SDLK_LEFT) or key_pressed(SDLK_RIGHT) or key_pressed(SDLK_UP) or key_pressed(SDLK_DOWN))
 {
 speak(message);
@@ -11,5 +12,6 @@ speak(message);
 if (key_pressed(SDLK_RETURN) or key_pressed(SDLK_ESCAPE))
 {
 break;
+}
 }
 }

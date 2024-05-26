@@ -17,7 +17,7 @@ source.open(filename, "r");
 string data=source.read(source.get_size());
 source.close();
 encrypted.open(filename, "w");
-string final=string_decrypt(data, key, data.length());
+string final=string_decrypt(data, key);
 encrypted.write(final);
 encrypted.close();
 }
