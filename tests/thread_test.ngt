@@ -1,0 +1,14 @@
+dictionary args;   //   Not supporting yet.
+void function(){
+while(true){
+speak(""+random(0, 100), true);
+wait(1000);
+}
+}
+thread th(function, args);          //    args is not usable.
+void main(){
+alert("Thread test", "We know that the alert function blocks the thread until the user closes the window, so now we will demonstrate the functions in two threads. The first is a message box, and the second is a random number generator.", "Next");
+th.detach();
+alert("NGTWindow", "Press exit, to shutdown a program.", "Exit");
+exit(0);
+}
