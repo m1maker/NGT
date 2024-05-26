@@ -94,7 +94,7 @@ SDL_Keycode* keys_released();
 SDL_Keycode* keys_down();
 SDL_Keycode* keys_repeat();
 std::string string_encrypt(std::string the_string, std::string encryption_key);
-std::string string_decrypt(std::string the_string, std::string encryption_key, int length);
+std::string string_decrypt(std::string the_string, std::string encryption_key);
 std::string url_decode(const std::string& url);
 std::string url_encode(const std::string& url);
 std::string url_get(const std::string& url);

@@ -494,7 +494,7 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterGlobalFunction("void reset_all_forced_keys()", asFUNCTION(reset_all_forced_keys), asCALL_CDECL);
 
     engine->RegisterGlobalFunction("string string_encrypt(const string &in, const string &in)", asFUNCTION(string_encrypt), asCALL_CDECL);
-    engine->RegisterGlobalFunction("string string_decrypt(const string &in, const string &in, int)", asFUNCTION(string_decrypt), asCALL_CDECL);
+    engine->RegisterGlobalFunction("string string_decrypt(const string &in, const string &in)", asFUNCTION(string_decrypt), asCALL_CDECL);
     engine->RegisterGlobalFunction("string url_decode(const string &in)", asFUNCTION(url_decode), asCALL_CDECL);
     engine->RegisterGlobalFunction("string url_encode(const string &in)", asFUNCTION(url_encode), asCALL_CDECL);
     engine->RegisterGlobalFunction("string url_get(const string &in)", asFUNCTION(url_get), asCALL_CDECL);

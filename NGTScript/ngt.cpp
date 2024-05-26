@@ -15,6 +15,8 @@ extern "C"
 #include"bl_number_to_words.h"
 }
 #include<map>
+#include "../uni_algo.h"
+#include<algorithm>
 #include <stdio.h>
 #include "NGT.H"
 #include "scriptfile/scriptfilesystem.h"
@@ -559,7 +561,7 @@ std::string string_encrypt(std::string the_string, std::string encryption_key) {
     return std::string((const char*)ciphertext);
 }
 
-std::string string_decrypt(std::string the_string, std::string encryption_key, int length) {
+std::string string_decrypt(std::string the_string, std::string encryption_key) {
     /* "opaque" encryption, decryption ctx structures that libcrypto uses to record
        status of enc/dec operations */
     EVP_CIPHER_CTX* en = EVP_CIPHER_CTX_new();
@@ -575,15 +577,21 @@ std::string string_decrypt(std::string the_string, std::string encryption_key, i
     key_data = (unsigned char*)encryption_key.c_str();
     key_data_len = strlen((char*)key_data);
     const char* str = the_string.c_str();
-    int len = length;
+
+    int len = strlen((char*)str);
     /* gen key and iv. init the cipher ctx object */
     if (aes_init(key_data, key_data_len, (unsigned char*)&salt, en, de)) {
         return "";
     }
-    char* ciphertext = (char*)aes_decrypt(de, (unsigned char*)str, &len);
-    return std::string((const char*)ciphertext);
+    char* decrypted_text = (char*)aes_decrypt(de, (unsigned char*)str, &len);
 
+    // Trim any extra characters added during encryption
+    std::string decrypted_string(decrypted_text, len);
+
+    return decrypted_string;
 }
+
+
 std::string url_decode(const std::string& url) {
     URI uri(url);
     return uri.getPathEtc();
