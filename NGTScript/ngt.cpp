@@ -32,7 +32,7 @@ extern "C"
 #include <stdlib.h>
 #include <openssl/evp.h>
 #include <openssl/aes.h>
-
+tts_voice* voice_object = nullptr;
 /**
  * Create a 256 bit key and IV using the supplied key_data. salt can be added for taste.
  * Fills in the encryption and decryption ctx objects and returns 0 on success
@@ -226,7 +226,9 @@ std::string get_platform() {
 void init_engine(){
 
     SDL_Init(SDL_INIT_EVERYTHING);
-    tolk_library_load("Tolk.dll");
+    if (!tolk_library_load("Tolk.dll")) {
+        voice_object = new tts_voice;
+    }
     Tolk_Load();
 
     enet_initialize();
@@ -239,11 +241,17 @@ void init_engine(){
     void set_library_path(const std::string& path) {
     if (Tolk_IsLoaded())Tolk_Unload();
     tolk_library_unload();
+    if (voice_object != nullptr) {
+        delete voice_object;
+        voice_object = nullptr;
+    }
     std::filesystem::path current_dir = std::filesystem::current_path();
     std::filesystem::path new_dir= std::filesystem::current_path()/path;
 
     std::filesystem::current_path(new_dir);
-    tolk_library_load("Tolk.dll");
+    if (!tolk_library_load("Tolk.dll")) {
+        voice_object = new tts_voice;
+    }
     Tolk_Load();
     soundsystem_free();
     soundsystem_init();
@@ -276,21 +284,35 @@ int get_last_error() {
 
 void speak(const std::string & text, bool stop) {
     std::wstring textstr = wstr(text);
-    std::thread speakingThread([textstr, stop]() {
         Tolk_Speak(textstr.c_str(), stop);
-        });
-    speakingThread.detach();
+        if (voice_object != nullptr) {
+            if (stop)
+                voice_object->speak_interrupt(text);
+            else
+                voice_object->speak(text);
+        }
 }
 void speak_wait(const std::string & text, bool stop) {
     speak(text, stop);
     while (Tolk_IsSpeaking()) {
         SDL_PollEvent(&e);
     }
+    if (voice_object != nullptr) {
+        if (stop)
+            voice_object->speak_interrupt_wait(text);
+        else
+            voice_object->speak_wait(text);
+    }
+
 }
 
 void stop_speech() {
         Tolk_Silence();
-    }
+        if (voice_object != nullptr) {
+                voice_object->speak_interrupt(nullptr);
+        }
+
+}
 std::string screen_reader_detect() {
     reader = Tolk_DetectScreenReader();
     return std::string(reader.begin(), reader.end());
@@ -446,6 +468,10 @@ SDL_UnregisterApp();
 enet_deinitialize();
 Tolk_Unload();
 tolk_library_unload();
+if (voice_object != nullptr) {
+    delete voice_object;
+    voice_object = nullptr;
+}
 SDL_Quit();
 exit(return_number);
 }
@@ -1011,7 +1037,7 @@ bool timer::is_running() {
     void library::destruct() {}
     bool library::load(const std::string& libname) {
         lib = SDL_LoadObject(libname.c_str());
-                                    return lib == NULL;
+                                    return lib != NULL;
                                 }
     typedef void* (*func)(void**, void**, void**, void**, void**, void**, void**, void**, void**, void**);
     void library_call(asIScriptGeneric* gen) {

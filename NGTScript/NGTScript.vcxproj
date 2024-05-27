@@ -127,7 +127,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <TranslateIncludes>false</TranslateIncludes>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <Optimization>Disabled</Optimization>
+      <Optimization>MinSpace</Optimization>
       <StringPooling>
       </StringPooling>
       <DisableSpecificWarnings>
