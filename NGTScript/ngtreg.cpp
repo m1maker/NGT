@@ -378,7 +378,6 @@ void add_text(std::wstring text)
 
 
     
-
 timer* ftimer() { return new timer; }
 user_idle* fuser_idle() { return new user_idle; }
 asIScriptFunction* fscript_function() { asIScriptFunction* r =nullptr; return r; }
