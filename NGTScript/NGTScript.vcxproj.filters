@@ -32,6 +32,7 @@
     <ClCompile Include="dlibrary.cpp" />
     <ClCompile Include="openssl\applink.c" />
     <ClCompile Include="aes256enc.c" />
+    <ClCompile Include="Tolk.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="angelscript.h" />

@@ -224,9 +224,11 @@ std::string get_platform() {
     return std::string(SDL_GetPlatform());
 }
 void init_engine(){
-    Tolk_Load();
 
     SDL_Init(SDL_INIT_EVERYTHING);
+    tolk_library_load("Tolk.dll");
+    Tolk_Load();
+
     enet_initialize();
     Tolk_TrySAPI(true);
     reader=Tolk_DetectScreenReader();
@@ -236,11 +238,12 @@ void init_engine(){
 }   
     void set_library_path(const std::string& path) {
     if (Tolk_IsLoaded())Tolk_Unload();
+    tolk_library_unload();
     std::filesystem::path current_dir = std::filesystem::current_path();
     std::filesystem::path new_dir= std::filesystem::current_path()/path;
 
     std::filesystem::current_path(new_dir);
-
+    tolk_library_load("Tolk.dll");
     Tolk_Load();
     soundsystem_free();
     soundsystem_init();
@@ -442,6 +445,7 @@ win=NULL;
 SDL_UnregisterApp();
 enet_deinitialize();
 Tolk_Unload();
+tolk_library_unload();
 SDL_Quit();
 exit(return_number);
 }
