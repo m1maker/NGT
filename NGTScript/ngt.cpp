@@ -110,18 +110,18 @@ SDL_Window* win = NULL;
 
 SDL_Event e;
 bool window_is_focused;
-std::wstring wstr(const std::string& utf8String)
+wstring wstr(const string& utf8String)
 {
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+    wstring_convert<codecvt_utf8_utf16<wchar_t>> converter;
     return converter.from_bytes(utf8String);
 }
-std::wstring reader;
-std::unordered_map<SDL_Scancode, bool> keys;
+wstring reader;
+unordered_map<SDL_Scancode, bool> keys;
 bool keyhook = false;
-std::string inputtext;
-void replace(std::string& str, const std::string& from, const std::string& to) {
+string inputtext;
+void replace(string& str, const string& from, const string& to) {
     size_t start_pos = 0;
-    while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
+    while ((start_pos = str.find(from, start_pos)) != string::npos) {
         str.replace(start_pos, from.length(), to);
         start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
     }
@@ -220,8 +220,8 @@ int get_cpu_count() {
 int get_system_ram() {
     return SDL_GetSystemRAM();
 }
-std::string get_platform() {
-    return std::string(SDL_GetPlatform());
+string get_platform() {
+    return string(SDL_GetPlatform());
 }
 void init_engine(){
 
@@ -238,39 +238,39 @@ void init_engine(){
         Tolk_PreferSAPI(true);
 }
 }   
-    void set_library_path(const std::string& path) {
+    void set_library_path(const string& path) {
     if (Tolk_IsLoaded())Tolk_Unload();
     tolk_library_unload();
     if (voice_object != nullptr) {
         delete voice_object;
         voice_object = nullptr;
     }
-    std::filesystem::path current_dir = std::filesystem::current_path();
-    std::filesystem::path new_dir= std::filesystem::current_path()/path;
+    filesystem::path current_dir = filesystem::current_path();
+    filesystem::path new_dir= filesystem::current_path()/path;
 
-    std::filesystem::current_path(new_dir);
+    filesystem::current_path(new_dir);
     if (!tolk_library_load("Tolk.dll")) {
         voice_object = new tts_voice;
     }
     Tolk_Load();
     soundsystem_free();
     soundsystem_init();
-    std::filesystem::current_path(current_dir);
+    filesystem::current_path(current_dir);
 }
 
-std::random_device rd;
-std::mt19937 gen(rd());
+random_device rd;
+mt19937 gen(rd());
 long random(long min, long max) {
-    static_assert(std::is_integral<long>::value, "Type must be integral");
+    static_assert(is_integral<long>::value, "Type must be integral");
 
-    std::uniform_int_distribution<long> dis(min, max);
+    uniform_int_distribution<long> dis(min, max);
 
     return dis(gen); // Ensure 'gen' is a valid random number generator
 }
 double randomDouble(double min, double max) {
-    static_assert(std::is_floating_point<double>::value, "Type must be floating point");
+    static_assert(is_floating_point<double>::value, "Type must be floating point");
 
-    std::uniform_real_distribution<double> dis(min, max);
+    uniform_real_distribution<double> dis(min, max);
 
     return dis(gen); // Ensure 'gen' is a valid random number generator
 }
@@ -282,8 +282,8 @@ int get_last_error() {
     return 0;
 }
 
-void speak(const std::string & text, bool stop) {
-    std::wstring textstr = wstr(text);
+void speak(const string & text, bool stop) {
+    wstring textstr = wstr(text);
         Tolk_Speak(textstr.c_str(), stop);
         if (voice_object != nullptr) {
             if (stop)
@@ -292,7 +292,7 @@ void speak(const std::string & text, bool stop) {
                 voice_object->speak(text);
         }
 }
-void speak_wait(const std::string & text, bool stop) {
+void speak_wait(const string & text, bool stop) {
     speak(text, stop);
     while (Tolk_IsSpeaking()) {
         SDL_PollEvent(&e);
@@ -313,9 +313,9 @@ void stop_speech() {
         }
 
 }
-std::string screen_reader_detect() {
+string screen_reader_detect() {
     reader = Tolk_DetectScreenReader();
-    return std::string(reader.begin(), reader.end());
+    return string(reader.begin(), reader.end());
 }
 bool window_closable;
 void show_console() {
@@ -330,7 +330,7 @@ void hide_console() {
     FreeConsole();
 }
 
-bool show_window(const std::string & title,int width, int height, bool closable)
+bool show_window(const string & title,int width, int height, bool closable)
 {
     if (win != NULL)
         return false;
@@ -367,7 +367,7 @@ void hide_window() {
     SDL_DestroyWindow(win);
     window_is_focused = false;
 }
-void set_window_title(const std::string & new_title) {
+void set_window_title(const string & new_title) {
     SDL_SetWindowTitle(win, new_title.c_str());
 }
 void set_window_closable(bool set_closable) {
@@ -378,10 +378,10 @@ void garbage_collect() {
     asIScriptEngine* engine = ctx->GetEngine();
     engine->GarbageCollect(1|2, 1);
 }
-std::string key_to_string(SDL_Scancode key) {
-    return std::string(SDL_GetScancodeName(key));
+string key_to_string(SDL_Scancode key) {
+    return string(SDL_GetScancodeName(key));
 }
-SDL_Scancode string_to_key(const std::string&key) {
+SDL_Scancode string_to_key(const string&key) {
     return SDL_GetScancodeFromName(key.c_str());
 }
 void update_window(bool wait_event)
@@ -475,18 +475,18 @@ if (voice_object != nullptr) {
 SDL_Quit();
 exit(return_number);
 }
-std::string number_to_words(uint64_t num, bool include_and)
+string number_to_words(uint64_t num, bool include_and)
 {
-    std::vector<char> buf(1024);
+    vector<char> buf(1024);
     int use_and = (include_and ? 1 : 0);
     size_t bufsize = bl_number_to_words(num, buf.data(), buf.size(), use_and);
     if (bufsize > buf.size())
     {
         return "";
     }
-    return std::string(buf.data());
+    return string(buf.data());
 }
-std::string read_environment_variable(const std::string& path) {
+string read_environment_variable(const string& path) {
 #ifdef _WIN32
     // Use _dupenv_s on Windows
     char* value;
@@ -495,28 +495,28 @@ std::string read_environment_variable(const std::string& path) {
         // Environment variable not found or error occurred
         return "";
     }
-    const std::string & result(value);
+    const string & result(value);
     free(value);  // Free the allocated memory
     return result;
 #else
     // Use getenv for non-Windows platforms
-    char* value = std::getenv(path.c_str());
+    char* value = getenv(path.c_str());
     if (value == nullptr) {
         // Environment variable not found
         return "";
     }
-    return const std::string &(value);
+    return const string &(value);
 #endif
 }
-bool clipboard_copy_text(const std::string & text) {
+bool clipboard_copy_text(const string & text) {
     SDL_SetClipboardText(text.c_str());
     return true;
 }
-std::string clipboard_read_text() {
+string clipboard_read_text() {
     return SDL_GetClipboardText();
 }
-std::string get_input() {
-    std::string temp=inputtext;
+string get_input() {
+    string temp=inputtext;
     inputtext="";
     return temp;
 }
@@ -578,7 +578,7 @@ void reset_all_forced_keys() {
 
 }
 }
-std::string string_encrypt(std::string the_string, std::string encryption_key) {
+string string_encrypt(string the_string, string encryption_key) {
     /* "opaque" encryption, decryption ctx structures that libcrypto uses to record
        status of enc/dec operations */
     EVP_CIPHER_CTX* en = EVP_CIPHER_CTX_new();
@@ -600,10 +600,10 @@ std::string string_encrypt(std::string the_string, std::string encryption_key) {
         return "";
     }
     unsigned char* ciphertext = aes_encrypt(en, (unsigned char*)str, &len);
-    return std::string((const char*)ciphertext);
+    return string((const char*)ciphertext);
 }
 
-std::string string_decrypt(std::string the_string, std::string encryption_key) {
+string string_decrypt(string the_string, string encryption_key) {
     /* "opaque" encryption, decryption ctx structures that libcrypto uses to record
        status of enc/dec operations */
     EVP_CIPHER_CTX* en = EVP_CIPHER_CTX_new();
@@ -628,53 +628,53 @@ std::string string_decrypt(std::string the_string, std::string encryption_key) {
     char* decrypted_text = (char*)aes_decrypt(de, (unsigned char*)str, &len);
 
     // Trim any extra characters added during encryption
-    std::string decrypted_string(decrypted_text, len);
+    string decrypted_string(decrypted_text, len);
 
     return decrypted_string;
 }
 
 
-std::string url_decode(const std::string& url) {
+string url_decode(const string& url) {
     URI uri(url);
     return uri.getPathEtc();
 }
 
-std::string url_encode(const std::string& url) {
+string url_encode(const string& url) {
     URI uri;
     uri.setPathEtc(url);
     return uri.toString();
 }
 
-std::string url_get(const std::string& url) {
+string url_get(const string& url) {
     HTTPClientSession session(url);
     HTTPRequest request(HTTPRequest::HTTP_GET, "/");
     session.sendRequest(request);
     HTTPResponse response;
-    std::istream& rs = session.receiveResponse(response);
-    std::string result;
+    istream& rs = session.receiveResponse(response);
+    string result;
     StreamCopier::copyToString(rs, result);
     return result;
 }
 
-std::string url_post(const std::string& url, const std::string& parameters) {
+string url_post(const string& url, const string& parameters) {
     HTTPClientSession session(url);
     HTTPRequest request(HTTPRequest::HTTP_POST, "/");
     request.setContentType("application/x-www-form-urlencoded");
     request.setContentLength(parameters.length());
-    std::ostream& os = session.sendRequest(request);
+    ostream& os = session.sendRequest(request);
     os << parameters;
     HTTPResponse response;
-    std::istream& rs = session.receiveResponse(response);
-    std::string result;
+    istream& rs = session.receiveResponse(response);
+    string result;
     StreamCopier::copyToString(rs, result);
     return result;
 }
 
-std::string ascii_to_character(int the_ascii_code) {
-    return std::string(1, static_cast<char>(the_ascii_code));
+string ascii_to_character(int the_ascii_code) {
+    return string(1, static_cast<char>(the_ascii_code));
 }
 
-int character_to_ascii(std::string the_character) {
+int character_to_ascii(string the_character) {
     if (the_character.length() == 1) {
         return static_cast<int>(the_character[0]);
     }
@@ -683,40 +683,40 @@ int character_to_ascii(std::string the_character) {
     }
 }
 
-std::string hex_to_string(std::string the_hexadecimal_sequence) {
-    std::string decoded;
-    std::istringstream iss(the_hexadecimal_sequence);
-    std::ostringstream oss;
+string hex_to_string(string the_hexadecimal_sequence) {
+    string decoded;
+    istringstream iss(the_hexadecimal_sequence);
+    ostringstream oss;
     Poco::HexBinaryDecoder decoder(iss);
     decoder >> decoded;
     return decoded;
 }
 
 
-std::string number_to_hex_string(double the_number) {
+string number_to_hex_string(double the_number) {
     return Poco::NumberFormatter::formatHex(static_cast<unsigned int>(the_number));
 }
 
-std::string string_base64_decode(std::string base64_string) {
-    std::istringstream iss(base64_string);
-    std::ostringstream oss;
+string string_base64_decode(string base64_string) {
+    istringstream iss(base64_string);
+    ostringstream oss;
     Poco::Base64Decoder decoder(iss);
     decoder >> oss.rdbuf();
     return oss.str();
 }
 
 
-std::string string_base64_encode(std::string the_string) {
-    std::istringstream iss(the_string);
-    std::ostringstream oss;
+string string_base64_encode(string the_string) {
+    istringstream iss(the_string);
+    ostringstream oss;
     Poco::Base64Encoder encoder(oss);
     encoder << iss.rdbuf();
     encoder.close();
     return oss.str();
 }
 
-std::string string_to_hex(std::string the_string) {
-    std::ostringstream oss;
+string string_to_hex(string the_string) {
+    ostringstream oss;
     Poco::HexBinaryEncoder encoder(oss);
     encoder << the_string;
     encoder.close();
@@ -724,7 +724,7 @@ std::string string_to_hex(std::string the_string) {
 }
 
 
-bool alert(const std::string & title, const std::string & text, const std::string &button_name)
+bool alert(const string & title, const string & text, const string &button_name)
 {
     SDL_MessageBoxButtonData buttons[] = {
         { SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT | SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 1, button_name.c_str()},
@@ -750,7 +750,7 @@ bool alert(const std::string & title, const std::string & text, const std::strin
 
 return true;
 }
-int question(const std::string& title, const std::string& text) {
+int question(const string& title, const string& text) {
     SDL_MessageBoxButtonData buttons[] = {
     { SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Yes" },
     { SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 2, "No" },
@@ -791,7 +791,7 @@ SDL_Delay(ms);
 void serialize(asIScriptGeneric* gen) {
     void* dict = gen->GetArgAddress(0);
     char* dict_str = static_cast<char*>(dict);
-    std::string result(dict_str);
+    string result(dict_str);
     gen->SetReturnObject(&result);
 }
 void deserialize(asIScriptGeneric* gen) {
@@ -806,73 +806,73 @@ void timer::construct() {
 void timer::destruct() {
 }
     uint64_t timer::elapsed_seconds() {
-        return pausedNanos != 0 ? std::chrono::duration_cast<std::chrono::seconds>(std::chrono::nanoseconds(pausedNanos)).count() 
-                                : std::chrono::duration_cast<std::chrono::seconds>(
-                                  std::chrono::steady_clock::now() - inittime).count();
+        return pausedNanos != 0 ? chrono::duration_cast<chrono::seconds>(chrono::nanoseconds(pausedNanos)).count() 
+                                : chrono::duration_cast<chrono::seconds>(
+                                  chrono::steady_clock::now() - inittime).count();
     }
     uint64_t timer::elapsed_minutes() {
-        return pausedNanos != 0 ? std::chrono::duration_cast<std::chrono::minutes>(std::chrono::nanoseconds(pausedNanos)).count() 
-                                : std::chrono::duration_cast<std::chrono::minutes>(
-                                  std::chrono::steady_clock::now() - inittime).count();
+        return pausedNanos != 0 ? chrono::duration_cast<chrono::minutes>(chrono::nanoseconds(pausedNanos)).count() 
+                                : chrono::duration_cast<chrono::minutes>(
+                                  chrono::steady_clock::now() - inittime).count();
     }
     uint64_t timer::elapsed_hours() {
-        return pausedNanos != 0 ? std::chrono::duration_cast<std::chrono::hours>(std::chrono::nanoseconds(pausedNanos)).count() 
-                                : std::chrono::duration_cast<std::chrono::hours>(
-                                  std::chrono::steady_clock::now() - inittime).count();
+        return pausedNanos != 0 ? chrono::duration_cast<chrono::hours>(chrono::nanoseconds(pausedNanos)).count() 
+                                : chrono::duration_cast<chrono::hours>(
+                                  chrono::steady_clock::now() - inittime).count();
     }
     uint64_t timer::elapsed_millis() {
-        return pausedNanos != 0 ? std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::nanoseconds(pausedNanos)).count() 
-                                : std::chrono::duration_cast<std::chrono::milliseconds>(
-                                  std::chrono::steady_clock::now() - inittime).count();
+        return pausedNanos != 0 ? chrono::duration_cast<chrono::milliseconds>(chrono::nanoseconds(pausedNanos)).count() 
+                                : chrono::duration_cast<chrono::milliseconds>(
+                                  chrono::steady_clock::now() - inittime).count();
     }
 
     uint64_t timer::elapsed_micros() {
-        return pausedNanos != 0 ? std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::nanoseconds(pausedNanos)).count() 
-                                : std::chrono::duration_cast<std::chrono::microseconds>(
-                                  std::chrono::steady_clock::now() - inittime).count();
+        return pausedNanos != 0 ? chrono::duration_cast<chrono::microseconds>(chrono::nanoseconds(pausedNanos)).count() 
+                                : chrono::duration_cast<chrono::microseconds>(
+                                  chrono::steady_clock::now() - inittime).count();
     }
     uint64_t timer::elapsed_nanos() {
         return pausedNanos != 0 ? pausedNanos 
-                                : std::chrono::duration_cast<std::chrono::nanoseconds>(
-                                  std::chrono::steady_clock::now() - inittime).count();
+                                : chrono::duration_cast<chrono::nanoseconds>(
+                                  chrono::steady_clock::now() - inittime).count();
     }
     void timer::force_seconds(uint64_t seconds) {
-        inittime = std::chrono::steady_clock::now() - std::chrono::seconds(seconds);
+        inittime = chrono::steady_clock::now() - chrono::seconds(seconds);
         pausedNanos = 0;
     }
     void timer::force_minutes(uint64_t minutes) {
-        inittime = std::chrono::steady_clock::now() - std::chrono::minutes(minutes);
+        inittime = chrono::steady_clock::now() - chrono::minutes(minutes);
         pausedNanos = 0;
     }
     void timer::force_hours(uint64_t hours) {
-        inittime = std::chrono::steady_clock::now() - std::chrono::hours(hours);
+        inittime = chrono::steady_clock::now() - chrono::hours(hours);
         pausedNanos = 0;
     }
     void timer::force_millis(uint64_t millis) {
-        inittime = std::chrono::steady_clock::now() - std::chrono::milliseconds(millis);
+        inittime = chrono::steady_clock::now() - chrono::milliseconds(millis);
         pausedNanos = 0;
     }
 
     // Force the timer to a specific time in microseconds
     void timer::force_micros(uint64_t micros) {
-        inittime = std::chrono::steady_clock::now() - std::chrono::microseconds(micros);
+        inittime = chrono::steady_clock::now() - chrono::microseconds(micros);
         pausedNanos = 0;
     }
 
     // Force the timer to a specific time in nanoseconds
     void timer::force_nanos(uint64_t nanos) {
-        inittime = std::chrono::steady_clock::now() - std::chrono::nanoseconds(nanos);
+        inittime = chrono::steady_clock::now() - chrono::nanoseconds(nanos);
         pausedNanos = 0;
     }
 
     void timer::restart() {
-        inittime = std::chrono::steady_clock::now();
+        inittime = chrono::steady_clock::now();
         pausedNanos = 0;
     }
     void timer::pause() {
         if (pausedNanos == 0) {
-            pausedNanos = std::chrono::duration_cast<std::chrono::nanoseconds>(
-                          std::chrono::steady_clock::now() - inittime).count();
+            pausedNanos = chrono::duration_cast<chrono::nanoseconds>(
+                          chrono::steady_clock::now() - inittime).count();
         }
 }
 bool timer::is_running() {
@@ -881,7 +881,7 @@ bool timer::is_running() {
 
     void timer::resume() {
         if (pausedNanos != 0) {
-            inittime = std::chrono::steady_clock::now() - std::chrono::nanoseconds(pausedNanos);
+            inittime = chrono::steady_clock::now() - chrono::nanoseconds(pausedNanos);
             pausedNanos = 0;
         }
     }
@@ -891,7 +891,7 @@ bool timer::is_running() {
 
         void network::construct() {}
         void network::destruct() { }
-    unsigned int network::connect(const std::string& hostAddress, int port) {
+    unsigned int network::connect(const string& hostAddress, int port) {
         ENetAddress enetAddress;
         enet_address_set_host(&enetAddress, hostAddress.c_str());
         enetAddress.port = port;
@@ -927,10 +927,18 @@ bool timer::is_running() {
         return false;
 
 }
-    std::string network::get_peer_address(unsigned int peer_id) {
-        char addressStr[64];
-        enet_address_get_host_ip(&host->peers[peer_id].address, addressStr, sizeof(addressStr));
-        return std::string(addressStr);
+    string address_to_string(const ENetAddress* address)
+    {
+        uint8_t a = (uint8_t)(address->host);
+        uint8_t b = (uint8_t)(address->host >> 8);
+        uint8_t c = (uint8_t)(address->host >> 16);
+        uint8_t d = (uint8_t)(address->host >> 24);
+        return to_string(a) + "." + to_string(b) + "." + to_string(c) + "." + to_string(d) + ":" + to_string(address->port);
+    }
+
+
+    string network::get_peer_address(unsigned int peer_id) {
+        return address_to_string(&host->peers[peer_id].address);
     }
     double network::get_peer_average_round_trip_time(unsigned int peerId) {
         return host->peers[peerId].roundTripTime;
@@ -947,37 +955,35 @@ bool timer::is_running() {
     }
     network_event* network::request(int timeout, int* out_host_result) {
         network_event* handle_ = new network_event;
-        std::thread t([this, handle_, timeout, out_host_result]() {
 
             ENetEvent event;
             int result= enet_host_service(host, &event, timeout);
             if (result > 0){
-            handle_->m_type = event.type;
-                handle_->m_channel = event.channelID;
+                if(event.type!=0)
+                handle_->m_type = event.type;
+            handle_->m_channel = event.channelID;
 
-                if (event.packet != nullptr) {
-                    handle_->m_message = std::string(reinterpret_cast<char*>(event.packet->data));
+                if (event.packet != nullptr and event.type==ENET_EVENT_TYPE_RECEIVE) {
+                    handle_->m_message = string(reinterpret_cast<char*>(event.packet->data));
                     enet_packet_destroy(event.packet);
                 }
                 if (event.peer != nullptr)
                     handle_->m_peerId = event.peer->incomingPeerID;
             }
             *out_host_result = result;
-            });
-        t.detach();
         return handle_;
 
     }
 
-    bool network::send_reliable(unsigned int peer_id, const std::string& packet, int channel) {
-        ENetPacket* p = enet_packet_create(packet.c_str(), strlen(packet.c_str()), ENET_PACKET_FLAG_RELIABLE);
+    bool network::send_reliable(unsigned int peer_id, const string& packet, int channel) {
+        ENetPacket* p = enet_packet_create(packet.c_str(), strlen(packet.c_str())+1, ENET_PACKET_FLAG_RELIABLE);
         int result=enet_peer_send(&host->peers[peer_id], channel, p);
         if (result == 0)
             return true;
         return false;
     }
-    bool network::send_unreliable(unsigned int peer_id, const std::string& packet, int channel) {
-        ENetPacket* p = enet_packet_create(packet.c_str(), strlen(packet.c_str()), 0);
+    bool network::send_unreliable(unsigned int peer_id, const string& packet, int channel) {
+        ENetPacket* p = enet_packet_create(packet.c_str(), strlen(packet.c_str())+1, 0);
         int result = enet_peer_send(&host->peers[peer_id], channel, p);
         if (result == 0)
             return true;
@@ -1035,7 +1041,7 @@ bool timer::is_running() {
     }
     void library::construct() {}
     void library::destruct() {}
-    bool library::load(const std::string& libname) {
+    bool library::load(const string& libname) {
         lib = SDL_LoadObject(libname.c_str());
                                     return lib != NULL;
                                 }
@@ -1046,10 +1052,10 @@ bool timer::is_running() {
         library* lib_obj = (library*)gen->GetObject();
 
         void* ref = gen->GetArgAddress(0);
-        std::string func_name = *static_cast<string*>(ref);
+        string func_name = *static_cast<string*>(ref);
         //Function signature parser:
-        std::vector<std::string> tokens;
-        std::string token;
+        vector<string> tokens;
+        string token;
         for (char c : func_name) {
             if (c == ' ' || c == '(' || c == ')' || c == ',' || c == ';') {
                 if (!token.empty()) {
@@ -1063,12 +1069,12 @@ bool timer::is_running() {
         }
 
         // First array: Return type and function name
-        std::vector<std::string> first;
+        vector<string> first;
         first.push_back(tokens[0]);  // Return type
         first.push_back(tokens[1]);  // Function name
 
         // Second array: Parameters
-        std::vector<std::string> last;
+        vector<string> last;
         for (size_t i = 2; i < tokens.size(); ++i) {
             if (!tokens[i].empty()) {
                 last.push_back(tokens[i]);
@@ -1078,7 +1084,7 @@ bool timer::is_running() {
         void*address = SDL_LoadFunction(lib_obj->lib, first[1].c_str());
         if (address == NULL) {
             const char* name = first[1].c_str();
-            std::string message = "Signature parse error: GetProcAddress failed for '" + std::string(name) + "'";
+            string message = "Signature parse error: GetProcAddress failed for '" + string(name) + "'";
             ctx->SetException(message.c_str());
             return;
         }
@@ -1123,12 +1129,12 @@ bool timer::is_running() {
                 }
                 else if (last[arg_count] == "string") {
                     void* ref = gen->GetArgAddress(i);
-                    std::string value = *static_cast<std::string*>(ref);
+                    string value = *static_cast<string*>(ref);
                     call_ctx->SetArgObject(arg_count, &value);
                 }
                 else if (last[arg_count] == "c_str") {
                     void* ref = gen->GetArgAddress(i);
-                    std::string value = *static_cast<std::string*>(ref);
+                    string value = *static_cast<string*>(ref);
                     const char* str = value.c_str();
                     call_ctx->SetArgObject(arg_count, &str);
                 }
@@ -1150,18 +1156,18 @@ bool timer::is_running() {
             if (arg_count < last.size()) {
             if (last[arg_count] == "int" or last[arg_count] == "int8" or last[arg_count] == "int16" or last[arg_count] == "int32" or last[arg_count] == "int64" or last[arg_count] == "uint" or last[arg_count] == "uint8" or last[arg_count] == "uint16" or last[arg_count] == "uint32" or last[arg_count] == "uint64" or last[arg_count] == "short" or last[arg_count] == "long") {
                 asINT64 value = *static_cast<asINT64*>(gen->GetArgAddress(i));
-                dict->Set(std::to_string(i), value);
+                dict->Set(to_string(i), value);
             }
             else if (last[arg_count] == "double" or last[arg_count] == "float") {
                 double value = *static_cast<double*>(gen->GetArgAddress(i));
-                dict->Set(std::to_string(i), value);
+                dict->Set(to_string(i), value);
 
             }
             else if (last[arg_count] == "string") {
                 void* ref = gen->GetArgAddress(i);
 
-                std::string value = *static_cast<std::string*>(ref);
-                dict->Set(std::to_string(i), &value, 67108876);
+                string value = *static_cast<string*>(ref);
+                dict->Set(to_string(i), &value, 67108876);
             }
 
             }
@@ -1183,13 +1189,13 @@ bool timer::is_running() {
             context->Prepare(function);
         }
         void script_thread::detach() {
-            std::thread t([this]() {
+            thread t([this]() {
                 this->context->Execute();
                 });
             t.detach();
         }
         void script_thread::join() {
-            std::thread t([this]() {
+            thread t([this]() {
                 this->context->Execute();
                 });
             t.join();
@@ -1234,16 +1240,16 @@ uint64_t user_idle::get_idle_time() {
 }
 
 uint64_t get_time_stamp_millis() {
-    auto now = std::chrono::system_clock::now();
+    auto now = chrono::system_clock::now();
     auto duration = now.time_since_epoch();
-    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+    auto millis = chrono::duration_cast<chrono::milliseconds>(duration).count();
     return millis;
 }
 
 uint64_t get_time_stamp_seconds() {
-    auto now = std::chrono::system_clock::now();
+    auto now = chrono::system_clock::now();
     auto duration = now.time_since_epoch();
-    auto seconds = std::chrono::duration_cast<std::chrono::seconds>(duration).count();
+    auto seconds = chrono::duration_cast<chrono::seconds>(duration).count();
     return seconds;
 }
 void ngtvector::construct() {}
@@ -1266,34 +1272,34 @@ void ngtsqlite3::destruct() {}
 
 int sqlite3statement::step() { return sqlite3_step(stmt); }
     int sqlite3statement::reset() { return sqlite3_reset(stmt); }
-    std::string sqlite3statement::get_expanded_sql_statement() const { return sqlite3_expanded_sql(stmt); }
-    std::string sqlite3statement::get_sql_statement() const { return sqlite3_sql(stmt); }
+    string sqlite3statement::get_expanded_sql_statement() const { return sqlite3_expanded_sql(stmt); }
+    string sqlite3statement::get_sql_statement() const { return sqlite3_sql(stmt); }
     int sqlite3statement::get_bind_param_count() const { return sqlite3_bind_parameter_count(stmt); }
     int sqlite3statement::get_column_count() const { return sqlite3_column_count(stmt); }
-    int sqlite3statement::bind_blob(int index, const std::string& value, bool copy) { return sqlite3_bind_blob(stmt, index, value.c_str(), value.size(), copy ? SQLITE_TRANSIENT : SQLITE_STATIC); }
+    int sqlite3statement::bind_blob(int index, const string& value, bool copy) { return sqlite3_bind_blob(stmt, index, value.c_str(), value.size(), copy ? SQLITE_TRANSIENT : SQLITE_STATIC); }
     int sqlite3statement::bind_double(int index, double value) { return sqlite3_bind_double(stmt, index, value); }
     int sqlite3statement::bind_int(int index, int value) { return sqlite3_bind_int(stmt, index, value); }
     int sqlite3statement::bind_int64(int index, int64_t value) { return sqlite3_bind_int64(stmt, index, value); }
     int sqlite3statement::bind_null(int index) { return sqlite3_bind_null(stmt, index); }
-    int sqlite3statement::bind_param_index(const std::string& name) { return sqlite3_bind_parameter_index(stmt, name.c_str()); }
-    std::string sqlite3statement::bind_param_name(int index) { return sqlite3_bind_parameter_name(stmt, index); }
-    int sqlite3statement::bind_text(int index, const std::string& value, bool copy) { return sqlite3_bind_text(stmt, index, value.c_str(), value.size(), copy ? SQLITE_TRANSIENT : SQLITE_STATIC); }
+    int sqlite3statement::bind_param_index(const string& name) { return sqlite3_bind_parameter_index(stmt, name.c_str()); }
+    string sqlite3statement::bind_param_name(int index) { return sqlite3_bind_parameter_name(stmt, index); }
+    int sqlite3statement::bind_text(int index, const string& value, bool copy) { return sqlite3_bind_text(stmt, index, value.c_str(), value.size(), copy ? SQLITE_TRANSIENT : SQLITE_STATIC); }
     int sqlite3statement::clear_bindings() { return sqlite3_clear_bindings(stmt); }
-    std::string sqlite3statement::column_blob(int index) { return std::string(reinterpret_cast<const char*>(sqlite3_column_blob(stmt, index)), sqlite3_column_bytes(stmt, index)); }
+    string sqlite3statement::column_blob(int index) { return string(reinterpret_cast<const char*>(sqlite3_column_blob(stmt, index)), sqlite3_column_bytes(stmt, index)); }
     int sqlite3statement::column_bytes(int index) { return sqlite3_column_bytes(stmt, index); }
-    std::string sqlite3statement::column_decltype(int index) { return sqlite3_column_decltype(stmt, index); }
+    string sqlite3statement::column_decltype(int index) { return sqlite3_column_decltype(stmt, index); }
     double sqlite3statement::column_double(int index) { return sqlite3_column_double(stmt, index); }
     int sqlite3statement::column_int(int index) { return sqlite3_column_int(stmt, index); }
     int64_t sqlite3statement::column_int64(int index) { return sqlite3_column_int64(stmt, index); }
-    std::string sqlite3statement::column_name(int index) { return sqlite3_column_name(stmt, index); }
+    string sqlite3statement::column_name(int index) { return sqlite3_column_name(stmt, index); }
     int sqlite3statement::column_type(int index) { return sqlite3_column_type(stmt, index); }
-    std::string sqlite3statement::column_text(int index) { return reinterpret_cast<const char*>(sqlite3_column_text(stmt, index)); }
+    string sqlite3statement::column_text(int index) { return reinterpret_cast<const char*>(sqlite3_column_text(stmt, index)); }
 
 
     int ngtsqlite3::close() { return sqlite3_close(db); }
 
-    int ngtsqlite3::open(const std::string& filename, int flags) { return sqlite3_open_v2(filename.c_str(), &db, flags, nullptr); }
-    sqlite3statement* ngtsqlite3::prepare(const std::string& name, int& out) {
+    int ngtsqlite3::open(const string& filename, int flags) { return sqlite3_open_v2(filename.c_str(), &db, flags, nullptr); }
+    sqlite3statement* ngtsqlite3::prepare(const string& name, int& out) {
         sqlite3statement* statement = new sqlite3statement();
         if (sqlite3_prepare_v2(db, name.c_str(), -1, &statement->stmt, 0) != SQLITE_OK)
         {
@@ -1303,7 +1309,7 @@ int sqlite3statement::step() { return sqlite3_step(stmt); }
         return statement;
     }
 
-    int ngtsqlite3::execute(const std::string& sql)
+    int ngtsqlite3::execute(const string& sql)
     {
         return sqlite3_exec(db, sql.c_str(), 0, 0, 0);
     }
@@ -1314,7 +1320,7 @@ int sqlite3statement::step() { return sqlite3_step(stmt); }
 
     int ngtsqlite3::limit(int id, int val) { return sqlite3_limit(db, id, val); }
 
-    int ngtsqlite3::set_authorizer(sqlite3_authorizer* callback, const std::string& arg) { return 0; }
+    int ngtsqlite3::set_authorizer(sqlite3_authorizer* callback, const string& arg) { return 0; }
 
     int64_t ngtsqlite3::get_last_insert_rowid() const { return sqlite3_last_insert_rowid(db); }
 
@@ -1322,7 +1328,7 @@ int sqlite3statement::step() { return sqlite3_step(stmt); }
 
     int ngtsqlite3::get_last_error() { return sqlite3_errcode(db); }
 
-    std::string ngtsqlite3::get_last_error_text() { return sqlite3_errmsg(db); }
+    string ngtsqlite3::get_last_error_text() { return sqlite3_errmsg(db); }
 
     bool ngtsqlite3::get_active() const { return db != nullptr; }
 

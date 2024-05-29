@@ -33,6 +33,7 @@ using namespace Poco::Net;
 #include<thread>
 #include <vector>
 #include "scriptdictionary/scriptdictionary.h"
+using namespace std;
 class ngtvector {
 public:
 	void construct();
@@ -43,33 +44,33 @@ public:
 };
 
 
-std::wstring wstr(const std::string & utf8String);
+wstring wstr(const string & utf8String);
 uint64_t get_time_stamp_millis();
 uint64_t get_time_stamp_seconds();
 void as_printf(asIScriptGeneric* gen);
 int get_cpu_count();
 int get_system_ram();
-std::string get_platform();
+string get_platform();
 void init_engine();
-void set_library_path(const std::string& path);
+void set_library_path(const string& path);
 long random(long min, long max);
  double randomDouble(double min, double max);
  bool random_bool();
  int get_last_error();
-void speak(const std::string &	 text, bool stop = true);
-void speak_wait(const std::string &	 text, bool stop = true);
+void speak(const string &	 text, bool stop = true);
+void speak_wait(const string &	 text, bool stop = true);
 void stop_speech();
-std::string screen_reader_detect();
+string screen_reader_detect();
 void show_console();
 void hide_console();
-bool show_window(const std::string & title,int width=640, int height=480, bool closable=true);
+bool show_window(const string & title,int width=640, int height=480, bool closable=true);
 bool focus_window();
 void hide_window();
-void set_window_title(const std::string & );
+void set_window_title(const string & );
 void set_window_closable(bool);
 bool get_window_active();
-std::string key_to_string(SDL_Scancode);
-SDL_Scancode string_to_key(const std::string&);
+string key_to_string(SDL_Scancode);
+SDL_Scancode string_to_key(const string&);
 void garbage_collect();
 void update_window(bool wait_event=false);
 bool mouse_pressed(int);
@@ -79,10 +80,10 @@ int get_MOUSE_X();
 int get_MOUSE_Y();
 int get_MOUSE_Z();
 void exit_engine(int=0);
-std::string number_to_words(uint64_t, bool);
-bool clipboard_copy_text(const std::string&);
-std::string clipboard_read_text();
-std::string get_input();
+string number_to_words(uint64_t, bool);
+bool clipboard_copy_text(const string&);
+string clipboard_read_text();
+string get_input();
 bool key_pressed(SDL_Scancode);
 bool key_released(SDL_Scancode);
 bool key_down(SDL_Scancode);
@@ -95,34 +96,34 @@ SDL_Keycode* keys_pressed();
 SDL_Keycode* keys_released();
 SDL_Keycode* keys_down();
 SDL_Keycode* keys_repeat();
-std::string string_encrypt(std::string the_string, std::string encryption_key);
-std::string string_decrypt(std::string the_string, std::string encryption_key);
-std::string url_decode(const std::string& url);
-std::string url_encode(const std::string& url);
-std::string url_get(const std::string& url);
-std::string url_post(const std::string& url, const std::string& parameters);
-std::string ascii_to_character(int the_ascii_code);
-int character_to_ascii(std::string the_character);
-std::string hex_to_string(std::string the_hexadecimal_sequence);
-std::string number_to_hex_string(double the_number);
-std::string string_base64_decode(std::string base64_string);
-std::string string_base64_encode(std::string the_string);
-std::string string_to_hex(std::string the_string);
-bool alert(const std::string &	 title, const std::string &	 text, const std::string &button_name="OK");
-int question(const std::string& title, const std::string &text);
+string string_encrypt(string the_string, string encryption_key);
+string string_decrypt(string the_string, string encryption_key);
+string url_decode(const string& url);
+string url_encode(const string& url);
+string url_get(const string& url);
+string url_post(const string& url, const string& parameters);
+string ascii_to_character(int the_ascii_code);
+int character_to_ascii(string the_character);
+string hex_to_string(string the_hexadecimal_sequence);
+string number_to_hex_string(double the_number);
+string string_base64_decode(string base64_string);
+string string_base64_encode(string the_string);
+string string_to_hex(string the_string);
+bool alert(const string &	 title, const string &	 text, const string &button_name="OK");
+int question(const string& title, const string &text);
 void wait(uint64_t);
 void delay(int);
-std::string read_environment_variable(const std::string&);
+string read_environment_variable(const string&);
 void serialize(asIScriptGeneric*);
 void deserialize(asIScriptGeneric*);
 class timer {
 public:
 	mutable int ref = 0;
-	std::chrono::time_point<std::chrono::steady_clock> inittime;
+	chrono::time_point<chrono::steady_clock> inittime;
 	uint64_t pausedNanos = 0;
 
 	timer() {
-		inittime = std::chrono::steady_clock::now();
+		inittime = chrono::steady_clock::now();
 		pausedNanos = 0;
 	}
 	void construct();
@@ -164,14 +165,14 @@ unsigned    int get_channel() const {
         return m_channel;
     }
 
-    std::string get_message() const {
+    string get_message() const {
         return m_message;
     }
 
     int m_type;
 unsigned    int m_peerId;
     int m_channel;
-    std::string m_message;
+    string m_message;
 };
 
 class network {
@@ -179,17 +180,17 @@ public:
 	mutable int ref = 0;
 	void construct();
 	void destruct();
-	unsigned    int connect(const std::string& host, int port);
+	unsigned    int connect(const string& host, int port);
 	bool destroy();
 	bool disconnect_peer(unsigned int);
 	bool disconnect_peer_forcefully(unsigned int);
 	bool disconnect_peer_softly(unsigned int);
-	std::string get_peer_address(unsigned int);
+	string get_peer_address(unsigned int);
 	double get_peer_average_round_trip_time(unsigned int);
 	CScriptArray* get_peer_list();
 	network_event* request(int timeout=30000, int *out_host_result=nullptr);
-	bool send_reliable(unsigned int peerId, const std::string& packet, int channel);
-	bool send_unreliable(unsigned int peerId, const std::string& packet, int channel);
+	bool send_reliable(unsigned int peerId, const string& packet, int channel);
+	bool send_unreliable(unsigned int peerId, const string& packet, int channel);
 	bool set_bandwidth_limits(double incomingBandwidth, double outgoingBandwidth);
 	bool setup_client(int channels, int maxPeers);
 	bool setup_server(int listeningPort, int channels, int maxPeers);
@@ -217,7 +218,7 @@ public:
 	void* lib;
 	void construct();
 	void destruct();
-	bool load(const std::string &);
+	bool load(const string &);
 		void unload();
 };
 void library_call(asIScriptGeneric* gen);
@@ -226,7 +227,7 @@ private:
 	mutable int ref = 0;
 	asIScriptContext* context;
 	asIScriptFunction* function;
-	std::thread* th;
+	thread* th;
 	CScriptDictionary* thread_args ;
 public:
 	script_thread(asIScriptFunction* func, CScriptDictionary* args);
@@ -240,7 +241,7 @@ private:
 	mutable int ref = 0;
 	HANDLE mutex;
 public:
-	instance(const std::string & application_name) {
+	instance(const string & application_name) {
 		mutex = CreateMutexA(NULL, TRUE, application_name.c_str());
 	}
 	void construct();
@@ -270,32 +271,32 @@ public:
 	void destruct();
 	int step();
 	int reset();
-	std::string get_expanded_sql_statement()const;
-	std::string get_sql_statement() const;
+	string get_expanded_sql_statement()const;
+	string get_sql_statement() const;
 	int get_bind_param_count()const;
 	int get_column_count()const;
-	int bind_blob(int index, const std::string& value, bool copy = true);
+	int bind_blob(int index, const string& value, bool copy = true);
 	int bind_double(int index, double value);
 	int bind_int(int index, int value);
 	int bind_int64(int index, int64_t value);
 	int bind_null(int index);
-	int bind_param_index(const std::string& name);
-	std::string bind_param_name(int index);
-	int bind_text(int index, const std::string& value, bool copy = true);
+	int bind_param_index(const string& name);
+	string bind_param_name(int index);
+	int bind_text(int index, const string& value, bool copy = true);
 	int clear_bindings();
-	std::string column_blob(int index);
+	string column_blob(int index);
 	int column_bytes(int index);
-	std::string column_decltype(int index);
+	string column_decltype(int index);
 	double column_double(int index);
 	int column_int(int index);
 	int64_t column_int64(int index);
-	std::string column_name(int index);
+	string column_name(int index);
 	int column_type(int index);
-	std::string column_text(int index);
+	string column_text(int index);
 	sqlite3_stmt* stmt;
 };
 
-using sqlite3_authorizer = int(*)(std::string, int, std::string, std::string, std::string, std::string);
+using sqlite3_authorizer = int(*)(string, int, string, string, string, string);
 
 
 class ngtsqlite3
@@ -305,18 +306,18 @@ public:
 	void destruct();
 
 	int close();
-	int open(const std::string& filename, int flags = 6);
-	sqlite3statement* prepare(const std::string& name, int& out);
+	int open(const string& filename, int flags = 6);
+	sqlite3statement* prepare(const string& name, int& out);
 
-	int execute(const std::string& sql);
+	int execute(const string& sql);
 	int64_t get_rows_changed() const;
 	int64_t get_total_rows_changed()const;
 	int limit(int id, int val);
-	int set_authorizer(sqlite3_authorizer* callback, const std::string& arg = "");
+	int set_authorizer(sqlite3_authorizer* callback, const string& arg = "");
 	int64_t get_last_insert_rowid() const;
 	void set_last_insert_rowid(int64_t id);
 	int get_last_error();
-	std::string get_last_error_text();
+	string get_last_error_text();
 	bool get_active()const;
 private:
 	sqlite3* db;

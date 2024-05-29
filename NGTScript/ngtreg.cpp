@@ -409,6 +409,7 @@ void MessageCallback(const asSMessageInfo* msg, void* param)
     std::string output = "File: "+std::string(msg->section) + "\r\nLine (" + rowStr + ", " + colStr + ") : \r\n" + type + " : " + messageStr;
     ouou = wstr(output);
     result_message  += ouou+L"\r\n";
+    cout << output << endl;
 }
 
 
