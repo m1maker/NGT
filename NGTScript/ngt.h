@@ -116,6 +116,7 @@ void delay(int);
 string read_environment_variable(const string&);
 void serialize(asIScriptGeneric*);
 void deserialize(asIScriptGeneric*);
+bool urlopen(const string& url);
 class timer {
 public:
 	mutable int ref = 0;

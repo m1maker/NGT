@@ -799,7 +799,11 @@ void deserialize(asIScriptGeneric* gen) {
 
     gen->SetReturnObject(dict);
 }
-
+bool urlopen(const string& url) {
+    int result=SDL_OpenURL(url.c_str());
+    if (result == 0)return true;
+    return false;
+}
 void timer::construct() {
 }
 
