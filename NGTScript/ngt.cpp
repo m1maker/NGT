@@ -105,7 +105,6 @@ unsigned char* aes_decrypt(EVP_CIPHER_CTX* e, unsigned char* ciphertext, int* le
 
 
 using namespace std;
-bool engine_is_active= false;
 SDL_Window* win = NULL;
 
 SDL_Event e;
@@ -276,7 +275,7 @@ double randomDouble(double min, double max) {
 }
 
 bool random_bool() {
-    return rand() % 2 == 0;
+    return random(0, 1) == random(0, 1);
 }
 int get_last_error() {
     return 0;
@@ -646,28 +645,43 @@ string url_encode(const string& url) {
 }
 
 string url_get(const string& url) {
-    HTTPClientSession session(url);
-    HTTPRequest request(HTTPRequest::HTTP_GET, "/");
-    session.sendRequest(request);
-    HTTPResponse response;
-    istream& rs = session.receiveResponse(response);
-    string result;
-    StreamCopier::copyToString(rs, result);
-    return result;
+    try {
+        HTTPClientSession session(url);
+        HTTPRequest request(HTTPRequest::HTTP_GET, "/");
+        session.sendRequest(request);
+        HTTPResponse response;
+        istream& rs = session.receiveResponse(response);
+        string result;
+        StreamCopier::copyToString(rs, result);
+        return result;
+    }
+    catch (const Poco::Exception& e) {
+        asIScriptContext* ctx= asGetActiveContext();
+        ctx->SetException(e.displayText().c_str());
+    }
 }
 
+
+
 string url_post(const string& url, const string& parameters) {
-    HTTPClientSession session(url);
-    HTTPRequest request(HTTPRequest::HTTP_POST, "/");
-    request.setContentType("application/x-www-form-urlencoded");
-    request.setContentLength(parameters.length());
-    ostream& os = session.sendRequest(request);
-    os << parameters;
-    HTTPResponse response;
-    istream& rs = session.receiveResponse(response);
-    string result;
-    StreamCopier::copyToString(rs, result);
-    return result;
+    try {
+        HTTPClientSession session(url);
+        HTTPRequest request(HTTPRequest::HTTP_POST, "/");
+        request.setContentType("application/x-www-form-urlencoded");
+        request.setContentLength(parameters.length());
+        ostream& os = session.sendRequest(request);
+        os << parameters;
+        HTTPResponse response;
+        istream& rs = session.receiveResponse(response);
+        string result;
+        StreamCopier::copyToString(rs, result);
+        return result;
+    }
+    catch (const Poco::Exception& e) {
+        asIScriptContext* ctx = asGetActiveContext();
+        ctx->SetException(e.displayText().c_str());
+    }
+
 }
 
 string ascii_to_character(int the_ascii_code) {
@@ -714,6 +728,23 @@ string string_base64_encode(string the_string) {
     encoder.close();
     return oss.str();
 }
+string string_base32_decode(string base32_string) {
+    istringstream iss(base32_string);
+    ostringstream oss;
+    Poco::Base32Decoder decoder(iss);
+    decoder >> oss.rdbuf();
+    return oss.str();
+}
+
+
+string string_base32_encode(string the_string) {
+    istringstream iss(the_string);
+    ostringstream oss;
+    Poco::Base32Encoder encoder(oss);
+    encoder << iss.rdbuf();
+    encoder.close();
+    return oss.str();
+}
 
 string string_to_hex(string the_string) {
     ostringstream oss;
@@ -722,8 +753,6 @@ string string_to_hex(string the_string) {
     encoder.close();
     return oss.str();
 }
-
-
 bool alert(const string & title, const string & text, const string &button_name)
 {
     SDL_MessageBoxButtonData buttons[] = {

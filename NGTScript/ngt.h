@@ -8,6 +8,9 @@
 #include "Poco/Net/HTTPResponse.h"
 #include "Poco/Base64Encoder.h"
 #include "Poco/Base64Decoder.h"
+#include "Poco/Base32Encoder.h"
+#include "Poco/Base32Decoder.h"
+
 #include "Poco/HexBinaryEncoder.h"
 #include "Poco/HexBinaryDecoder.h"
 #include "Poco/String.h"
@@ -108,6 +111,8 @@ string hex_to_string(string the_hexadecimal_sequence);
 string number_to_hex_string(double the_number);
 string string_base64_decode(string base64_string);
 string string_base64_encode(string the_string);
+string string_base32_decode(string base32_string);
+string string_base32_encode(string the_string);
 string string_to_hex(string the_string);
 bool alert(const string &	 title, const string &	 text, const string &button_name="OK");
 int question(const string& title, const string &text);

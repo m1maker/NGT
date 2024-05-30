@@ -512,6 +512,8 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterGlobalFunction("string number_to_hex_string(double)", asFUNCTION(number_to_hex_string), asCALL_CDECL);
     engine->RegisterGlobalFunction("string string_base64_decode(const string &in)", asFUNCTION(string_base64_decode), asCALL_CDECL);
     engine->RegisterGlobalFunction("string string_base64_encode(const string &in)", asFUNCTION(string_base64_encode), asCALL_CDECL);
+    engine->RegisterGlobalFunction("string string_base32_decode(const string &in)", asFUNCTION(string_base32_decode), asCALL_CDECL);
+    engine->RegisterGlobalFunction("string string_base32_encode(const string &in)", asFUNCTION(string_base32_encode), asCALL_CDECL);
     engine->RegisterGlobalFunction("string string_to_hex(const string &in)", asFUNCTION(string_to_hex), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool alert(const string &in, const string &in, const string &in=\"OK\")", asFUNCTION(alert), asCALL_CDECL);
     engine->RegisterGlobalFunction("int question(const string &in, const string &in)", asFUNCTION(question), asCALL_CDECL);
