@@ -343,6 +343,12 @@
     <ClInclude Include="openssl\__DECC_INCLUDE_EPILOGUE.H" />
     <ClInclude Include="openssl\__DECC_INCLUDE_PROLOGUE.H" />
     <ClInclude Include="pack.h" />
+    <ClInclude Include="pack\physfs.h" />
+    <ClInclude Include="pack\physfs_casefolding.h" />
+    <ClInclude Include="pack\physfs_internal.h" />
+    <ClInclude Include="pack\physfs_lzmasdk.h" />
+    <ClInclude Include="pack\physfs_miniz.h" />
+    <ClInclude Include="pack\physfs_platforms.h" />
     <ClInclude Include="phonon.h" />
     <ClInclude Include="phonon_interfaces.h" />
     <ClInclude Include="phonon_version.h" />
@@ -456,6 +462,32 @@
     <ClCompile Include="ngtreg.cpp" />
     <ClCompile Include="openssl\applink.c" />
     <ClCompile Include="pack.cpp" />
+    <ClCompile Include="pack\physfs.c" />
+    <ClCompile Include="pack\physfs_archiver_7z.c" />
+    <ClCompile Include="pack\physfs_archiver_csm.c" />
+    <ClCompile Include="pack\physfs_archiver_dir.c" />
+    <ClCompile Include="pack\physfs_archiver_grp.c" />
+    <ClCompile Include="pack\physfs_archiver_hog.c" />
+    <ClCompile Include="pack\physfs_archiver_iso9660.c" />
+    <ClCompile Include="pack\physfs_archiver_mvl.c" />
+    <ClCompile Include="pack\physfs_archiver_qpak.c" />
+    <ClCompile Include="pack\physfs_archiver_slb.c" />
+    <ClCompile Include="pack\physfs_archiver_unpacked.c" />
+    <ClCompile Include="pack\physfs_archiver_vdf.c" />
+    <ClCompile Include="pack\physfs_archiver_wad.c" />
+    <ClCompile Include="pack\physfs_archiver_zip.c" />
+    <ClCompile Include="pack\physfs_byteorder.c" />
+    <ClCompile Include="pack\physfs_platform_android.c" />
+    <ClCompile Include="pack\physfs_platform_haiku.cpp" />
+    <ClCompile Include="pack\physfs_platform_ogc.c" />
+    <ClCompile Include="pack\physfs_platform_os2.c" />
+    <ClCompile Include="pack\physfs_platform_playdate.c" />
+    <ClCompile Include="pack\physfs_platform_posix.c" />
+    <ClCompile Include="pack\physfs_platform_qnx.c" />
+    <ClCompile Include="pack\physfs_platform_unix.c" />
+    <ClCompile Include="pack\physfs_platform_windows.c" />
+    <ClCompile Include="pack\physfs_platform_winrt.cpp" />
+    <ClCompile Include="pack\physfs_unicode.c" />
     <ClCompile Include="sapi\SpeechEngine.cpp" />
     <ClCompile Include="sapi\Voice.cpp" />
     <ClCompile Include="scriptany\scriptany.cpp" />
@@ -478,6 +510,9 @@
     <ClCompile Include="stb_vorbis.h" />
     <ClCompile Include="Tolk.cpp" />
     <ClCompile Include="tts_voice.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="pack\physfs_platform_apple.m" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

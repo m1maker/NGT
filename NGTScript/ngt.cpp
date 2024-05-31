@@ -940,6 +940,14 @@ bool timer::is_running() {
 
         void network_event::construct() {}
         void network_event::destruct() {}
+        network_event& network_event::operator=(const network_event new_event) {
+            this->m_peerId= new_event.m_peerId;
+            this->m_type = new_event.m_type;
+            this->m_message= new_event.m_message;
+            this->m_channel = new_event.m_channel;
+            return *this;
+        }
+
 
         void network::construct() {}
         void network::destruct() { }
@@ -1100,7 +1108,9 @@ bool timer::is_running() {
 
         return true;
     }
-
+    void network::flush() {
+        enet_host_flush(host);
+}
     int network::get_connected_peers() const {
         return host ? host->connectedPeers : 0;
     }

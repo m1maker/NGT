@@ -180,8 +180,8 @@ unsigned    int get_channel() const {
 unsigned    int m_peerId;
     int m_channel;
     string m_message;
+	network_event& operator=(const network_event);
 };
-
 class network {
 public:
 	mutable int ref = 0;
@@ -201,7 +201,7 @@ public:
 	bool set_bandwidth_limits(double incomingBandwidth, double outgoingBandwidth);
 	bool setup_client(int channels, int maxPeers);
 	bool setup_server(int listeningPort, int channels, int maxPeers);
-
+	void flush();
 	int get_connected_peers() const;
 
 	double get_bytes_sent() const;
