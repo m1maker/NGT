@@ -54,6 +54,7 @@ void as_printf(asIScriptGeneric* gen);
 int get_cpu_count();
 int get_system_ram();
 string get_platform();
+void set_exit_callback(asIScriptFunction* callback = nullptr);
 void init_engine();
 void set_library_path(const string& path);
 long random(long min, long max);
@@ -194,7 +195,7 @@ public:
 	string get_peer_address(unsigned int);
 	double get_peer_average_round_trip_time(unsigned int);
 	CScriptArray* get_peer_list();
-	network_event* request(int timeout=30000, int *out_host_result=nullptr);
+	network_event* request(int timeout=0, int *out_host_result=nullptr);
 	bool send_reliable(unsigned int peerId, const string& packet, int channel);
 	bool send_unreliable(unsigned int peerId, const string& packet, int channel);
 	bool set_bandwidth_limits(double incomingBandwidth, double outgoingBandwidth);
@@ -234,9 +235,8 @@ private:
 	asIScriptContext* context;
 	asIScriptFunction* function;
 	thread* th;
-	CScriptDictionary* thread_args ;
 public:
-	script_thread(asIScriptFunction* func, CScriptDictionary* args);
+	script_thread(asIScriptFunction* func);
 	void join();
 	void detach();
 	void destroy();

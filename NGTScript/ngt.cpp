@@ -32,6 +32,7 @@ extern "C"
 #include <stdlib.h>
 #include <openssl/evp.h>
 #include <openssl/aes.h>
+asIScriptFunction* exit_callback = nullptr;
 tts_voice* voice_object = nullptr;
 /**
  * Create a 256 bit key and IV using the supplied key_data. salt can be added for taste.
@@ -222,6 +223,10 @@ int get_system_ram() {
 string get_platform() {
     return string(SDL_GetPlatform());
 }
+void set_exit_callback(asIScriptFunction* callback) {
+    exit_callback = callback;
+}
+
 void init_engine(){
 
     SDL_Init(SDL_INIT_EVERYTHING);
@@ -317,7 +322,7 @@ string screen_reader_detect() {
     return string(reader.begin(), reader.end());
 }
 bool window_closable;
-void show_console() {
+    void show_console() {
     if (AllocConsole())
     {
         FILE* file = nullptr;
@@ -459,7 +464,20 @@ if (e.type == SDL_QUIT and window_closable == true)
 
     void exit_engine(int return_number)
 {
-    soundsystem_free();
+        if (exit_callback != nullptr) {
+            asIScriptContext* ctx = asGetActiveContext();
+            asIScriptEngine* engine = ctx->GetEngine();
+            asIScriptContext* e_ctx = engine->CreateContext();
+            e_ctx->Prepare(exit_callback);
+            e_ctx->Execute();
+            int result = e_ctx->GetReturnDWord();
+            if (result == 1) {
+                e_ctx->Release();
+                return;
+}
+            e_ctx->Release();
+        }
+        soundsystem_free();
     SDL_StopTextInput();
     SDL_DestroyWindow(win);
 win=NULL;
@@ -1078,7 +1096,6 @@ bool timer::is_running() {
         lib = SDL_LoadObject(libname.c_str());
                                     return lib != NULL;
                                 }
-    typedef void* (*func)(void**, void**, void**, void**, void**, void**, void**, void**, void**, void**);
     void library_call(asIScriptGeneric* gen) {
 #undef GetObject
         asIScriptContext* ctx = asGetActiveContext();
@@ -1121,9 +1138,8 @@ bool timer::is_running() {
             ctx->SetException(message.c_str());
             return;
         }
-        func function = reinterpret_cast<func>(address);
         asIScriptEngine* engine = ctx->GetEngine();
-        int func_id = engine->RegisterGlobalFunction(func_name.c_str(), asFUNCTION(function), asCALL_CDECL);
+        int func_id = engine->RegisterGlobalFunction(func_name.c_str(), asFUNCTION(address), asCALL_CDECL);
         asIScriptFunction* script_func = engine->GetFunctionById(func_id);
         asIScriptContext* call_ctx = engine->CreateContext();
         call_ctx->Prepare(script_func);
@@ -1171,7 +1187,10 @@ bool timer::is_running() {
                     const char* str = value.c_str();
                     call_ctx->SetArgObject(arg_count, &str);
                 }
-
+                if (last[arg_count] == "?&in" or last[arg_count] == "?&out") {
+                    void* ref = gen->GetArgAddress(i);
+                    call_ctx->SetArgObject(arg_count, ref);
+}
             }
         }
             call_ctx->Execute();
@@ -1202,6 +1221,11 @@ bool timer::is_running() {
                 string value = *static_cast<string*>(ref);
                 dict->Set(to_string(i), &value, 67108876);
             }
+            if (last[arg_count] == "?&in" or last[arg_count] == "?&out") {
+                void* ref = gen->GetArgAddress(i);
+                dict->Set(to_string(i), ref, 67108876);
+
+            }
 
             }
         }
@@ -1210,12 +1234,11 @@ bool timer::is_running() {
         void library::unload() {
                                     SDL_UnloadObject(lib);
                                 }
-        script_thread::script_thread(asIScriptFunction* func, CScriptDictionary* args) {
+        script_thread::script_thread(asIScriptFunction* func) {
             function = func;
             asIScriptContext* current_context = asGetActiveContext();
             if (function == 0) {
                 current_context->SetException("Function is null");
-                thread_args = args;
             }
             asIScriptEngine* current_engine = current_context->GetEngine();
             context = current_engine->CreateContext();

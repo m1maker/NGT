@@ -1,5 +1,4 @@
-﻿
-#include "scriptbuilder/scriptbuilder.h"
+﻿#include "scriptbuilder/scriptbuilder.h"
 #include "scriptstdstring/scriptstdstring.h"
 #include <fstream>
 #include <cstdlib>
@@ -384,8 +383,7 @@ asIScriptFunction* fscript_function() { asIScriptFunction* r =nullptr; return r;
 library* flibrary() { return new library; }
 void fscript_thread(asIScriptGeneric* gen) {
     asIScriptFunction* func = (asIScriptFunction*)gen->GetArgAddress(0);
-    CScriptDictionary* dict= (CScriptDictionary*)gen->GetArgAddress(1);
-    script_thread* th = new script_thread(func, dict);
+    script_thread* th = new script_thread(func);
     gen->SetReturnObject(th);
 }
 tts_voice* ftts_voice() { return new tts_voice(); }
@@ -434,6 +432,7 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterTypedef("size_t", "uint64");
     engine->RegisterTypedef("c_str", "int8");
     engine->RegisterTypedef("hwnd", "uint8");
+    engine->RegisterFuncdef("int exit_callback()");
     engine->RegisterObjectType("vector", sizeof(ngtvector), asOBJ_REF);
     engine->RegisterObjectBehaviour("vector", asBEHAVE_FACTORY, "vector@ v()", asFUNCTION(fngtvector), asCALL_CDECL);
     engine->RegisterObjectBehaviour("vector", asBEHAVE_ADDREF, "void f()", asMETHOD(ngtvector, construct), asCALL_THISCALL);
@@ -463,6 +462,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 
     engine->RegisterGlobalFunction("void stop_speech()", asFUNCTION(stop_speech), asCALL_CDECL);
     engine->RegisterGlobalFunction("string screen_reader_detect()", asFUNCTION(screen_reader_detect), asCALL_CDECL);
+    engine->RegisterGlobalFunction("void set_exit_callback(exit_callback@=null)", asFUNCTION(set_exit_callback), asCALL_CDECL);
 
     engine->RegisterGlobalFunction("void show_console()", asFUNCTION(show_console), asCALL_CDECL);
     engine->RegisterGlobalFunction("void hide_console()", asFUNCTION(hide_console), asCALL_CDECL);
@@ -475,8 +475,6 @@ void RegisterFunctions(asIScriptEngine* engine)
 
     engine->RegisterGlobalFunction("void update_window(bool=false)", asFUNCTION(update_window), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool get_window_active()property", asFUNCTION(get_window_active), asCALL_CDECL);
-    engine->RegisterGlobalFunction("hwnd get_focused_window()", asFUNCTION(GetFocus), asCALL_STDCALL);
-    engine->RegisterGlobalFunction("hwnd set_focused_window(hwnd)", asFUNCTION(SetFocus), asCALL_STDCALL);
     engine->RegisterGlobalFunction("bool mouse_pressed(int &in)", asFUNCTION(mouse_pressed), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool mouse_down(int &in)", asFUNCTION(mouse_down), asCALL_CDECL);
     engine->RegisterGlobalFunction("bool mouse_update()", asFUNCTION(mouse_update), asCALL_CDECL);
@@ -581,7 +579,7 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectMethod("library", "void unload()const", asMETHOD(library, unload), asCALL_THISCALL);
     engine->RegisterFuncdef("void thread_func()");
     engine->RegisterObjectType("thread", sizeof(script_thread), asOBJ_REF | asOBJ_NOCOUNT);
-    engine->RegisterObjectBehaviour("thread", asBEHAVE_FACTORY, "thread@ t(thread_func@, dictionary@)", asFUNCTION(fscript_thread), asCALL_GENERIC);
+    engine->RegisterObjectBehaviour("thread", asBEHAVE_FACTORY, "thread@ t(thread_func@)", asFUNCTION(fscript_thread), asCALL_GENERIC);
     engine->RegisterObjectMethod("thread", "void detach()const", asMETHOD(script_thread, detach), asCALL_THISCALL);
     engine->RegisterObjectMethod("thread", "void join()const", asMETHOD(script_thread, join), asCALL_THISCALL);
 
@@ -617,7 +615,7 @@ void RegisterFunctions(asIScriptEngine* engine)
     engine->RegisterObjectMethod("network", "string get_peer_address(uint)const property", asMETHOD(network, get_peer_address), asCALL_THISCALL);
     engine->RegisterObjectMethod("network", "double get_peer_average_round_trip_time(uint)const property", asMETHOD(network, get_peer_average_round_trip_time), asCALL_THISCALL);
     engine->RegisterObjectMethod("network", "uint[]@ get_peer_list()", asMETHOD(network, get_peer_list), asCALL_THISCALL);
-    engine->RegisterObjectMethod("network", "network_event@ request(int=30000, int &out=void)", asMETHOD(network, request), asCALL_THISCALL);
+    engine->RegisterObjectMethod("network", "network_event@ request(int=0, int &out=void)", asMETHOD(network, request), asCALL_THISCALL);
     engine->RegisterObjectMethod("network", "bool send_reliable(uint, string&in, int)", asMETHOD(network, send_reliable), asCALL_THISCALL);
     engine->RegisterObjectMethod("network", "bool send_unreliable(uint, string&in, int)", asMETHOD(network, send_unreliable), asCALL_THISCALL);
     engine->RegisterObjectMethod("network", "bool set_bandwidth_limits(double, double)", asMETHOD(network, set_bandwidth_limits), asCALL_THISCALL);
