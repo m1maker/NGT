@@ -942,20 +942,33 @@ bool timer::is_running() {
 
         void network::construct() {}
         void network::destruct() { }
-    unsigned int network::connect(const string& hostAddress, int port) {
-        ENetAddress enetAddress;
-        enet_address_set_host(&enetAddress, hostAddress.c_str());
-        enetAddress.port = port;
+        unsigned int network::connect(const string& hostAddress, int port) {
+            ENetAddress enetAddress;
+            enet_address_set_host(&enetAddress, hostAddress.c_str());
+            enetAddress.port = port;
 
-        ENetPeer* peer = enet_host_connect(host, &enetAddress, 1, 0);
-        if (peer == NULL) {
-            return 0; // Connection failed
+            int initial_timeout = 5000;
+            int timeout_multiplier = 2;
+            int max_retries = 100;
+            int retry_count = 0;
+
+            while (retry_count < max_retries) {
+                ENetPeer* peer = enet_host_connect(host, &enetAddress, 1, 0);
+                if (peer != NULL) {
+                    current_peer_id = peer->incomingPeerID;
+                    return peer->incomingPeerID;
+                }
+                else {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(initial_timeout));
+                    initial_timeout *= timeout_multiplier;
+                    retry_count++;
+                }
+            }
+
+            return 0;
         }
-        current_peer_id = peer->incomingPeerID;
-        return peer->incomingPeerID;
-    }
 
-    bool network::destroy() {
+        bool network::destroy() {
         if (host) {
             enet_host_destroy(host);
             host = NULL;
@@ -1004,26 +1017,42 @@ bool timer::is_running() {
         }
         return peers;
     }
-    network_event* network::request(int timeout, int* out_host_result) {
+    network_event* network::request(int initial_timeout, int* out_host_result) {
         network_event* handle_ = new network_event;
+        int timeout = initial_timeout;
+        int retry_count = 0;
+        const int max_retries = 100;
+        const int timeout_multiplier = 2;
 
+        while (retry_count < max_retries) {
             ENetEvent event;
-            int result= enet_host_service(host, &event, timeout);
-            if (result > 0){
-                if(event.type!=0)
-                handle_->m_type = event.type;
-            handle_->m_channel = event.channelID;
+            int result = enet_host_service(host, &event, timeout);
+            *out_host_result = result;
 
-                if (event.packet != nullptr and event.type==ENET_EVENT_TYPE_RECEIVE) {
-                    handle_->m_message = string(reinterpret_cast<char*>(event.packet->data));
+            if (result > 0) {
+                handle_->m_type = event.type;
+                handle_->m_channel = event.channelID;
+
+                if (event.type == ENET_EVENT_TYPE_RECEIVE && event.packet != nullptr) {
+                    handle_->m_message = std::string(reinterpret_cast<char*>(event.packet->data), event.packet->dataLength);
                     enet_packet_destroy(event.packet);
                 }
-                if (event.peer != nullptr)
-                    handle_->m_peerId = event.peer->incomingPeerID;
-            }
-            *out_host_result = result;
-        return handle_;
 
+                if (event.peer != nullptr) {
+                    handle_->m_peerId = event.peer->incomingPeerID;
+                }
+
+                return handle_;
+            }
+            else if (result == 0) {
+                timeout *= timeout_multiplier;
+                retry_count++;
+            }
+            else {
+                return handle_;
+            }
+        }
+        return handle_;
     }
 
     bool network::send_reliable(unsigned int peer_id, const string& packet, int channel) {
