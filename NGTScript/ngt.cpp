@@ -476,6 +476,7 @@ if (e.type == SDL_QUIT and window_closable == true)
                 return;
 }
             e_ctx->Release();
+            exit_callback = nullptr;
         }
         soundsystem_free();
     SDL_StopTextInput();
@@ -947,9 +948,9 @@ bool timer::is_running() {
             enet_address_set_host(&enetAddress, hostAddress.c_str());
             enetAddress.port = port;
 
-            int initial_timeout = 5000;
+            int initial_timeout = 0;
             int timeout_multiplier = 2;
-            int max_retries = 100;
+            int max_retries = 1000;
             int retry_count = 0;
 
             while (retry_count < max_retries) {
@@ -959,9 +960,7 @@ bool timer::is_running() {
                     return peer->incomingPeerID;
                 }
                 else {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(initial_timeout));
-                    initial_timeout *= timeout_multiplier;
-                    retry_count++;
+                   retry_count++;
                 }
             }
 
@@ -1021,8 +1020,7 @@ bool timer::is_running() {
         network_event* handle_ = new network_event;
         int timeout = initial_timeout;
         int retry_count = 0;
-        const int max_retries = 100;
-        const int timeout_multiplier = 2;
+        const int max_retries = 1000;
 
         while (retry_count < max_retries) {
             ENetEvent event;
@@ -1032,7 +1030,7 @@ bool timer::is_running() {
             if (result > 0) {
                 handle_->m_type = event.type;
                 handle_->m_channel = event.channelID;
-
+                if (event.type == ENET_EVENT_TYPE_DISCONNECT)result = 0;
                 if (event.type == ENET_EVENT_TYPE_RECEIVE && event.packet != nullptr) {
                     handle_->m_message = std::string(reinterpret_cast<char*>(event.packet->data), event.packet->dataLength);
                     enet_packet_destroy(event.packet);
@@ -1041,11 +1039,10 @@ bool timer::is_running() {
                 if (event.peer != nullptr) {
                     handle_->m_peerId = event.peer->incomingPeerID;
                 }
-
                 return handle_;
+
             }
             else if (result == 0) {
-                timeout *= timeout_multiplier;
                 retry_count++;
             }
             else {
