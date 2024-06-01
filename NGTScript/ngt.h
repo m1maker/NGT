@@ -1,23 +1,45 @@
+#ifndef NGT_H
+#define NGT_H
 #pragma once
 #define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
-#include "Poco/URI.h"
-#include "Poco/URIStreamOpener.h"
-#include "Poco/StreamCopier.h"
+#include "Poco/Base32Decoder.h"
+#include "Poco/Base32Encoder.h"
+#include "Poco/Base64Decoder.h"
+#include "Poco/Base64Encoder.h"
+#include "Poco/Exception.h"
+#include "Poco/HexBinaryDecoder.h"
+#include "Poco/HexBinaryEncoder.h"
+#include "Poco/Net/FTPStreamFactory.h"
 #include "Poco/Net/HTTPClientSession.h"
 #include "Poco/Net/HTTPRequest.h"
 #include "Poco/Net/HTTPResponse.h"
-#include "Poco/Base64Encoder.h"
-#include "Poco/Base64Decoder.h"
-#include "Poco/Base32Encoder.h"
-#include "Poco/Base32Decoder.h"
-
-#include "Poco/HexBinaryEncoder.h"
-#include "Poco/HexBinaryDecoder.h"
-#include "Poco/String.h"
+#include "Poco/Net/HTTPStreamFactory.h"
+#include "Poco/Net/MailMessage.h"
+#include "Poco/Net/MailRecipient.h"
+#include "Poco/Net/SMTPClientSession.h"
+#include "Poco/Net/StringPartSource.h"
 #include "Poco/NumberFormatter.h"
+#include "Poco/Path.h"
+#include "Poco/StreamCopier.h"
+#include "Poco/String.h"
+#include "Poco/URI.h"
+#include "Poco/URIStreamOpener.h"
 #include"tts_voice.h"
+#include <memory>
 using namespace Poco;
 using namespace Poco::Net;
+using Poco::URIStreamOpener;
+using Poco::StreamCopier;
+using Poco::Path;
+using Poco::URI;
+using Poco::Exception;
+using Poco::Net::HTTPStreamFactory;
+using Poco::Net::FTPStreamFactory;
+using Poco::Net::MailMessage;
+using Poco::Net::MailRecipient;
+using Poco::Net::SMTPClientSession;
+using Poco::Net::StringPartSource;
+
 #include "dyn/dyncall.h"
 #include "dyn/dynload.h"
 #include <Windows.h>
@@ -47,7 +69,7 @@ public:
 };
 
 
-wstring wstr(const string & utf8String);
+wstring wstr(const string& utf8String);
 uint64_t get_time_stamp_millis();
 uint64_t get_time_stamp_seconds();
 void as_printf(asIScriptGeneric* gen);
@@ -58,32 +80,32 @@ void set_exit_callback(asIScriptFunction* callback = nullptr);
 void init_engine();
 void set_library_path(const string& path);
 long random(long min, long max);
- double randomDouble(double min, double max);
- bool random_bool();
- int get_last_error();
-void speak(const string &	 text, bool stop = true);
-void speak_wait(const string &	 text, bool stop = true);
+double randomDouble(double min, double max);
+bool random_bool();
+int get_last_error();
+void speak(const string& text, bool stop = true);
+void speak_wait(const string& text, bool stop = true);
 void stop_speech();
 string screen_reader_detect();
 void show_console();
 void hide_console();
-bool show_window(const string & title,int width=640, int height=480, bool closable=true);
+bool show_window(const string& title, int width = 640, int height = 480, bool closable = true);
 bool focus_window();
 void hide_window();
-void set_window_title(const string & );
+void set_window_title(const string&);
 void set_window_closable(bool);
 bool get_window_active();
 string key_to_string(SDL_Scancode);
 SDL_Scancode string_to_key(const string&);
 void garbage_collect();
-void update_window(bool wait_event=false);
+void update_window(bool wait_event = false);
 bool mouse_pressed(int);
 bool mouse_down(int);
 bool mouse_update();
 int get_MOUSE_X();
 int get_MOUSE_Y();
 int get_MOUSE_Z();
-void exit_engine(int=0);
+void exit_engine(int = 0);
 string number_to_words(uint64_t, bool);
 bool clipboard_copy_text(const string&);
 string clipboard_read_text();
@@ -106,6 +128,8 @@ string url_decode(const string& url);
 string url_encode(const string& url);
 string url_get(const string& url);
 string url_post(const string& url, const string& parameters);
+void ftp_download(const string& url, const string& file);
+void mail_send(const string& username, const string& password, const string& mailhost, const string& sender, const string& recipient, const string& subject, const string& content, const string& attachment = "");
 string ascii_to_character(int the_ascii_code);
 int character_to_ascii(string the_character);
 string hex_to_string(string the_hexadecimal_sequence);
@@ -115,8 +139,8 @@ string string_base64_encode(string the_string);
 string string_base32_decode(string base32_string);
 string string_base32_encode(string the_string);
 string string_to_hex(string the_string);
-bool alert(const string &	 title, const string &	 text, const string &button_name="OK");
-int question(const string& title, const string &text);
+bool alert(const string& title, const string& text, const string& button_name = "OK");
+int question(const string& title, const string& text);
 void wait(uint64_t);
 void delay(int);
 string read_environment_variable(const string&);
@@ -154,39 +178,46 @@ public:
 };
 class network_event {
 public:
-    const int EVENT_NONE = ENET_EVENT_TYPE_NONE;
-    const int EVENT_CONNECT = ENET_EVENT_TYPE_CONNECT;
-    const int EVENT_RECEIVE = ENET_EVENT_TYPE_RECEIVE;
-    const int EVENT_DISCONNECT = ENET_EVENT_TYPE_DISCONNECT;
+	const int EVENT_NONE = ENET_EVENT_TYPE_NONE;
+	const int EVENT_CONNECT = ENET_EVENT_TYPE_CONNECT;
+	const int EVENT_RECEIVE = ENET_EVENT_TYPE_RECEIVE;
+	const int EVENT_DISCONNECT = ENET_EVENT_TYPE_DISCONNECT;
 	void construct();
 	void destruct();
-    int get_type() const {
-        return m_type;
-    }
+	int get_type() const {
+		return m_type;
+	}
 
-unsigned    int get_peer_id() const {
-        return m_peerId;
-    }
+	unsigned    int get_peer_id() const {
+		return m_peerId;
+	}
 
-unsigned    int get_channel() const {
-        return m_channel;
-    }
+	unsigned    int get_channel() const {
+		return m_channel;
+	}
 
-    string get_message() const {
-        return m_message;
-    }
+	string get_message() const {
+		return m_message;
+	}
 
-    int m_type;
-unsigned    int m_peerId;
-    int m_channel;
-    string m_message;
+	int m_type;
+	unsigned    int m_peerId;
+	int m_channel;
+	string m_message;
 	network_event& operator=(const network_event);
+};
+enum network_type {
+	NETWORK_TYPE_SERVER,
+	NETWORK_TYPE_CLIENT
 };
 class network {
 public:
 	mutable int ref = 0;
 	void construct();
 	void destruct();
+	map<unsigned int, _ENetPeer*> peers;
+	_ENetPeer* get_peer(unsigned int);
+	network_type type;
 	unsigned    int connect(const string& host, int port);
 	bool destroy();
 	bool disconnect_peer(unsigned int);
@@ -195,7 +226,7 @@ public:
 	string get_peer_address(unsigned int);
 	double get_peer_average_round_trip_time(unsigned int);
 	CScriptArray* get_peer_list();
-	network_event* request(int timeout=0, int *out_host_result=nullptr);
+	network_event* request(int timeout = 0, int* out_host_result = nullptr);
 	bool send_reliable(unsigned int peerId, const string& packet, int channel);
 	bool send_unreliable(unsigned int peerId, const string& packet, int channel);
 	bool set_bandwidth_limits(double incomingBandwidth, double outgoingBandwidth);
@@ -213,7 +244,7 @@ public:
 private:
 	ENetAddress address;
 	ENetHost* host;
-	unsigned int current_peer_id;
+	unsigned int current_peer_id = 1;
 	int m_connectedPeers;
 	double m_bytesSent;
 	double m_bytesReceived;
@@ -225,8 +256,8 @@ public:
 	void* lib;
 	void construct();
 	void destruct();
-	bool load(const string &);
-		void unload();
+	bool load(const string&);
+	void unload();
 };
 void library_call(asIScriptGeneric* gen);
 class script_thread {
@@ -247,7 +278,7 @@ private:
 	mutable int ref = 0;
 	HANDLE mutex;
 public:
-	instance(const string & application_name) {
+	instance(const string& application_name) {
 		mutex = CreateMutexA(NULL, TRUE, application_name.c_str());
 	}
 	void construct();
@@ -259,16 +290,16 @@ public:
 };
 class user_idle {
 public:
-    user_idle();
-    uint64_t elapsed_millis();  // Pridaná nová funkcia
-    uint64_t elapsed_seconds();
-    uint64_t elapsed_minutes();
-    uint64_t elapsed_hours();
-    uint64_t elapsed_days();
-    uint64_t elapsed_weeks();
+	user_idle();
+	uint64_t elapsed_millis();  // Pridaná nová funkcia
+	uint64_t elapsed_seconds();
+	uint64_t elapsed_minutes();
+	uint64_t elapsed_hours();
+	uint64_t elapsed_days();
+	uint64_t elapsed_weeks();
 
 private:
-    uint64_t get_idle_time();
+	uint64_t get_idle_time();
 };
 class sqlite3statement
 {
@@ -330,3 +361,4 @@ private:
 };
 
 
+#endif
