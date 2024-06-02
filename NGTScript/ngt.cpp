@@ -106,8 +106,9 @@ unsigned char* aes_decrypt(EVP_CIPHER_CTX* e, unsigned char* ciphertext, int* le
 
 
 using namespace std;
-SDL_Window* win = NULL;
-
+SDL_Window* win = nullptr;
+SDL_Renderer* renderer = nullptr;
+int mouse_x = 0, mouse_y = 0;
 SDL_Event e;
 bool window_is_focused;
 wstring wstr(const string& utf8String)
@@ -117,6 +118,8 @@ wstring wstr(const string& utf8String)
 }
 wstring reader;
 unordered_map<SDL_Scancode, bool> keys;
+unordered_map<int, bool> buttons;
+
 bool keyhook = false;
 string inputtext;
 void replace(string& str, const string& from, const string& to) {
@@ -357,17 +360,19 @@ bool show_window(const string& title, int width, int height, bool closable)
 
 		update_window();
 		window_is_focused = true;
+		renderer = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+		if (renderer == nullptr)return false;
 		return true;
 	}
 	return false;
 }
 bool focus_window() {
-	SDL_SetWindowInputFocus(win);
+	SDL_RaiseWindow(win);
 	return true;
 }
 void hide_window() {
 	SDL_StopTextInput();
-
+	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(win);
 	window_is_focused = false;
 }
@@ -414,6 +419,22 @@ void update_window(bool wait_event)
 				it->second = false;
 			}
 		}
+		if (e.type == SDL_MOUSEBUTTONDOWN)
+		{
+			buttons[e.button.button] = true;
+		}
+		if (e.type == SDL_MOUSEBUTTONUP)
+		{
+			auto it = buttons.find(e.button.button);
+			if (it != buttons.end())
+			{
+				it->second = false;
+			}
+		}
+		if (e.type == SDL_MOUSEMOTION) {
+			mouse_x = e.motion.x;
+			mouse_y = e.motion.y;
+		}
 		if (e.type == SDL_WINDOWEVENT) {
 			if (e.window.event == SDL_WINDOWEVENT_FOCUS_GAINED)
 				window_is_focused = true;
@@ -426,38 +447,42 @@ void update_window(bool wait_event)
 bool get_window_active() {
 	return window_is_focused;
 }
-bool mouse_down(int button) {
-	return SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(button);
+bool mouse_pressed(int button)
+{
+	if (e.button.state == SDL_PRESSED)
+	{
+		if (e.button.button == button) {
+			return true;
+		}
+	}
+	return false;
 }
-
-bool mouse_pressed(int button) {
-	static bool prev_state = false;
-	bool current_state = SDL_GetMouseState(NULL, NULL) & SDL_BUTTON(button);
-	bool result = current_state && !prev_state;
-	prev_state = current_state;
-	return result;
+bool mouse_released(int button)
+{
+	if (e.button.state == SDL_RELEASED)
+	{
+		if (e.button.button == button) {
+			return true;
+		}
+	}
+	return false;
 }
-
-bool mouse_update() {
-	SDL_PumpEvents();
-	return true;
+bool mouse_down(int button)
+{
+	if (buttons.find(button) != buttons.begin() or buttons.find(button) != buttons.end()) {
+		return buttons[button];
+	}
+	return false;
 }
 
 int get_MOUSE_X() {
-	int x;
-	SDL_GetMouseState(&x, NULL);
-	return x;
+	return mouse_x;
 }
 
 int get_MOUSE_Y() {
-	int y;
-	SDL_GetMouseState(NULL, &y);
-	return y;
+	return mouse_y;
 }
-
 int get_MOUSE_Z() {
-	int x, y;
-	SDL_GetMouseState(NULL, NULL);
 	return 0; // SDL does not provide direct support for mouse wheel in this function
 }
 void ftp_download(const string& url, const string& file) {
@@ -564,7 +589,7 @@ string read_environment_variable(const string& path) {
 	if (value == nullptr) {
 		// Environment variable not found
 		return "";
-}
+	}
 	return const string & (value);
 #endif
 }
@@ -1368,9 +1393,8 @@ void script_thread::join() {
 
 
 bool instance::is_running() {
-	DWORD result = WaitForSingleObject(mutex, 0);
-	if (result == WAIT_OBJECT_0) {
-		ReleaseMutex(mutex);
+	if (mutex->tryLock() == true) {
+		mutex->unlock();
 		return false;
 	}
 	return true;

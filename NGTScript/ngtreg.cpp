@@ -476,8 +476,8 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("void update_window(bool=false)", asFUNCTION(update_window), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool get_window_active()property", asFUNCTION(get_window_active), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool mouse_pressed(int &in)", asFUNCTION(mouse_pressed), asCALL_CDECL);
+	engine->RegisterGlobalFunction("bool mouse_released(int &in)", asFUNCTION(mouse_released), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool mouse_down(int &in)", asFUNCTION(mouse_down), asCALL_CDECL);
-	engine->RegisterGlobalFunction("bool mouse_update()", asFUNCTION(mouse_update), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int get_MOUSE_X()property", asFUNCTION(get_MOUSE_X), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int get_MOUSE_Y()property", asFUNCTION(get_MOUSE_Y), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int get_MOUSE_Z()property", asFUNCTION(get_MOUSE_Z), asCALL_CDECL);

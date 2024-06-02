@@ -26,6 +26,8 @@
 #include "Poco/URI.h"
 #include "Poco/URIStreamOpener.h"
 #include"tts_voice.h"
+#include "poco/mutex.h"
+#include"poco/NamedMutex.h"
 #include <memory>
 using namespace Poco;
 using namespace Poco::Net;
@@ -99,8 +101,8 @@ SDL_Scancode string_to_key(const string&);
 void garbage_collect();
 void update_window(bool wait_event = false);
 bool mouse_pressed(int);
+bool mouse_released(int);
 bool mouse_down(int);
-bool mouse_update();
 int get_MOUSE_X();
 int get_MOUSE_Y();
 int get_MOUSE_Z();
@@ -262,14 +264,20 @@ public:
 
 class instance : public as_class {
 private:
-	HANDLE mutex;
+	Poco::NamedMutex* mutex = nullptr;
 public:
 	instance(const string& application_name) {
-		mutex = CreateMutexA(NULL, TRUE, application_name.c_str());
+		try {
+			mutex = new Poco::NamedMutex(application_name);
+			mutex->tryLock();
+		}
+		catch (std::exception& e) {}
 	}
 	bool is_running();
 	~instance() {
-		CloseHandle(mutex);
+		mutex->unlock();
+		delete mutex;
+		mutex = nullptr;
 	}
 };
 class user_idle : public as_class {

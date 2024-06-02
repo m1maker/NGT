@@ -2,3 +2,8 @@ NGTScript/.vs
 NGTScript/x64
 NGTScript/release
 NGTScript/NGTScript
+*.lib
+*.dll
+*.exe
+*.log
+*.swp
