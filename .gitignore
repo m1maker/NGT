@@ -7,3 +7,4 @@ NGTScript/NGTScript
 *.exe
 *.log
 *.swp
+*.pdb
