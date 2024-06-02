@@ -1,6 +1,6 @@
 #include"sapi/SpeechEngine.h"
-#include<string>
 #include"tts_voice.h"
+#include<string>
 tts_voice::tts_voice()
 {
 	speaker = new SpeechEngine();
@@ -9,13 +9,6 @@ tts_voice::~tts_voice()
 {
 	delete speaker;
 	speaker = nullptr;
-}
-void tts_voice::construct()
-{
-
-}
-void tts_voice::destruct()
-{
 }
 void tts_voice::speak(const std::string& text)
 {
@@ -35,9 +28,9 @@ void tts_voice::speak_interrupt_wait(const std::string& text)
 }
 int tts_voice::get_rate() const
 {
-return speaker->getRate();
+	return speaker->getRate();
 }
 void tts_voice::set_rate(int rate)
 {
-speaker->setRate(rate);
+	speaker->setRate(rate);
 }

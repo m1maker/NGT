@@ -153,6 +153,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="angelscript.h" />
+    <ClInclude Include="as_class.h" />
     <ClInclude Include="autowrapper\aswrappedcall.h" />
     <ClInclude Include="bl_number_to_words.h" />
     <ClInclude Include="datetime\datetime.h" />
@@ -453,6 +454,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="aes256enc.c" />
+    <ClCompile Include="as_class.cpp" />
     <ClCompile Include="datetime\datetime.cpp" />
     <ClCompile Include="debugger\debugger.cpp" />
     <ClCompile Include="dlibrary.cpp" />

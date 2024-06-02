@@ -59,6 +59,7 @@
     <ClCompile Include="pack\physfs_platform_windows.c" />
     <ClCompile Include="pack\physfs_platform_winrt.cpp" />
     <ClCompile Include="pack\physfs_unicode.c" />
+    <ClCompile Include="as_class.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="angelscript.h" />
@@ -359,6 +360,7 @@
     <ClInclude Include="pack\physfs_lzmasdk.h" />
     <ClInclude Include="pack\physfs_miniz.h" />
     <ClInclude Include="pack\physfs_platforms.h" />
+    <ClInclude Include="as_class.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="pack\physfs_platform_apple.m" />

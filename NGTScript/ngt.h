@@ -1,6 +1,7 @@
 #ifndef NGT_H
 #define NGT_H
 #pragma once
+#include"as_class.h"
 #define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
 #include "Poco/Base32Decoder.h"
 #include "Poco/Base32Encoder.h"
@@ -59,10 +60,8 @@ using Poco::Net::StringPartSource;
 #include <vector>
 #include "scriptdictionary/scriptdictionary.h"
 using namespace std;
-class ngtvector {
+class ngtvector : public as_class {
 public:
-	void construct();
-	void destruct();
 	float x, y, z;
 	float get_length()const;
 	ngtvector& operator=(const ngtvector);
@@ -144,12 +143,11 @@ int question(const string& title, const string& text);
 void wait(uint64_t);
 void delay(int);
 string read_environment_variable(const string&);
-void serialize(asIScriptGeneric*);
-void deserialize(asIScriptGeneric*);
+string serialize(CScriptDictionary*);
+CScriptDictionary* deserialize(const string&);
 bool urlopen(const string& url);
-class timer {
+class timer : public as_class {
 public:
-	mutable int ref = 0;
 	chrono::time_point<chrono::steady_clock> inittime;
 	uint64_t pausedNanos = 0;
 
@@ -157,8 +155,6 @@ public:
 		inittime = chrono::steady_clock::now();
 		pausedNanos = 0;
 	}
-	void construct();
-	void destruct();
 	uint64_t elapsed_seconds();
 	uint64_t elapsed_minutes();
 	uint64_t elapsed_hours();
@@ -176,14 +172,12 @@ public:
 	void resume();
 	bool is_running();
 };
-class network_event {
+class network_event : public as_class {
 public:
 	const int EVENT_NONE = ENET_EVENT_TYPE_NONE;
 	const int EVENT_CONNECT = ENET_EVENT_TYPE_CONNECT;
 	const int EVENT_RECEIVE = ENET_EVENT_TYPE_RECEIVE;
 	const int EVENT_DISCONNECT = ENET_EVENT_TYPE_DISCONNECT;
-	void construct();
-	void destruct();
 	int get_type() const {
 		return m_type;
 	}
@@ -210,11 +204,8 @@ enum network_type {
 	NETWORK_TYPE_SERVER,
 	NETWORK_TYPE_CLIENT
 };
-class network {
+class network : public as_class {
 public:
-	mutable int ref = 0;
-	void construct();
-	void destruct();
 	map<unsigned int, _ENetPeer*> peers;
 	_ENetPeer* get_peer(unsigned int);
 	network_type type;
@@ -250,19 +241,15 @@ private:
 	double m_bytesReceived;
 	bool m_active;
 };
-class library {
+class library : public as_class {
 public:
-	mutable int ref = 0;
 	void* lib;
-	void construct();
-	void destruct();
 	bool load(const string&);
 	void unload();
 };
 void library_call(asIScriptGeneric* gen);
-class script_thread {
+class script_thread : public as_class {
 private:
-	mutable int ref = 0;
 	asIScriptContext* context;
 	asIScriptFunction* function;
 	thread* th;
@@ -273,22 +260,19 @@ public:
 	void destroy();
 };
 
-class instance {
+class instance : public as_class {
 private:
-	mutable int ref = 0;
 	HANDLE mutex;
 public:
 	instance(const string& application_name) {
 		mutex = CreateMutexA(NULL, TRUE, application_name.c_str());
 	}
-	void construct();
-	void destruct();
 	bool is_running();
 	~instance() {
 		CloseHandle(mutex);
 	}
 };
-class user_idle {
+class user_idle : public as_class {
 public:
 	user_idle();
 	uint64_t elapsed_millis();  // Pridaná nová funkcia
@@ -301,11 +285,9 @@ public:
 private:
 	uint64_t get_idle_time();
 };
-class sqlite3statement
+class sqlite3statement : public as_class
 {
 public:
-	void construct();
-	void destruct();
 	int step();
 	int reset();
 	string get_expanded_sql_statement()const;
@@ -336,11 +318,9 @@ public:
 using sqlite3_authorizer = int(*)(string, int, string, string, string, string);
 
 
-class ngtsqlite3
+class ngtsqlite3 : public as_class
 {
 public:
-	void construct();
-	void destruct();
 
 	int close();
 	int open(const string& filename, int flags = 6);

@@ -505,8 +505,8 @@ void mail_send(const string& username, const string& password, const string& mai
 
 void exit_engine(int return_number)
 {
+	asIScriptContext* ctx = asGetActiveContext();
 	if (exit_callback != nullptr) {
-		asIScriptContext* ctx = asGetActiveContext();
 		asIScriptEngine* engine = ctx->GetEngine();
 		asIScriptContext* e_ctx = engine->CreateContext();
 		e_ctx->Prepare(exit_callback);
@@ -519,6 +519,7 @@ void exit_engine(int return_number)
 		e_ctx->Release();
 		exit_callback = nullptr;
 	}
+	ctx->Release();
 	soundsystem_free();
 	SDL_StopTextInput();
 	SDL_DestroyWindow(win);
@@ -563,7 +564,7 @@ string read_environment_variable(const string& path) {
 	if (value == nullptr) {
 		// Environment variable not found
 		return "";
-	}
+}
 	return const string & (value);
 #endif
 }
@@ -877,26 +878,21 @@ void delay(int ms)
 {
 	SDL_Delay(ms);
 }
-void serialize(asIScriptGeneric* gen) {
-	void* dict = gen->GetArgAddress(0);
-	char* dict_str = static_cast<char*>(dict);
-	string result(dict_str);
-	gen->SetReturnObject(&result);
-}
-void deserialize(asIScriptGeneric* gen) {
-	CScriptDictionary* dict = (CScriptDictionary*)gen->GetArgAddress(0);
+string serialize(CScriptDictionary* data) {
+	if (data == nullptr) return "";
 
-	gen->SetReturnObject(dict);
+	asIScriptContext* context = asGetActiveContext();
+	asIScriptEngine* engine = context->GetEngine();
+	return "";
+}
+
+CScriptDictionary* deserialize(const std::string& strData) {
+	return nullptr;
 }
 bool urlopen(const string& url) {
 	int result = SDL_OpenURL(url.c_str());
 	if (result == 0)return true;
 	return false;
-}
-void timer::construct() {
-}
-
-void timer::destruct() {
 }
 uint64_t timer::elapsed_seconds() {
 	return pausedNanos != 0 ? chrono::duration_cast<chrono::seconds>(chrono::nanoseconds(pausedNanos)).count()
@@ -978,8 +974,6 @@ void timer::resume() {
 		pausedNanos = 0;
 	}
 }
-void network_event::construct() {}
-void network_event::destruct() {}
 network_event& network_event::operator=(const network_event new_event) {
 	this->m_peerId = new_event.m_peerId;
 	this->m_type = new_event.m_type;
@@ -989,8 +983,6 @@ network_event& network_event::operator=(const network_event new_event) {
 }
 
 
-void network::construct() {}
-void network::destruct() { }
 _ENetPeer* network::get_peer(unsigned int peer_id) {
 	auto it = peers.find(peer_id);
 	if (it == peers.end())return 0;
@@ -1138,6 +1130,7 @@ network_event* network::request(int initial_timeout, int* out_host_result) {
 
 bool network::send_reliable(unsigned int peer_id, const string& packet, int channel) {
 	ENetPacket* p = enet_packet_create(packet.c_str(), strlen(packet.c_str()) + 1, ENET_PACKET_FLAG_RELIABLE);
+	enet_packet_resize(p, packet.size());
 	_ENetPeer* peer = get_peer(peer_id);
 	if (!peer)return false;
 	int result = enet_peer_send(peer, channel, p);
@@ -1147,6 +1140,8 @@ bool network::send_reliable(unsigned int peer_id, const string& packet, int chan
 }
 bool network::send_unreliable(unsigned int peer_id, const string& packet, int channel) {
 	ENetPacket* p = enet_packet_create(packet.c_str(), strlen(packet.c_str()) + 1, 0);
+
+	enet_packet_resize(p, packet.size());
 	_ENetPeer* peer = get_peer(peer_id);
 	if (!peer)return false;
 	int result = enet_peer_send(peer, channel, p);
@@ -1206,8 +1201,6 @@ double network::get_bytes_received() const {
 bool network::is_active() const {
 	return m_active;
 }
-void library::construct() {}
-void library::destruct() {}
 bool library::load(const string& libname) {
 	lib = SDL_LoadObject(libname.c_str());
 	return lib != NULL;
@@ -1373,8 +1366,6 @@ void script_thread::join() {
 	t.join();
 }
 
-void instance::construct() {}
-void instance::destruct() {  }
 
 bool instance::is_running() {
 	DWORD result = WaitForSingleObject(mutex, 0);
@@ -1424,8 +1415,6 @@ uint64_t get_time_stamp_seconds() {
 	auto seconds = chrono::duration_cast<chrono::seconds>(duration).count();
 	return seconds;
 }
-void ngtvector::construct() {}
-void ngtvector::destruct() {}
 float ngtvector::get_length()const {
 	return sqrt(x * x + y * y + z * z);
 }
@@ -1437,10 +1426,6 @@ ngtvector& ngtvector::operator=(const ngtvector new_vector) {
 	return *this;
 }
 
-void sqlite3statement::construct() {}
-void sqlite3statement::destruct() {}
-void ngtsqlite3::construct() {}
-void ngtsqlite3::destruct() {}
 
 int sqlite3statement::step() { return sqlite3_step(stmt); }
 int sqlite3statement::reset() { return sqlite3_reset(stmt); }
