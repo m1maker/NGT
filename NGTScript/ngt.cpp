@@ -108,7 +108,7 @@ unsigned char* aes_decrypt(EVP_CIPHER_CTX* e, unsigned char* ciphertext, int* le
 using namespace std;
 SDL_Window* win = nullptr;
 SDL_Renderer* renderer = nullptr;
-int mouse_x = 0, mouse_y = 0;
+int mouse_x = 0, mouse_y = 0, mouse_z = 0;
 SDL_Event e;
 bool window_is_focused;
 wstring wstr(const string& utf8String)
@@ -117,8 +117,8 @@ wstring wstr(const string& utf8String)
 	return converter.from_bytes(utf8String);
 }
 wstring reader;
-unordered_map<SDL_Scancode, bool> keys;
-unordered_map<int, bool> buttons;
+unordered_map<int, bool> keys;
+unordered_map<Uint8, bool> buttons;
 
 bool keyhook = false;
 string inputtext;
@@ -419,21 +419,20 @@ void update_window(bool wait_event)
 				it->second = false;
 			}
 		}
-		if (e.type == SDL_MOUSEBUTTONDOWN)
-		{
+		if (e.type == SDL_MOUSEBUTTONDOWN) {
 			buttons[e.button.button] = true;
 		}
-		if (e.type == SDL_MOUSEBUTTONUP)
-		{
-			auto it = buttons.find(e.button.button);
-			if (it != buttons.end())
-			{
-				it->second = false;
-			}
+		if (e.type == SDL_MOUSEBUTTONUP) {
+			buttons[e.button.button] = false;
 		}
+
+
 		if (e.type == SDL_MOUSEMOTION) {
 			mouse_x = e.motion.x;
 			mouse_y = e.motion.y;
+		}
+		if (e.type == SDL_MOUSEWHEEL) {
+			mouse_z = e.wheel.y;
 		}
 		if (e.type == SDL_WINDOWEVENT) {
 			if (e.window.event == SDL_WINDOWEVENT_FOCUS_GAINED)
@@ -447,17 +446,17 @@ void update_window(bool wait_event)
 bool get_window_active() {
 	return window_is_focused;
 }
-bool mouse_pressed(int button)
+bool mouse_pressed(Uint8 button)
 {
 	if (e.button.state == SDL_PRESSED)
 	{
-		if (e.button.button == button) {
+		if (button == e.button.button) {
 			return true;
 		}
 	}
 	return false;
 }
-bool mouse_released(int button)
+bool mouse_released(Uint8 button)
 {
 	if (e.button.state == SDL_RELEASED)
 	{
@@ -467,12 +466,9 @@ bool mouse_released(int button)
 	}
 	return false;
 }
-bool mouse_down(int button)
+bool mouse_down(Uint8 button)
 {
-	if (buttons.find(button) != buttons.begin() or buttons.find(button) != buttons.end()) {
-		return buttons[button];
-	}
-	return false;
+	return buttons[button];
 }
 
 int get_MOUSE_X() {
@@ -483,7 +479,7 @@ int get_MOUSE_Y() {
 	return mouse_y;
 }
 int get_MOUSE_Z() {
-	return 0; // SDL does not provide direct support for mouse wheel in this function
+	return mouse_z;
 }
 void ftp_download(const string& url, const string& file) {
 	try {
@@ -560,6 +556,50 @@ void exit_engine(int return_number)
 	SDL_Quit();
 	exit(return_number);
 }
+CScriptArray* keys_pressed() {
+	asIScriptContext* ctx = asGetActiveContext();
+	asIScriptEngine* engine = ctx->GetEngine();
+	asITypeInfo* arrayType = engine->GetTypeInfoById(engine->GetTypeIdByDecl("array<int>"));
+	CScriptArray* array = CScriptArray::Create(arrayType, (asUINT)0);
+	for (auto i = 0; i < 290; i++) {
+		if (key_pressed(i))
+			array->InsertLast(&i);
+	}
+	return array;
+}
+CScriptArray* keys_released() {
+	asIScriptContext* ctx = asGetActiveContext();
+	asIScriptEngine* engine = ctx->GetEngine();
+	asITypeInfo* arrayType = engine->GetTypeInfoById(engine->GetTypeIdByDecl("array<int>"));
+	CScriptArray* array = CScriptArray::Create(arrayType, (asUINT)0);
+	for (auto i = 0; i < 290; i++) {
+		if (key_released(i))
+			array->InsertLast(&i);
+	}
+	return array;
+}
+CScriptArray* keys_down() {
+	asIScriptContext* ctx = asGetActiveContext();
+	asIScriptEngine* engine = ctx->GetEngine();
+	asITypeInfo* arrayType = engine->GetTypeInfoById(engine->GetTypeIdByDecl("array<int>"));
+	CScriptArray* array = CScriptArray::Create(arrayType, (asUINT)0);
+	for (auto i = 0; i < 290; i++) {
+		if (key_down(i))
+			array->InsertLast(&i);
+	}
+	return array;
+}
+CScriptArray* keys_repeat() {
+	asIScriptContext* ctx = asGetActiveContext();
+	asIScriptEngine* engine = ctx->GetEngine();
+	asITypeInfo* arrayType = engine->GetTypeInfoById(engine->GetTypeIdByDecl("array<int>"));
+	CScriptArray* array = CScriptArray::Create(arrayType, (asUINT)0);
+	for (auto i = 0; i < 290; i++) {
+		if (key_repeat(i))
+			array->InsertLast(&i);
+	}
+	return array;
+}
 string number_to_words(uint64_t num, bool include_and)
 {
 	vector<char> buf(1024);
@@ -605,7 +645,7 @@ string get_input() {
 	inputtext = "";
 	return temp;
 }
-bool key_pressed(SDL_Scancode key_code)
+bool key_pressed(int key_code)
 {
 	if (e.key.state == SDL_PRESSED)
 	{
@@ -615,7 +655,7 @@ bool key_pressed(SDL_Scancode key_code)
 	}
 	return false;
 }
-bool key_released(SDL_Scancode key_code)
+bool key_released(int key_code)
 {
 	if (e.key.state == SDL_RELEASED)
 	{
@@ -625,14 +665,14 @@ bool key_released(SDL_Scancode key_code)
 	}
 	return false;
 }
-bool key_down(SDL_Scancode key_code)
+bool key_down(int key_code)
 {
 	if (keys.find(key_code) != keys.begin() or keys.find(key_code) != keys.end()) {
 		return keys[key_code];
 	}
 	return false;
 }
-bool key_repeat(SDL_Scancode key_code)
+bool key_repeat(int key_code)
 {
 	if (e.type == SDL_KEYDOWN)
 	{

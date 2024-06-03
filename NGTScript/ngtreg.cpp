@@ -475,9 +475,9 @@ void RegisterFunctions(asIScriptEngine* engine)
 
 	engine->RegisterGlobalFunction("void update_window(bool=false)", asFUNCTION(update_window), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool get_window_active()property", asFUNCTION(get_window_active), asCALL_CDECL);
-	engine->RegisterGlobalFunction("bool mouse_pressed(int &in)", asFUNCTION(mouse_pressed), asCALL_CDECL);
-	engine->RegisterGlobalFunction("bool mouse_released(int &in)", asFUNCTION(mouse_released), asCALL_CDECL);
-	engine->RegisterGlobalFunction("bool mouse_down(int &in)", asFUNCTION(mouse_down), asCALL_CDECL);
+	engine->RegisterGlobalFunction("bool mouse_pressed(uint8)", asFUNCTION(mouse_pressed), asCALL_CDECL);
+	engine->RegisterGlobalFunction("bool mouse_released(uint8)", asFUNCTION(mouse_released), asCALL_CDECL);
+	engine->RegisterGlobalFunction("bool mouse_down(uint8)", asFUNCTION(mouse_down), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int get_MOUSE_X()property", asFUNCTION(get_MOUSE_X), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int get_MOUSE_Y()property", asFUNCTION(get_MOUSE_Y), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int get_MOUSE_Z()property", asFUNCTION(get_MOUSE_Z), asCALL_CDECL);
@@ -489,12 +489,16 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("bool clipboard_copy_text(const string &in)", asFUNCTION(clipboard_copy_text), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string clipboard_read_text()", asFUNCTION(clipboard_read_text), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string get_input()", asFUNCTION(get_input), asCALL_CDECL);
-	engine->RegisterTypedef("keycode", "int32");
+	engine->RegisterTypedef("keycode", "int");
 	engine->RegisterGlobalFunction("bool key_pressed(keycode)", asFUNCTION(key_pressed), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool key_released(keycode)", asFUNCTION(key_released), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool key_down(keycode)", asFUNCTION(key_down), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool key_repeat(keycode)", asFUNCTION(key_repeat), asCALL_CDECL);
-	engine->RegisterGlobalFunction("string key_to_string(const keycode&in)", asFUNCTION(key_to_string), asCALL_CDECL);
+	engine->RegisterGlobalFunction("keycode[]@ keys_pressed()", asFUNCTION(keys_pressed), asCALL_CDECL);
+	engine->RegisterGlobalFunction("keycode[]@ keys_released()", asFUNCTION(keys_released), asCALL_CDECL);
+	engine->RegisterGlobalFunction("keycode[]@ keys_down()", asFUNCTION(keys_down), asCALL_CDECL);
+	engine->RegisterGlobalFunction("keycode[]@ keys_repeat()", asFUNCTION(keys_repeat), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string key_to_string(keycode)", asFUNCTION(key_to_string), asCALL_CDECL);
 	engine->RegisterGlobalFunction("keycode string_to_key(const string&in)", asFUNCTION(string_to_key), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool force_key_down(keycode)", asFUNCTION(force_key_down), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool force_key_up(keycode)", asFUNCTION(force_key_up), asCALL_CDECL);

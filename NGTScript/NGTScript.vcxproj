@@ -199,6 +199,7 @@
     <ClInclude Include="enet\win32.h" />
     <ClInclude Include="fx\verblib.h" />
     <ClInclude Include="http.h" />
+    <ClInclude Include="joystick.h" />
     <ClInclude Include="miniaudio.h" />
     <ClInclude Include="ngt.h" />
     <ClInclude Include="ngtreg.h" />
@@ -459,6 +460,7 @@
     <ClCompile Include="debugger\debugger.cpp" />
     <ClCompile Include="dlibrary.cpp" />
     <ClCompile Include="http.cpp" />
+    <ClCompile Include="joystick.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ngt.cpp" />
     <ClCompile Include="ngtreg.cpp" />
