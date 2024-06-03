@@ -945,15 +945,46 @@ void delay(int ms)
 }
 string serialize(CScriptDictionary* data) {
 	if (data == nullptr) return "";
-
+	stringstream ss;
 	asIScriptContext* context = asGetActiveContext();
 	asIScriptEngine* engine = context->GetEngine();
-	return "";
+	long size = data->GetSize();
+	ss << size;
+	for (auto it : *data) {
+		string key = it.GetKey();
+		ss << key.c_str();
+		long len = key.size();
+		ss << len;
+		int type_id = it.GetTypeId();
+		ss << type_id;
+		const void* value = it.GetAddressOfValue();
+		ss << reinterpret_cast<const char*>(value);
+	}
+	return ss.str();
 }
 
-CScriptDictionary* deserialize(const std::string& strData) {
-	return nullptr;
+CScriptDictionary* deserialize(const std::string& data) {
+	asIScriptContext* context = asGetActiveContext();
+	asIScriptEngine* engine = context->GetEngine();
+	CScriptDictionary* dict = CScriptDictionary::Create(engine);
+	stringstream ss(data);
+	long size;
+	ss >> size;
+	for (int i = 0; i < size; i++)
+	{
+		string key;
+		long len;
+		ss >> key >> len;
+		int type_id;
+		ss >> type_id;
+		void* value;
+		ss >> value;
+
+		dict->Set(key, value, type_id);
+	}
+	return dict;
 }
+
 bool urlopen(const string& url) {
 	int result = SDL_OpenURL(url.c_str());
 	if (result == 0)return true;

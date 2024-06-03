@@ -660,10 +660,6 @@ static void ma_steamaudio_binaural_node_process_pcm_frames(ma_node* pNode, const
 	ma_steamaudio_binaural_node* pBinauralNode = (ma_steamaudio_binaural_node*)pNode;
 	IPLBinauralEffectParams binauralParams;
 	IPLDirectEffectParams params;
-	params.occlusion = 0.4f;
-	params.transmission[0] = 0.3f;
-	params.transmission[1] = 0.2f;
-	params.transmission[2] = 0.1f;
 	IPLAudioBuffer inputBufferDesc;
 	IPLAudioBuffer outputBufferDesc;
 	ma_uint32 totalFramesToProcess = *pFrameCountOut;
@@ -710,9 +706,10 @@ static void ma_steamaudio_binaural_node_process_pcm_frames(ma_node* pNode, const
 		inputBufferDesc.numSamples = (IPLint32)framesToProcessThisIteration;
 
 		/* Apply the effect. */
-//        iplDirectEffectApply(pBinauralNode->effect, &params, &inputBufferDesc, &outputBufferDesc);
 		iplBinauralEffectApply(pBinauralNode->iplEffect, &binauralParams, &inputBufferDesc, &outputBufferDesc);
-		/* Interleave straight into the output buffer. */
+		//		iplDirectEffectApply(pBinauralNode->effect, &params, &inputBufferDesc, &outputBufferDesc);
+
+				/* Interleave straight into the output buffer. */
 		ma_interleave_pcm_frames(ma_format_f32, 2, framesToProcessThisIteration, (const void**)pBinauralNode->ppBuffersOut, ma_offset_pcm_frames_ptr_f32(ppFramesOut[0], totalFramesProcessed, 2));
 
 		/* Advance. */
