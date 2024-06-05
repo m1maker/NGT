@@ -329,7 +329,7 @@ using sqlite3_authorizer = int(*)(string, int, string, string, string, string);
 class ngtsqlite3 : public as_class
 {
 public:
-
+	ngtsqlite3();
 	int close();
 	int open(const string& filename, int flags = 6);
 	sqlite3statement* prepare(const string& name, int& out);

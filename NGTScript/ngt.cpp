@@ -873,16 +873,58 @@ string serialize(CScriptDictionary* data) {
 	asIScriptContext* context = asGetActiveContext();
 	asIScriptEngine* engine = context->GetEngine();
 	long size = data->GetSize();
-	ss << size;
+	ss << size << " ";
 	for (auto it : *data) {
 		string key = it.GetKey();
-		ss << key.c_str();
+		ss << key << "  ";
 		long len = key.size();
-		ss << len;
+		ss << len << " ";
 		int type_id = it.GetTypeId();
-		ss << type_id;
+		ss << type_id << " ";
 		const void* value = it.GetAddressOfValue();
-		ss << reinterpret_cast<const char*>(value);
+		switch (type_id) {
+			{
+		case asTYPEID_BOOL:
+			ss << *(bool*)(value) << " ";
+			break;
+		case asTYPEID_FLOAT:
+			ss << *(float*)(value) << " ";
+			break;
+		case asTYPEID_DOUBLE:
+			ss << *(double*)(value) << " ";
+			break;
+		case asTYPEID_INT8:
+			ss << *(int8_t*)(value) << " ";
+			break;
+		case asTYPEID_INT16:
+			ss << *(int16_t*)(value) << " ";
+			break;
+		case asTYPEID_INT32:
+			ss << *(int32_t*)(value) << " ";
+			break;
+		case asTYPEID_INT64:
+			ss << *(int64_t*)(value) << " ";
+			break;
+		case asTYPEID_UINT8:
+			ss << *(uint8_t*)(value) << " ";
+			break;
+		case asTYPEID_UINT16:
+			ss << *(uint16_t*)(value) << " ";
+			break;
+		case asTYPEID_UINT32:
+			ss << *(uint32_t*)(value) << " ";
+			break;
+		case asTYPEID_UINT64:
+			ss << *(uint64_t*)(value) << " ";
+			break;
+		case 67108876:
+			ss << *(string*)(value) << " ";
+			break;
+		default:
+			ss << (void*)(value) << " ";
+			break;
+			}
+		}
 	}
 	return ss.str();
 }
@@ -901,10 +943,66 @@ CScriptDictionary* deserialize(const std::string& data) {
 		ss >> key >> len;
 		int type_id;
 		ss >> type_id;
-		void* value;
-		ss >> value;
-
-		dict->Set(key, value, type_id);
+		if (type_id == asTYPEID_BOOL) {
+			bool val;
+			ss >> val;
+			dict->Set(key, &val, type_id);
+		}
+		else if (type_id == asTYPEID_FLOAT) {
+			float val;
+			ss >> val;
+			dict->Set(key, &val, type_id);
+		}
+		else if (type_id == asTYPEID_DOUBLE) {
+			bool val;
+			ss >> val;
+			dict->Set(key, &val, type_id);
+		}
+		else if (type_id == asTYPEID_INT8) {
+			int8_t val;
+			ss >> val;
+			dict->Set(key, &val, type_id);
+		}
+		else if (type_id == asTYPEID_INT16) {
+			int16_t val;
+			ss >> val;
+			dict->Set(key, &val, type_id);
+		}
+		else if (type_id == asTYPEID_INT32) {
+			int32_t val;
+			ss >> val;
+			dict->Set(key, &val, type_id);
+		}
+		else if (type_id == asTYPEID_INT64) {
+			int64_t val;
+			ss >> val;
+			dict->Set(key, &val, type_id);
+		}
+		else if (type_id == asTYPEID_UINT8) {
+			uint8_t val;
+			ss >> val;
+			dict->Set(key, &val, type_id);
+		}
+		else if (type_id == asTYPEID_UINT16) {
+			uint16_t val;
+			ss >> val;
+			dict->Set(key, &val, type_id);
+		}
+		else if (type_id == asTYPEID_UINT32) {
+			uint32_t val;
+			ss >> val;
+			dict->Set(key, &val, type_id);
+		}
+		else if (type_id == asTYPEID_UINT64) {
+			uint64_t val;
+			ss >> val;
+			dict->Set(key, &val, type_id);
+		}
+		else if (type_id == 67108876) {
+			string val;
+			ss >> val;
+			dict->Set(key, &val, type_id);
+		}
 	}
 	return dict;
 }
@@ -1471,7 +1569,9 @@ string sqlite3statement::column_name(int index) { return sqlite3_column_name(stm
 int sqlite3statement::column_type(int index) { return sqlite3_column_type(stmt, index); }
 string sqlite3statement::column_text(int index) { return reinterpret_cast<const char*>(sqlite3_column_text(stmt, index)); }
 
-
+ngtsqlite3::ngtsqlite3() {
+	sqlite3_initialize();
+}
 int ngtsqlite3::close() { return sqlite3_close(db); }
 
 int ngtsqlite3::open(const string& filename, int flags) { return sqlite3_open_v2(filename.c_str(), &db, flags, nullptr); }
