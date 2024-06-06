@@ -208,20 +208,20 @@ enum network_type {
 };
 class network : public as_class {
 public:
-	map<unsigned int, _ENetPeer*> peers;
-	_ENetPeer* get_peer(unsigned int);
+	map<asUINT, _ENetPeer*> peers;
+	_ENetPeer* get_peer(asUINT);
 	network_type type;
-	unsigned    int connect(const string& host, int port);
+	asUINT connect(const string& host, int port);
 	bool destroy();
-	bool disconnect_peer(unsigned int);
-	bool disconnect_peer_forcefully(unsigned int);
-	bool disconnect_peer_softly(unsigned int);
-	string get_peer_address(unsigned int);
-	double get_peer_average_round_trip_time(unsigned int);
+	bool disconnect_peer(asUINT);
+	bool disconnect_peer_forcefully(asUINT);
+	bool disconnect_peer_softly(asUINT);
+	string get_peer_address(asUINT);
+	double get_peer_average_round_trip_time(asUINT);
 	CScriptArray* get_peer_list();
 	network_event* request(int timeout = 0, int* out_host_result = nullptr);
-	bool send_reliable(unsigned int peerId, const string& packet, int channel);
-	bool send_unreliable(unsigned int peerId, const string& packet, int channel);
+	bool send_reliable(asUINT peerId, const string& packet, int channel);
+	bool send_unreliable(asUINT peerId, const string& packet, int channel);
 	bool set_bandwidth_limits(double incomingBandwidth, double outgoingBandwidth);
 	bool setup_client(int channels, int maxPeers);
 	bool setup_server(int listeningPort, int channels, int maxPeers);
@@ -237,7 +237,7 @@ public:
 private:
 	ENetAddress address;
 	ENetHost* host;
-	unsigned int current_peer_id = 1;
+	asUINT current_peer_id = 1;
 	int m_connectedPeers;
 	double m_bytesSent;
 	double m_bytesReceived;

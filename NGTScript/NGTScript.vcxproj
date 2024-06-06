@@ -156,6 +156,7 @@
     <ClInclude Include="as_class.h" />
     <ClInclude Include="autowrapper\aswrappedcall.h" />
     <ClInclude Include="bl_number_to_words.h" />
+    <ClInclude Include="contextmgr\contextmgr.h" />
     <ClInclude Include="datetime\datetime.h" />
     <ClInclude Include="debugger\debugger.h" />
     <ClInclude Include="dlibrary.h" />
@@ -456,6 +457,7 @@
   <ItemGroup>
     <ClCompile Include="aes256enc.c" />
     <ClCompile Include="as_class.cpp" />
+    <ClCompile Include="contextmgr\contextmgr.cpp" />
     <ClCompile Include="datetime\datetime.cpp" />
     <ClCompile Include="debugger\debugger.cpp" />
     <ClCompile Include="dlibrary.cpp" />

@@ -125,7 +125,7 @@ void as_printf(asIScriptGeneric* gen)
 		}
 		case 8:
 		{
-			unsigned int local = *static_cast<unsigned int*>(ref);
+			asUINT local = *static_cast<asUINT*>(ref);
 			replace(format, "%d", to_string(local));
 			break;
 		}
@@ -758,7 +758,7 @@ string hex_to_string(string the_hexadecimal_sequence) {
 
 
 string number_to_hex_string(double the_number) {
-	return Poco::NumberFormatter::formatHex(static_cast<unsigned int>(the_number));
+	return Poco::NumberFormatter::formatHex(static_cast<asUINT>(the_number));
 }
 
 string string_base64_decode(string base64_string) {
@@ -1101,13 +1101,13 @@ network_event& network_event::operator=(const network_event new_event) {
 }
 
 
-_ENetPeer* network::get_peer(unsigned int peer_id) {
+_ENetPeer* network::get_peer(asUINT peer_id) {
 	auto it = peers.find(peer_id);
 	if (it == peers.end())return 0;
 	return it->second;
 }
 
-unsigned int network::connect(const string& hostAddress, int port) {
+asUINT network::connect(const string& hostAddress, int port) {
 	ENetAddress enetAddress;
 	enet_address_set_host(&enetAddress, hostAddress.c_str());
 	enetAddress.port = port;
@@ -1143,7 +1143,7 @@ bool network::destroy() {
 	}
 	return false;
 }
-bool network::disconnect_peer(unsigned int peer_id) {
+bool network::disconnect_peer(asUINT peer_id) {
 	if (host) {
 		_ENetPeer* peer = get_peer(peer_id);
 		if (!peer)return false;
@@ -1153,7 +1153,7 @@ bool network::disconnect_peer(unsigned int peer_id) {
 	}
 	return false;
 }
-bool network::disconnect_peer_forcefully(unsigned int peer_id) {
+bool network::disconnect_peer_forcefully(asUINT peer_id) {
 	if (host) {
 		_ENetPeer* peer = get_peer(peer_id);
 		if (!peer)return false;
@@ -1174,12 +1174,12 @@ string address_to_string(const ENetAddress* address)
 }
 
 
-string network::get_peer_address(unsigned int peer_id) {
+string network::get_peer_address(asUINT peer_id) {
 	_ENetPeer* peer = get_peer(peer_id);
 	if (!peer)return "NULL";
 	return address_to_string(&peer->address);
 }
-double network::get_peer_average_round_trip_time(unsigned int peerId) {
+double network::get_peer_average_round_trip_time(asUINT peerId) {
 	_ENetPeer* peer = get_peer(peerId);
 	if (!peer)return -1;
 	return peer->roundTripTime;
@@ -1190,7 +1190,7 @@ CScriptArray* network::get_peer_list() {
 	asITypeInfo* arrayType = engine->GetTypeInfoById(engine->GetTypeIdByDecl("array<uint>"));
 	CScriptArray* peers_array = CScriptArray::Create(arrayType, (asUINT)0);
 	for (auto it = peers.begin(); it != peers.end(); it++) {
-		unsigned int peer_id = it->first;
+		asUINT peer_id = it->first;
 		peers_array->InsertLast(&peer_id);
 	}
 	return peers_array;
@@ -1219,18 +1219,18 @@ network_event* network::request(int initial_timeout, int* out_host_result) {
 					current_peer_id += 1;
 				}
 				else if (this->type == NETWORK_TYPE_CLIENT) {
-					handle_->m_peerId = reinterpret_cast<unsigned int>(event.peer->data);
+					handle_->m_peerId = reinterpret_cast<asUINT>(event.peer->data);
 				}
 			}
 			if (event.type == ENET_EVENT_TYPE_DISCONNECT) {
-				unsigned int peer = reinterpret_cast<unsigned int>(event.peer->data);
+				asUINT peer = reinterpret_cast<asUINT>(event.peer->data);
 				event.peer->data = 0;
 				if (peer > 0)
 					peers.erase(peer);
 				handle_->m_peerId = peer;
 			}
 			if (event.type == ENET_EVENT_TYPE_RECEIVE && event.packet != nullptr) {
-				handle_->m_peerId = reinterpret_cast<unsigned int>(event.peer->data);
+				handle_->m_peerId = reinterpret_cast<asUINT>(event.peer->data);
 				handle_->m_message = string(reinterpret_cast<char*>(event.packet->data), event.packet->dataLength);
 				enet_packet_destroy(event.packet);
 			}
@@ -1248,7 +1248,7 @@ network_event* network::request(int initial_timeout, int* out_host_result) {
 	return handle_;
 }
 
-bool network::send_reliable(unsigned int peer_id, const string& packet, int channel) {
+bool network::send_reliable(asUINT peer_id, const string& packet, int channel) {
 	ENetPacket* p = enet_packet_create(packet.c_str(), strlen(packet.c_str()) + 1, ENET_PACKET_FLAG_RELIABLE);
 	enet_packet_resize(p, packet.size());
 	_ENetPeer* peer = get_peer(peer_id);
@@ -1258,7 +1258,7 @@ bool network::send_reliable(unsigned int peer_id, const string& packet, int chan
 		return true;
 	return false;
 }
-bool network::send_unreliable(unsigned int peer_id, const string& packet, int channel) {
+bool network::send_unreliable(asUINT peer_id, const string& packet, int channel) {
 	ENetPacket* p = enet_packet_create(packet.c_str(), strlen(packet.c_str()) + 1, 0);
 
 	enet_packet_resize(p, packet.size());
@@ -1386,7 +1386,7 @@ void library_call(asIScriptGeneric* gen) {
 				call_ctx->SetArgDWord(arg_count, value);
 			}
 			else if (last[arg_count] == "uint" or last[arg_count] == "uint8" or last[arg_count] == "uint16" or last[arg_count] == "uint32" or last[arg_count] == "uint64") {
-				unsigned int value = *static_cast<unsigned int*>(gen->GetArgAddress(i));
+				asUINT value = *static_cast<asUINT*>(gen->GetArgAddress(i));
 				call_ctx->SetArgDWord(arg_count, value);
 			}
 			else if (last[arg_count] == "short") {

@@ -1,6 +1,7 @@
 ﻿#pragma section(".NGT")
 #define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
 #include "angelscript.h"
+#include "contextmgr/contextmgr.h"
 #include "datetime/datetime.h"
 #include "ngt.h"
 #include "ngtreg.h"
@@ -25,7 +26,7 @@ struct NGT {
 
 __declspec(allocate(".NGT")) NGT ngt = { {0x0, 2, 3, 1, 1} };
 
-
+CContextMgr context_manager;
 CScriptBuilder builder;
 void crypt(std::vector<asBYTE>& bytes) {
 	for (size_t i = 0; i < bytes.size(); ++i) {
@@ -255,6 +256,8 @@ auto main(int argc, char* argv[]) -> int {
 		RegisterScriptMath(engine);
 		RegisterScriptHandle(engine);
 		RegisterScriptAny(engine);
+		context_manager.RegisterThreadSupport(engine);
+		context_manager.RegisterCoRoutineSupport(engine);
 		RegisterFunctions(engine);
 		engine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
 		engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
@@ -325,6 +328,8 @@ auto main(int argc, char* argv[]) -> int {
 		RegisterScriptMath(engine);
 		RegisterScriptHandle(engine);
 		RegisterScriptAny(engine);
+		context_manager.RegisterThreadSupport(engine);
+		context_manager.RegisterCoRoutineSupport(engine);
 		RegisterFunctions(engine);
 		engine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
 		engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
@@ -417,6 +422,8 @@ auto main(int argc, char* argv[]) -> int {
 		RegisterScriptMath(engine);
 		RegisterScriptHandle(engine);
 		RegisterScriptAny(engine);
+		context_manager.RegisterThreadSupport(engine);
+		context_manager.RegisterCoRoutineSupport(engine);
 		RegisterFunctions(engine);
 		engine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
 		engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
@@ -526,6 +533,8 @@ auto main(int argc, char* argv[]) -> int {
 		RegisterScriptMath(engine);
 		RegisterScriptHandle(engine);
 		RegisterScriptAny(engine);
+		context_manager.RegisterThreadSupport(engine);
+		context_manager.RegisterCoRoutineSupport(engine);
 		RegisterFunctions(engine);
 		engine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
 		engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
@@ -642,7 +651,7 @@ int ExecSystemCmd(const string& str)
 #else
 	return system(str.c_str());
 #endif
-}
+	}
 
 // This function returns the command line arguments that were passed to the script
 CScriptArray* GetCommandLineArgs()
