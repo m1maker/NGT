@@ -33,12 +33,12 @@ extern "C"
 #include <openssl/evp.h>
 #include <openssl/aes.h>
 asIScriptFunction* exit_callback = nullptr;
-using namespace std::string_literals;
+using namespace string_literals;
 tts_voice* voice_object = nullptr;
 template<typename T, typename D>
-std::unique_ptr<T, D> make_handle(T* handle, D deleter)
+unique_ptr<T, D> make_handle(T* handle, D deleter)
 {
-	return std::unique_ptr<T, D>{handle, deleter};
+	return unique_ptr<T, D>{handle, deleter};
 }
 
 using namespace std;
@@ -421,14 +421,14 @@ void ftp_download(const string& url, const string& file) {
 	try {
 		HTTPStreamFactory::registerFactory(); // Must register the HTTP factory to stream using HTTP
 		FTPStreamFactory::registerFactory(); // Must register the FTP factory to stream using FTP
-		std::ofstream fileStream;
+		ofstream fileStream;
 		fileStream.open(file, ios::out | ios::trunc | ios::binary);
 
 		// Create the URI from the URL to the file.
 		URI uri(url);
 
 		// Open the stream and copy the data to the file. 
-		std::unique_ptr<std::istream> pStr(URIStreamOpener::defaultOpener().open(uri));
+		unique_ptr<istream> pStr(URIStreamOpener::defaultOpener().open(uri));
 		StreamCopier::copyStream(*pStr.get(), fileStream);
 
 		fileStream.close();
@@ -648,7 +648,7 @@ string string_encrypt(string the_string, string encryption_key) {
 	EVP_CipherInit(ctx.get(), EVP_aes_256_cbc(), reinterpret_cast<unsigned char const*>(encryption_key.data()), reinterpret_cast<unsigned char const*>(iv.data()), true);
 	const int block_size = EVP_CIPHER_CTX_block_size(ctx.get());
 
-	std::vector<unsigned char> cipherBuffer;
+	vector<unsigned char> cipherBuffer;
 	cipherBuffer.resize(MAX_BUFFER_SIZE + block_size);
 
 	int out_length;
@@ -669,7 +669,7 @@ string string_decrypt(string the_string, string encryption_key) {
 	EVP_CipherInit(ctx.get(), EVP_aes_256_cbc(), reinterpret_cast<unsigned char const*>(encryption_key.data()), reinterpret_cast<unsigned char const*>(iv.data()), false);
 	const int block_size = EVP_CIPHER_CTX_block_size(ctx.get());
 
-	std::string rv;
+	string rv;
 	rv.resize(MAX_BUFFER_SIZE + block_size);
 
 	int out_length;
@@ -929,7 +929,7 @@ string serialize(CScriptDictionary* data) {
 	return ss.str();
 }
 
-CScriptDictionary* deserialize(const std::string& data) {
+CScriptDictionary* deserialize(const string& data) {
 	asIScriptContext* context = asGetActiveContext();
 	asIScriptEngine* engine = context->GetEngine();
 	CScriptDictionary* dict = CScriptDictionary::Create(engine);
@@ -1203,13 +1203,15 @@ network_event* network::request(int initial_timeout, int* out_host_result) {
 
 	while (retry_count < max_retries) {
 		ENetEvent event;
+		if (!host)return handle_;
 		int result = enet_host_service(host, &event, timeout);
-		*out_host_result = result;
-
+		if (out_host_result != nullptr)
+			*out_host_result = result;
 		if (result > 0) {
 			handle_->m_type = event.type;
 			handle_->m_channel = event.channelID;
 			if (event.type == ENET_EVENT_TYPE_CONNECT) {
+				enet_peer_timeout(event.peer, 128, 10000, 35000);
 				if (this->type == NETWORK_TYPE_SERVER) {
 					event.peer->data = reinterpret_cast<void*>(current_peer_id);
 					peers[current_peer_id] = event.peer;
@@ -1229,7 +1231,7 @@ network_event* network::request(int initial_timeout, int* out_host_result) {
 			}
 			if (event.type == ENET_EVENT_TYPE_RECEIVE && event.packet != nullptr) {
 				handle_->m_peerId = reinterpret_cast<unsigned int>(event.peer->data);
-				handle_->m_message = std::string(reinterpret_cast<char*>(event.packet->data), event.packet->dataLength);
+				handle_->m_message = string(reinterpret_cast<char*>(event.packet->data), event.packet->dataLength);
 				enet_packet_destroy(event.packet);
 			}
 
@@ -1483,7 +1485,9 @@ void script_thread::join() {
 		});
 	t.join();
 }
-
+void script_thread::destroy() {
+	this->context->Release();
+}
 
 bool instance::is_running() {
 	if (mutex->tryLock() == true) {

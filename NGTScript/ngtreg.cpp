@@ -528,6 +528,10 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("string serialize(dictionary@=null)", asFUNCTION(serialize), asCALL_CDECL);
 	engine->RegisterGlobalFunction("dictionary@ deserialize(const string &in)", asFUNCTION(deserialize), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool urlopen(const string &in)", asFUNCTION(urlopen), asCALL_CDECL);
+	engine->RegisterGlobalFunction("uint64 malloc(uint64)", asFUNCTION(malloc), asCALL_CDECL);
+	engine->RegisterGlobalFunction("uint64 calloc(uint64, uint64)", asFUNCTION(calloc), asCALL_CDECL);
+	engine->RegisterGlobalFunction("uint64 realloc(uint64, uint64)", asFUNCTION(realloc), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void free(uint64)", asFUNCTION(free), asCALL_CDECL);
 
 	register_pack(engine);
 	register_sound(engine);
@@ -594,7 +598,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 
 	engine->RegisterObjectMethod("thread", "void detach()const", asMETHOD(script_thread, detach), asCALL_THISCALL);
 	engine->RegisterObjectMethod("thread", "void join()const", asMETHOD(script_thread, join), asCALL_THISCALL);
-
+	engine->RegisterObjectMethod("thread", "void destroy()const", asMETHOD(script_thread, destroy), asCALL_THISCALL);
 	engine->RegisterObjectType("instance", sizeof(instance), asOBJ_REF);
 	engine->RegisterObjectBehaviour("instance", asBEHAVE_FACTORY, "instance@ i(const string&in)", asFUNCTION(finstance), asCALL_CDECL);
 	engine->RegisterObjectBehaviour("instance", asBEHAVE_ADDREF, "void f()", asMETHOD(instance, add_ref), asCALL_THISCALL);

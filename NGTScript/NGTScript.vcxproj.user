@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>"C:\Users\Ecler\Documents\ngt\NGTScript\x64\Release\test.ngt" -d</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>"C:\Users\Ecler\Documents\new_test2\client\client.ngt" -d</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerWorkingDirectory>$(SolutionDir)</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>C:\Users\Ecler\Documents\new_test2\client</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
 </Project>

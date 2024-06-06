@@ -3,16 +3,23 @@ class key_hold
 bool status;
 short key_flag=0;
 keycode key_code;
-int64 repeat_time;
-int64 setting_1;
-int64 setting_2;
+uint64 repeat_time;
+uint64 setting_1;
+uint64 setting_2;
 timer key_timer;
-key_hold(keycode _key_code, int64 _setting_1, int64 _setting_2)
+uint64 wait_time;
+key_hold(const keycode&in _key_code, const uint64&in _setting_1, const uint64&in _setting_2)
 {
 key_code=_key_code;
 setting_1=_setting_1;
 setting_2=_setting_2;
 repeat_time=setting_1;
+}
+key_hold(){
+this.reset();
+}
+~key_hold(){
+this.reset();
 }
 bool pressing()
 {
@@ -25,7 +32,7 @@ key_flag=0;
 return false;
 }
 int keytimerelapsed=key_timer.elapsed_millis;
-if(keytimerelapsed>=repeat_time)
+if(keytimerelapsed>=repeat_time or wait_time>0 and(key_timer.elapsed_millis>wait_time))
 {
 switch(key_flag)
 {
@@ -42,6 +49,16 @@ break;
 return true;
 }
 return false;
+}
+void reset(){
+status=false;
+key_flag=0;
+key_code=0;
+repeat_time=0;
+setting_1=0;
+setting_2=0;
+key_timer.restart();
+wait_time=0;
 }
 }
 
