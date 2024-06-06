@@ -432,6 +432,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterTypedef("size_t", "uint64");
 	engine->RegisterTypedef("c_str", "int8");
 	engine->RegisterTypedef("hwnd", "uint8");
+	engine->RegisterObjectType("ptr", sizeof(void*), asOBJ_VALUE | asOBJ_POD);
 	engine->RegisterFuncdef("int exit_callback()");
 	engine->RegisterObjectType("vector", sizeof(ngtvector), asOBJ_REF);
 	engine->RegisterObjectBehaviour("vector", asBEHAVE_FACTORY, "vector@ v()", asFUNCTION(fngtvector), asCALL_CDECL);

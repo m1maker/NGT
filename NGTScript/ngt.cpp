@@ -1410,13 +1410,7 @@ void library_call(asIScriptGeneric* gen) {
 				string value = *static_cast<string*>(ref);
 				call_ctx->SetArgObject(arg_count, &value);
 			}
-			else if (last[arg_count] == "c_str") {
-				void* ref = gen->GetArgAddress(i);
-				string value = *static_cast<string*>(ref);
-				const char* str = value.c_str();
-				call_ctx->SetArgObject(arg_count, &str);
-			}
-			if (last[arg_count] == "?&in" or last[arg_count] == "?&out") {
+			if (last[arg_count] == "ptr") {
 				void* ref = gen->GetArgAddress(i);
 				call_ctx->SetArgObject(arg_count, ref);
 			}
@@ -1450,7 +1444,7 @@ void library_call(asIScriptGeneric* gen) {
 				string value = *static_cast<string*>(ref);
 				dict->Set(to_string(i), &value, 67108876);
 			}
-			if (last[arg_count] == "?&in" or last[arg_count] == "?&out") {
+			if (last[arg_count] == "ptr") {
 				void* ref = gen->GetArgAddress(i);
 				dict->Set(to_string(i), ref, 67108876);
 
