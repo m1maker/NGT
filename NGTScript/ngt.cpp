@@ -296,7 +296,7 @@ bool show_window(const string& title, int width, int height, bool closable)
 
 		update_window();
 		window_is_focused = true;
-		renderer = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+		renderer = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
 		if (renderer == nullptr)return false;
 		return true;
 	}
@@ -322,6 +322,13 @@ void garbage_collect() {
 	asIScriptContext* ctx = asGetActiveContext();
 	asIScriptEngine* engine = ctx->GetEngine();
 	engine->GarbageCollect(1 | 2, 1);
+}
+SDL_Surface* get_window_surface() {
+	if (win == nullptr)return nullptr;
+	return SDL_GetWindowSurface(win);
+}
+SDL_Surface* load_bmp(const string& file) {
+	return SDL_LoadBMP(file.c_str());
 }
 string key_to_string(SDL_Scancode key) {
 	return string(SDL_GetScancodeName(key));
@@ -377,6 +384,7 @@ void update_window(bool wait_event)
 				window_is_focused = false;
 
 		}
+		SDL_UpdateWindowSurface(win);
 	}
 }
 bool get_window_active() {
@@ -476,7 +484,8 @@ void exit_engine(int return_number)
 		e_ctx->Release();
 		exit_callback = nullptr;
 	}
-	ctx->Release();
+	if (ctx != nullptr)
+		ctx->Release();
 	soundsystem_free();
 	SDL_StopTextInput();
 	SDL_DestroyWindow(win);
@@ -548,26 +557,14 @@ string number_to_words(uint64_t num, bool include_and)
 	return string(buf.data());
 }
 string read_environment_variable(const string& path) {
-#ifdef _WIN32
-	// Use _dupenv_s on Windows
 	char* value;
-	size_t size;
-	if (_dupenv_s(&value, &size, path.c_str()) != 0 || value == nullptr) {
-		// Environment variable not found or error occurred
-		return "";
-	}
-	const string& result(value);
-	free(value);  // Free the allocated memory
-	return result;
-#else
-	// Use getenv for non-Windows platforms
-	char* value = getenv(path.c_str());
-	if (value == nullptr) {
-		// Environment variable not found
-		return "";
-	}
-	return const string & (value);
-#endif
+	value = SDL_getenv(path.c_str());
+	return string(value);
+}
+bool write_environment_variable(const string& path, const string& value) {
+	int result = SDL_setenv(path.c_str(), value.c_str(), 1);
+	if (result == 0)return true;
+	return false;
 }
 bool clipboard_copy_text(const string& text) {
 	SDL_SetClipboardText(text.c_str());

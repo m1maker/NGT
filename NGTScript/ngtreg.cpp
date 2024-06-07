@@ -419,7 +419,7 @@ void Print(const char* format, ...)
 	vprintf(format, args);
 	va_end(args);
 }
-
+SDL_Rect* frect() { return new SDL_Rect; }
 void RegisterFunctions(asIScriptEngine* engine)
 {
 	engine->SetEngineProperty(asEP_ALLOW_MULTILINE_STRINGS, true);
@@ -432,7 +432,14 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterTypedef("size_t", "uint64");
 	engine->RegisterTypedef("c_str", "int8");
 	engine->RegisterTypedef("hwnd", "uint8");
+	engine->RegisterTypedef("surface", "int64");
 	engine->RegisterObjectType("ptr", sizeof(void*), asOBJ_VALUE | asOBJ_POD);
+	engine->RegisterObjectType("rect", sizeof(SDL_Rect), asOBJ_REF | asOBJ_NOCOUNT);
+	engine->RegisterObjectBehaviour("rect", asBEHAVE_FACTORY, "rect@ r()", asFUNCTION(frect), asCALL_CDECL);
+	engine->RegisterObjectProperty("rect", "int x", asOFFSET(SDL_Rect, x));
+	engine->RegisterObjectProperty("rect", "int y", asOFFSET(SDL_Rect, y));
+	engine->RegisterObjectProperty("rect", "int h", asOFFSET(SDL_Rect, h));
+	engine->RegisterObjectProperty("rect", "int w", asOFFSET(SDL_Rect, w));
 	engine->RegisterFuncdef("int exit_callback()");
 	engine->RegisterObjectType("vector", sizeof(ngtvector), asOBJ_REF);
 	engine->RegisterObjectBehaviour("vector", asBEHAVE_FACTORY, "vector@ v()", asFUNCTION(fngtvector), asCALL_CDECL);
@@ -472,8 +479,13 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("void hide_window()", asFUNCTION(hide_window), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void set_window_title(const string &in)property", asFUNCTION(set_window_title), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void set_window_closable(bool)property", asFUNCTION(set_window_closable), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void garbage_collect()", asFUNCTION(garbage_collect), asCALL_CDECL);
 
+	engine->RegisterGlobalFunction("void garbage_collect()", asFUNCTION(garbage_collect), asCALL_CDECL);
+	engine->RegisterGlobalFunction("surface get_window_surface()property", asFUNCTION(get_window_surface), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void free_surface(surface)", asFUNCTION(SDL_FreeSurface), asCALL_CDECL);
+	engine->RegisterGlobalFunction("surface load_bmp(const string &in)", asFUNCTION(load_bmp), asCALL_CDECL);
+	engine->RegisterGlobalFunction("int fill_rect(surface, rect@, uint32)", asFUNCTION(SDL_FillRect), asCALL_CDECL);
+	engine->RegisterGlobalFunction("int blit_surface(surface, rect@, surface, rect@)", asFUNCTION(SDL_BlitSurface), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void update_window(bool=false)", asFUNCTION(update_window), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool get_window_active()property", asFUNCTION(get_window_active), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool mouse_pressed(uint8)", asFUNCTION(mouse_pressed), asCALL_CDECL);
@@ -526,6 +538,8 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("void wait(uint64)", asFUNCTION(wait), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void delay(int)", asFUNCTION(delay), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string read_environment_variable(const string&in)", asFUNCTION(read_environment_variable), asCALL_CDECL);
+	engine->RegisterGlobalFunction("bool write_environment_variable(const string&in, const string &in)", asFUNCTION(write_environment_variable), asCALL_CDECL);
+
 	engine->RegisterGlobalFunction("string serialize(dictionary@=null)", asFUNCTION(serialize), asCALL_CDECL);
 	engine->RegisterGlobalFunction("dictionary@ deserialize(const string &in)", asFUNCTION(deserialize), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool urlopen(const string &in)", asFUNCTION(urlopen), asCALL_CDECL);
