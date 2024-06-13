@@ -6,6 +6,7 @@
 #include "scriptarray/scriptarray.h"
 #include "sound.h"
 #include <thread>
+using namespace std;
 #define MINIAUDIO_IMPLEMENTATION
 #include "miniaudio.h"
 #include <stdint.h> /* Required for uint32_t which is used by STEAMAUDIO_VERSION. That dependency needs to be removed from Steam Audio - use IPLuint32 or "unsigned int" instead! */
@@ -14,6 +15,7 @@
 #define FORMAT      ma_format_f32   /* Must be floating point. */
 #define CHANNELS    2               /* Must be stereo for this example. */
 #define SAMPLE_RATE 44100
+#include "fx/freeverb.h"
 #define VERBLIB_IMPLEMENTATION
 
 #include "fx/verblib.h"
@@ -660,6 +662,7 @@ static void ma_steamaudio_binaural_node_process_pcm_frames(ma_node* pNode, const
 	ma_steamaudio_binaural_node* pBinauralNode = (ma_steamaudio_binaural_node*)pNode;
 	IPLBinauralEffectParams binauralParams;
 	IPLDirectEffectParams params;
+	params.flags = IPLDirectEffectFlags(IPL_DIRECTEFFECTFLAGS_APPLYDISTANCEATTENUATION | IPL_DIRECTEFFECTFLAGS_APPLYAIRABSORPTION | IPL_DIRECTEFFECTFLAGS_APPLYOCCLUSION);
 	IPLAudioBuffer inputBufferDesc;
 	IPLAudioBuffer outputBufferDesc;
 	ma_uint32 totalFramesToProcess = *pFrameCountOut;
@@ -675,7 +678,7 @@ static void ma_steamaudio_binaural_node_process_pcm_frames(ma_node* pNode, const
 	float maxDistance = 2.0f;
 
 	float normalizedDistance = distance / maxDistance;
-	binauralParams.spatialBlend = std::min(0.0f + normalizedDistance, 1.0f);
+	binauralParams.spatialBlend = min(0.0f + normalizedDistance, 1.0f);
 	if (binauralParams.spatialBlend > 1.0f)
 		binauralParams.spatialBlend = 1.0f;
 	binauralParams.hrtf = pBinauralNode->iplHRTF;
@@ -707,9 +710,9 @@ static void ma_steamaudio_binaural_node_process_pcm_frames(ma_node* pNode, const
 
 		/* Apply the effect. */
 		iplBinauralEffectApply(pBinauralNode->iplEffect, &binauralParams, &inputBufferDesc, &outputBufferDesc);
-		//		iplDirectEffectApply(pBinauralNode->effect, &params, &inputBufferDesc, &outputBufferDesc);
+		//iplDirectEffectApply(pBinauralNode->effect, &params, &inputBufferDesc, &outputBufferDesc);
 
-				/* Interleave straight into the output buffer. */
+		/* Interleave straight into the output buffer. */
 		ma_interleave_pcm_frames(ma_format_f32, 2, framesToProcessThisIteration, (const void**)pBinauralNode->ppBuffersOut, ma_offset_pcm_frames_ptr_f32(ppFramesOut[0], totalFramesProcessed, 2));
 
 		/* Advance. */
@@ -875,7 +878,11 @@ MA_API ma_result ma_steamaudio_binaural_node_set_direction(ma_steamaudio_binaura
 	return MA_SUCCESS;
 }
 ma_resource_manager sounds;
+IPLScene scene;
+IPLSimulator simulator;
+IPLSimulationSharedInputs simulator_inputs;
 void soundsystem_init() {
+	if (inited == true)return;
 	engineConfig = ma_engine_config_init();
 	engineConfig.channels = CHANNELS;
 	engineConfig.sampleRate = SAMPLE_RATE;
@@ -900,17 +907,42 @@ void soundsystem_init() {
 	iplHRTFSettings.type = IPL_HRTFTYPE_DEFAULT;
 	iplHRTFSettings.volume = 1.0f;
 	ma_result_from_IPLerror(iplHRTFCreate(iplContext, &iplAudioSettings, &iplHRTFSettings, &iplHRTF));
+	IPLSimulationSettings simulation_settings{};
+	simulation_settings.flags = IPLSimulationFlags(IPL_SIMULATIONFLAGS_DIRECT | IPL_SIMULATIONFLAGS_REFLECTIONS);
+	simulation_settings.sceneType = IPL_SCENETYPE_DEFAULT;
+	simulation_settings.reflectionType = IPL_REFLECTIONEFFECTTYPE_CONVOLUTION;
+	simulation_settings.maxNumRays = 2048;
+	simulation_settings.numDiffuseSamples = 128;
+	simulation_settings.maxDuration = 2.0f;
+	simulation_settings.maxOrder = 2;
+	simulation_settings.maxNumSources = 64;
+	simulation_settings.numThreads = 16;
+	simulation_settings.samplingRate = engineConfig.sampleRate;
+	simulation_settings.frameSize = engineConfig.periodSizeInFrames;
+	iplSimulatorCreate(iplContext, &simulation_settings, &simulator);
+	IPLSceneSettings scene_settings{};
+	scene_settings.type = IPL_SCENETYPE_DEFAULT;
+	iplSceneCreate(iplContext, &scene_settings, &scene);
+	simulator_inputs.numRays = 2048;
+	simulator_inputs.numBounces = 32;
+	simulator_inputs.duration = 2.0f;
+	simulator_inputs.order = 2;
+	simulator_inputs.irradianceMinDistance = 1.0f;
+	iplSimulatorSetScene(simulator, scene);
+	iplSimulatorCommit(simulator);
 }
 void soundsystem_free() {
+	if (inited == false)return;
 	ma_engine_uninit(&sound_default_mixer);
+
 	iplContextRelease(&iplContext);
 
 }
-std::string sound_path;
-void set_sound_storage(const std::string& path) {
+string sound_path;
+void set_sound_storage(const string& path) {
 	sound_path = path;
 }
-std::string get_sound_storage() {
+string get_sound_storage() {
 	return sound_path;
 }
 void set_master_volume(float volume) {
@@ -928,8 +960,8 @@ void mixer_start() {
 void mixer_stop() {
 	ma_engine_stop(&sound_default_mixer);
 }
-bool mixer_play_sound(const std::string& filename) {
-	std::string result;
+bool mixer_play_sound(const string& filename) {
+	string result;
 	if (sound_path != "") {
 		result = sound_path + "/" + filename.c_str();
 	}
@@ -970,7 +1002,7 @@ static size_t write_memory_callback(void* contents, size_t size, size_t nmemb, v
 	return realsize;
 }
 
-std::vector<float> load_audio_from_url(const char* url) {
+vector<float> load_audio_from_url(const char* url) {
 	CURL* curl_handle;
 	CURLcode res;
 	struct MemoryStruct chunk;
@@ -990,10 +1022,10 @@ std::vector<float> load_audio_from_url(const char* url) {
 
 	if (res != CURLE_OK) {
 		free(chunk.memory);
-		return std::vector<float>();
+		return vector<float>();
 	}
 
-	std::vector<float> audioData(chunk.size / sizeof(float));
+	vector<float> audioData(chunk.size / sizeof(float));
 	memcpy(audioData.data(), chunk.memory, chunk.size);
 
 	free(chunk.memory);
@@ -1142,7 +1174,7 @@ public:
 	bool sound_hrtf = false;
 	ma_node* current_fx = nullptr;
 	mutable int ref = 0;
-	sound(const std::string& filename = "", bool set3d = false) {
+	sound(const string& filename = "", bool set3d = false) {
 		ref = 1;
 		if (!inited) {
 			soundsystem_init();
@@ -1165,8 +1197,8 @@ public:
 			}
 		}
 	}
-	bool load(const std::string& filename, bool set3d) {
-		std::string result;
+	bool load(const string& filename, bool set3d) {
+		string result;
 		if (sound_path != "") {
 			result = sound_path + "/" + filename.c_str();
 		}
@@ -1174,7 +1206,11 @@ public:
 			result = filename;
 		}
 		handle_ = new ma_sound;
-		ma_sound_init_from_file(&sound_default_mixer, result.c_str(), 0, NULL, NULL, handle_);
+		ma_result loading_result = ma_sound_init_from_file(&sound_default_mixer, result.c_str(), 0, NULL, NULL, handle_);
+		if (loading_result != MA_SUCCESS) {
+			active = false;
+			return false;
+		}
 		active = true;
 
 		if (sound_global_hrtf)
@@ -1183,7 +1219,7 @@ public:
 		ma_sound_set_end_callback(handle_, at_stop, current_fx);
 		return true;
 	}
-	bool load_from_memory(const std::string& data, bool set3d) {
+	bool load_from_memory(const string& data, bool set3d) {
 		handle_ = new ma_sound;
 		ma_sound_config c;
 
@@ -1194,7 +1230,11 @@ public:
 
 		if (!set3d)
 			c.flags |= MA_SOUND_FLAG_NO_SPATIALIZATION;
-		ma_sound_init_ex(&sound_default_mixer, &c, handle_);
+		ma_result loading_result = ma_sound_init_ex(&sound_default_mixer, &c, handle_);
+		if (loading_result != MA_SUCCESS) {
+			active = false;
+			return false;
+		}
 		active = true;
 		if (sound_global_hrtf)
 			this->set_hrtf(true);
@@ -1202,8 +1242,8 @@ public:
 
 		return active;
 	}
-	bool stream(const std::string& filename, bool set3d) {
-		std::string result;
+	bool stream(const string& filename, bool set3d) {
+		string result;
 		if (sound_path != "") {
 			result = sound_path + "/" + filename.c_str();
 		}
@@ -1211,10 +1251,11 @@ public:
 			result = filename;
 		}
 		handle_ = new ma_sound;
-		if (set3d)
-			ma_sound_init_from_file(&sound_default_mixer, result.c_str(), MA_SOUND_FLAG_STREAM, NULL, NULL, handle_);
-		else
-			ma_sound_init_from_file(&sound_default_mixer, result.c_str(), MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_STREAM, NULL, NULL, handle_);
+		ma_result loading_result = ma_sound_init_from_file(&sound_default_mixer, result.c_str(), MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_STREAM, NULL, NULL, handle_);
+		if (loading_result != MA_SUCCESS) {
+			active = false;
+			return false;
+		}
 		active = true;
 		if (sound_global_hrtf)
 			this->set_hrtf(true);
@@ -1222,12 +1263,12 @@ public:
 
 		return true;
 	}
-	bool load_url(const std::string& url, bool set3d) {
+	bool load_url(const string& url, bool set3d) {
 		handle_ = new ma_sound;
 		ma_sound_config c;
 
 		ma_decoder decoder;
-		std::vector<float> audio = load_audio_from_url(url.c_str());
+		vector<float> audio = load_audio_from_url(url.c_str());
 		ma_decoder_init_memory(audio.data(), audio.size(), NULL, &decoder);
 		c = ma_sound_config_init();
 		c.pDataSource = &decoder;
@@ -1242,7 +1283,7 @@ public:
 
 		return active;
 	}
-	std::string push_memory() {
+	string push_memory() {
 		return NULL;
 	}
 	void set_faid_time(float volume_beg, float volume_end, float time) {
@@ -1340,7 +1381,7 @@ public:
 		active = false;
 		return true;
 	}
-	void set_fx(const std::string& fx) {
+	void set_fx(const string& fx) {
 		if (!active)return;
 		if (fx == "reverb") {
 			reverbNodeConfig = ma_reverb_node_config_init(engineConfig.channels, engineConfig.sampleRate, 100, 100, 100);
@@ -1466,7 +1507,7 @@ public:
 			notchf = true;
 		}
 	}
-	void delete_fx(const std::string& fx) {
+	void delete_fx(const string& fx) {
 		if (!active)return;
 		if (fx == "reverb") {
 			if (reverb) {
@@ -1796,9 +1837,9 @@ bool get_sound_global_hrtf() {
 	return sound_global_hrtf;
 }
 ma_result ma_encoder_write_callback(ma_encoder* encoder, const void* buffer, size_t bytesToWrite, size_t* pBytesWritten) {
-	std::string temp((char*)buffer, bytesToWrite);
+	string temp((char*)buffer, bytesToWrite);
 	temp.resize(bytesToWrite);
-	std::string* data = (std::string*)encoder->pUserData;
+	string* data = (string*)encoder->pUserData;
 	*data += temp;
 	return MA_SUCCESS;
 }
@@ -1807,7 +1848,7 @@ ma_result ma_encoder_seek_callback(ma_encoder* pEncoder, ma_int64 offset, ma_see
 }
 class audio_encoder {
 public:
-	std::string data;
+	string data;
 	ma_encoder_config encoderConfig;
 	ma_encoder encoder;
 	audio_encoder() {
@@ -1815,11 +1856,11 @@ public:
 		ma_encoder_init(ma_encoder_write_callback, ma_encoder_seek_callback, &data, &encoderConfig, &encoder);
 
 	}
-	void encode(std::string audio_data) {
+	void encode(string audio_data) {
 		ma_encoder_write_pcm_frames(&encoder, audio_data.c_str(), strlen(audio_data.c_str()), NULL);
 
 	}
-	std::string get_data() {
+	string get_data() {
 		return data;
 	}
 };
@@ -1853,14 +1894,14 @@ public:
 	void stop() {
 		ma_device_uninit(&recording_device);
 	}
-	std::string get_data() {
+	string get_data() {
 		return encoder.get_data();
 	}
 };
 ma_result audio_stream_callback(ma_decoder* pDecoder, void* buffer, size_t bytesToRead, size_t* pBytesRead) {
-	std::string temp((char*)buffer, bytesToRead);
+	string temp((char*)buffer, bytesToRead);
 	temp.resize(bytesToRead);
-	std::string* data = (std::string*)pDecoder->pUserData;
+	string* data = (string*)pDecoder->pUserData;
 	*data = temp;
 	return MA_SUCCESS;
 }
@@ -1887,7 +1928,7 @@ public:
 };
 
 
-sound* fsound(const std::string& filename, bool set3d) { return new sound(filename, set3d); }
+sound* fsound(const string& filename, bool set3d) { return new sound(filename, set3d); }
 mixer* fmixer() { return new mixer; }
 audio_recorder* faudio_recorder() { return new audio_recorder; }
 audio_encoder* faudio_encoder() { return new audio_encoder; }

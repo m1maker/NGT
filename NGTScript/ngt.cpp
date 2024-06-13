@@ -47,6 +47,7 @@ SDL_Renderer* renderer = nullptr;
 int mouse_x = 0, mouse_y = 0, mouse_z = 0;
 SDL_Event e;
 bool window_is_focused;
+bool default_screen_reader_interrupt = false;
 wstring wstr(const string& utf8String)
 {
 	wstring_convert<codecvt_utf8_utf16<wchar_t>> converter;
@@ -224,6 +225,12 @@ bool random_bool() {
 int get_last_error() {
 	return 0;
 }
+void set_screen_reader_interrupt(bool interrupt) {
+	default_screen_reader_interrupt = interrupt;
+}
+bool get_screen_reader_interrupt() {
+	return default_screen_reader_interrupt;
+}
 
 void speak(const string& text, bool stop) {
 	wstring textstr = wstr(text);
@@ -390,6 +397,13 @@ void update_window(bool wait_event)
 bool get_window_active() {
 	return window_is_focused;
 }
+void set_window_fullscreen(bool fullscreen) {
+	if (!win)return;
+	if (fullscreen == true)
+		SDL_SetWindowFullscreen(win, SDL_WINDOW_FULLSCREEN);
+	else
+		SDL_SetWindowFullscreen(win, 0);
+}
 bool mouse_pressed(Uint8 button)
 {
 	if (e.button.state == SDL_PRESSED)
@@ -487,8 +501,7 @@ void exit_engine(int return_number)
 	if (ctx != nullptr)
 		ctx->Release();
 	soundsystem_free();
-	SDL_StopTextInput();
-	SDL_DestroyWindow(win);
+	hide_window();
 	win = NULL;
 	SDL_UnregisterApp();
 	enet_deinitialize();

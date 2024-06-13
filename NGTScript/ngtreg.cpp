@@ -464,9 +464,11 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("void printf(string &in, ?&in var = 0, ?&in var2 = 0, ?&in var3 = 0, ?&in var4 = 0, ?&in var5 = 0, ?&in var6 = 0, ?&in var7 = 0, ?&in var8 = 0, ?&in var9 = 0, ?&in var10 = 0, ?&in var11 = 0, ?&in var12 = 0, ?&in var13 = 0, ?&in var14 = 0, ?&in var15 = 0)", asFUNCTION(as_printf), asCALL_GENERIC);
 
 	engine->RegisterGlobalFunction("int get_last_error()property", asFUNCTION(get_last_error), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void set_screen_reader_interrupt(bool)property", asFUNCTION(set_screen_reader_interrupt), asCALL_CDECL);
+	engine->RegisterGlobalFunction("bool get_screen_reader_interrupt()property", asFUNCTION(get_screen_reader_interrupt), asCALL_CDECL);
 
-	engine->RegisterGlobalFunction("void speak(const string &in, bool=true)", asFUNCTION(speak), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void speak_wait(const string &in, bool=true)", asFUNCTION(speak_wait), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void speak(const string &in, bool=screen_reader_interrupt)", asFUNCTION(speak), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void speak_wait(const string &in, bool=screen_reader_interrupt)", asFUNCTION(speak_wait), asCALL_CDECL);
 
 	engine->RegisterGlobalFunction("void stop_speech()", asFUNCTION(stop_speech), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string screen_reader_detect()", asFUNCTION(screen_reader_detect), asCALL_CDECL);
@@ -488,6 +490,8 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("int blit_surface(surface, rect@, surface, rect@)", asFUNCTION(SDL_BlitSurface), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void update_window(bool=false)", asFUNCTION(update_window), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool get_window_active()property", asFUNCTION(get_window_active), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void set_window_fullscreen(bool)property", asFUNCTION(set_window_fullscreen), asCALL_CDECL);
+
 	engine->RegisterGlobalFunction("bool mouse_pressed(uint8)", asFUNCTION(mouse_pressed), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool mouse_released(uint8)", asFUNCTION(mouse_released), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool mouse_down(uint8)", asFUNCTION(mouse_down), asCALL_CDECL);

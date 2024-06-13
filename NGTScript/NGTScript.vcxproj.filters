@@ -62,6 +62,7 @@
     <ClCompile Include="as_class.cpp" />
     <ClCompile Include="joystick.cpp" />
     <ClCompile Include="contextmgr\contextmgr.cpp" />
+    <ClCompile Include="fx\freeverb.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="angelscript.h" />
@@ -365,6 +366,7 @@
     <ClInclude Include="as_class.h" />
     <ClInclude Include="joystick.h" />
     <ClInclude Include="contextmgr\contextmgr.h" />
+    <ClInclude Include="fx\freeverb.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="pack\physfs_platform_apple.m" />
