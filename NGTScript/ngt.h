@@ -154,6 +154,8 @@ string read_environment_variable(const string&);
 bool write_environment_variable(const string& path, const string& value);
 string serialize(CScriptDictionary*);
 CScriptDictionary* deserialize(const string&);
+string serialize_array(CScriptArray*);
+CScriptArray* deserialize_array(const string&);
 bool urlopen(const string& url);
 class timer : public as_class {
 public:

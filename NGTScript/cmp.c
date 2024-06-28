@@ -21,6 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+
 #include "cmp.h"
 
 static const uint32_t cmp_version_ = 20;
@@ -2912,99 +2913,99 @@ bool cmp_skip_object_no_limit(cmp_ctx_t* ctx) {
 
 	return true;
 }
+/*
+bool cmp_skip_object_limit(cmp_ctx_t *ctx, cmp_object_t *obj, uint32_t limit) {
+  size_t element_count = 1;
+  uint32_t depth = 0;
 
-bool cmp_skip_object_limit(cmp_ctx_t* ctx, cmp_object_t* obj, uint32_t limit) {
-	size_t element_count = 1;
-	uint32_t depth = 0;
+  while (element_count) {
+	uint8_t type_marker = 0;
+	uint8_t cmp_type;
+	uint32_t size = 0;
 
-	while (element_count) {
-		uint8_t type_marker = 0;
-		uint8_t cmp_type;
-		uint32_t size = 0;
+	if (!read_type_marker(ctx, &type_marker)) {
+	  return false;
+	}
 
-		if (!read_type_marker(ctx, &type_marker)) {
+	if (!type_marker_to_cmp_type(type_marker, &cmp_type)) {
+	  ctx->error = CMP_ERROR_INVALID_TYPE;
+	  return false;
+	}
+
+	switch (cmp_type) {
+	  case CMP_TYPE_FIXARRAY:
+	  case CMP_TYPE_ARRAY16:
+	  case CMP_TYPE_ARRAY32:
+	  case CMP_TYPE_FIXMAP:
+	  case CMP_TYPE_MAP16:
+	  case CMP_TYPE_MAP32:
+		++depth;
+
+		if (depth > limit) {
+		  obj->type = cmp_type;
+
+		  if (!read_obj_data(ctx, type_marker, obj)) {
 			return false;
+		  }
+
+		  ctx->error = CMP_ERROR_SKIP_DEPTH_LIMIT_EXCEEDED;
+
+		  return false;
 		}
 
-		if (!type_marker_to_cmp_type(type_marker, &cmp_type)) {
-			ctx->error = CMP_ERROR_INVALID_TYPE;
-			return false;
+		break;
+	  default:
+		if (!read_type_size(ctx, type_marker, cmp_type, &size)) {
+		  return false;
 		}
 
-		switch (cmp_type) {
-		case CMP_TYPE_FIXARRAY:
-		case CMP_TYPE_ARRAY16:
-		case CMP_TYPE_ARRAY32:
-		case CMP_TYPE_FIXMAP:
-		case CMP_TYPE_MAP16:
-		case CMP_TYPE_MAP32:
-			++depth;
+		if (size) {
+		  switch (cmp_type) {
+			case CMP_TYPE_FIXEXT1:
+			case CMP_TYPE_FIXEXT2:
+			case CMP_TYPE_FIXEXT4:
+			case CMP_TYPE_FIXEXT8:
+			case CMP_TYPE_FIXEXT16:
+			case CMP_TYPE_EXT8:
+			case CMP_TYPE_EXT16:
+			case CMP_TYPE_EXT32:
+			  ++size;
+			  break;
+			default:
+			  break;
+		  }
 
-			if (depth > limit) {
-				obj->type = cmp_type;
-
-				if (!read_obj_data(ctx, type_marker, obj)) {
-					return false;
-				}
-
-				ctx->error = CMP_ERROR_SKIP_DEPTH_LIMIT_EXCEEDED;
-
-				return false;
-			}
-
-			break;
-		default:
-			if (!read_type_size(ctx, type_marker, cmp_type, &size)) {
-				return false;
-			}
-
-			if (size) {
-				switch (cmp_type) {
-				case CMP_TYPE_FIXEXT1:
-				case CMP_TYPE_FIXEXT2:
-				case CMP_TYPE_FIXEXT4:
-				case CMP_TYPE_FIXEXT8:
-				case CMP_TYPE_FIXEXT16:
-				case CMP_TYPE_EXT8:
-				case CMP_TYPE_EXT16:
-				case CMP_TYPE_EXT32:
-					++size;
-					break;
-				default:
-					break;
-				}
-
-				skip_bytes(ctx, size);
-			}
-		}
-
-		element_count--;
-
-		switch (cmp_type) {
-		case CMP_TYPE_FIXARRAY:
-		case CMP_TYPE_ARRAY16:
-		case CMP_TYPE_ARRAY32:
-			if (!read_type_size(ctx, type_marker, cmp_type, &size)) {
-				return false;
-			}
-			element_count += size;
-			break;
-		case CMP_TYPE_FIXMAP:
-		case CMP_TYPE_MAP16:
-		case CMP_TYPE_MAP32:
-			if (!read_type_size(ctx, type_marker, cmp_type, &size)) {
-				return false;
-			}
-			element_count += ((size_t)size) * 2;
-			break;
-		default:
-			break;
+		  skip_bytes(ctx, size);
 		}
 	}
 
-	return true;
-}
+	element_count--;
 
+	switch (cmp_type) {
+	  case CMP_TYPE_FIXARRAY:
+	  case CMP_TYPE_ARRAY16:
+	  case CMP_TYPE_ARRAY32:
+		if (!read_type_size(ctx, type_marker, cmp_type, &size)) {
+		  return false;
+		}
+		element_count += size;
+		break;
+	  case CMP_TYPE_FIXMAP:
+	  case CMP_TYPE_MAP16:
+	  case CMP_TYPE_MAP32:
+		if (!read_type_size(ctx, type_marker, cmp_type, &size)) {
+		  return false;
+		}
+		element_count += ((size_t)size) * 2;
+		break;
+	  default:
+		break;
+	}
+  }
+
+  return true;
+}
+*/
 bool cmp_object_is_char(const cmp_object_t* obj) {
 	switch (obj->type) {
 	case CMP_TYPE_NEGATIVE_FIXNUM:

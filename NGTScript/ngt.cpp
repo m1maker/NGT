@@ -1,4 +1,5 @@
 ﻿#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS 
+#include "cmp.h"
 #include "ngtreg.h"
 #include"sdl/SDL.h"
 #include "sound.h"
@@ -56,7 +57,6 @@ wstring wstr(const string& utf8String)
 wstring reader;
 unordered_map<int, bool> keys;
 unordered_map<Uint8, bool> buttons;
-
 bool keyhook = false;
 string inputtext;
 void replace(string& str, const string& from, const string& to) {
@@ -66,8 +66,6 @@ void replace(string& str, const string& from, const string& to) {
 		start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
 	}
 }
-
-
 void as_printf(asIScriptGeneric* gen)
 {
 	void* ref = gen->GetArgAddress(0);
@@ -166,9 +164,34 @@ string get_platform() {
 void set_exit_callback(asIScriptFunction* callback) {
 	exit_callback = callback;
 }
-
+typedef struct {
+	std::string* data;
+	size_t read_cursor;
+} cmp_buffer;
+bool cmp_read_bytes(cmp_ctx_t* ctx, void* output, size_t len) {
+	cmp_buffer* buf = (cmp_buffer*)ctx->buf;
+	if (!buf || !buf->data) return false;
+	if (buf->read_cursor + len > buf->data->size()) len = buf->data->size() - buf->read_cursor;
+	if (len == 0) return false;
+	memcpy(output, buf->data->data() + buf->read_cursor, len);
+	buf->read_cursor += len;
+	return true;
+}
+bool cmp_skip_bytes(cmp_ctx_t* ctx, size_t len) {
+	cmp_buffer* buf = (cmp_buffer*)ctx->buf;
+	if (!buf || !buf->data) return false;
+	if (buf->read_cursor + len > buf->data->size()) len = buf->data->size() - buf->read_cursor;
+	if (len == 0) return false;
+	buf->read_cursor += len;
+	return true;
+}
+size_t cmp_write_bytes(cmp_ctx_t* ctx, const void* input, size_t len) {
+	cmp_buffer* buf = (cmp_buffer*)ctx->buf;
+	if (!buf || !buf->data) return 0;
+	buf->data->append((const char*)input, len);
+	return len;
+}
 void init_engine() {
-
 	SDL_Init(SDL_INIT_EVERYTHING);
 	if (!tolk_library_load("Tolk.dll")) {
 		voice_object = new tts_voice;
@@ -245,7 +268,7 @@ void speak(const string& text, bool stop) {
 void speak_wait(const string& text, bool stop) {
 	speak(text, stop);
 	while (Tolk_IsSpeaking()) {
-		SDL_PollEvent(&e);
+		SDL_PumpEvents();
 	}
 	if (voice_object != nullptr) {
 		if (stop)
@@ -279,7 +302,6 @@ void show_console() {
 void hide_console() {
 	FreeConsole();
 }
-
 bool show_window(const string& title, int width, int height, bool closable)
 {
 	if (win != NULL)
@@ -300,7 +322,7 @@ bool show_window(const string& title, int width, int height, bool closable)
 	window_closable = closable;
 	if (win != NULL)
 	{
-
+		focus_window();
 		update_window();
 		window_is_focused = true;
 		renderer = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
@@ -317,6 +339,7 @@ void hide_window() {
 	SDL_StopTextInput();
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(win);
+	win = nullptr;
 	window_is_focused = false;
 }
 void set_window_title(const string& new_title) {
@@ -346,8 +369,10 @@ SDL_Scancode string_to_key(const string& key) {
 void update_window(bool wait_event)
 {
 	if (win != nullptr) {
-		if (!wait_event)
+		SDL_PumpEvents();
+		if (!wait_event) {
 			SDL_PollEvent(&e);
+		}
 		else
 			SDL_WaitEvent(&e);
 		if (e.type == SDL_QUIT and window_closable == true)
@@ -502,7 +527,6 @@ void exit_engine(int return_number)
 		ctx->Release();
 	soundsystem_free();
 	hide_window();
-	win = NULL;
 	SDL_UnregisterApp();
 	enet_deinitialize();
 	Tolk_Unload();
@@ -512,7 +536,7 @@ void exit_engine(int return_number)
 		voice_object = nullptr;
 	}
 	SDL_Quit();
-	exit(return_number);
+	std::exit(0);
 }
 CScriptArray* keys_pressed() {
 	asIScriptContext* ctx = asGetActiveContext();
@@ -576,8 +600,7 @@ string read_environment_variable(const string& path) {
 }
 bool write_environment_variable(const string& path, const string& value) {
 	int result = SDL_setenv(path.c_str(), value.c_str(), 1);
-	if (result == 0)return true;
-	return false;
+	return result == 0;
 }
 bool clipboard_copy_text(const string& text) {
 	SDL_SetClipboardText(text.c_str());
@@ -869,7 +892,7 @@ void wait(uint64_t time) {
 	timer waittimer;
 	int el = 0;
 	while (el < time) {
-		SDL_PollEvent(&e);
+		SDL_PumpEvents();
 		el = waittimer.elapsed_millis();
 	}
 }
@@ -879,143 +902,377 @@ void delay(int ms)
 }
 string serialize(CScriptDictionary* data) {
 	if (data == nullptr) return "";
-	stringstream ss;
 	asIScriptContext* context = asGetActiveContext();
 	asIScriptEngine* engine = context->GetEngine();
-	long size = data->GetSize();
-	ss << size << " ";
+	std::string serialized;
+	cmp_buffer buf = { &serialized, 0 };
+	cmp_ctx_t sctx = { 0, &buf, cmp_read_bytes, cmp_skip_bytes, cmp_write_bytes };
+	uint64_t size = data->GetSize();
+	cmp_write_u64(&sctx, size);
 	for (auto it : *data) {
 		string key = it.GetKey();
-		ss << key << "  ";
-		long len = key.size();
-		ss << len << " ";
-		int type_id = it.GetTypeId();
-		ss << type_id << " ";
+		uint64_t len = key.size();
+		int32_t type_id = it.GetTypeId();
+		cmp_write_u64(&sctx, len);
+		cmp_write_str(&sctx, key.c_str(), key.size());
+		cmp_write_s32(&sctx, type_id);
 		const void* value = it.GetAddressOfValue();
 		switch (type_id) {
-			{
 		case asTYPEID_BOOL:
-			ss << *(bool*)(value) << " ";
+		{
+			bool val = *reinterpret_cast<const bool*>(value);
+			cmp_write_bool(&sctx, val);
 			break;
+		}
 		case asTYPEID_FLOAT:
-			ss << *(float*)(value) << " ";
+		{
+			float val = *reinterpret_cast<const float*>(value);
+			cmp_write_float(&sctx, val);
 			break;
+		}
 		case asTYPEID_DOUBLE:
-			ss << *(double*)(value) << " ";
+		{
+			double val = *reinterpret_cast<const double*> (value);
+			cmp_write_double(&sctx, val);
 			break;
+		}
 		case asTYPEID_INT8:
-			ss << *(int8_t*)(value) << " ";
+		{
+			int8_t val = *reinterpret_cast<const int8_t*>(value);
+			cmp_write_s8(&sctx, val);
 			break;
+		}
 		case asTYPEID_INT16:
-			ss << *(int16_t*)(value) << " ";
+		{
+			int16_t val = *reinterpret_cast<const int16_t*>(value);
+			cmp_write_s16(&sctx, val);
 			break;
+		}
 		case asTYPEID_INT32:
-			ss << *(int32_t*)(value) << " ";
+		{
+			int32_t val = *reinterpret_cast<const int32_t*>(value);
+			cmp_write_s32(&sctx, val);
 			break;
+		}
 		case asTYPEID_INT64:
-			ss << *(int64_t*)(value) << " ";
+		{
+			int64_t val = *reinterpret_cast<const int64_t*>(value);
+			cmp_write_s64(&sctx, val);
 			break;
+		}
 		case asTYPEID_UINT8:
-			ss << *(uint8_t*)(value) << " ";
+		{
+			uint8_t val = *reinterpret_cast<const uint8_t*>(value);
+			cmp_write_u8(&sctx, val);
 			break;
+		}
 		case asTYPEID_UINT16:
-			ss << *(uint16_t*)(value) << " ";
+		{
+			uint16_t val = *reinterpret_cast<const uint16_t*>(value);
+			cmp_write_u16(&sctx, val);
 			break;
+		}
 		case asTYPEID_UINT32:
-			ss << *(uint32_t*)(value) << " ";
+		{
+			uint32_t val = *reinterpret_cast<const uint32_t*>(value);
+			cmp_write_u32(&sctx, val);
 			break;
+		}
 		case asTYPEID_UINT64:
-			ss << *(uint64_t*)(value) << " ";
+		{
+			uint64_t val = *reinterpret_cast<const uint64_t*>(value);
+			cmp_write_u64(&sctx, val);
 			break;
+		}
 		case 67108876:
-			ss << *(string*)(value) << " ";
+		{
+			const string& str = *static_cast<const string*>(value);
+			cmp_write_u32(&sctx, str.size());
+			cmp_write_str(&sctx, str.c_str(), str.size());
 			break;
+		}
+
 		default:
-			ss << (void*)(value) << " ";
+			cmp_write_bin(&sctx, value, sizeof(value));
 			break;
-			}
 		}
 	}
-	return ss.str();
+	return serialized;
 }
 
 CScriptDictionary* deserialize(const string& data) {
 	asIScriptContext* context = asGetActiveContext();
 	asIScriptEngine* engine = context->GetEngine();
 	CScriptDictionary* dict = CScriptDictionary::Create(engine);
-	stringstream ss(data);
-	long size;
-	ss >> size;
+	cmp_buffer buf = { (string*)&data, 0 };
+	cmp_ctx_t sctx = { 0, &buf, cmp_read_bytes, cmp_skip_bytes, cmp_write_bytes };
+	uint64_t size;
+	cmp_read_u64(&sctx, &size);
 	for (int i = 0; i < size; i++)
 	{
 		string key;
-		long len;
-		ss >> key >> len;
-		int type_id;
-		ss >> type_id;
+		uint64_t len;
+		int32_t type_id;
+		cmp_read_u64(&sctx, &len);
+		uint32_t length = len + 1;
+		char* key_char = new char[len];
+		cmp_read_str(&sctx, key_char, &length);
+		key = string(key_char);
+		delete[] key_char;
+		cmp_read_s32(&sctx, &type_id);
 		if (type_id == asTYPEID_BOOL) {
 			bool val;
-			ss >> val;
+			cmp_read_bool(&sctx, &val);
 			dict->Set(key, &val, type_id);
 		}
 		else if (type_id == asTYPEID_FLOAT) {
 			float val;
-			ss >> val;
+			cmp_read_float(&sctx, &val);
 			dict->Set(key, &val, type_id);
 		}
 		else if (type_id == asTYPEID_DOUBLE) {
-			bool val;
-			ss >> val;
+			double val;
+			cmp_read_double(&sctx, &val);
 			dict->Set(key, &val, type_id);
 		}
 		else if (type_id == asTYPEID_INT8) {
 			int8_t val;
-			ss >> val;
+			cmp_read_s8(&sctx, &val);
 			dict->Set(key, &val, type_id);
 		}
 		else if (type_id == asTYPEID_INT16) {
 			int16_t val;
-			ss >> val;
+			cmp_read_s16(&sctx, &val);
 			dict->Set(key, &val, type_id);
 		}
 		else if (type_id == asTYPEID_INT32) {
 			int32_t val;
-			ss >> val;
+			cmp_read_s32(&sctx, &val);
 			dict->Set(key, &val, type_id);
 		}
 		else if (type_id == asTYPEID_INT64) {
 			int64_t val;
-			ss >> val;
+			cmp_read_s64(&sctx, &val);
 			dict->Set(key, &val, type_id);
 		}
 		else if (type_id == asTYPEID_UINT8) {
 			uint8_t val;
-			ss >> val;
+			cmp_read_u8(&sctx, &val);
 			dict->Set(key, &val, type_id);
 		}
 		else if (type_id == asTYPEID_UINT16) {
 			uint16_t val;
-			ss >> val;
+			cmp_read_u16(&sctx, &val);
 			dict->Set(key, &val, type_id);
 		}
 		else if (type_id == asTYPEID_UINT32) {
 			uint32_t val;
-			ss >> val;
+			cmp_read_u32(&sctx, &val);
 			dict->Set(key, &val, type_id);
 		}
 		else if (type_id == asTYPEID_UINT64) {
 			uint64_t val;
-			ss >> val;
+			cmp_read_u64(&sctx, &val);
 			dict->Set(key, &val, type_id);
 		}
 		else if (type_id == 67108876) {
 			string val;
-			ss >> val;
+			uint32_t length = 0;
+			cmp_read_u32(&sctx, &length);
+			char* val_char = new char[length];
+			length += 1;
+			cmp_read_str(&sctx, val_char, &length);
+			val = string(val_char);
+			delete[] val_char;
 			dict->Set(key, &val, type_id);
 		}
 	}
 	return dict;
 }
+string serialize_array(CScriptArray* data) {
+	if (data == nullptr) return "";
+	asIScriptContext* context = asGetActiveContext();
+	asIScriptEngine* engine = context->GetEngine();
+	std::string serialized;
+	cmp_buffer buf = { &serialized, 0 };
+	cmp_ctx_t sctx = { 0, &buf, cmp_read_bytes, cmp_skip_bytes, cmp_write_bytes };
+	int32_t array_tid = data->GetArrayTypeId();
+	cmp_write_s32(&sctx, array_tid);
+	uint64_t size = data->GetSize();
+	cmp_write_u64(&sctx, size);
+	for (int i = 0; i < data->GetSize(); i++) {
+		int32_t type_id = data->GetElementTypeId();
+		cmp_write_s32(&sctx, type_id);
+		const void* value = data->At(i);
+		switch (type_id) {
+		case asTYPEID_BOOL:
+		{
+			bool val = *reinterpret_cast<const bool*>(value);
+			cmp_write_bool(&sctx, val);
+			break;
+		}
+		case asTYPEID_FLOAT:
+		{
+			float val = *reinterpret_cast<const float*>(value);
+			cmp_write_float(&sctx, val);
+			break;
+		}
+		case asTYPEID_DOUBLE:
+		{
+			double val = *reinterpret_cast<const double*> (value);
+			cmp_write_double(&sctx, val);
+			break;
+		}
+		case asTYPEID_INT8:
+		{
+			int8_t val = *reinterpret_cast<const int8_t*>(value);
+			cmp_write_s8(&sctx, val);
+			break;
+		}
+		case asTYPEID_INT16:
+		{
+			int16_t val = *reinterpret_cast<const int16_t*>(value);
+			cmp_write_s16(&sctx, val);
+			break;
+		}
+		case asTYPEID_INT32:
+		{
+			int32_t val = *reinterpret_cast<const int32_t*>(value);
+			cmp_write_s32(&sctx, val);
+			break;
+		}
+		case asTYPEID_INT64:
+		{
+			int64_t val = *reinterpret_cast<const int64_t*>(value);
+			cmp_write_s64(&sctx, val);
+			break;
+		}
+		case asTYPEID_UINT8:
+		{
+			uint8_t val = *reinterpret_cast<const uint8_t*>(value);
+			cmp_write_u8(&sctx, val);
+			break;
+		}
+		case asTYPEID_UINT16:
+		{
+			uint16_t val = *reinterpret_cast<const uint16_t*>(value);
+			cmp_write_u16(&sctx, val);
+			break;
+		}
+		case asTYPEID_UINT32:
+		{
+			uint32_t val = *reinterpret_cast<const uint32_t*>(value);
+			cmp_write_u32(&sctx, val);
+			break;
+		}
+		case asTYPEID_UINT64:
+		{
+			uint64_t val = *reinterpret_cast<const uint64_t*>(value);
+			cmp_write_u64(&sctx, val);
+			break;
+		}
+		case 67108876:
+		{
+			const string& str = *static_cast<const string*>(value);
+			cmp_write_u32(&sctx, str.size());
+			cmp_write_str(&sctx, str.c_str(), str.size());
+			break;
+		}
+
+		default:
+			cmp_write_bin(&sctx, value, sizeof(value));
+			break;
+		}
+	}
+	return serialized;
+}
+
+CScriptArray* deserialize_array(const string& data) {
+	asIScriptContext* context = asGetActiveContext();
+	asIScriptEngine* engine = context->GetEngine();
+	int32_t array_tid;
+	cmp_buffer buf = { (string*)&data, 0 };
+	cmp_ctx_t sctx = { 0, &buf, cmp_read_bytes, cmp_skip_bytes, cmp_write_bytes };
+	cmp_read_s32(&sctx, &array_tid);
+	asITypeInfo* arrayType = engine->GetTypeInfoById(array_tid);
+	CScriptArray* array = CScriptArray::Create(arrayType);
+	uint64_t size;
+	cmp_read_u64(&sctx, &size);
+	array->Reserve(size);
+	for (int i = 0; i < size; i++)
+	{
+		int32_t type_id;
+		cmp_read_s32(&sctx, &type_id);
+		if (type_id == asTYPEID_BOOL) {
+			bool val;
+			cmp_read_bool(&sctx, &val);
+			array->InsertAt(i, &val);
+		}
+		else if (type_id == asTYPEID_FLOAT) {
+			float val;
+			cmp_read_float(&sctx, &val);
+			array->InsertAt(i, &val);
+		}
+		else if (type_id == asTYPEID_DOUBLE) {
+			double val;
+			cmp_read_double(&sctx, &val);
+			array->InsertAt(i, &val);
+		}
+		else if (type_id == asTYPEID_INT8) {
+			int8_t val;
+			cmp_read_s8(&sctx, &val);
+			array->InsertAt(i, &val);
+		}
+		else if (type_id == asTYPEID_INT16) {
+			int16_t val;
+			cmp_read_s16(&sctx, &val);
+			array->InsertAt(i, &val);
+		}
+		else if (type_id == asTYPEID_INT32) {
+			int32_t val;
+			cmp_read_s32(&sctx, &val);
+			array->InsertAt(i, &val);
+		}
+		else if (type_id == asTYPEID_INT64) {
+			int64_t val;
+			cmp_read_s64(&sctx, &val);
+			array->InsertAt(i, &val);
+		}
+		else if (type_id == asTYPEID_UINT8) {
+			uint8_t val;
+			cmp_read_u8(&sctx, &val);
+			array->InsertAt(i, &val);
+		}
+		else if (type_id == asTYPEID_UINT16) {
+			uint16_t val;
+			cmp_read_u16(&sctx, &val);
+			array->InsertAt(i, &val);
+		}
+		else if (type_id == asTYPEID_UINT32) {
+			uint32_t val;
+			cmp_read_u32(&sctx, &val);
+			array->InsertAt(i, &val);
+		}
+		else if (type_id == asTYPEID_UINT64) {
+			uint64_t val;
+			cmp_read_u64(&sctx, &val);
+			array->InsertAt(i, &val);
+		}
+		else if (type_id == 67108876) {
+			string val;
+			uint32_t length = 0;
+			cmp_read_u32(&sctx, &length);
+			char* val_char = new char[length];
+			length += 1;
+			cmp_read_str(&sctx, val_char, &length);
+			val = string(val_char);
+			delete[] val_char;
+			array->InsertAt(i, &val);
+		}
+	}
+	return array;
+}
+
 
 bool urlopen(const string& url) {
 	int result = SDL_OpenURL(url.c_str());

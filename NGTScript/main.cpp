@@ -373,7 +373,6 @@ auto main(int argc, char* argv[]) -> int {
 			engine->Release();
 			return -1;
 		}
-
 		// Prepare the script context with the function we wish to execute. Prepare()
 		// must be called on the context before each new script function that will be
 		// executed. Note, that if you intend to execute the same function several 
@@ -651,7 +650,7 @@ int ExecSystemCmd(const string& str)
 #else
 	return system(str.c_str());
 #endif
-	}
+}
 
 // This function returns the command line arguments that were passed to the script
 CScriptArray* GetCommandLineArgs()
