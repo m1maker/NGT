@@ -1465,8 +1465,7 @@ network_event* network::request(int initial_timeout) {
 	if (!host)return handle_;
 	ENetEvent event;
 	int result = enet_host_service(host, &event, timeout);
-	if (result < 0)
-		handle_->m_type = event.type;
+	handle_->m_type = event.type;
 	handle_->m_channel = event.channelID;
 	if (event.type == ENET_EVENT_TYPE_CONNECT) {
 		enet_peer_timeout(event.peer, 128, 10000, 35000);

@@ -641,7 +641,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterObjectMethod("network", "string get_peer_address(uint)const property", asMETHOD(network, get_peer_address), asCALL_THISCALL);
 	engine->RegisterObjectMethod("network", "double get_peer_average_round_trip_time(uint)const property", asMETHOD(network, get_peer_average_round_trip_time), asCALL_THISCALL);
 	engine->RegisterObjectMethod("network", "uint[]@ get_peer_list()", asMETHOD(network, get_peer_list), asCALL_THISCALL);
-	engine->RegisterObjectMethod("network", "network_event@ request(int=0, int &out=void)", asMETHOD(network, request), asCALL_THISCALL);
+	engine->RegisterObjectMethod("network", "network_event@ request(int=0)", asMETHOD(network, request), asCALL_THISCALL);
 	engine->RegisterObjectMethod("network", "bool send_reliable(uint, string&in, int)", asMETHOD(network, send_reliable), asCALL_THISCALL);
 	engine->RegisterObjectMethod("network", "bool send_unreliable(uint, string&in, int)", asMETHOD(network, send_unreliable), asCALL_THISCALL);
 	engine->RegisterObjectMethod("network", "bool set_bandwidth_limits(double, double)", asMETHOD(network, set_bandwidth_limits), asCALL_THISCALL);
