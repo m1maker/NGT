@@ -1,19 +1,18 @@
-# NGT: Your Gateway to Innovative Game Development
+# NGT: (New Game Toolkit)
 
-Welcome to NGT (New Game Toolkit)! Built on C++, it blends power with flexibility, enabling high-performance game creation. Embracing open source, NGT fosters collaboration. Unleash limitless creativity within a thriving developer community. Join NGT and redefine the possibilities of game design.
+Welcome to NGT! An open source game engine using AngelScript as its internal scripting language.
 
+Currently, NGT is positioned as a game engine for users with visual impairments, but we should think about the possibility of making it possible to create visual games.
+Now the engine is under development, it contains some problems and bugs that we need to fix, but we can still say about a few features.
 ## Features
 
-- **Powerful Engine:** Drive your game development with a robust and potent engine at your fingertips.
-- **Free and Open Source:** Embrace the freedom to create without constraints, thanks to NGT’s open-source nature.
-- **Easy to Code:** Simplified coding structure empowers developers to bring their ideas to life effortlessly.
-- **User-Friendly:** Intuitive interface and design cater to users of varying skill levels, fostering a welcoming environment for all.
-- **Support for Multiple Screen Readers:** Accessibility is key, with robust support for various screen readers, ensuring inclusivity in gaming experiences.
-- **Immersive 3D Sounds:** Enhance gaming experiences with spatially accurate and immersive 3D sound capabilities.
-- **Expanded File and Filesystem Abilities:** Unlock more possibilities by harnessing enhanced file and filesystem capabilities for versatile game development.
-- **Comprehensive Documentation:** Access fully-documented resources, facilitating ease of understanding and implementation.
-- **Reliability:** Trust in NGT's stability and consistency, ensuring a reliable platform for game creation.
-- **Diverse Abilities:** Explore a plethora of additional abilities, opening doors to endless creative possibilities in game design.
+- **Support for Multiple Screen Readers:** Accessibility is key for users with visual impairments, allowing user to receive speech messages with any screen reader.
+- ** 3D Soundsystem:** Use 3D audio positioning, reverbs, lowpass, highpass and notch filters to achieve realistic sound in games.
+- ** File and Filesystem:** Use this to work with the user progress (For example, to save a game).
+- ** Encryption:** Use the AES256 algorithm to protect user passwords, game resources, etc.
+- ** Networking system:** Create online games. Not finished.
+
+Since NGT is not yet ready for use and contains many problems, your contribution to this project to improve it is very important to us.
 
 # Building and Contribution
 
@@ -54,5 +53,3 @@ The compiled scripts can be found in the x64 folder.
 # Additional Resources
 
 - [Official News Telegram Channel](https://t.me/newgametoolkit)
-- [NGT Documentation Repository](https://github.com/harrymkt/ngt-docs)
-- [NGT Custom Includes Repository](https://github.com/harrymkt/ngt-includes)
