@@ -228,7 +228,7 @@ public:
 	string get_peer_address(asUINT);
 	double get_peer_average_round_trip_time(asUINT);
 	CScriptArray* get_peer_list();
-	network_event* request(int timeout = 0, int* out_host_result = nullptr);
+	network_event* request(int timeout = 0);
 	bool send_reliable(asUINT peerId, const string& packet, int channel);
 	bool send_unreliable(asUINT peerId, const string& packet, int channel);
 	bool set_bandwidth_limits(double incomingBandwidth, double outgoingBandwidth);

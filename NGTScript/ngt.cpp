@@ -1459,67 +1459,61 @@ CScriptArray* network::get_peer_list() {
 	}
 	return peers_array;
 }
-network_event* network::request(int initial_timeout, int* out_host_result) {
+network_event* network::request(int initial_timeout) {
 	network_event* handle_ = new network_event;
 	int timeout = initial_timeout;
-	int retry_count = 0;
-	const int max_retries = 1000;
+	if (!host)return handle_;
+	ENetEvent event;
+	int result = enet_host_service(host, &event, timeout);
+	if (result < 0)
+		handle_->m_type = event.type;
+	handle_->m_channel = event.channelID;
+	if (event.type == ENET_EVENT_TYPE_CONNECT) {
+		enet_peer_timeout(event.peer, 128, 10000, 35000);
 
-	while (retry_count < max_retries) {
-		ENetEvent event;
-		if (!host)return handle_;
-		int result = enet_host_service(host, &event, timeout);
-		if (out_host_result != nullptr)
-			*out_host_result = result;
-		if (result > 0) {
-			handle_->m_type = event.type;
-			handle_->m_channel = event.channelID;
-			if (event.type == ENET_EVENT_TYPE_CONNECT) {
-				enet_peer_timeout(event.peer, 128, 10000, 35000);
-				if (this->type == NETWORK_TYPE_SERVER) {
-					event.peer->data = reinterpret_cast<void*>(current_peer_id);
-					peers[current_peer_id] = event.peer;
-					handle_->m_peerId = current_peer_id;
-					current_peer_id += 1;
-				}
-				else if (this->type == NETWORK_TYPE_CLIENT) {
-					handle_->m_peerId = reinterpret_cast<asUINT>(event.peer->data);
-				}
-			}
-			if (event.type == ENET_EVENT_TYPE_DISCONNECT) {
-				asUINT peer = reinterpret_cast<asUINT>(event.peer->data);
-				event.peer->data = 0;
-				if (peer > 0)
-					peers.erase(peer);
-				handle_->m_peerId = peer;
-			}
-			if (event.type == ENET_EVENT_TYPE_RECEIVE && event.packet != nullptr) {
-				handle_->m_peerId = reinterpret_cast<asUINT>(event.peer->data);
-				handle_->m_message = string(reinterpret_cast<char*>(event.packet->data), event.packet->dataLength);
-				enet_packet_destroy(event.packet);
-			}
-
-			return handle_;
-
+		if (this->type == NETWORK_TYPE_SERVER) {
+			//alert("connect id", to_string(event.peer->connectID));
+			event.peer->data = reinterpret_cast<void*>(current_peer_id);
+			peers[current_peer_id] = event.peer;
+			handle_->m_peerId = current_peer_id;
+			current_peer_id += 1;
 		}
-		else if (result == 0) {
-			retry_count++;
-		}
-		else {
-			return handle_;
+		else if (this->type == NETWORK_TYPE_CLIENT) {
+			handle_->m_peerId = reinterpret_cast<asUINT>(event.peer->data);
 		}
 	}
+	if (event.type == ENET_EVENT_TYPE_DISCONNECT) {
+		asUINT peer = reinterpret_cast<asUINT>(event.peer->data);
+		event.peer->data = 0;
+		if (peer > 0)
+			peers.erase(peer);
+		handle_->m_peerId = peer;
+	}
+	if (event.type == ENET_EVENT_TYPE_RECEIVE && event.packet != nullptr) {
+		handle_->m_peerId = reinterpret_cast<asUINT>(event.peer->data);
+		handle_->m_message = string(reinterpret_cast<char*>(event.packet->data), event.packet->dataLength);
+		enet_packet_destroy(event.packet);
+	}
+
 	return handle_;
 }
 
 bool network::send_reliable(asUINT peer_id, const string& packet, int channel) {
 	ENetPacket* p = enet_packet_create(packet.c_str(), strlen(packet.c_str()) + 1, ENET_PACKET_FLAG_RELIABLE);
 	enet_packet_resize(p, packet.size());
-	_ENetPeer* peer = get_peer(peer_id);
-	if (!peer)return false;
-	int result = enet_peer_send(peer, channel, p);
-	if (result == 0)
+	if (peer_id > 0) {
+		_ENetPeer* peer = get_peer(peer_id);
+		if (!peer)return false;
+		int result = enet_peer_send(peer, channel, p);
+		if (result == 0)
+			return true;
+	}
+	else
+	{
+		if (!host) return false;
+		enet_host_broadcast(host, channel, p);
 		return true;
+	}
 	return false;
 }
 bool network::send_unreliable(asUINT peer_id, const string& packet, int channel) {
