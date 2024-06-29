@@ -1471,7 +1471,6 @@ network_event* network::request(int initial_timeout) {
 		enet_peer_timeout(event.peer, 128, 10000, 35000);
 
 		if (this->type == NETWORK_TYPE_SERVER) {
-			//alert("connect id", to_string(event.peer->connectID));
 			event.peer->data = reinterpret_cast<void*>(current_peer_id);
 			peers[current_peer_id] = event.peer;
 			handle_->m_peerId = current_peer_id;
@@ -1517,13 +1516,20 @@ bool network::send_reliable(asUINT peer_id, const string& packet, int channel) {
 }
 bool network::send_unreliable(asUINT peer_id, const string& packet, int channel) {
 	ENetPacket* p = enet_packet_create(packet.c_str(), strlen(packet.c_str()) + 1, 0);
-
 	enet_packet_resize(p, packet.size());
-	_ENetPeer* peer = get_peer(peer_id);
-	if (!peer)return false;
-	int result = enet_peer_send(peer, channel, p);
-	if (result == 0)
+	if (peer_id > 0) {
+		_ENetPeer* peer = get_peer(peer_id);
+		if (!peer)return false;
+		int result = enet_peer_send(peer, channel, p);
+		if (result == 0)
+			return true;
+	}
+	else
+	{
+		if (!host) return false;
+		enet_host_broadcast(host, channel, p);
 		return true;
+	}
 	return false;
 }
 bool network::set_bandwidth_limits(double incomingBandwidth, double outgoingBandwidth) {
