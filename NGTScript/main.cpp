@@ -15,6 +15,7 @@
 #include "scripthelper/scripthelper.h"
 #include "scriptmath/scriptmath.h"
 #include "scriptstdstring/scriptstdstring.h"
+#include "sdl3/sdl_main.h"
 #include <assert.h>  // assert()
 #include <cstdlib>
 #include <fstream>
@@ -207,7 +208,6 @@ std::string filename;
 std::string flag;
 int scriptArg = 0;
 std::string this_exe;
-
 auto main(int argc, char* argv[]) -> int {
 	cout << ngt.code.data();
 	this_exe = get_exe();

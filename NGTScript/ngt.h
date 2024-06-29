@@ -56,7 +56,7 @@ using Poco::Net::StringPartSource;
 #include<chrono>
 #include <string>
 //#define SDL_MAIN_HANDLED
-#include"sdl/SDL.h"
+#include"sdl3/SDL.h"
 #include <iostream>
 #include<thread>
 #include <vector>

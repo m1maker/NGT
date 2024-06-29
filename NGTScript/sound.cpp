@@ -55,14 +55,13 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-
-
 MA_API ma_reverb_node_config ma_reverb_node_config_init(ma_uint32 channels, ma_uint32 sampleRate, float dry, float wet, float room_size)
 {
 	ma_reverb_node_config config;
 
 	MA_ZERO_OBJECT(&config);
 	config.nodeConfig = ma_node_config_init();  /* Input and output channels will be set in ma_reverb_node_init(). */
+	config.channels = channels;
 	config.channels = channels;
 	config.sampleRate = sampleRate;
 	config.roomSize = room_size;

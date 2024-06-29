@@ -1,7 +1,7 @@
 ﻿#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS 
 #include "cmp.h"
 #include "ngtreg.h"
-#include"sdl/SDL.h"
+#include"sdl3/SDL.h"
 #include "sound.h"
 #include "Tolk.h"
 #include <chrono>
@@ -59,6 +59,7 @@ unordered_map<int, bool> keys;
 unordered_map<Uint8, bool> buttons;
 bool keyhook = false;
 string inputtext;
+bool text_input = false;
 void replace(string& str, const string& from, const string& to) {
 	size_t start_pos = 0;
 	while ((start_pos = str.find(from, start_pos)) != string::npos) {
@@ -192,7 +193,7 @@ size_t cmp_write_bytes(cmp_ctx_t* ctx, const void* input, size_t len) {
 	return len;
 }
 void init_engine() {
-	SDL_Init(SDL_INIT_EVERYTHING);
+	SDL_Init(SDL_INIT_VIDEO);
 	if (!tolk_library_load("Tolk.dll")) {
 		voice_object = new tts_voice;
 	}
@@ -268,7 +269,7 @@ void speak(const string& text, bool stop) {
 void speak_wait(const string& text, bool stop) {
 	speak(text, stop);
 	while (Tolk_IsSpeaking()) {
-		SDL_PumpEvents();
+		update_window();
 	}
 	if (voice_object != nullptr) {
 		if (stop)
@@ -308,24 +309,21 @@ bool show_window(const string& title, int width, int height, bool closable)
 		return false;
 	if (reader == L"JAWS") {
 		SDL_SetHint(SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED, "1");
-		win = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN | SDL_WINDOW_KEYBOARD_GRABBED);
-		SDL_RegisterApp("NGTWindow", 0x450, GetModuleHandle(NULL));
+		win = SDL_CreateWindow(title.c_str(), width, height, SDL_WINDOW_KEYBOARD_GRABBED);
 
 	}
 	else
 		SDL_SetHint(SDL_HINT_APP_NAME, "NGTGame");
-	SDL_RegisterApp("NGTWindow", 0x450, GetModuleHandle(NULL));
 
-	win = SDL_CreateWindow(title.c_str(), SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
+	win = SDL_CreateWindow(title.c_str(), width, height, 0);
 
-	SDL_StartTextInput();
 	window_closable = closable;
 	if (win != NULL)
 	{
 		focus_window();
 		update_window();
 		window_is_focused = true;
-		renderer = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED);
+		renderer = SDL_CreateRenderer(win, "NGTGameRenderer");
 		if (renderer == nullptr)return false;
 		return true;
 	}
@@ -336,7 +334,9 @@ bool focus_window() {
 	return true;
 }
 void hide_window() {
-	SDL_StopTextInput();
+	if (win == nullptr)return;
+	if (SDL_TextInputActive(win))
+		SDL_StopTextInput(win);
 	SDL_DestroyRenderer(renderer);
 	SDL_DestroyWindow(win);
 	win = nullptr;
@@ -375,47 +375,44 @@ void update_window(bool wait_event)
 		}
 		else
 			SDL_WaitEvent(&e);
-		if (e.type == SDL_QUIT and window_closable == true)
+		if (e.type == SDL_EVENT_QUIT and window_closable == true)
 		{
 			exit_engine();
 		}
-		if (e.type == SDL_TEXTINPUT)
+		if (e.type == SDL_EVENT_TEXT_INPUT)
 			inputtext += e.text.text;
 
-		if (e.type == SDL_KEYDOWN)
+		if (e.type == SDL_EVENT_KEY_DOWN)
 		{
-			keys[e.key.keysym.scancode] = true;
+			keys[e.key.scancode] = true;
 		}
-		if (e.type == SDL_KEYUP)
+		if (e.type == SDL_EVENT_KEY_UP)
 		{
-			auto it = keys.find(e.key.keysym.scancode);
+			auto it = keys.find(e.key.scancode);
 			if (it != keys.end())
 			{
 				it->second = false;
 			}
 		}
-		if (e.type == SDL_MOUSEBUTTONDOWN) {
+		if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
 			buttons[e.button.button] = true;
 		}
-		if (e.type == SDL_MOUSEBUTTONUP) {
+		if (e.type == SDL_EVENT_MOUSE_BUTTON_UP) {
 			buttons[e.button.button] = false;
 		}
 
 
-		if (e.type == SDL_MOUSEMOTION) {
+		if (e.type == SDL_EVENT_MOUSE_MOTION) {
 			mouse_x = e.motion.x;
 			mouse_y = e.motion.y;
 		}
-		if (e.type == SDL_MOUSEWHEEL) {
+		if (e.type == SDL_EVENT_MOUSE_WHEEL) {
 			mouse_z = e.wheel.y;
 		}
-		if (e.type == SDL_WINDOWEVENT) {
-			if (e.window.event == SDL_WINDOWEVENT_FOCUS_GAINED)
-				window_is_focused = true;
-			if (e.window.event == SDL_WINDOWEVENT_FOCUS_LOST)
-				window_is_focused = false;
-
-		}
+		if (e.type == SDL_EVENT_WINDOW_FOCUS_GAINED)
+			window_is_focused = true;
+		if (e.type == SDL_EVENT_WINDOW_FOCUS_LOST)
+			window_is_focused = false;
 		SDL_UpdateWindowSurface(win);
 	}
 }
@@ -527,7 +524,6 @@ void exit_engine(int return_number)
 		ctx->Release();
 	soundsystem_free();
 	hide_window();
-	SDL_UnregisterApp();
 	enet_deinitialize();
 	Tolk_Unload();
 	tolk_library_unload();
@@ -610,6 +606,7 @@ string clipboard_read_text() {
 	return SDL_GetClipboardText();
 }
 string get_input() {
+	if (SDL_TextInputActive(win) == SDL_FALSE)SDL_StartTextInput(win);
 	string temp = inputtext;
 	inputtext = "";
 	return temp;
@@ -618,7 +615,7 @@ bool key_pressed(int key_code)
 {
 	if (e.key.state == SDL_PRESSED)
 	{
-		if (e.key.keysym.scancode == key_code and e.key.repeat == 0) {
+		if (e.key.scancode == key_code and e.key.repeat == 0) {
 			return true;
 		}
 	}
@@ -628,7 +625,7 @@ bool key_released(int key_code)
 {
 	if (e.key.state == SDL_RELEASED)
 	{
-		if (e.key.keysym.scancode == key_code) {
+		if (e.key.scancode == key_code) {
 			return true;
 		}
 	}
@@ -643,31 +640,31 @@ bool key_down(int key_code)
 }
 bool key_repeat(int key_code)
 {
-	if (e.type == SDL_KEYDOWN)
+	if (e.type == SDL_EVENT_KEY_DOWN)
 	{
-		if (e.key.keysym.scancode == key_code) {
+		if (e.key.scancode == key_code) {
 			return true;
 		}
 	}
 	return false;
 }
 bool force_key_down(SDL_Scancode keycode) {
-	e.type = SDL_KEYDOWN;
-	e.key.keysym.scancode = keycode;
-	keys[e.key.keysym.scancode] = true;
-	return SDL_PushEvent(&e);
+	e.type = SDL_EVENT_KEY_DOWN;
+	e.key.scancode = keycode;
+	keys[e.key.scancode] = true;
+	return SDL_PushEvent(&e) == 0;
 }
 bool force_key_up(SDL_Scancode keycode) {
-	e.type = SDL_KEYUP;
-	e.key.keysym.scancode = keycode;
-	keys[e.key.keysym.scancode] = false;
-	return SDL_PushEvent(&e);
+	e.type = SDL_EVENT_KEY_UP;
+	e.key.scancode = keycode;
+	keys[e.key.scancode] = false;
+	return SDL_PushEvent(&e) == 0;
 }
 void reset_all_forced_keys() {
 	for (int i = 0; i < keys.size(); i++) {
-		e.type = SDL_KEYUP;
+		e.type = SDL_EVENT_KEY_UP;
 
-		keys[e.key.keysym.scancode] = false;
+		keys[e.key.scancode] = false;
 		SDL_PushEvent(&e);
 
 	}
@@ -892,7 +889,7 @@ void wait(uint64_t time) {
 	timer waittimer;
 	int el = 0;
 	while (el < time) {
-		SDL_PumpEvents();
+		update_window();
 		el = waittimer.elapsed_millis();
 	}
 }
