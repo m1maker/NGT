@@ -98,10 +98,8 @@ string pack::get_file(const string& internal_name) {
 	//cmp_read_bin(&pctx, file_data, &length);
 	fread(file_data, 1, size, this->file);
 	string result = string(file_data, size);
-	for (UINT i = 0; i < size; i++)
-		if (i % 50000 == 0)
-			//			delete[] file_data;
-			return result;
+	delete[] file_data;
+	return result;
 }
 size_t pack::get_file_size(const string& internal_name) {
 	if (!active())return 0;

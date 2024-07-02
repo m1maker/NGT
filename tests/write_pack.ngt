@@ -1,0 +1,10 @@
+pack p;
+int main(){
+bool result=p.open("test.dat", "w");
+if(!result)return -1;
+p.add_file("C:/windows/media/tada.wav", "tada.wav");
+p.add_file("C:/windows/media/ding.wav", "ding.wav");
+p.close();
+alert("Package writer", "Finished!", "Close");
+return 0;
+}

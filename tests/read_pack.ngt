@@ -1,0 +1,20 @@
+sound s;
+pack p;
+int main(){
+bool result=p.open("test.dat", "r");
+if(!result){
+alert("Package reader", "Package not found. Please creat them and run Package reader.", "Close");
+return -1;
+}
+array<string>@ files=p.list_files();
+for (auto i=0;i<files.length();i++){
+string file_data=p.get_file(files[i]);
+size_t file_size=p.get_file_size(files[i]);
+bool result=s.load_from_memory(file_data, file_size, false);
+if(!result)return -2;
+s.play_wait();
+s.close();
+}
+alert("Package reader", "Finished!", "Close");
+return 0;
+}
