@@ -1,0 +1,23 @@
+audio_recorder ar;
+file encoded;
+void main(){
+show_window("Audio recorder", 640, 480, false);
+wait(500);
+speak("Press Enter to stop recording");
+ar.start();
+while(true){
+delay(5);
+update_window();
+if(key_pressed(SDLK_RETURN))break;
+}
+ar.stop();
+if(encoded.open("Recording "+time_stamp_millis+".wav", "w")!=0){
+alert("Audio recorder", "Can't open file for writing.");
+exit(-1);
+}
+encoded.write(ar.data);
+encoded.close();
+speak("Audio file saved!");
+wait(500);
+exit();
+}

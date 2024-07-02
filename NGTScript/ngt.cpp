@@ -59,8 +59,7 @@ unordered_map<int, bool> keys;
 unordered_map<Uint8, bool> buttons;
 bool keyhook = false;
 string inputtext;
-bool text_input = false;
-void replace(string& str, const string& from, const string& to) {
+static void replace(string& str, const string& from, const string& to) {
 	size_t start_pos = 0;
 	while ((start_pos = str.find(from, start_pos)) != string::npos) {
 		str.replace(start_pos, from.length(), to);
@@ -169,7 +168,7 @@ typedef struct {
 	std::string* data;
 	size_t read_cursor;
 } cmp_buffer;
-bool cmp_read_bytes(cmp_ctx_t* ctx, void* output, size_t len) {
+static bool cmp_read_bytes(cmp_ctx_t* ctx, void* output, size_t len) {
 	cmp_buffer* buf = (cmp_buffer*)ctx->buf;
 	if (!buf || !buf->data) return false;
 	if (buf->read_cursor + len > buf->data->size()) len = buf->data->size() - buf->read_cursor;
@@ -178,7 +177,7 @@ bool cmp_read_bytes(cmp_ctx_t* ctx, void* output, size_t len) {
 	buf->read_cursor += len;
 	return true;
 }
-bool cmp_skip_bytes(cmp_ctx_t* ctx, size_t len) {
+static bool cmp_skip_bytes(cmp_ctx_t* ctx, size_t len) {
 	cmp_buffer* buf = (cmp_buffer*)ctx->buf;
 	if (!buf || !buf->data) return false;
 	if (buf->read_cursor + len > buf->data->size()) len = buf->data->size() - buf->read_cursor;
@@ -186,7 +185,7 @@ bool cmp_skip_bytes(cmp_ctx_t* ctx, size_t len) {
 	buf->read_cursor += len;
 	return true;
 }
-size_t cmp_write_bytes(cmp_ctx_t* ctx, const void* input, size_t len) {
+static size_t cmp_write_bytes(cmp_ctx_t* ctx, const void* input, size_t len) {
 	cmp_buffer* buf = (cmp_buffer*)ctx->buf;
 	if (!buf || !buf->data) return 0;
 	buf->data->append((const char*)input, len);

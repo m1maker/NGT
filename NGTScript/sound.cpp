@@ -1138,6 +1138,7 @@ public:
 	bool is_3d_;
 	bool playing = false, paused = false, active = false;
 	ma_sound* handle_ = nullptr;
+	ma_decoder decoder;
 	ma_steamaudio_binaural_node g_binauralNode;   /* The echo effect is achieved using a delay node. */
 	ma_reverb_node      g_reverbNode;        /* The reverb node. */
 	ma_reverb_node_config reverbNodeConfig;
@@ -1218,22 +1219,17 @@ public:
 		ma_sound_set_end_callback(handle_, at_stop, current_fx);
 		return true;
 	}
-	bool load_from_memory(const string& data, bool set3d) {
+	bool load_from_memory(const string& data, size_t stream_size, bool set3d) {
 		handle_ = new ma_sound;
-		ma_sound_config c;
 
-		ma_decoder decoder;
-		ma_decoder_init_memory(data.c_str(), strlen(data.c_str()), NULL, &decoder);
-		c = ma_sound_config_init();
-		c.pDataSource = &decoder;
-
-		if (!set3d)
-			c.flags |= MA_SOUND_FLAG_NO_SPATIALIZATION;
-		ma_result loading_result = ma_sound_init_ex(&sound_default_mixer, &c, handle_);
+		ma_result r = ma_decoder_init_memory(data.c_str(), stream_size, NULL, &decoder);
+		if (r != MA_SUCCESS)return false;
+		ma_result loading_result = ma_sound_init_from_data_source(&sound_default_mixer, &decoder, 0, 0, handle_);
 		if (loading_result != MA_SUCCESS) {
 			active = false;
 			return false;
 		}
+		ma_decoder_uninit(&decoder);
 		active = true;
 		if (sound_global_hrtf)
 			this->set_hrtf(true);
@@ -1836,10 +1832,9 @@ bool get_sound_global_hrtf() {
 	return sound_global_hrtf;
 }
 ma_result ma_encoder_write_callback(ma_encoder* encoder, const void* buffer, size_t bytesToWrite, size_t* pBytesWritten) {
-	string temp((char*)buffer, bytesToWrite);
-	temp.resize(bytesToWrite);
-	string* data = (string*)encoder->pUserData;
-	*data += temp;
+	std::vector<string>* data = (std::vector<string>*)encoder->pUserData;
+	data->push_back(string((char*)buffer, bytesToWrite));
+	*pBytesWritten = bytesToWrite;
 	return MA_SUCCESS;
 }
 ma_result ma_encoder_seek_callback(ma_encoder* pEncoder, ma_int64 offset, ma_seek_origin origin) {
@@ -1847,7 +1842,7 @@ ma_result ma_encoder_seek_callback(ma_encoder* pEncoder, ma_int64 offset, ma_see
 }
 class audio_encoder {
 public:
-	string data;
+	std::vector<string> data;
 	ma_encoder_config encoderConfig;
 	ma_encoder encoder;
 	audio_encoder() {
@@ -1860,7 +1855,7 @@ public:
 
 	}
 	string get_data() {
-		return data;
+		return *data.data();
 	}
 };
 
@@ -1950,7 +1945,7 @@ void register_sound(asIScriptEngine* engine) {
 	engine->RegisterObjectBehaviour("sound", asBEHAVE_ADDREF, "void f()", asMETHOD(sound, add), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("sound", asBEHAVE_RELEASE, "void f()", asMETHOD(sound, release), asCALL_THISCALL);
 	engine->RegisterObjectMethod("sound", "bool load(const string &in, bool=false, sound_end_callback@=null)const", asMETHOD(sound, load), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "bool load_from_memory(const string &in, bool=false)const", asMETHOD(sound, load_from_memory), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "bool load_from_memory(const string &in, size_t=0, bool=false)const", asMETHOD(sound, load_from_memory), asCALL_THISCALL);
 	engine->RegisterObjectMethod("sound", "bool stream(const string &in, bool=false)const", asMETHOD(sound, stream), asCALL_THISCALL);
 	engine->RegisterObjectMethod("sound", "bool load_url(const string &in, bool=false)const", asMETHOD(sound, load_url), asCALL_THISCALL);
 
