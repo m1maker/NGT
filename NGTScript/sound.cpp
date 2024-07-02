@@ -12,6 +12,7 @@ using namespace std;
 #include <stdint.h> /* Required for uint32_t which is used by STEAMAUDIO_VERSION. That dependency needs to be removed from Steam Audio - use IPLuint32 or "unsigned int" instead! */
 #include<algorithm>
 #include "phonon.h" /* Steam Audio */
+#include "pack.h"
 #define FORMAT      ma_format_f32   /* Must be floating point. */
 #define CHANNELS    2               /* Must be stereo for this example. */
 #define SAMPLE_RATE 44100
@@ -938,14 +939,23 @@ void soundsystem_free() {
 
 }
 string sound_path;
+pack* sound_pack = nullptr;
 void set_sound_storage(const string& path) {
 	sound_path = path;
+	sound_pack = nullptr;
 }
 string get_sound_storage() {
 	return sound_path;
 }
+void set_sound_pack(pack* p) {
+	if (p == nullptr)return;
+	sound_pack = p;
+	sound_path = "";
+}
+pack* get_sound_pack() {
+	return sound_pack;
+}
 void set_master_volume(float volume) {
-
 	if (volume > 0 or volume < -100)return;
 	ma_engine_set_gain_db(&sound_default_mixer, volume);
 }
@@ -1205,6 +1215,11 @@ public:
 		else {
 			result = filename;
 		}
+		if (sound_pack != nullptr and sound_pack->active()) {
+			string file = sound_pack->get_file(filename);
+			size_t size = sound_pack->get_file_size(filename);
+			return this->load_from_memory(file, size, set3d);
+		}
 		handle_ = new ma_sound;
 		ma_result loading_result = ma_sound_init_from_file(&sound_default_mixer, result.c_str(), 0, NULL, NULL, handle_);
 		if (loading_result != MA_SUCCESS) {
@@ -1221,7 +1236,6 @@ public:
 	}
 	bool load_from_memory(const string& data, size_t stream_size, bool set3d) {
 		handle_ = new ma_sound;
-
 		ma_result r = ma_decoder_init_memory(data.c_str(), stream_size, NULL, &decoder);
 		if (r != MA_SUCCESS)return false;
 		ma_result loading_result = ma_sound_init_from_data_source(&sound_default_mixer, &decoder, 0, 0, handle_);
@@ -1932,6 +1946,9 @@ void register_sound(asIScriptEngine* engine) {
 	engine->RegisterGlobalFunction("void set_sound_storage(const string &in)property", asFUNCTION(set_sound_storage), asCALL_CDECL);
 
 	engine->RegisterGlobalFunction("string get_sound_storage()property", asFUNCTION(get_sound_storage), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void set_sound_pack(pack@)property", asFUNCTION(set_sound_pack), asCALL_CDECL);
+
+	engine->RegisterGlobalFunction("pack@ get_sound_pack()property", asFUNCTION(get_sound_pack), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void set_master_volume(float)property", asFUNCTION(set_master_volume), asCALL_CDECL);
 	engine->RegisterGlobalFunction("float get_master_volume()property", asFUNCTION(get_master_volume), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void mixer_start()", asFUNCTION(mixer_start), asCALL_CDECL);

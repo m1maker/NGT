@@ -1,14 +1,5 @@
 //NGTPACK
-#include "as_class.h"
-#include "cmp.h"
-#include "ngt.h"
 #include "pack.h"
-#include "scriptarray/scriptarray.h"
-#include <filesystem>
-#include <stdint.h>
-#include <stdio.h>
-#include<string>
-#include <vector>
 using namespace std;
 static bool read_bytes(void* data, size_t sz, FILE* fh) {
 	return fread(data, sizeof(uint8_t), sz, fh) == (sz * sizeof(uint8_t));
@@ -22,193 +13,170 @@ static bool file_skipper(cmp_ctx_t* ctx, size_t count) {
 static size_t file_writer(cmp_ctx_t* ctx, const void* data, size_t count) {
 	return fwrite(data, sizeof(uint8_t), count, (FILE*)ctx->buf);
 }
-typedef struct {
-	string name;
-	uint64_t size;
-	uint64_t position;
-}pkfile;
 const char* pack_header = "NGTPack";
-class pack : public as_class {
-private:
-	FILE* file = nullptr;
-	string mode;
-	cmp_ctx_t pctx = { 0 };
-	std::vector<pkfile> files;
-	uint64_t number_of_files = 0;
-public:
-	pack() {
-	}
-	bool  open(const string& filename, const string& open_mode) {
-		if (open_mode == "w")mode = "w+b";
-		else if (open_mode == "r")mode = "r+b";
-		else if (open_mode == "a")mode = "a+b";
-		else return false;
-		int result = fopen_s(&file, filename.c_str(), mode.c_str());
-		if (result != 0)return false;
-		cmp_init(&pctx, file, file_reader, file_skipper, file_writer);
-		if (mode == "w+b") {
-			cmp_write_str(&pctx, pack_header, strlen(pack_header));
-			cmp_write_u64(&pctx, number_of_files);
-		}
-		else if (mode == "r+b" or mode == "a+b") {
-			int len = strlen(pack_header);
-			char* header = new char[len];
-			uint32_t length = len + 1;
-			cmp_read_str(&pctx, header, &length);
-
-			if (strcmp(header, pack_header) != 0)
-			{
-				delete[] header;
-				return false;
-			}
-			delete[] header;
-			cmp_read_u64(&pctx, &number_of_files);
-			if (number_of_files > 0)
-			{
-				for (auto i = 0; i < number_of_files; i++) {
-					alert(to_string(i), to_string(ftell(this->file)));
-					pkfile f;
-					uint32_t file_name_length;
-					cmp_read_u32(&pctx, &file_name_length);
-					alert("after reading name length", to_string(ftell(this->file)));
-					uint64_t file_size;
-					cmp_read_u64(&pctx, &file_size);
-					alert("after reading file size", to_string(ftell(this->file)));
-
-					char* name = new char[file_name_length + 1];
-					uint32_t length = file_name_length + 1;
-					cmp_read_str(&pctx, name, &length);
-
-					alert("after reading name", to_string(ftell(this->file)));
-					string file_name = string(name);
-					delete[] name;
-					Uint64 position = ftell(this->file);
-					alert("info", file_name + "\n" + to_string(file_size));
-					f.name = file_name;
-					f.size = file_size;
-					f.position = position;
-					files.push_back(f);
-					fseek(this->file, file_size, SEEK_CUR);
-				}
-			}
-		}
-		return file != nullptr;
-	}
-	CScriptArray* list_files() {
-		asIScriptContext* ctx = asGetActiveContext();
-		asIScriptEngine* engine = ctx->GetEngine();
-		asITypeInfo* arrayType = engine->GetTypeInfoById(engine->GetTypeIdByDecl("array<string>"));
-		CScriptArray* array = CScriptArray::Create(arrayType, (asUINT)0);
-		if (!active())return array;
-		for (auto i = 0; i < files.size(); i++) {
-			array->InsertLast(&files[i].name);
-		}
-		return array;
-	}
-	string get_file(const string& internal_name) {
-		if (!active())return "";
-		if (mode != "r+b") return "";
-		string file_name;
-		uint64_t it;
-		bool found = false;
-		for (it = 0; it < files.size(); it++) {
-			if (internal_name == files[it].name)
-			{
-				found = true;
-				break;
-			}
-		}
-		if (!found)return "";
-		fseek(file, files[it].position, 0);
-
-		uint64_t size = files[it].size;
-		char* file_data = new char[size + 1];
-		uint32_t length = size + 1;
-		cmp_read_bin(&pctx, file_data, &length);
-		string result = string(file_data, size);
-		delete[] file_data;
-		return result;
-	}
-	size_t get_file_size(const string& internal_name) {
-		if (!active())return 0;
-		if (mode != "r+b") return 0;
-		string file_name;
-		uint64_t it;
-		bool found = false;
-		for (it = 0; it < files.size(); it++) {
-			if (internal_name == files[it].name)
-			{
-				found = true;
-				break;
-			}
-		}
-		if (!found)return 0;
-		fseek(file, files[it].position, 0);
-
-		return files[it].size;
-	}
-	bool add_file(const string& file, const string& name) {
-		if (!active())return false;
-		if (mode != "w+b" and mode != "a+b") return false;
-		if (file_exists(name)) return false;
-		pkfile f;
-		FILE* temp = nullptr;
-		if (fopen_s(&temp, file.c_str(), "rb") != 0)return false;
-		fseek(temp, 0, SEEK_END);
-		uint64_t size = ftell(temp);
-		fseek(temp, 0, SEEK_SET);
-		char* data = new char[size + 1];
-		size_t sz = fread(data, 1, size, temp);
-		data[sz] = '\0';
-		fclose(temp);
-		fseek(this->file, strlen(pack_header) + 1, SEEK_SET);
-		number_of_files += 1;
+pack::pack() {}
+bool  pack::open(const string& filename, const string& open_mode) {
+	if (open_mode == "w")mode = "w+b";
+	else if (open_mode == "r")mode = "r+b";
+	else if (open_mode == "a")mode = "a+b";
+	else return false;
+	int result = fopen_s(&file, filename.c_str(), mode.c_str());
+	if (result != 0)return false;
+	cmp_init(&pctx, file, file_reader, file_skipper, file_writer);
+	if (mode == "w+b") {
+		cmp_write_str(&pctx, pack_header, strlen(pack_header));
 		cmp_write_u64(&pctx, number_of_files);
-		fseek(this->file, 0, SEEK_END);
-		Uint64 position = ftell(this->file);
-		cmp_write_u32(&pctx, name.size());
-		cmp_write_u64(&pctx, size);
-		alert("fsize", to_string(size));
-		cmp_write_str(&pctx, name.c_str(), name.size());
-		alert("before writing the data", to_string(ftell(this->file)));
-		cmp_write_bin(&pctx, data, size);
-		alert("length of the file", to_string(ftell(this->file)));
-		f.name = name;
-		f.position = position;
-		f.size = size;
-		files.push_back(f);
-		delete[] data;
-		return true;
 	}
-	bool file_exists(const string& filename) {
-		for (Uint64 i = 0; i < files.size(); i++)
-			if (files[i].name == filename) return true;
-		return false;
-	}
-	bool extract_file(const string& internal_name, const string& file_on_disk) {
-		FILE* temp = nullptr;
-		if (fopen_s(&temp, file_on_disk.c_str(), "wb") != 0)return false;
-		auto data = get_file(internal_name);
-		fwrite(data.c_str(), 1, get_file_size(internal_name), temp);
-		fclose(temp);
-	}
-	bool active() const {
-		return file != nullptr;
-	}
-	int file_count() const {
-		return files.size();
-	}
-	void close() {
-		if (!this->active())return;
-		fclose(file);
-		files.clear();
-		number_of_files = 0;
-	}
+	else if (mode == "r+b" or mode == "a+b") {
+		int len = strlen(pack_header);
+		char* header = new char[len];
+		uint32_t length = len + 1;
+		cmp_read_str(&pctx, header, &length);
 
-	~pack() {
-		close();
+		if (strcmp(header, pack_header) != 0)
+		{
+			delete[] header;
+			return false;
+		}
+		delete[] header;
+		cmp_read_u64(&pctx, &number_of_files);
+		if (number_of_files > 0)
+		{
+			for (auto i = 0; i < number_of_files; i++) {
+				pkfile f;
+				uint32_t file_name_length;
+				cmp_read_u32(&pctx, &file_name_length);
+				uint64_t file_size;
+				cmp_read_u64(&pctx, &file_size);
+
+				char* name = new char[file_name_length + 1];
+				uint32_t length = file_name_length + 1;
+				cmp_read_str(&pctx, name, &length);
+
+				string file_name = string(name);
+				delete[] name;
+				Uint64 position = ftell(this->file);
+				f.name = file_name;
+				f.size = file_size;
+				f.position = position;
+				files.push_back(f);
+				fseek(this->file, file_size, SEEK_CUR);
+			}
+		}
 	}
-};
+	return file != nullptr;
+}
+CScriptArray* pack::list_files() {
+	asIScriptContext* ctx = asGetActiveContext();
+	asIScriptEngine* engine = ctx->GetEngine();
+	asITypeInfo* arrayType = engine->GetTypeInfoById(engine->GetTypeIdByDecl("array<string>"));
+	CScriptArray* array = CScriptArray::Create(arrayType, (asUINT)0);
+	if (!active())return array;
+	for (auto i = 0; i < files.size(); i++) {
+		array->InsertLast(&files[i].name);
+	}
+	return array;
+}
+string pack::get_file(const string& internal_name) {
+	if (!active())return "";
+	if (mode != "r+b") return "";
+	string file_name;
+	uint64_t it;
+	bool found = false;
+	for (it = 0; it < files.size(); it++) {
+		if (internal_name == files[it].name)
+		{
+			found = true;
+			break;
+		}
+	}
+	if (!found)return "";
+	fseek(file, files[it].position, 0);
+
+	uint64_t size = files[it].size;
+	char* file_data = new char[size + 1];
+	uint32_t length = size + 1;
+	cmp_read_bin(&pctx, file_data, &length);
+	string result = string(file_data, size);
+	delete[] file_data;
+	return result;
+}
+size_t pack::get_file_size(const string& internal_name) {
+	if (!active())return 0;
+	if (mode != "r+b") return 0;
+	string file_name;
+	uint64_t it;
+	bool found = false;
+	for (it = 0; it < files.size(); it++) {
+		if (internal_name == files[it].name)
+		{
+			found = true;
+			break;
+		}
+	}
+	if (!found)return 0;
+	fseek(file, files[it].position, 0);
+
+	return files[it].size;
+}
+bool pack::add_file(const string& file, const string& name) {
+	if (!active())return false;
+	if (mode != "w+b" and mode != "a+b") return false;
+	if (file_exists(name)) return false;
+	pkfile f;
+	FILE* temp = nullptr;
+	if (fopen_s(&temp, file.c_str(), "rb") != 0)return false;
+	fseek(temp, 0, SEEK_END);
+	uint64_t size = ftell(temp);
+	fseek(temp, 0, SEEK_SET);
+	char* data = new char[size + 1];
+	size_t sz = fread(data, 1, size, temp);
+	data[sz] = '\0';
+	fclose(temp);
+	fseek(this->file, strlen(pack_header) + 1, SEEK_SET);
+	number_of_files += 1;
+	cmp_write_u64(&pctx, number_of_files);
+	fseek(this->file, 0, SEEK_END);
+	Uint64 position = ftell(this->file);
+	cmp_write_u32(&pctx, name.size());
+	cmp_write_u64(&pctx, size);
+	cmp_write_str(&pctx, name.c_str(), name.size());
+	cmp_write_bin(&pctx, data, size);
+	f.name = name;
+	f.position = position;
+	f.size = size;
+	files.push_back(f);
+	delete[] data;
+	return true;
+}
+bool pack::file_exists(const string& filename) {
+	for (Uint64 i = 0; i < files.size(); i++)
+		if (files[i].name == filename) return true;
+	return false;
+}
+bool pack::extract_file(const string& internal_name, const string& file_on_disk) {
+	FILE* temp = nullptr;
+	if (fopen_s(&temp, file_on_disk.c_str(), "wb") != 0)return false;
+	auto data = get_file(internal_name);
+	fwrite(data.c_str(), 1, get_file_size(internal_name), temp);
+	fclose(temp);
+}
+bool pack::active() const {
+	return file != nullptr;
+}
+int pack::file_count() const {
+	return files.size();
+}
+void pack::close() {
+	if (!this->active())return;
+	fclose(file);
+	files.clear();
+	number_of_files = 0;
+}
+
+pack::~pack() {
+	close();
+}
 pack* fpack() { return new pack; }
 void register_pack(asIScriptEngine* engine) {
 	engine->RegisterObjectType("pack", sizeof(pack), asOBJ_REF);
