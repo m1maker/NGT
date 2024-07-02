@@ -1243,7 +1243,6 @@ public:
 			active = false;
 			return false;
 		}
-		ma_decoder_uninit(&decoder);
 		active = true;
 		if (sound_global_hrtf)
 			this->set_hrtf(true);
@@ -1336,6 +1335,8 @@ public:
 	}
 	bool close() {
 		if (!active)return false;
+		if (&decoder != nullptr)
+			ma_decoder_uninit(&decoder);
 		if (reverb) {
 			ma_reverb_node_uninit(&g_reverbNode, NULL);
 			reverb = false;

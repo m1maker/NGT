@@ -14,7 +14,6 @@ static size_t file_writer(cmp_ctx_t* ctx, const void* data, size_t count) {
 	return fwrite(data, sizeof(uint8_t), count, (FILE*)ctx->buf);
 }
 const char* pack_header = "NGTPack";
-pack::pack() {}
 bool  pack::open(const string& filename, const string& open_mode) {
 	if (open_mode == "w")mode = "w+b";
 	else if (open_mode == "r")mode = "r+b";
@@ -96,10 +95,13 @@ string pack::get_file(const string& internal_name) {
 	uint64_t size = files[it].size;
 	char* file_data = new char[size + 1];
 	uint32_t length = size + 1;
-	cmp_read_bin(&pctx, file_data, &length);
+	//cmp_read_bin(&pctx, file_data, &length);
+	fread(file_data, 1, size, this->file);
 	string result = string(file_data, size);
-	delete[] file_data;
-	return result;
+	for (UINT i = 0; i < size; i++)
+		if (i % 50000 == 0)
+			//			delete[] file_data;
+			return result;
 }
 size_t pack::get_file_size(const string& internal_name) {
 	if (!active())return 0;
@@ -141,7 +143,8 @@ bool pack::add_file(const string& file, const string& name) {
 	cmp_write_u32(&pctx, name.size());
 	cmp_write_u64(&pctx, size);
 	cmp_write_str(&pctx, name.c_str(), name.size());
-	cmp_write_bin(&pctx, data, size);
+	//cmp_write_bin(&pctx, data, size);
+	fwrite(data, sizeof(uint8_t), size, this->file);
 	f.name = name;
 	f.position = position;
 	f.size = size;
@@ -179,10 +182,10 @@ pack::~pack() {
 }
 pack* fpack() { return new pack; }
 void register_pack(asIScriptEngine* engine) {
-	engine->RegisterObjectType("pack", sizeof(pack), asOBJ_REF);
+	engine->RegisterObjectType("pack", sizeof(pack), asOBJ_REF | asOBJ_NOCOUNT);
 	engine->RegisterObjectBehaviour("pack", asBEHAVE_FACTORY, "pack@ p()", asFUNCTION(fpack), asCALL_CDECL);
-	engine->RegisterObjectBehaviour("pack", asBEHAVE_ADDREF, "void f()", asMETHOD(pack, add_ref), asCALL_THISCALL);
-	engine->RegisterObjectBehaviour("pack", asBEHAVE_RELEASE, "void f()", asMETHOD(pack, release), asCALL_THISCALL);
+	//	engine->RegisterObjectBehaviour("pack", asBEHAVE_ADDREF, "void f()", asMETHOD(pack, add_ref), asCALL_THISCALL);
+	//	engine->RegisterObjectBehaviour("pack", asBEHAVE_RELEASE, "void f()", asMETHOD(pack, release), asCALL_THISCALL);
 	engine->RegisterObjectMethod("pack", "bool open(const string &in, const string &in)const", asMETHOD(pack, open), asCALL_THISCALL);
 	engine->RegisterObjectMethod("pack", "void close()const", asMETHOD(pack, close), asCALL_THISCALL);
 	engine->RegisterObjectMethod("pack", "bool file_exists(const string &in)const", asMETHOD(pack, file_exists), asCALL_THISCALL);

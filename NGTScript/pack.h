@@ -25,7 +25,6 @@ private:
 	std::vector<pkfile> files;
 	uint64_t number_of_files = 0;
 public:
-	pack();
 	bool  open(const string& filename, const string& open_mode);
 	CScriptArray* list_files();
 	string get_file(const string& internal_name);
