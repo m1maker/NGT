@@ -11,7 +11,7 @@ Now the engine is under development, it contains some problems and bugs that we 
 - **3D Soundsystem:** Use 3D audio positioning, reverbs, lowpass, highpass and notch filters to achieve realistic sound in games.
 - **File and Filesystem:** Use this to work with the user progress (For example, to save a game).
 - **Encryption:** Use the AES256 algorithm to protect user passwords, game resources, etc.
-- **Networking system:** Create online games. Not finished.
+- **Networking system:** Create online games.
 
 Since NGT is not yet ready for use and contains many problems, your contribution to this project to improve it is very important to us.
 
@@ -54,3 +54,4 @@ The compiled scripts can be found in the x64 folder.
 # Additional Resources
 
 - [Official News Telegram Channel](https://t.me/newgametoolkit)
+- [Website](https://ngtcode.dev/)
