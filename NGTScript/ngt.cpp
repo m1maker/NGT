@@ -5,7 +5,9 @@
 #include "sound.h"
 #include "Tolk.h"
 #include <chrono>
+#include<condition_variable>
 #include <filesystem>
+#include<mutex>
 #include <random>
 #include <string>
 #include <thread>
@@ -134,6 +136,7 @@ void as_printf(asIScriptGeneric* gen)
 			asUINT local = *static_cast<asUINT*>(ref);
 			replace(format, "%d", to_string(local));
 			break;
+
 		}
 		case 9:
 		{
@@ -198,10 +201,15 @@ static size_t cmp_write_bytes(cmp_ctx_t* ctx, const void* input, size_t len) {
 	buf->data->append((const char*)input, len);
 	return len;
 }
+mutex window_mtx;
+condition_variable window_event_pool;
 thread window_thread([&]() {
 	if (SDL_Init(SDL_INIT_VIDEO) != 0)exit_engine((int)SDL_GetError());
-	timer window_updater;
-	while (true) {
+	while (!window_thread_event_shutdown) {
+		unique_lock<mutex> lock(window_mtx);
+		if (win == nullptr) {
+			window_event_pool.wait(lock, [] { return window_event_show || window_event_hide; });
+		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(5));
 		if (window_event_show) {
 			window_event_show = false;
@@ -234,9 +242,9 @@ thread window_thread([&]() {
 			if (win == nullptr)continue;
 			SDL_SetWindowTitle(win, window_title);
 		}
-		if (window_thread_event_shutdown)break;
 		if (win != nullptr) {
-			SDL_PollEvent(&e);
+			SDL_bool result = SDL_PollEvent(&e);
+			if (result == SDL_FALSE)continue;
 			if (e.type == SDL_EVENT_QUIT and window_closable == true)
 			{
 				exit_engine();
@@ -405,15 +413,18 @@ bool show_window(const string& title, int width, int height, bool closable)
 	window_closable = closable;
 	// Starting window
 	window_event_show = true;
-	wait(5);// Get window_thread time to create window
+	window_event_pool.notify_one();
+	wait(20);// Get window_thread time to create window
 	return win != nullptr;
 }
 void hide_window() {
 	window_event_hide = true;
+	window_event_pool.notify_one();
 }
 void set_window_title(const string& new_title) {
 	window_title = new_title.c_str();
 	window_event_set_title = true;
+	window_event_pool.notify_one();
 }
 void set_window_closable(bool set_closable) {
 	window_closable = set_closable;
@@ -545,6 +556,7 @@ void exit_engine(int return_number)
 	soundsystem_free();
 	hide_window();
 	window_thread_event_shutdown = true;
+	window_event_pool.notify_all();
 	enet_deinitialize();
 	Tolk_Unload();
 	tolk_library_unload();
@@ -661,7 +673,7 @@ bool key_down(int key_code)
 }
 bool key_repeat(int key_code)
 {
-	if (e.type == SDL_EVENT_KEY_DOWN)
+	if (e.key.state == SDL_PRESSED)
 	{
 		if (e.key.scancode == key_code) {
 			return true;
