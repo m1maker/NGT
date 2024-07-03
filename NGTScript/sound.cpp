@@ -592,7 +592,7 @@ IPLHRTFSettings iplHRTFSettings;
 IPLHRTF iplHRTF;
 
 
-bool inited = false;
+bool g_SoundInitialized = false;
 ma_engine sound_default_mixer;
 
 ma_engine_config engineConfig;
@@ -877,20 +877,17 @@ MA_API ma_result ma_steamaudio_binaural_node_set_direction(ma_steamaudio_binaura
 
 	return MA_SUCCESS;
 }
-ma_resource_manager sounds;
 IPLScene scene;
 IPLSimulator simulator;
 IPLSimulationSharedInputs simulator_inputs;
 void soundsystem_init() {
-	if (inited == true)return;
+	if (g_SoundInitialized == true)return;
 	engineConfig = ma_engine_config_init();
 	engineConfig.channels = CHANNELS;
 	engineConfig.sampleRate = SAMPLE_RATE;
 	engineConfig.periodSizeInFrames = 256;
 
 	ma_engine_init(&engineConfig, &sound_default_mixer);
-	ma_resource_manager_config c = ma_resource_manager_config_init();
-	ma_resource_manager_init(&c, &sounds);
 	MA_ZERO_OBJECT(&iplAudioSettings);
 	iplAudioSettings.samplingRate = ma_engine_get_sample_rate(&sound_default_mixer);
 
@@ -932,7 +929,7 @@ void soundsystem_init() {
 	iplSimulatorCommit(simulator);
 }
 void soundsystem_free() {
-	if (inited == false)return;
+	if (g_SoundInitialized == false)return;
 	ma_engine_uninit(&sound_default_mixer);
 
 	iplContextRelease(&iplContext);
@@ -1186,9 +1183,9 @@ public:
 	mutable int ref = 0;
 	sound(const string& filename = "", bool set3d = false) {
 		ref = 1;
-		if (!inited) {
+		if (!g_SoundInitialized) {
 			soundsystem_init();
-			inited = true;
+			g_SoundInitialized = true;
 		}
 		if (filename != "")
 			this->load(filename, set3d);
@@ -1215,6 +1212,7 @@ public:
 		else {
 			result = filename;
 		}
+		if (active)this->close();
 		if (sound_pack != nullptr and sound_pack->active()) {
 			string file = sound_pack->get_file(filename);
 			size_t size = sound_pack->get_file_size(filename);
@@ -1234,7 +1232,8 @@ public:
 		ma_sound_set_end_callback(handle_, at_stop, current_fx);
 		return true;
 	}
-	bool load_from_memory(const string& data, size_t stream_size, bool set3d) {
+	bool load_from_memory(string data, size_t stream_size, bool set3d) {
+		if (active)this->close();
 		handle_ = new ma_sound;
 		ma_result r = ma_decoder_init_memory(data.c_str(), stream_size, NULL, &decoder);
 		if (r != MA_SUCCESS)return false;
@@ -1292,7 +1291,9 @@ public:
 		return active;
 	}
 	string push_memory() {
-		return NULL;
+		if (!active)return"";
+		char* source = (char*)ma_sound_get_data_source(handle_);
+		return string(source);
 	}
 	void set_faid_time(float volume_beg, float volume_end, float time) {
 		ma_sound_set_fade_in_milliseconds(handle_, volume_beg / 100, volume_end / 100, static_cast<ma_uint64>(time));
@@ -1318,8 +1319,6 @@ public:
 	bool play_wait() {
 		this->play();
 		while (true) {
-			update_window();
-			delay(5);
 			bool ac = sound::is_playing();
 			if (ac == false) {
 				break;
@@ -1963,7 +1962,7 @@ void register_sound(asIScriptEngine* engine) {
 	engine->RegisterObjectBehaviour("sound", asBEHAVE_ADDREF, "void f()", asMETHOD(sound, add), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("sound", asBEHAVE_RELEASE, "void f()", asMETHOD(sound, release), asCALL_THISCALL);
 	engine->RegisterObjectMethod("sound", "bool load(const string &in, bool=false, sound_end_callback@=null)const", asMETHOD(sound, load), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "bool load_from_memory(const string &in, size_t=0, bool=false)const", asMETHOD(sound, load_from_memory), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "bool load_from_memory(string, size_t=0, bool=false)const", asMETHOD(sound, load_from_memory), asCALL_THISCALL);
 	engine->RegisterObjectMethod("sound", "bool stream(const string &in, bool=false)const", asMETHOD(sound, stream), asCALL_THISCALL);
 	engine->RegisterObjectMethod("sound", "bool load_url(const string &in, bool=false)const", asMETHOD(sound, load_url), asCALL_THISCALL);
 

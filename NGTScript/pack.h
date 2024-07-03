@@ -16,6 +16,7 @@ typedef struct {
 	string name;
 	uint64_t size;
 	uint64_t position;
+	string data;
 }pkfile;
 class pack : public as_class {
 private:

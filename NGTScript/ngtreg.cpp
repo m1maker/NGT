@@ -466,7 +466,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("void show_console()", asFUNCTION(show_console), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void hide_console()", asFUNCTION(hide_console), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool show_window(const string &in,int=640,int=480, bool=true)", asFUNCTION(show_window), asCALL_CDECL);
-	engine->RegisterGlobalFunction("bool focus_window()", asFUNCTION(focus_window), asCALL_CDECL);
+	//	engine->RegisterGlobalFunction("bool focus_window()", asFUNCTION(focus_window), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void hide_window()", asFUNCTION(hide_window), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void set_window_title(const string &in)property", asFUNCTION(set_window_title), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void set_window_closable(bool)property", asFUNCTION(set_window_closable), asCALL_CDECL);
@@ -477,7 +477,6 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("surface load_bmp(const string &in)", asFUNCTION(load_bmp), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int fill_rect(surface, rect@, uint32)", asFUNCTION(SDL_FillSurfaceRect), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int blit_surface(surface, rect@, surface, rect@)", asFUNCTION(SDL_BlitSurface), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void update_window(bool=false)", asFUNCTION(update_window), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool get_window_active()property", asFUNCTION(get_window_active), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void set_window_fullscreen(bool)property", asFUNCTION(set_window_fullscreen), asCALL_CDECL);
 
@@ -529,7 +528,6 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("int question(const string &in, const string &in)", asFUNCTION(question), asCALL_CDECL);
 
 	engine->RegisterGlobalFunction("void wait(uint64)", asFUNCTION(wait), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void delay(int)", asFUNCTION(delay), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string read_environment_variable(const string&in)", asFUNCTION(read_environment_variable), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool write_environment_variable(const string&in, const string &in)", asFUNCTION(write_environment_variable), asCALL_CDECL);
 

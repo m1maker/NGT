@@ -90,6 +90,7 @@ string pack::get_file(const string& internal_name) {
 		}
 	}
 	if (!found)return "";
+	if (files[it].data != "")return files[it].data;
 	fseek(file, files[it].position, 0);
 
 	uint64_t size = files[it].size;
@@ -99,6 +100,7 @@ string pack::get_file(const string& internal_name) {
 	fread(file_data, 1, size, this->file);
 	string result = string(file_data, size);
 	delete[] file_data;
+	files[it].data = result;
 	return result;
 }
 size_t pack::get_file_size(const string& internal_name) {
@@ -180,10 +182,10 @@ pack::~pack() {
 }
 pack* fpack() { return new pack; }
 void register_pack(asIScriptEngine* engine) {
-	engine->RegisterObjectType("pack", sizeof(pack), asOBJ_REF | asOBJ_NOCOUNT);
+	engine->RegisterObjectType("pack", sizeof(pack), asOBJ_REF);
 	engine->RegisterObjectBehaviour("pack", asBEHAVE_FACTORY, "pack@ p()", asFUNCTION(fpack), asCALL_CDECL);
-	//	engine->RegisterObjectBehaviour("pack", asBEHAVE_ADDREF, "void f()", asMETHOD(pack, add_ref), asCALL_THISCALL);
-	//	engine->RegisterObjectBehaviour("pack", asBEHAVE_RELEASE, "void f()", asMETHOD(pack, release), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("pack", asBEHAVE_ADDREF, "void f()", asMETHOD(pack, add_ref), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("pack", asBEHAVE_RELEASE, "void f()", asMETHOD(pack, release), asCALL_THISCALL);
 	engine->RegisterObjectMethod("pack", "bool open(const string &in, const string &in)const", asMETHOD(pack, open), asCALL_THISCALL);
 	engine->RegisterObjectMethod("pack", "void close()const", asMETHOD(pack, close), asCALL_THISCALL);
 	engine->RegisterObjectMethod("pack", "bool file_exists(const string &in)const", asMETHOD(pack, file_exists), asCALL_THISCALL);
