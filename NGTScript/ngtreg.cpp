@@ -468,6 +468,8 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("bool show_window(const string &in,int=640,int=480, bool=true)", asFUNCTION(show_window), asCALL_CDECL);
 	//	engine->RegisterGlobalFunction("bool focus_window()", asFUNCTION(focus_window), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void hide_window()", asFUNCTION(hide_window), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void set_update_window_freq(long)property", asFUNCTION(set_update_window_freq), asCALL_CDECL);
+	engine->RegisterGlobalFunction("long get_update_window_freq()property", asFUNCTION(get_update_window_freq), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void set_window_title(const string &in)property", asFUNCTION(set_window_title), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void set_window_closable(bool)property", asFUNCTION(set_window_closable), asCALL_CDECL);
 

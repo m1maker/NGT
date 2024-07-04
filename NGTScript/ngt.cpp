@@ -55,6 +55,7 @@ bool window_is_focused = false;
 bool window_event_show = false;
 bool window_event_hide = false;
 bool window_event_set_title = false;
+long update_window_freq = 5;
 const char* window_title = nullptr;
 int window_w, window_h;
 bool window_thread_event_shutdown = false;
@@ -218,7 +219,7 @@ public:
 	void run() {
 		if (SDL_Init(SDL_INIT_VIDEO) != 0)exit_engine((int)SDL_GetError());
 		while (!window_thread_event_shutdown) {
-			thread.sleep(5);
+			thread.sleep(update_window_freq);
 			// Lock the mutex
 			Poco::Mutex::ScopedLock lock(mutex);
 
@@ -315,6 +316,12 @@ public:
 	}
 };
 WindowThread windowRunnable;
+void set_update_window_freq(long freq) {
+	update_window_freq = freq;
+}
+long get_update_window_freq() {
+	return update_window_freq;
+}
 void init_engine() {
 	if (!tolk_library_load("Tolk.dll")) {
 		voice_object = new tts_voice;

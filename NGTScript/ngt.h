@@ -78,6 +78,8 @@ int get_cpu_count();
 int get_system_ram();
 string get_platform();
 void set_exit_callback(asIScriptFunction* callback = nullptr);
+void set_update_window_freq(long);
+long get_update_window_freq();
 void init_engine();
 void set_library_path(const string& path);
 long random(long min, long max);
