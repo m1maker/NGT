@@ -1,6 +1,10 @@
 ﻿#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS 
 #include "cmp.h"
 #include "ngtreg.h"
+#include "Poco/Event.h"
+#include "Poco/Mutex.h"
+#include "Poco/Runnable.h"
+#include "Poco/Thread.h"
 #include"sdl3/SDL.h"
 #include "sound.h"
 #include "Tolk.h"
@@ -45,8 +49,6 @@ unique_ptr<T, D> make_handle(T* handle, D deleter)
 }
 
 using namespace std;
-SDL_Window* win = nullptr;
-SDL_Renderer* renderer = nullptr;
 int mouse_x = 0, mouse_y = 0, mouse_z = 0;
 SDL_Event e;
 bool window_is_focused = false;
@@ -201,103 +203,119 @@ static size_t cmp_write_bytes(cmp_ctx_t* ctx, const void* input, size_t len) {
 	buf->data->append((const char*)input, len);
 	return len;
 }
-mutex window_mtx;
-condition_variable window_event_pool;
-thread window_thread([&]() {
-	if (SDL_Init(SDL_INIT_VIDEO) != 0)exit_engine((int)SDL_GetError());
-	while (!window_thread_event_shutdown) {
-		unique_lock<mutex> lock(window_mtx);
-		if (win == nullptr) {
-			window_event_pool.wait(lock, [] { return window_event_show || window_event_hide; });
-		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(5));
-		if (window_event_show) {
-			window_event_show = false;
-			if (win != nullptr) {
-				SDL_ShowWindow(win);
-				continue;
-			}
-			if (reader == L"JAWS") {
-				SDL_SetHint(SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED, "1");
-				win = SDL_CreateWindow(window_title, window_w, window_h, SDL_WINDOW_KEYBOARD_GRABBED);
-			}
-			else
-				SDL_SetHint(SDL_HINT_APP_NAME, "NGTGame");
+Poco::Mutex window_mtx;
+Poco::Event window_event_pool;
+class WindowThread : public Poco::Runnable {
+private:
+	Poco::Thread thread;
+	SDL_Window* win = nullptr;
+	SDL_Renderer* renderer = nullptr;
+public:
+	void start() {
+		thread.setPriority(Poco::Thread::PRIO_LOWEST);
+		thread.start(*this);
+	}
+	void run() {
+		if (SDL_Init(SDL_INIT_VIDEO) != 0)exit_engine((int)SDL_GetError());
+		while (!window_thread_event_shutdown) {
+			thread.sleep(5);
+			// Lock the mutex
+			Poco::Mutex::ScopedLock lock(mutex);
 
-			win = SDL_CreateWindow(window_title, window_w, window_h, 0);
+			if (win == nullptr) {
+				window_event_pool.wait();
+			}
+			if (window_event_show) {
+				window_event_show = false;
+				if (reader == L"JAWS") {
+					SDL_SetHint(SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED, "1");
+					win = SDL_CreateWindow(window_title, window_w, window_h, SDL_WINDOW_KEYBOARD_GRABBED);
+				}
+				else
+					SDL_SetHint(SDL_HINT_APP_NAME, "NGTGame");
 
-			if (win != nullptr)
-			{
-				window_is_focused = true;
-				renderer = SDL_CreateRenderer(win, "NGTGameRenderer");
-				if (renderer == nullptr)continue;
-			}
-		}
-		if (window_event_hide) {
-			window_event_hide = false;
-			SDL_HideWindow(win);
-		}
-		if (window_event_set_title) {
-			window_event_set_title = false;
-			if (win == nullptr)continue;
-			SDL_SetWindowTitle(win, window_title);
-		}
-		if (win != nullptr) {
-			SDL_bool result = SDL_PollEvent(&e);
-			if (result == SDL_FALSE)continue;
-			if (e.type == SDL_EVENT_QUIT and window_closable == true)
-			{
-				exit_engine();
-			}
-			if (e.type == SDL_EVENT_TEXT_INPUT)
-				inputtext += e.text.text;
+				win = SDL_CreateWindow(window_title, window_w, window_h, 0);
 
-			if (e.type == SDL_EVENT_KEY_DOWN)
-			{
-				keys[e.key.scancode] = true;
-			}
-			if (e.type == SDL_EVENT_KEY_UP)
-			{
-				auto it = keys.find(e.key.scancode);
-				if (it != keys.end())
+				if (win != nullptr)
 				{
-					it->second = false;
+					window_is_focused = true;
+					renderer = SDL_CreateRenderer(win, "NGTGameRenderer");
+					if (renderer == nullptr)continue;
+					if (SDL_TextInputActive(win) == SDL_FALSE)SDL_StartTextInput(win);
 				}
 			}
-			if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-				buttons[e.button.button] = true;
+			if (window_event_hide) {
+				window_event_hide = false;
+				SDL_DestroyWindow(win);
+				win = nullptr;
 			}
-			if (e.type == SDL_EVENT_MOUSE_BUTTON_UP) {
-				buttons[e.button.button] = false;
+			if (window_event_set_title) {
+				window_event_set_title = false;
+				if (win == nullptr)continue;
+				SDL_SetWindowTitle(win, window_title);
 			}
+			if (win != nullptr) {
+				SDL_bool result = SDL_PollEvent(&e);
+				if (result == SDL_FALSE) SDL_PumpEvents();
+				if (e.type == SDL_EVENT_QUIT and window_closable == true)
+				{
+					exit_engine();
+				}
+				if (e.type == SDL_EVENT_TEXT_INPUT)
+					inputtext += e.text.text;
+
+				if (e.type == SDL_EVENT_KEY_DOWN)
+				{
+					keys[e.key.scancode] = true;
+				}
+				if (e.type == SDL_EVENT_KEY_UP)
+				{
+					auto it = keys.find(e.key.scancode);
+					if (it != keys.end())
+					{
+						it->second = false;
+					}
+				}
+				if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+					buttons[e.button.button] = true;
+				}
+				if (e.type == SDL_EVENT_MOUSE_BUTTON_UP) {
+					buttons[e.button.button] = false;
+				}
 
 
-			if (e.type == SDL_EVENT_MOUSE_MOTION) {
-				mouse_x = e.motion.x;
-				mouse_y = e.motion.y;
+				if (e.type == SDL_EVENT_MOUSE_MOTION) {
+					mouse_x = e.motion.x;
+					mouse_y = e.motion.y;
+				}
+				if (e.type == SDL_EVENT_MOUSE_WHEEL) {
+					mouse_z = e.wheel.y;
+				}
+				if (e.type == SDL_EVENT_WINDOW_FOCUS_GAINED)
+					window_is_focused = true;
+				if (e.type == SDL_EVENT_WINDOW_FOCUS_LOST)
+					window_is_focused = false;
+				SDL_UpdateWindowSurface(win);
 			}
-			if (e.type == SDL_EVENT_MOUSE_WHEEL) {
-				mouse_z = e.wheel.y;
-			}
-			if (e.type == SDL_EVENT_WINDOW_FOCUS_GAINED)
-				window_is_focused = true;
-			if (e.type == SDL_EVENT_WINDOW_FOCUS_LOST)
-				window_is_focused = false;
-			SDL_UpdateWindowSurface(win);
 		}
+		if (win != nullptr) {
+			if (SDL_TextInputActive(win))
+				SDL_StopTextInput(win);
+			SDL_DestroyRenderer(renderer);
+			SDL_DestroyWindow(win);
+			win = nullptr;
+			window_is_focused = false;
+		}
+		SDL_Quit();
 	}
-	if (win != nullptr) {
-		if (SDL_TextInputActive(win))
-			SDL_StopTextInput(win);
-		SDL_DestroyRenderer(renderer);
-		SDL_DestroyWindow(win);
-		win = nullptr;
-		window_is_focused = false;
+	void stop() {
+		window_thread_event_shutdown = true;
+		window_event_pool.set();
+		thread.join();
 	}
-	SDL_Quit();
-	});
+};
+WindowThread windowRunnable;
 void init_engine() {
-	window_thread.detach();
 	if (!tolk_library_load("Tolk.dll")) {
 		voice_object = new tts_voice;
 	}
@@ -407,24 +425,29 @@ void hide_console() {
 }
 bool show_window(const string& title, int width, int height, bool closable)
 {
+	window_thread_event_shutdown = false;
+	windowRunnable.start();
 	window_title = title.c_str();
 	window_w = width;
 	window_h = height;
 	window_closable = closable;
 	// Starting window
 	window_event_show = true;
-	window_event_pool.notify_one();
+	window_event_pool.set();
 	wait(20);// Get window_thread time to create window
-	return win != nullptr;
+	return true;
 }
 void hide_window() {
 	window_event_hide = true;
-	window_event_pool.notify_one();
+	window_thread_event_shutdown = true;
+	window_event_pool.set();
+	wait(20);
+	windowRunnable.stop();
 }
 void set_window_title(const string& new_title) {
 	window_title = new_title.c_str();
 	window_event_set_title = true;
-	window_event_pool.notify_one();
+	window_event_pool.set();
 }
 void set_window_closable(bool set_closable) {
 	window_closable = set_closable;
@@ -435,8 +458,7 @@ void garbage_collect() {
 	engine->GarbageCollect(1 | 2, 1);
 }
 SDL_Surface* get_window_surface() {
-	if (win == nullptr)return nullptr;
-	return SDL_GetWindowSurface(win);
+	return nullptr;
 }
 SDL_Surface* load_bmp(const string& file) {
 	return SDL_LoadBMP(file.c_str());
@@ -451,11 +473,6 @@ bool get_window_active() {
 	return window_is_focused;
 }
 void set_window_fullscreen(bool fullscreen) {
-	if (!win)return;
-	if (fullscreen == true)
-		SDL_SetWindowFullscreen(win, SDL_WINDOW_FULLSCREEN);
-	else
-		SDL_SetWindowFullscreen(win, 0);
 }
 bool mouse_pressed(Uint8 button)
 {
@@ -555,8 +572,6 @@ void exit_engine(int return_number)
 		ctx->Release();
 	soundsystem_free();
 	hide_window();
-	window_thread_event_shutdown = true;
-	window_event_pool.notify_all();
 	enet_deinitialize();
 	Tolk_Unload();
 	tolk_library_unload();
@@ -639,7 +654,6 @@ string clipboard_read_text() {
 	return SDL_GetClipboardText();
 }
 string get_input() {
-	if (SDL_TextInputActive(win) == SDL_FALSE)SDL_StartTextInput(win);
 	string temp = inputtext;
 	inputtext = "";
 	return temp;
@@ -874,7 +888,7 @@ bool alert(const string& title, const string& text, const string& button_name)
 
 	SDL_MessageBoxData messageboxdata = {
 		SDL_MESSAGEBOX_INFORMATION,
-		win,
+		SDL_GetKeyboardFocus(),
 		title.c_str(),
 		text.c_str(),
 		SDL_arraysize(buttons),
@@ -900,7 +914,7 @@ int question(const string& title, const string& text) {
 
 	SDL_MessageBoxData messageboxdata = {
 		SDL_MESSAGEBOX_INFORMATION,
-		win,
+		SDL_GetKeyboardFocus(),
 		title.c_str(),
 		text.c_str(),
 		SDL_arraysize(buttons),
