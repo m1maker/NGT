@@ -886,7 +886,6 @@ void soundsystem_init() {
 	engineConfig.channels = CHANNELS;
 	engineConfig.sampleRate = SAMPLE_RATE;
 	engineConfig.periodSizeInFrames = 256;
-
 	ma_engine_init(&engineConfig, &sound_default_mixer);
 	MA_ZERO_OBJECT(&iplAudioSettings);
 	iplAudioSettings.samplingRate = ma_engine_get_sample_rate(&sound_default_mixer);
@@ -967,6 +966,10 @@ void mixer_stop() {
 	ma_engine_stop(&sound_default_mixer);
 }
 bool mixer_play_sound(const string& filename) {
+	if (!g_SoundInitialized) {
+		soundsystem_init();
+		g_SoundInitialized = true;
+	}
 	string result;
 	if (sound_path != "") {
 		result = sound_path + "/" + filename.c_str();

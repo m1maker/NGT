@@ -205,7 +205,6 @@ static size_t cmp_write_bytes(cmp_ctx_t* ctx, const void* input, size_t len) {
 	return len;
 }
 Poco::Mutex window_mtx;
-Poco::Event window_event_pool;
 class WindowThread : public Poco::Runnable {
 private:
 	Poco::Thread thread;
@@ -213,19 +212,14 @@ private:
 	SDL_Renderer* renderer = nullptr;
 public:
 	void start() {
-		thread.setPriority(Poco::Thread::PRIO_LOWEST);
 		thread.start(*this);
 	}
+	bool IsRunning() { return thread.isRunning(); }
 	void run() {
-		if (SDL_Init(SDL_INIT_VIDEO) != 0)exit_engine((int)SDL_GetError());
 		while (!window_thread_event_shutdown) {
 			thread.sleep(update_window_freq);
 			// Lock the mutex
-			Poco::Mutex::ScopedLock lock(mutex);
-
-			if (win == nullptr) {
-				window_event_pool.wait();
-			}
+			Poco::Mutex::ScopedLock lock(window_mtx);
 			if (window_event_show) {
 				window_event_show = false;
 				if (reader == L"JAWS") {
@@ -239,6 +233,7 @@ public:
 
 				if (win != nullptr)
 				{
+					SDL_RaiseWindow(win);
 					window_is_focused = true;
 					renderer = SDL_CreateRenderer(win, "NGTGameRenderer");
 					if (renderer == nullptr)continue;
@@ -257,7 +252,7 @@ public:
 			}
 			if (win != nullptr) {
 				SDL_bool result = SDL_PollEvent(&e);
-				if (result == SDL_FALSE) SDL_PumpEvents();
+				if (result == SDL_FALSE);
 				if (e.type == SDL_EVENT_QUIT and window_closable == true)
 				{
 					exit_engine();
@@ -307,15 +302,12 @@ public:
 			win = nullptr;
 			window_is_focused = false;
 		}
-		SDL_Quit();
 	}
 	void stop() {
 		window_thread_event_shutdown = true;
-		window_event_pool.set();
-		thread.join();
 	}
 };
-WindowThread windowRunnable;
+WindowThread* windowRunnable;
 void set_update_window_freq(long freq) {
 	update_window_freq = freq;
 }
@@ -323,6 +315,7 @@ long get_update_window_freq() {
 	return update_window_freq;
 }
 void init_engine() {
+	if (SDL_Init(SDL_INIT_VIDEO) != 0)exit_engine((int)SDL_GetError());
 	if (!tolk_library_load("Tolk.dll")) {
 		voice_object = new tts_voice;
 	}
@@ -432,29 +425,29 @@ void hide_console() {
 }
 bool show_window(const string& title, int width, int height, bool closable)
 {
+	windowRunnable = new WindowThread;
 	window_thread_event_shutdown = false;
-	windowRunnable.start();
+	windowRunnable->start();
 	window_title = title.c_str();
 	window_w = width;
 	window_h = height;
 	window_closable = closable;
 	// Starting window
 	window_event_show = true;
-	window_event_pool.set();
 	wait(20);// Get window_thread time to create window
-	return true;
+	return windowRunnable->IsRunning();
 }
 void hide_window() {
 	window_event_hide = true;
 	window_thread_event_shutdown = true;
-	window_event_pool.set();
 	wait(20);
-	windowRunnable.stop();
+	windowRunnable->stop();
+	delete windowRunnable;
+	windowRunnable = nullptr;
 }
 void set_window_title(const string& new_title) {
 	window_title = new_title.c_str();
 	window_event_set_title = true;
-	window_event_pool.set();
 }
 void set_window_closable(bool set_closable) {
 	window_closable = set_closable;
