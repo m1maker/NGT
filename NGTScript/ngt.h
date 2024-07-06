@@ -136,7 +136,7 @@ string url_encode(const string& url);
 string url_get(const string& url);
 string url_post(const string& url, const string& parameters);
 void ftp_download(const string& url, const string& file);
-void mail_send(const string& username, const string& password, const string& mailhost, const string& sender, const string& recipient, const string& subject, const string& content, const string& attachment = "");
+void mail_send(Poco::Net::SMTPClientSession::LoginMethod login_method, asUINT port, const string& username, const string& password, const string& mailhost, const string& sender, const string& recipient, const string& subject, const string& content, const string& attachment = "");
 string ascii_to_character(int the_ascii_code);
 int character_to_ascii(string the_character);
 string hex_to_string(string the_hexadecimal_sequence);

@@ -2,7 +2,6 @@
 #include "scriptstdstring/scriptstdstring.h"
 #include <cstdlib>
 #include <fstream>
-
 #include <iostream>
 #define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
 #include <windows.h>
@@ -489,7 +488,15 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("int get_MOUSE_Y()property", asFUNCTION(get_MOUSE_Y), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int get_MOUSE_Z()property", asFUNCTION(get_MOUSE_Z), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void ftp_download(const string& in, const string &in)", asFUNCTION(ftp_download), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void mail_send(const string &in, const string &in, const string&in, const string&in, const string&in, const string&in, const string&in, const string&in=\"\")", asFUNCTION(mail_send), asCALL_CDECL);
+	engine->RegisterEnum("smtp_login_method");
+	engine->RegisterEnumValue("smtp_login_method", "AUTH_NONE", Poco::Net::SMTPClientSession::AUTH_NONE);
+	engine->RegisterEnumValue("smtp_login_method", "AUTH_CRAM_MD5", Poco::Net::SMTPClientSession::AUTH_CRAM_MD5);
+	engine->RegisterEnumValue("smtp_login_method", "AUTH_CRAM_SHA1", Poco::Net::SMTPClientSession::AUTH_CRAM_SHA1);
+	engine->RegisterEnumValue("smtp_login_method", "AUTH_LOGIN", Poco::Net::SMTPClientSession::AUTH_LOGIN);
+	engine->RegisterEnumValue("smtp_login_method", "AUTH_PLAIN", Poco::Net::SMTPClientSession::AUTH_PLAIN);
+	engine->RegisterEnumValue("smtp_login_method", "AUTH_XOAUTH2", Poco::Net::SMTPClientSession::AUTH_XOAUTH2);
+	engine->RegisterEnumValue("smtp_login_method", "AUTH_NTLM", Poco::Net::SMTPClientSession::AUTH_NTLM);
+	engine->RegisterGlobalFunction("void mail_send(smtp_login_method, uint, const string &in, const string &in, const string&in, const string&in, const string&in, const string&in, const string&in, const string&in=\"\")", asFUNCTION(mail_send), asCALL_CDECL);
 
 	engine->RegisterGlobalFunction("void exit(int=0)", asFUNCTION(exit_engine), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string number_to_words(uint64, bool)", asFUNCTION(number_to_words), asCALL_CDECL);

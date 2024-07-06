@@ -1322,6 +1322,7 @@ public:
 	bool play_wait() {
 		this->play();
 		while (true) {
+			wait(1);
 			bool ac = sound::is_playing();
 			if (ac == false) {
 				break;

@@ -217,7 +217,7 @@ public:
 	bool IsRunning() { return thread.isRunning(); }
 	void run() {
 		while (!window_thread_event_shutdown) {
-			thread.sleep(update_window_freq);
+			thread.sleep(update_window_freq + 1);
 			// Lock the mutex
 			Poco::Mutex::ScopedLock lock(window_mtx);
 			if (window_event_show) {
@@ -252,11 +252,9 @@ public:
 			}
 			if (win != nullptr) {
 				SDL_bool result = SDL_PollEvent(&e);
-				if (result == SDL_FALSE);
+				//if (result == SDL_FALSE) continue;
 				if (e.type == SDL_EVENT_QUIT and window_closable == true)
-				{
 					exit_engine();
-				}
 				if (e.type == SDL_EVENT_TEXT_INPUT)
 					inputtext += e.text.text;
 
@@ -531,7 +529,7 @@ void ftp_download(const string& url, const string& file) {
 	}
 
 }
-void mail_send(const string& username, const string& password, const string& mailhost, const string& sender, const string& recipient, const string& subject, const string& content, const string& attachment) {
+void mail_send(Poco::Net::SMTPClientSession::LoginMethod login_method, asUINT port, const string& username, const string& password, const string& mailhost, const string& sender, const string& recipient, const string& subject, const string& content, const string& attachment) {
 	try {
 		MailMessage message;
 		message.setSender(sender);
@@ -540,8 +538,8 @@ void mail_send(const string& username, const string& password, const string& mai
 		message.addContent(new StringPartSource(content));
 		if (attachment != "")
 			message.addAttachment("Attachment", new StringPartSource(attachment, "file@ f"));
-		SMTPClientSession session(mailhost);
-		session.login(SMTPClientSession::AUTH_LOGIN, username, password);
+		SMTPClientSession session(mailhost, port);
+		session.login(login_method, username, password);
 		session.sendMessage(message);
 		session.close();
 	}
@@ -936,6 +934,8 @@ void wait(uint64_t time) {
 	timer waittimer;
 	int el = 0;
 	while (el < time) {
+		unsigned int wt = (time < 5 ? time : 5);
+		SDL_Delay(wt);
 		el = waittimer.elapsed_millis();
 	}
 }
