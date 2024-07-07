@@ -64,6 +64,7 @@
     <ClCompile Include="contextmgr\contextmgr.cpp" />
     <ClCompile Include="fx\freeverb.c" />
     <ClCompile Include="cmp.c" />
+    <ClCompile Include="docgen.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="angelscript.h" />
@@ -371,6 +372,7 @@
     <ClInclude Include="SDL3\SDL_version.h" />
     <ClInclude Include="SDL3\SDL_video.h" />
     <ClInclude Include="SDL3\SDL_vulkan.h" />
+    <ClInclude Include="docgen.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="pack\physfs_platform_apple.m" />

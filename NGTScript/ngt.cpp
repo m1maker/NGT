@@ -55,6 +55,8 @@ bool window_is_focused = false;
 bool window_event_show = false;
 bool window_event_hide = false;
 bool window_event_set_title = false;
+bool window_event_push = false;
+bool window_event_keyboard_reset = false;
 long update_window_freq = 5;
 const char* window_title = nullptr;
 int window_w, window_h;
@@ -67,7 +69,7 @@ wstring wstr(const string& utf8String)
 	return converter.from_bytes(utf8String);
 }
 wstring reader;
-unordered_map<int, bool> keys;
+std::array<KeyboardKey, 512> keys;
 unordered_map<Uint8, bool> buttons;
 bool keyhook = false;
 string inputtext;
@@ -224,12 +226,12 @@ public:
 				window_event_show = false;
 				if (reader == L"JAWS") {
 					SDL_SetHint(SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED, "1");
-					win = SDL_CreateWindow(window_title, window_w, window_h, SDL_WINDOW_KEYBOARD_GRABBED);
+					win = SDL_CreateWindow(window_title, window_w, window_h, SDL_WINDOW_KEYBOARD_GRABBED | SDL_WINDOW_INPUT_FOCUS);
 				}
 				else
 					SDL_SetHint(SDL_HINT_APP_NAME, "NGTGame");
 
-				win = SDL_CreateWindow(window_title, window_w, window_h, 0);
+				win = SDL_CreateWindow(window_title, window_w, window_h, SDL_WINDOW_INPUT_FOCUS);
 
 				if (win != nullptr)
 				{
@@ -238,6 +240,7 @@ public:
 					renderer = SDL_CreateRenderer(win, "NGTGameRenderer");
 					if (renderer == nullptr)continue;
 					if (SDL_TextInputActive(win) == SDL_FALSE)SDL_StartTextInput(win);
+					SDL_SetWindowInputFocus(win);
 				}
 			}
 			if (window_event_hide) {
@@ -253,22 +256,29 @@ public:
 			if (win != nullptr) {
 				SDL_bool result = SDL_PollEvent(&e);
 				//if (result == SDL_FALSE) continue;
+				if (window_event_push) {
+					window_event_push = false;
+					SDL_PushEvent(&e);
+				}
+				if (window_event_keyboard_reset) {
+					window_event_keyboard_reset = false;
+					SDL_ResetKeyboard();
+				}
 				if (e.type == SDL_EVENT_QUIT and window_closable == true)
 					exit_engine();
-				if (e.type == SDL_EVENT_TEXT_INPUT)
+				if (e.type == SDL_EVENT_TEXT_INPUT or e.type == SDL_EVENT_TEXT_EDITING)
+				{
 					inputtext += e.text.text;
+				}
 
 				if (e.type == SDL_EVENT_KEY_DOWN)
 				{
-					keys[e.key.scancode] = true;
+					keys[e.key.scancode].isDown = true;
 				}
 				if (e.type == SDL_EVENT_KEY_UP)
 				{
-					auto it = keys.find(e.key.scancode);
-					if (it != keys.end())
-					{
-						it->second = false;
-					}
+					keys[e.key.scancode].isDown = false;
+					keys[e.key.scancode].isPressed = false;
 				}
 				if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
 					buttons[e.button.button] = true;
@@ -659,11 +669,10 @@ string get_input() {
 }
 bool key_pressed(int key_code)
 {
-	if (e.key.state == SDL_PRESSED)
+	if (keys[key_code].isDown == true and keys[key_code].isPressed == false)
 	{
-		if (e.key.scancode == key_code and e.key.repeat == 0) {
-			return true;
-		}
+		keys[key_code].isPressed = true;
+		return true;
 	}
 	return false;
 }
@@ -679,16 +688,13 @@ bool key_released(int key_code)
 }
 bool key_down(int key_code)
 {
-	if (keys.find(key_code) != keys.begin() or keys.find(key_code) != keys.end()) {
-		return keys[key_code];
-	}
-	return false;
+	return keys[key_code].isDown;
 }
 bool key_repeat(int key_code)
 {
 	if (e.key.state == SDL_PRESSED)
 	{
-		if (e.key.scancode == key_code) {
+		if (key_pressed(key_code) or e.key.scancode == key_code and e.key.repeat > 0) {
 			return true;
 		}
 	}
@@ -697,23 +703,22 @@ bool key_repeat(int key_code)
 bool force_key_down(SDL_Scancode keycode) {
 	e.type = SDL_EVENT_KEY_DOWN;
 	e.key.scancode = keycode;
-	keys[e.key.scancode] = true;
-	return SDL_PushEvent(&e) == 0;
+	keys[e.key.scancode].isDown = true;
+	window_event_push = true;
+	return key_down(keycode);
 }
 bool force_key_up(SDL_Scancode keycode) {
 	e.type = SDL_EVENT_KEY_UP;
 	e.key.scancode = keycode;
-	keys[e.key.scancode] = false;
-	return SDL_PushEvent(&e) == 0;
+	keys[e.key.scancode].isDown = false;
+	window_event_push = true;
+	return !key_down(keycode);
 }
 void reset_all_forced_keys() {
-	for (int i = 0; i < keys.size(); i++) {
-		e.type = SDL_EVENT_KEY_UP;
-
-		keys[e.key.scancode] = false;
-		SDL_PushEvent(&e);
-
+	for (int i = 0; i < 512; i++) {
+		keys[i].isDown = false;
 	}
+	window_event_keyboard_reset = true;
 }
 string string_encrypt(string the_string, string encryption_key) {
 	string iv = "abcdabcdabcdabcd";

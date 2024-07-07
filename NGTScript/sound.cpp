@@ -596,7 +596,7 @@ bool g_SoundInitialized = false;
 ma_engine sound_default_mixer;
 
 ma_engine_config engineConfig;
-
+asUINT period_size = 256;
 static ma_result ma_result_from_IPLerror(IPLerror error)
 {
 	switch (error)
@@ -885,7 +885,7 @@ void soundsystem_init() {
 	engineConfig = ma_engine_config_init();
 	engineConfig.channels = CHANNELS;
 	engineConfig.sampleRate = SAMPLE_RATE;
-	engineConfig.periodSizeInFrames = 256;
+	engineConfig.periodSizeInFrames = period_size;
 	ma_engine_init(&engineConfig, &sound_default_mixer);
 	MA_ZERO_OBJECT(&iplAudioSettings);
 	iplAudioSettings.samplingRate = ma_engine_get_sample_rate(&sound_default_mixer);
@@ -930,9 +930,14 @@ void soundsystem_init() {
 void soundsystem_free() {
 	if (g_SoundInitialized == false)return;
 	ma_engine_uninit(&sound_default_mixer);
-
+	iplHRTFRelease(&iplHRTF);
 	iplContextRelease(&iplContext);
-
+	g_SoundInitialized = false;
+}
+void mixer_reinit();
+void set_audio_period_size(asUINT size) {
+	period_size = size;
+	if (g_SoundInitialized)mixer_reinit();
 }
 string sound_path;
 pack* sound_pack = nullptr;
@@ -1236,6 +1241,7 @@ public:
 		return true;
 	}
 	bool load_from_memory(string data, size_t stream_size, bool set3d) {
+		return false;// Stop yet
 		if (active)this->close();
 		handle_ = new ma_sound;
 		ma_result r = ma_decoder_init_memory(data.c_str(), stream_size, NULL, &decoder);
@@ -1338,8 +1344,6 @@ public:
 	}
 	bool close() {
 		if (!active)return false;
-		if (&decoder != nullptr)
-			ma_decoder_uninit(&decoder);
 		if (reverb) {
 			ma_reverb_node_uninit(&g_reverbNode, NULL);
 			reverb = false;
@@ -1947,6 +1951,7 @@ audio_encoder* faudio_encoder() { return new audio_encoder; }
 
 void register_sound(asIScriptEngine* engine) {
 	engine->RegisterFuncdef("void sound_end_callback(const ?&in=null)");
+	engine->RegisterGlobalFunction("void set_audio_period_size(uint)property", asFUNCTION(set_audio_period_size), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void set_sound_storage(const string &in)property", asFUNCTION(set_sound_storage), asCALL_CDECL);
 
 	engine->RegisterGlobalFunction("string get_sound_storage()property", asFUNCTION(get_sound_storage), asCALL_CDECL);

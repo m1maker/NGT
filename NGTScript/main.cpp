@@ -3,6 +3,7 @@
 #include "angelscript.h"
 #include "contextmgr/contextmgr.h"
 #include "datetime/datetime.h"
+#include "docgen.h"
 #include "ngt.h"
 #include "ngtreg.h"
 #include "scriptany/scriptany.h"
@@ -539,7 +540,17 @@ auto main(int argc, char* argv[]) -> int {
 		engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
 		engine->RegisterGlobalFunction("int exec(const string &in, string &out)", asFUNCTIONPR(ExecSystemCmd, (const string&, string&), int), asCALL_CDECL);
 		engine->RegisterGlobalProperty("const bool SCRIPT_COMPILED", (void*)&SCRIPT_COMPILED);
-		WriteConfigToFile(engine, filename.c_str());
+		ScriptDocumentationOptions sd;
+		sd.addTimestamp = true;
+		sd.documentationName = "NGT engine documentation";
+		sd.htmlSafe = true;
+		sd.includeArrayInterface = true;
+		sd.includeRefInterface = true;
+		sd.includeStringInterface = true;
+		sd.includeWeakRefInterface = true;
+		sd.outputFile = filename.c_str();
+		DocumentationGenerator dg(engine, sd);
+		dg.Generate();
 		engine->ShutDownAndRelease();
 
 	}

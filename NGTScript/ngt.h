@@ -356,5 +356,10 @@ private:
 	sqlite3* db;
 };
 
+struct KeyboardKey
+{
+	bool isDown = false;
+	bool isPressed = false;
+};
 
 #endif

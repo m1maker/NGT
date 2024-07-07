@@ -162,6 +162,7 @@
     <ClInclude Include="datetime\datetime.h" />
     <ClInclude Include="debugger\debugger.h" />
     <ClInclude Include="dlibrary.h" />
+    <ClInclude Include="docgen.h" />
     <ClInclude Include="dyn\dyncall.h" />
     <ClInclude Include="dyn\dyncall_alloc.h" />
     <ClInclude Include="dyn\dyncall_callf.h" />
@@ -467,6 +468,7 @@
     <ClCompile Include="datetime\datetime.cpp" />
     <ClCompile Include="debugger\debugger.cpp" />
     <ClCompile Include="dlibrary.cpp" />
+    <ClCompile Include="docgen.cpp" />
     <ClCompile Include="fx\freeverb.c" />
     <ClCompile Include="http.cpp" />
     <ClCompile Include="joystick.cpp" />
