@@ -529,6 +529,7 @@ void ftp_download(const string& url, const string& file) {
 	}
 
 }
+
 void mail_send(Poco::Net::SMTPClientSession::LoginMethod login_method, asUINT port, const string& username, const string& password, const string& mailhost, const string& sender, const string& recipient, const string& subject, const string& content, const string& attachment) {
 	try {
 		MailMessage message;

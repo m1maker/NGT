@@ -142,8 +142,11 @@ public:
 };
 
 static CStdStringFactoryCleaner cleaner;
-
-
+static string& AssignUInt64ToString(asQWORD i, string& dest);
+static string& AssignInt64ToString(asINT64 i, string& dest);
+static string& AssignDoubleToString(double f, string& dest);
+static string& AssignFloatToString(float f, string& dest);
+static string& AssignBoolToString(bool b, string& dest);
 static void ConstructString(string* thisPointer)
 {
 	new(thisPointer) string();
@@ -153,6 +156,48 @@ static void CopyConstructString(const string& other, string* thisPointer)
 {
 	new(thisPointer) string(other);
 }
+static void ConstructStringUInt64(asQWORD other, string* thisPointer)
+{
+	new(thisPointer) string();
+	AssignUInt64ToString(other, *thisPointer);
+}
+
+static void ConstructStringInt64(asINT64 other, string* thisPointer)
+{
+	new(thisPointer) string();
+	AssignInt64ToString(other, *thisPointer);
+}
+static void ConstructStringBool(bool other, string* thisPointer)
+{
+	new(thisPointer) string();
+	AssignBoolToString(other, *thisPointer);
+}
+
+
+static void ConstructStringUInt(asDWORD other, string* thisPointer)
+{
+	new(thisPointer) string();
+	AssignUInt64ToString(other, *thisPointer);
+}
+
+static void ConstructStringInt(int other, string* thisPointer)
+{
+	new(thisPointer) string();
+	AssignInt64ToString(other, *thisPointer);
+}
+
+static void ConstructStringDouble(double other, string* thisPointer)
+{
+	new(thisPointer) string();
+	AssignDoubleToString(other, *thisPointer);
+}
+
+static void ConstructStringFloat(float other, string* thisPointer)
+{
+	new(thisPointer) string();
+	AssignFloatToString(other, *thisPointer);
+}
+
 
 static void DestructString(string* thisPointer)
 {
@@ -179,158 +224,6 @@ static bool StringIsEmpty(const string& str)
 	// Example: CLang/LLVM with XCode 4.3 on OSX 10.7
 	return str.empty();
 }
-
-#if AS_NO_IMPL_OPS_WITH_STRING_AND_PRIMITIVE == 0
-static string& AssignUInt64ToString(asQWORD i, string& dest)
-{
-	ostringstream stream;
-	stream << i;
-	dest = stream.str();
-	return dest;
-}
-
-static string& AddAssignUInt64ToString(asQWORD i, string& dest)
-{
-	ostringstream stream;
-	stream << i;
-	dest += stream.str();
-	return dest;
-}
-
-static string AddStringUInt64(const string& str, asQWORD i)
-{
-	ostringstream stream;
-	stream << i;
-	return str + stream.str();
-}
-
-static string AddInt64String(asINT64 i, const string& str)
-{
-	ostringstream stream;
-	stream << i;
-	return stream.str() + str;
-}
-
-static string& AssignInt64ToString(asINT64 i, string& dest)
-{
-	ostringstream stream;
-	stream << i;
-	dest = stream.str();
-	return dest;
-}
-
-static string& AddAssignInt64ToString(asINT64 i, string& dest)
-{
-	ostringstream stream;
-	stream << i;
-	dest += stream.str();
-	return dest;
-}
-
-static string AddStringInt64(const string& str, asINT64 i)
-{
-	ostringstream stream;
-	stream << i;
-	return str + stream.str();
-}
-
-static string AddUInt64String(asQWORD i, const string& str)
-{
-	ostringstream stream;
-	stream << i;
-	return stream.str() + str;
-}
-
-static string& AssignDoubleToString(double f, string& dest)
-{
-	ostringstream stream;
-	stream << f;
-	dest = stream.str();
-	return dest;
-}
-
-static string& AddAssignDoubleToString(double f, string& dest)
-{
-	ostringstream stream;
-	stream << f;
-	dest += stream.str();
-	return dest;
-}
-
-static string& AssignFloatToString(float f, string& dest)
-{
-	ostringstream stream;
-	stream << f;
-	dest = stream.str();
-	return dest;
-}
-
-static string& AddAssignFloatToString(float f, string& dest)
-{
-	ostringstream stream;
-	stream << f;
-	dest += stream.str();
-	return dest;
-}
-
-static string& AssignBoolToString(bool b, string& dest)
-{
-	ostringstream stream;
-	stream << (b ? "true" : "false");
-	dest = stream.str();
-	return dest;
-}
-
-static string& AddAssignBoolToString(bool b, string& dest)
-{
-	ostringstream stream;
-	stream << (b ? "true" : "false");
-	dest += stream.str();
-	return dest;
-}
-
-static string AddStringDouble(const string& str, double f)
-{
-	ostringstream stream;
-	stream << f;
-	return str + stream.str();
-}
-
-static string AddDoubleString(double f, const string& str)
-{
-	ostringstream stream;
-	stream << f;
-	return stream.str() + str;
-}
-
-static string AddStringFloat(const string& str, float f)
-{
-	ostringstream stream;
-	stream << f;
-	return str + stream.str();
-}
-
-static string AddFloatString(float f, const string& str)
-{
-	ostringstream stream;
-	stream << f;
-	return stream.str() + str;
-}
-
-static string AddStringBool(const string& str, bool b)
-{
-	ostringstream stream;
-	stream << (b ? "true" : "false");
-	return str + stream.str();
-}
-
-static string AddBoolString(bool b, const string& str)
-{
-	ostringstream stream;
-	stream << (b ? "true" : "false");
-	return stream.str() + str;
-}
-#endif
 
 static std::string StringCharAt(unsigned int i, string& str)
 {
@@ -679,6 +572,163 @@ static bool StringEquals(const std::string& lhs, const std::string& rhs)
 {
 	return lhs == rhs;
 }
+static string& AssignUInt64ToString(asQWORD i, string& dest);
+static string& AssignInt64ToString(asINT64 i, string& dest);
+static string& AssignDoubleToString(double f, string& dest);
+static string& AssignFloatToString(float f, string& dest);
+static string& AssignBoolToString(bool b, string& dest);
+#if AS_NO_IMPL_OPS_WITH_STRING_AND_PRIMITIVE == 0
+static string& AssignUInt64ToString(asQWORD i, string& dest)
+{
+	ostringstream stream;
+	stream << i;
+	dest = stream.str();
+	return dest;
+}
+
+static string& AddAssignUInt64ToString(asQWORD i, string& dest)
+{
+	ostringstream stream;
+	stream << i;
+	dest += stream.str();
+	return dest;
+}
+
+static string AddStringUInt64(const string& str, asQWORD i)
+{
+	ostringstream stream;
+	stream << i;
+	return str + stream.str();
+}
+
+static string AddInt64String(asINT64 i, const string& str)
+{
+	ostringstream stream;
+	stream << i;
+	return stream.str() + str;
+}
+
+static string& AssignInt64ToString(asINT64 i, string& dest)
+{
+	ostringstream stream;
+	stream << i;
+	dest = stream.str();
+	return dest;
+}
+
+static string& AddAssignInt64ToString(asINT64 i, string& dest)
+{
+	ostringstream stream;
+	stream << i;
+	dest += stream.str();
+	return dest;
+}
+
+static string AddStringInt64(const string& str, asINT64 i)
+{
+	ostringstream stream;
+	stream << i;
+	return str + stream.str();
+}
+
+static string AddUInt64String(asQWORD i, const string& str)
+{
+	ostringstream stream;
+	stream << i;
+	return stream.str() + str;
+}
+
+static string& AssignDoubleToString(double f, string& dest)
+{
+	ostringstream stream;
+	stream << f;
+	dest = stream.str();
+	return dest;
+}
+
+static string& AddAssignDoubleToString(double f, string& dest)
+{
+	ostringstream stream;
+	stream << f;
+	dest += stream.str();
+	return dest;
+}
+
+static string& AssignFloatToString(float f, string& dest)
+{
+	ostringstream stream;
+	stream << f;
+	dest = stream.str();
+	return dest;
+}
+
+static string& AddAssignFloatToString(float f, string& dest)
+{
+	ostringstream stream;
+	stream << f;
+	dest += stream.str();
+	return dest;
+}
+
+static string& AssignBoolToString(bool b, string& dest)
+{
+	ostringstream stream;
+	stream << (b ? "true" : "false");
+	dest = stream.str();
+	return dest;
+}
+
+static string& AddAssignBoolToString(bool b, string& dest)
+{
+	ostringstream stream;
+	stream << (b ? "true" : "false");
+	dest += stream.str();
+	return dest;
+}
+
+static string AddStringDouble(const string& str, double f)
+{
+	ostringstream stream;
+	stream << f;
+	return str + stream.str();
+}
+
+static string AddDoubleString(double f, const string& str)
+{
+	ostringstream stream;
+	stream << f;
+	return stream.str() + str;
+}
+
+static string AddStringFloat(const string& str, float f)
+{
+	ostringstream stream;
+	stream << f;
+	return str + stream.str();
+}
+
+static string AddFloatString(float f, const string& str)
+{
+	ostringstream stream;
+	stream << f;
+	return stream.str() + str;
+}
+
+static string AddStringBool(const string& str, bool b)
+{
+	ostringstream stream;
+	stream << (b ? "true" : "false");
+	return str + stream.str();
+}
+
+static string AddBoolString(bool b, const string& str)
+{
+	ostringstream stream;
+	stream << (b ? "true" : "false");
+	return stream.str() + str;
+}
+#endif
+
 
 void RegisterStdString_Native(asIScriptEngine* engine)
 {
@@ -698,6 +748,14 @@ void RegisterStdString_Native(asIScriptEngine* engine)
 	// Register the object operator overloads
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(ConstructString), asCALL_CDECL_OBJLAST); assert(r >= 0);
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f(const string &in)", asFUNCTION(CopyConstructString), asCALL_CDECL_OBJLAST); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f(uint64)", asFUNCTION(ConstructStringUInt64), asCALL_CDECL_OBJLAST); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f(int64)", asFUNCTION(ConstructStringInt64), asCALL_CDECL_OBJLAST); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f(uint)", asFUNCTION(ConstructStringUInt), asCALL_CDECL_OBJLAST); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f(int)", asFUNCTION(ConstructStringInt), asCALL_CDECL_OBJLAST); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f(double)", asFUNCTION(ConstructStringDouble), asCALL_CDECL_OBJLAST); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f(float)", asFUNCTION(ConstructStringFloat), asCALL_CDECL_OBJLAST); assert(r >= 0);
+	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f(bool)", asFUNCTION(ConstructStringBool), asCALL_CDECL_OBJLAST); assert(r >= 0);
+
 	r = engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DestructString), asCALL_CDECL_OBJLAST); assert(r >= 0);
 	r = engine->RegisterObjectMethod("string", "string &opAssign(const string &in)", asMETHODPR(string, operator =, (const string&), string&), asCALL_THISCALL); assert(r >= 0);
 	// Need to use a wrapper on Mac OS X 10.7/XCode 4.3 and CLang/LLVM, otherwise the linker fails
@@ -1197,93 +1255,9 @@ static void StringSubString_Generic(asIScriptGeneric* gen)
 	new(gen->GetAddressOfReturnLocation()) string(StringSubString(start, count, *str));
 }
 
-void RegisterStdString_Generic(asIScriptEngine* engine)
-{
-	int r = 0;
-	UNUSED_VAR(r);
-
-	// Register the string type
-	r = engine->RegisterObjectType("string", sizeof(string), asOBJ_VALUE | asOBJ_APP_CLASS_CDAK); assert(r >= 0);
-
-	r = engine->RegisterStringFactory("string", GetStdStringFactorySingleton());
-
-	// Register the object operator overloads
-	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(ConstructStringGeneric), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectBehaviour("string", asBEHAVE_CONSTRUCT, "void f(const string &in)", asFUNCTION(CopyConstructStringGeneric), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectBehaviour("string", asBEHAVE_DESTRUCT, "void f()", asFUNCTION(DestructStringGeneric), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "string &opAssign(const string &in)", asFUNCTION(AssignStringGeneric), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "string &opAddAssign(const string &in)", asFUNCTION(AddAssignStringGeneric), asCALL_GENERIC); assert(r >= 0);
-
-	r = engine->RegisterObjectMethod("string", "bool opEquals(const string &in) const", asFUNCTION(StringEqualsGeneric), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "int opCmp(const string &in) const", asFUNCTION(StringCmpGeneric), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "string opAdd(const string &in) const", asFUNCTION(StringAddGeneric), asCALL_GENERIC); assert(r >= 0);
-
-	// Register the object methods
-#if AS_USE_ACCESSORS != 1
-	r = engine->RegisterObjectMethod("string", "uint length() const", asFUNCTION(StringLengthGeneric), asCALL_GENERIC); assert(r >= 0);
-#endif
-	r = engine->RegisterObjectMethod("string", "void resize(uint)", asFUNCTION(StringResizeGeneric), asCALL_GENERIC); assert(r >= 0);
-#if AS_USE_STLNAMES != 1 && AS_USE_ACCESSORS == 1
-	r = engine->RegisterObjectMethod("string", "uint get_length() const property", asFUNCTION(StringLengthGeneric), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "void set_length(uint) property", asFUNCTION(StringResizeGeneric), asCALL_GENERIC); assert(r >= 0);
-#endif
-	r = engine->RegisterObjectMethod("string", "bool is_empty() const", asFUNCTION(StringIsEmptyGeneric), asCALL_GENERIC); assert(r >= 0);
-
-	// Register the index operator, both as a mutator and as an inspector
-	r = engine->RegisterObjectMethod("string", "string opIndex(uint)", asFUNCTION(StringCharAtGeneric), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "const string opIndex(uint) const", asFUNCTION(StringCharAtGeneric), asCALL_GENERIC); assert(r >= 0);
-
-#if AS_NO_IMPL_OPS_WITH_STRING_AND_PRIMITIVE == 0
-	// Automatic conversion from values
-	r = engine->RegisterObjectMethod("string", "string &opAssign(double)", asFUNCTION(AssignDouble2StringGeneric), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "string &opAddAssign(double)", asFUNCTION(AddAssignDouble2StringGeneric), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "string opAdd(double) const", asFUNCTION(AddString2DoubleGeneric), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "string opAdd_r(double) const", asFUNCTION(AddDouble2StringGeneric), asCALL_GENERIC); assert(r >= 0);
-
-	r = engine->RegisterObjectMethod("string", "string &opAssign(float)", asFUNCTION(AssignFloat2StringGeneric), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "string &opAddAssign(float)", asFUNCTION(AddAssignFloat2StringGeneric), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "string opAdd(float) const", asFUNCTION(AddString2FloatGeneric), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "string opAdd_r(float) const", asFUNCTION(AddFloat2StringGeneric), asCALL_GENERIC); assert(r >= 0);
-
-	r = engine->RegisterObjectMethod("string", "string &opAssign(int64)", asFUNCTION(AssignInt2StringGeneric), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "string &opAddAssign(int64)", asFUNCTION(AddAssignInt2StringGeneric), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "string opAdd(int64) const", asFUNCTION(AddString2IntGeneric), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "string opAdd_r(int64) const", asFUNCTION(AddInt2StringGeneric), asCALL_GENERIC); assert(r >= 0);
-
-	r = engine->RegisterObjectMethod("string", "string &opAssign(uint64)", asFUNCTION(AssignUInt2StringGeneric), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "string &opAddAssign(uint64)", asFUNCTION(AddAssignUInt2StringGeneric), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "string opAdd(uint64) const", asFUNCTION(AddString2UIntGeneric), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "string opAdd_r(uint64) const", asFUNCTION(AddUInt2StringGeneric), asCALL_GENERIC); assert(r >= 0);
-
-	r = engine->RegisterObjectMethod("string", "string &opAssign(bool)", asFUNCTION(AssignBool2StringGeneric), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "string &opAddAssign(bool)", asFUNCTION(AddAssignBool2StringGeneric), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "string opAdd(bool) const", asFUNCTION(AddString2BoolGeneric), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "string opAdd_r(bool) const", asFUNCTION(AddBool2StringGeneric), asCALL_GENERIC); assert(r >= 0);
-#endif
-
-	r = engine->RegisterObjectMethod("string", "string substr(uint start = 0, int count = -1) const", asFUNCTION(StringSubString_Generic), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "int find_first(const string &in, uint start = 0) const", asFUNCTION(StringFindFirst_Generic), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "int find_first_of(const string &in, uint start = 0) const", asFUNCTION(StringFindFirstOf_Generic), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "int find_first_not_of(const string &in, uint start = 0) const", asFUNCTION(StringFindFirstNotOf_Generic), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "int find_last(const string &in, int start = -1) const", asFUNCTION(StringFindLast_Generic), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "int find_last_of(const string &in, int start = -1) const", asFUNCTION(StringFindLastOf_Generic), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "int find_last_not_of(const string &in, int start = -1) const", asFUNCTION(StringFindLastNotOf_Generic), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "void insert(uint pos, const string &in other)", asFUNCTION(StringInsert_Generic), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterObjectMethod("string", "void erase(uint pos, int count = -1)", asFUNCTION(StringErase_Generic), asCALL_GENERIC); assert(r >= 0);
-
-
-	r = engine->RegisterGlobalFunction("string formatInt(int64 val, const string &in options = \"\", uint width = 0)", asFUNCTION(formatInt_Generic), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterGlobalFunction("string formatUInt(uint64 val, const string &in options = \"\", uint width = 0)", asFUNCTION(formatUInt_Generic), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterGlobalFunction("string formatFloat(double val, const string &in options = \"\", uint width = 0, uint precision = 0)", asFUNCTION(formatFloat_Generic), asCALL_GENERIC); assert(r >= 0);
-	r = engine->RegisterGlobalFunction("double string_to_number(const string &in, uint &out byteCount = 0)", asFUNCTION(stringToNumber_Generic), asCALL_GENERIC); assert(r >= 0);
-}
-
 void RegisterStdString(asIScriptEngine* engine)
 {
-	if (strstr(asGetLibraryOptions(), "AS_MAX_PORTABILITY"))
-		RegisterStdString_Generic(engine);
-	else
-		RegisterStdString_Native(engine);
+	RegisterStdString_Native(engine);
 }
 
 END_AS_NAMESPACE
