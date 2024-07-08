@@ -597,6 +597,72 @@ ma_engine sound_default_mixer;
 
 ma_engine_config engineConfig;
 asUINT period_size = 256;
+struct AudioDevice {
+	std::string name;
+	ma_device_id id;
+};
+static std::vector<AudioDevice> GetOutputAudioDevices()
+{
+	std::vector<AudioDevice> audioDevices;
+	ma_result result;
+	ma_context context;
+	ma_device_info* pPlaybackDeviceInfos;
+	ma_uint32 playbackDeviceCount;
+	ma_uint32 iPlaybackDevice;
+
+	if (ma_context_init(NULL, 0, NULL, &context) != MA_SUCCESS) {
+		return audioDevices;;
+	}
+
+	result = ma_context_get_devices(&context, &pPlaybackDeviceInfos, &playbackDeviceCount, nullptr, nullptr);
+	if (result != MA_SUCCESS) {
+		return audioDevices;
+	}
+	for (iPlaybackDevice = 0; iPlaybackDevice < playbackDeviceCount; ++iPlaybackDevice) {
+		const char* name = pPlaybackDeviceInfos[iPlaybackDevice].name;
+		std::string name_str(name);
+		AudioDevice ad;
+		ad.id = pPlaybackDeviceInfos[iPlaybackDevice].id;
+		ad.name = name;
+		audioDevices.push_back(ad);
+	}
+
+	ma_context_uninit(&context);
+	return audioDevices;
+}
+std::vector<AudioDevice> devs;
+CScriptArray* get_output_audio_devices() {
+	if (!g_SoundInitialized)soundsystem_init();
+	asIScriptContext* ctx = asGetActiveContext();
+	asIScriptEngine* engine = ctx->GetEngine();
+	asITypeInfo* arrayType = engine->GetTypeInfoById(engine->GetTypeIdByDecl("array<string>"));
+	CScriptArray* array = CScriptArray::Create(arrayType, (asUINT)0);
+	devs = GetOutputAudioDevices();
+	if (devs.size() == 0)return array;
+	array->Reserve(devs.size());
+	for (asUINT i = 0; i < devs.size(); i++) {
+		array->InsertLast(&devs[i].name);
+	}
+	return array;
+}
+void mixer_start();
+void mixer_stop();
+bool set_output_audio_device(asUINT id) {
+	if (!g_SoundInitialized)soundsystem_init();
+	if (devs.size() == 0)devs = GetOutputAudioDevices();
+	mixer_stop();// Need to reset and uninitialize audio_device
+	ma_device_uninit(sound_default_mixer.pDevice);
+	sound_default_mixer.pDevice = nullptr;
+	sound_default_mixer.pDevice = (ma_device*)ma_malloc(sizeof(*sound_default_mixer.pDevice), &sound_default_mixer.allocationCallbacks);
+	ma_device_config devConfig = ma_device_config_init(ma_device_type_playback);;
+	devConfig.playback.pDeviceID = &devs[id].id;
+	devConfig.periodSizeInFrames = period_size;
+	devConfig.playback.channels = 2;
+	devConfig.sampleRate = SAMPLE_RATE;
+	if (ma_device_init(nullptr, &devConfig, sound_default_mixer.pDevice) != MA_SUCCESS)return false;
+	mixer_start();
+	return true;
+}
 static ma_result ma_result_from_IPLerror(IPLerror error)
 {
 	switch (error)
@@ -1964,6 +2030,8 @@ void register_sound(asIScriptEngine* engine) {
 	engine->RegisterGlobalFunction("void mixer_stop()", asFUNCTION(mixer_stop), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool mixer_play_sound(const string &in)", asFUNCTION(mixer_play_sound), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void mixer_reinit()", asFUNCTION(mixer_reinit), asCALL_CDECL);
+	engine->RegisterGlobalFunction("array<string>@ get_output_audio_devices()", asFUNCTION(get_output_audio_devices), asCALL_CDECL);
+	engine->RegisterGlobalFunction("bool set_output_audio_device(uint)", asFUNCTION(set_output_audio_device), asCALL_CDECL);
 	engine->RegisterObjectType("mixer", sizeof(mixer), asOBJ_REF | asOBJ_NOCOUNT);
 	engine->RegisterObjectBehaviour("mixer", asBEHAVE_FACTORY, "mixer @m()", asFUNCTION(fmixer), asCALL_CDECL);
 	engine->RegisterObjectType("sound", sizeof(sound), asOBJ_REF);

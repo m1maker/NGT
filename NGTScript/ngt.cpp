@@ -448,6 +448,11 @@ bool show_window(const string& title, int width, int height, bool closable)
 	// Starting window
 	window_event_show = true;
 	wait(20);// Get window_thread time to create window
+	// Initialize mouse and keyboard state.
+	keys_released();
+	for (int i = 0; i < 8; i++) {
+		mouse_released(i);
+	}
 	return windowRunnable->IsRunning();
 }
 void hide_window() {
