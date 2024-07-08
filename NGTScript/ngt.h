@@ -360,6 +360,12 @@ struct KeyboardKey
 {
 	bool isDown = false;
 	bool isPressed = false;
+	bool isReleased = false;
 };
-
+struct MouseButton
+{
+	bool isDown = false;
+	bool isPressed = false;
+	bool isReleased = false;
+};
 #endif

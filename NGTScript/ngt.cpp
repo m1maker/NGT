@@ -237,10 +237,7 @@ public:
 				{
 					SDL_RaiseWindow(win);
 					window_is_focused = true;
-					renderer = SDL_CreateRenderer(win, "NGTGameRenderer");
-					if (renderer == nullptr)continue;
-					if (SDL_TextInputActive(win) == SDL_FALSE)SDL_StartTextInput(win);
-					SDL_SetWindowInputFocus(win);
+					SDL_StartTextInput(win);
 				}
 			}
 			if (window_event_hide) {
@@ -266,7 +263,7 @@ public:
 				}
 				if (e.type == SDL_EVENT_QUIT and window_closable == true)
 					exit_engine();
-				if (e.type == SDL_EVENT_TEXT_INPUT or e.type == SDL_EVENT_TEXT_EDITING)
+				if (e.type == SDL_EVENT_TEXT_INPUT)
 				{
 					inputtext += e.text.text;
 				}
@@ -274,6 +271,7 @@ public:
 				if (e.type == SDL_EVENT_KEY_DOWN)
 				{
 					keys[e.key.scancode].isDown = true;
+					keys[e.key.scancode].isReleased = false;
 				}
 				if (e.type == SDL_EVENT_KEY_UP)
 				{
@@ -678,11 +676,10 @@ bool key_pressed(int key_code)
 }
 bool key_released(int key_code)
 {
-	if (e.key.state == SDL_RELEASED)
+	if (keys[key_code].isDown == false and keys[key_code].isReleased == false)
 	{
-		if (e.key.scancode == key_code) {
-			return true;
-		}
+		keys[key_code].isReleased = true;
+		return true;
 	}
 	return false;
 }
