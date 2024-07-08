@@ -548,6 +548,7 @@ auto main(int argc, char* argv[]) -> int {
 		sd.includeRefInterface = true;
 		sd.includeStringInterface = true;
 		sd.includeWeakRefInterface = true;
+		sd.projectName = "NGT";
 		sd.outputFile = filename.c_str();
 		DocumentationGenerator dg(engine, sd);
 		dg.Generate();

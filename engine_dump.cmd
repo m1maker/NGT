@@ -1,2 +1,2 @@
 @echo off
-start NGTScript/x64/release/NGTScript engine_conf.txt -i
+start NGTScript/x64/release/NGTScript engine_conf.html -i

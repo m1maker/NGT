@@ -71,6 +71,7 @@ public:
 
 
 wstring wstr(const string& utf8String);
+string unicode_convert(string str, string from, string to);
 uint64_t get_time_stamp_millis();
 uint64_t get_time_stamp_seconds();
 void as_printf(asIScriptGeneric* gen);
@@ -356,13 +357,7 @@ private:
 	sqlite3* db;
 };
 
-struct KeyboardKey
-{
-	bool isDown = false;
-	bool isPressed = false;
-	bool isReleased = false;
-};
-struct MouseButton
+struct DeviceButton
 {
 	bool isDown = false;
 	bool isPressed = false;

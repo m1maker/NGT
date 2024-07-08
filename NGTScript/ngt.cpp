@@ -1,10 +1,14 @@
 ﻿#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS 
 #include "cmp.h"
 #include "ngtreg.h"
+#include "Poco/BinaryReader.h"
 #include "Poco/Event.h"
 #include "Poco/Mutex.h"
 #include "Poco/Runnable.h"
+#include "Poco/TextConverter.h"
 #include "Poco/Thread.h"
+#include "Poco/Unicode.h"
+#include "Poco/UnicodeConverter.h"
 #include"sdl3/SDL.h"
 #include "sound.h"
 #include "Tolk.h"
@@ -65,12 +69,13 @@ bool window_closable = true;
 bool default_screen_reader_interrupt = false;
 wstring wstr(const string& utf8String)
 {
-	wstring_convert<codecvt_utf8_utf16<wchar_t>> converter;
-	return converter.from_bytes(utf8String);
+	wstring str;
+	Poco::UnicodeConverter::convert(utf8String, str);
+	return str;
 }
 wstring reader;
-std::array<KeyboardKey, 512> keys;
-unordered_map<Uint8, bool> buttons;
+std::array<DeviceButton, 512> keys;
+std::array<DeviceButton, 8>buttons;
 bool keyhook = false;
 string inputtext;
 static void replace(string& str, const string& from, const string& to) {
@@ -279,10 +284,12 @@ public:
 					keys[e.key.scancode].isPressed = false;
 				}
 				if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-					buttons[e.button.button] = true;
+					buttons[e.button.button].isDown = true;
+					buttons[e.button.button].isReleased = false;
 				}
 				if (e.type == SDL_EVENT_MOUSE_BUTTON_UP) {
-					buttons[e.button.button] = false;
+					buttons[e.button.button].isDown = false;
+					buttons[e.button.button].isPressed = false;
 				}
 
 
@@ -482,27 +489,25 @@ void set_window_fullscreen(bool fullscreen) {
 }
 bool mouse_pressed(Uint8 button)
 {
-	if (e.button.state == SDL_PRESSED)
+	if (buttons[button].isDown == true and buttons[button].isPressed == false)
 	{
-		if (button == e.button.button) {
-			return true;
-		}
+		buttons[button].isPressed = true;
+		return true;
 	}
 	return false;
 }
 bool mouse_released(Uint8 button)
 {
-	if (e.button.state == SDL_RELEASED)
+	if (buttons[button].isDown == false and buttons[button].isReleased == false)
 	{
-		if (e.button.button == button) {
-			return true;
-		}
+		buttons[button].isReleased = true;
+		return true;
 	}
 	return false;
 }
 bool mouse_down(Uint8 button)
 {
-	return buttons[button];
+	return buttons[button].isDown;
 }
 
 int get_MOUSE_X() {
