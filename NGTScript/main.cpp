@@ -227,10 +227,11 @@ auto main(int argc, char* argv[]) -> int {
 		if (argc < 2) {
 			asIScriptEngine* engine = asCreateScriptEngine();
 			engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
+			show_console();
 			engine->WriteMessage(get_exe().c_str(), 0, 0, asMSGTYPE_INFORMATION, "Something went wrong when starting the engine.\r\nNothing to debug, nothing to compile.\r\nArguments and flags that can be used:\r\n\"NGTScript.exe <filename> -d\" - Debug a script.\r\n\"NGTScript.exe <filename> -c\" - Compile a script to executable file.\r\n\"NGTScript.exe <output file> -i\" - Write engine config to a file.");
-			std::thread t(show_message);
-			t.join();
 			engine->ShutDownAndRelease();
+			ExecSystemCmd("pause");
+			hide_console();
 			return -1;
 		}
 
