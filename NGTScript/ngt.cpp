@@ -675,6 +675,49 @@ string get_input() {
 	inputtext = "";
 	return temp;
 }
+string input_box(const string& title, const string& text, const string& default_text, bool secure) {
+	int user_pressed;
+#ifdef _WIN32
+	HWND main_window;
+	HWND edit;
+	HWND ok;
+	HWND cancel;
+	main_window = gui::show_window(wstr(title));
+	if (main_window == nullptr)return "";
+	gui::create_text(main_window, wstr(text).c_str(), 0, 0, 0, 0, 0);
+	edit = gui::create_input_box(main_window, secure, 10, 70, 200, 30, 0);
+	ok = gui::create_button(main_window, L"&OK", 50, 120, 80, 30, 0);
+	cancel = gui::create_button(main_window, L"&Cancel", 150, 120, 80, 30, 0);
+	gui::focus(edit);
+	if (default_text != "")gui::add_text(edit, wstr(default_text).c_str());
+	while (true) {
+		gui::update_window(main_window);
+		if (gui::is_pressed(ok) or gui::key_down(0x0d)) {
+			user_pressed = 1;
+			break;
+		}
+		else if (gui::is_pressed(cancel) or gui::key_down(0x1b)) {
+			user_pressed = 2;
+			break;
+		}
+	}
+	if (user_pressed == 1) {
+		std::string result;
+		std::wstring Wtext = gui::get_text(edit);
+		Poco::UnicodeConverter::convert(Wtext, result);
+		gui::hide_window(main_window);
+		return result;
+	}
+	else if (user_pressed == 2) {
+		gui::hide_window(main_window);
+		return "";
+	}
+	gui::hide_window(main_window);
+	return "";
+#else 
+	return "";
+#endif
+}
 bool key_pressed(int key_code)
 {
 	if (keys[key_code].isDown == true and keys[key_code].isPressed == false)

@@ -1,0 +1,7 @@
+#include"win32.ngt"
+string name;
+void main(){
+win32_init();
+bool result=GetComputerNameA(name, 500);
+alert(result, name);
+}

@@ -3,6 +3,7 @@
 #pragma once
 #include"as_class.h"
 #define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
+#include "gui.h"
 #include "Poco/Base32Decoder.h"
 #include "Poco/Base32Encoder.h"
 #include "Poco/Base64Decoder.h"
@@ -118,6 +119,7 @@ string number_to_words(uint64_t, bool);
 bool clipboard_copy_text(const string&);
 string clipboard_read_text();
 string get_input();
+string input_box(const string& title, const string& text, const string& default_text = "", bool secure = false);
 bool key_pressed(int);
 bool key_released(int);
 bool key_down(int);

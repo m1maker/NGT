@@ -657,7 +657,7 @@ bool set_output_audio_device(asUINT id) {
 	ma_device_config devConfig = ma_device_config_init(ma_device_type_playback);;
 	devConfig.playback.pDeviceID = &devs[id].id;
 	devConfig.periodSizeInFrames = period_size;
-	devConfig.playback.channels = 2;
+	devConfig.playback.channels = CHANNELS;
 	devConfig.sampleRate = SAMPLE_RATE;
 	if (ma_device_init(nullptr, &devConfig, sound_default_mixer.pDevice) != MA_SUCCESS)return false;
 	mixer_start();
@@ -859,7 +859,6 @@ MA_API ma_result ma_steamaudio_binaural_node_init(ma_node_graph* pNodeGraph, con
 	IPLSimulationSettings simulationSettings{};
 	simulationSettings.flags = IPL_SIMULATIONFLAGS_DIRECT; // this enables occlusion/transmission simulation
 	simulationSettings.sceneType = IPL_SCENETYPE_DEFAULT;
-	// see below for examples of how to initialize the remaining fields of this structure
 
 	IPLSimulator simulator = nullptr;
 	iplSimulatorCreate(pBinauralNode->iplContext, &simulationSettings, &simulator);

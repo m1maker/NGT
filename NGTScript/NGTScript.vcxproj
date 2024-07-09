@@ -203,6 +203,7 @@
     <ClInclude Include="enet\win32.h" />
     <ClInclude Include="fx\freeverb.h" />
     <ClInclude Include="fx\verblib.h" />
+    <ClInclude Include="gui.h" />
     <ClInclude Include="http.h" />
     <ClInclude Include="joystick.h" />
     <ClInclude Include="miniaudio.h" />
@@ -470,6 +471,7 @@
     <ClCompile Include="dlibrary.cpp" />
     <ClCompile Include="docgen.cpp" />
     <ClCompile Include="fx\freeverb.c" />
+    <ClCompile Include="gui.cpp" />
     <ClCompile Include="http.cpp" />
     <ClCompile Include="joystick.cpp" />
     <ClCompile Include="main.cpp" />
