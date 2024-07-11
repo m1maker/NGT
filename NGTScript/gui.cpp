@@ -15,23 +15,6 @@ namespace gui {
 	{
 		switch (msg)
 		{
-		case WM_KEYDOWN:
-			g_KeysDown[wParam] = true;
-			if (g_KeysPressed[wParam] == false && g_KeysReleased[wParam] == true && g_KeysDown[wParam] == true)
-			{
-				g_KeysPressed[wParam] = true;
-				g_KeysReleased[wParam] = false;
-			}
-			else if (g_KeysReleased[wParam] == false)
-			{
-				g_KeysPressed[wParam] = false;
-			}
-			break;
-		case WM_KEYUP:
-			g_KeysDown[wParam] = false;
-			g_KeysPressed[wParam] = false;
-			g_KeysReleased[wParam] = true;
-			break;
 		case WM_DESTROY:
 		{
 			break;
@@ -98,6 +81,25 @@ namespace gui {
 
 		if (GetMessage(&msg, NULL, 0, 0))
 		{
+			switch (msg.message) {
+			case WM_KEYDOWN:
+				g_KeysDown[msg.wParam] = true;
+				if (g_KeysPressed[msg.wParam] == false && g_KeysReleased[msg.wParam] == true && g_KeysDown[msg.wParam] == true)
+				{
+					g_KeysPressed[msg.wParam] = true;
+					g_KeysReleased[msg.wParam] = false;
+				}
+				else if (g_KeysReleased[msg.wParam] == false)
+				{
+					g_KeysPressed[msg.wParam] = false;
+				}
+				break;
+			case WM_KEYUP:
+				g_KeysDown[msg.wParam] = false;
+				g_KeysPressed[msg.wParam] = false;
+				g_KeysReleased[msg.wParam] = true;
+				break;
+			}
 			if (!IsDialogMessage(window, &msg))
 			{
 				TranslateMessage(&msg);
