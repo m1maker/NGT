@@ -2,8 +2,12 @@
 #define NGT_H
 #pragma once
 #include"as_class.h"
+#ifdef _WIN32
 #define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
 #include "gui.h"
+#include <Windows.h>
+#include"tts_voice.h"
+#endif
 #include "Poco/Base32Decoder.h"
 #include "Poco/Base32Encoder.h"
 #include "Poco/Base64Decoder.h"
@@ -26,7 +30,6 @@
 #include "Poco/String.h"
 #include "Poco/URI.h"
 #include "Poco/URIStreamOpener.h"
-#include"tts_voice.h"
 #include "poco/mutex.h"
 #include"poco/NamedMutex.h"
 #include <memory>
@@ -46,7 +49,6 @@ using Poco::Net::StringPartSource;
 
 #include "dyn/dyncall.h"
 #include "dyn/dynload.h"
-#include <Windows.h>
 #include "enet/enet.h"
 #include <fcntl.h>
 #include <io.h>
@@ -70,8 +72,9 @@ public:
 	ngtvector& operator=(const ngtvector);
 };
 
-
+#ifdef _WIN32
 wstring wstr(const string& utf8String);
+#endif
 string unicode_convert(string str, string from, string to);
 uint64_t get_time_stamp_millis();
 uint64_t get_time_stamp_seconds();

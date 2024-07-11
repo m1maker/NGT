@@ -1,5 +1,13 @@
-﻿#pragma section(".NGT")
+﻿#ifdef _WIN32
 #define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
+#include <Windows.h>
+#pragma section(".NGT")
+#elif defined(__APPLE__)
+#include <libproc.h>
+#else
+#include <unistd.h>
+#endif
+#include <filesystem>
 #include "angelscript.h"
 #include "contextmgr/contextmgr.h"
 #include "datetime/datetime.h"
@@ -21,59 +29,69 @@
 #include <cstdlib>
 #include <fstream>
 #include <thread>
-#include <Windows.h>
-struct NGT {
-	std::vector<asBYTE> code;
-};
-
-__declspec(allocate(".NGT")) NGT ngt = { {0x0, 2, 3, 1, 1} };
-
 CContextMgr context_manager;
 CScriptBuilder builder;
-void crypt(std::vector<asBYTE>& bytes) {
+static void crypt(std::vector<asBYTE>& bytes) {
 	for (size_t i = 0; i < bytes.size(); ++i) {
 		bytes[i] ^= bytes.size();
 	}
 }
 
 
-std::string get_exe() {
+static std::string get_exe() {
+#ifdef _WIN32
 	std::vector<wchar_t> pathBuf;
 	DWORD copied = 0;
 	do {
 		pathBuf.resize(pathBuf.size() + MAX_PATH);
 		copied = GetModuleFileNameW(0, &pathBuf.at(0), pathBuf.size());
 	} while (copied >= pathBuf.size());
-
 	pathBuf.resize(copied);
-
-	std::wstring widePath(pathBuf.begin(), pathBuf.end());
-	return std::string(widePath.begin(), widePath.end());
+#elif defined(__APPLE__)
+	std::vector<char> pathBuf;
+	pid_t pid = getpid();
+	int ret = proc_pidpath(pid, &pathBuf.at(0), pathBuf.size());
+	if (ret <= 0) {
+		return "";
+	}
+	pathBuf.resize(ret);
+#else
+	std::vector<char> pathBuf;
+	ssize_t copied = 0;
+	do {
+		pathBuf.resize(pathBuf.size() + PATH_MAX);
+		copied = readlink("/proc/self/exe", &pathBuf.at(0), pathBuf.size());
+	} while (copied == static_cast<ssize_t>(pathBuf.size()));
+	pathBuf.resize(copied);
+	return std::string(pathBuf.begin(), pathBuf.end());
+#endif
+	return std::string(pathBuf.begin(), pathBuf.end());
 }
-std::wstring get_exe_w() {
-	std::vector<wchar_t> pathBuf;
-	DWORD copied = 0;
-	do {
-		pathBuf.resize(pathBuf.size() + MAX_PATH);
-		copied = GetModuleFileNameW(0, &pathBuf.at(0), pathBuf.size());
-	} while (copied >= pathBuf.size());
+static std::vector<std::string> string_split(const std::string& delim, const std::string& str)
+{
+	std::vector<std::string> array;
 
-	pathBuf.resize(copied);
+	if (delim.empty()) {
+		array.push_back(str);
+		return array;
+	}
 
-	std::wstring widePath(pathBuf.begin(), pathBuf.end());
-	return std::wstring(widePath.begin(), widePath.end());
+	size_t pos = 0, prev = 0;
+
+	while ((pos = str.find(delim, prev)) != std::string::npos)
+	{
+		array.push_back(str.substr(prev, pos - prev));
+		prev = pos + delim.length();
+	}
+
+	array.push_back(str.substr(prev));
+
+	return array;
 }
 
 std::vector <asBYTE> buffer;
 asUINT buffer_size;
 bool SCRIPT_COMPILED = false;
-BOOL FileExists(LPCTSTR szPath)
-{
-	DWORD dwAttrib = GetFileAttributes(szPath);
-
-	return (dwAttrib != INVALID_FILE_ATTRIBUTES &&
-		!(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
-}
 int               ExecSystemCmd(const string& cmd);
 int               ExecSystemCmd(const string& str, string& out);
 CScriptArray* GetCommandLineArgs();
@@ -141,7 +159,7 @@ public:
 };
 
 
-int Compile(asIScriptEngine* engine, const char* outputFile)
+static int Compile(asIScriptEngine* engine, const char* outputFile)
 {
 	int r;
 	CBytecodeStream stream;
@@ -174,7 +192,7 @@ int Compile(asIScriptEngine* engine, const char* outputFile)
 	return 0;
 }
 
-int Load(asIScriptEngine* engine, std::vector<asBYTE> code)
+static int Load(asIScriptEngine* engine, std::vector<asBYTE> code)
 {
 	int r;
 	CBytecodeStream stream;
@@ -210,7 +228,6 @@ std::string flag;
 int scriptArg = 0;
 std::string this_exe;
 auto main(int argc, char* argv[]) -> int {
-	cout << ngt.code.data();
 	this_exe = get_exe();
 	std::fstream read_file(this_exe.c_str(), std::ios::binary | std::ios::in);
 	read_file.seekg(0, std::ios::end);
@@ -286,13 +303,10 @@ auto main(int argc, char* argv[]) -> int {
 
 
 		// Call compiler to create executable file
-		CreateDirectory(L"Release", 0);
-		std::wstring main_exe = get_exe_w();
-		CopyFile(main_exe.c_str(), L"Release/run.exe", false);
-		CopyFile(L"SAAPI64.dll", L"Release/SAAPI64.dll", false);
-
-		CopyFile(L"nvdaControllerClient64.dll", L"Release/nvdaControllerClient64.dll", false);
-		std::fstream file("release/run.exe", std::ios::app | std::ios::binary);
+		std::string main_exe = get_exe();
+		std::vector<std::string> name_split = string_split(".", filename);
+		std::filesystem::copy_file(main_exe.c_str(), name_split[0] + ".exe");
+		std::fstream file(name_split[0] + ".exe", std::ios::app | std::ios::binary);
 		if (!file.is_open()) {
 			engine->WriteMessage(this_exe.c_str(), 0, 0, asMSGTYPE_ERROR, "Failed to open output file for writing");
 

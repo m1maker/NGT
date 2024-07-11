@@ -15,7 +15,6 @@
 using namespace std;
 void show_message();
 
-void add_text(std::wstring text);
 void MessageCallback(const asSMessageInfo* msg, void* param);
 void RegisterFunctions(asIScriptEngine* engine);
 #endif

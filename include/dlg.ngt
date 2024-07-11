@@ -1,17 +1,41 @@
-void dlg(string message)
+funcdef void dlg_callback();
+void dlg(string&in message="", uint64 time=0, dlg_callback@ cb=null, bool auto_close=false)
 {
+mixer_play_sound("dlg_open.ogg");
+bool played=false;
+timer t;
+timer tiks;
 speak(message);
 while(true)
 {
-delay(5);
-update_window();
+wait(5);
+if(cb!=null)
+cb();
+if(time>0){
+if(tiks.elapsed_millis>1000 and t.elapsed_millis<time){
+mixer_play_sound("dlg_tik.ogg");
+tiks.restart();
+}
+if(t.elapsed_millis>time and played==false){
+played=true;
+mixer_play_sound("dlg_active.ogg");
+if(auto_close)break;
+}
+}
 if (key_pressed(SDLK_LEFT) or key_pressed(SDLK_RIGHT) or key_pressed(SDLK_UP) or key_pressed(SDLK_DOWN))
 {
-speak(message);
+if(message!="")speak(message);
+mixer_play_sound("dlg_item.ogg");
 }
 if (key_pressed(SDLK_RETURN) or key_pressed(SDLK_ESCAPE))
 {
+if(time==0)
+break;
+else{
+if(t.elapsed_millis>time)
 break;
 }
 }
+}
+mixer_play_sound("dlg_close.ogg");
 }

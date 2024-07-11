@@ -11,7 +11,9 @@
 #include "Poco/UnicodeConverter.h"
 #include"sdl3/SDL.h"
 #include "sound.h"
+#ifdef _WIN32
 #include "Tolk.h"
+#endif
 #include <chrono>
 #include<condition_variable>
 #include <filesystem>
@@ -67,13 +69,16 @@ int window_w, window_h;
 bool window_thread_event_shutdown = false;
 bool window_closable = true;
 bool default_screen_reader_interrupt = false;
+#ifdef _WIN32
 wstring wstr(const string& utf8String)
 {
 	wstring str;
 	Poco::UnicodeConverter::convert(utf8String, str);
 	return str;
+	wstring reader;
 }
 wstring reader;
+#endif
 std::array<DeviceButton, 512> keys;
 std::array<DeviceButton, 8>buttons;
 bool keyhook = false;
@@ -329,33 +334,39 @@ long get_update_window_freq() {
 }
 void init_engine() {
 	if (SDL_Init(SDL_INIT_VIDEO) != 0)exit_engine((int)SDL_GetError());
+#ifdef  _WIN32
 	if (!tolk_library_load("Tolk.dll")) {
 		voice_object = new tts_voice;
 	}
 	Tolk_Load();
-
-	enet_initialize();
 	Tolk_TrySAPI(true);
 	reader = Tolk_DetectScreenReader();
 	if (!Tolk_HasSpeech()) {
 		Tolk_PreferSAPI(true);
 	}
+#endif //  _WIN32
+	enet_initialize();
 }
 void set_library_path(const string& path) {
+#ifdef _WIN32
+
 	if (Tolk_IsLoaded())Tolk_Unload();
 	tolk_library_unload();
 	if (voice_object != nullptr) {
 		delete voice_object;
 		voice_object = nullptr;
 	}
+#endif
 	filesystem::path current_dir = filesystem::current_path();
 	filesystem::path new_dir = filesystem::current_path() / path;
 
 	filesystem::current_path(new_dir);
+#ifdef _WIN32
 	if (!tolk_library_load("Tolk.dll")) {
 		voice_object = new tts_voice;
 	}
 	Tolk_Load();
+#endif
 	soundsystem_free();
 	soundsystem_init();
 	filesystem::current_path(current_dir);
@@ -392,6 +403,7 @@ bool get_screen_reader_interrupt() {
 }
 
 void speak(const string& text, bool stop) {
+#ifdef _WIN32
 	wstring textstr = wstr(text);
 	Tolk_Speak(textstr.c_str(), stop);
 	if (voice_object != nullptr) {
@@ -400,8 +412,12 @@ void speak(const string& text, bool stop) {
 		else
 			voice_object->speak(text);
 	}
+#else
+	return; // Not usable in other platforms yet.
+#endif
 }
 void speak_wait(const string& text, bool stop) {
+#ifdef _WIN32
 	speak(text, stop);
 	while (Tolk_IsSpeaking()) {
 	}
@@ -411,30 +427,48 @@ void speak_wait(const string& text, bool stop) {
 		else
 			voice_object->speak_wait(text);
 	}
-
+#else
+	return; // Not usable in other platforms yet.
+#endif
 }
 
 void stop_speech() {
+#ifdef _WIN32
 	Tolk_Silence();
 	if (voice_object != nullptr) {
 		voice_object->speak_interrupt(nullptr);
 	}
-
+#else
+	return; // Not usable in other platforms yet.
+#endif
 }
 string screen_reader_detect() {
+#ifdef _WIN32
 	reader = Tolk_DetectScreenReader();
 	return string(reader.begin(), reader.end());
+#else
+	return ""; // Not usable in other platforms yet.
+#endif
+
 }
 void show_console() {
+#ifdef _WIN32
 	if (AllocConsole())
 	{
 		FILE* file = nullptr;
 		freopen_s(&file, "CONOUT$", "w", stdout);
 	}
+#else 
+	return; // Don't need to allocating console in other platforms.
+#endif
 }
 
 void hide_console() {
+#ifdef _WIN32
 	FreeConsole();
+#else 
+	return; // Don't need to allocating console in other platforms.
+#endif
 }
 bool show_window(const string& title, int width, int height, bool closable)
 {
@@ -590,12 +624,14 @@ void exit_engine(int return_number)
 	soundsystem_free();
 	hide_window();
 	enet_deinitialize();
+#ifdef _WIN32
 	Tolk_Unload();
 	tolk_library_unload();
 	if (voice_object != nullptr) {
 		delete voice_object;
 		voice_object = nullptr;
 	}
+#endif
 	SDL_Quit();
 	std::exit(0);
 }
@@ -715,7 +751,7 @@ string input_box(const string& title, const string& text, const string& default_
 	gui::hide_window(main_window);
 	return "";
 #else 
-	return "";
+	return ""; // Needs to implement in other platforms also.
 #endif
 }
 bool key_pressed(int key_code)
@@ -1370,9 +1406,7 @@ CScriptArray* deserialize_array(const string& data) {
 
 
 bool urlopen(const string& url) {
-	int result = SDL_OpenURL(url.c_str());
-	if (result == 0)return true;
-	return false;
+	return SDL_OpenURL(url.c_str()) == 0;
 }
 uint64_t timer::elapsed_seconds() {
 	return pausedNanos != 0 ? chrono::duration_cast<chrono::seconds>(chrono::nanoseconds(pausedNanos)).count()

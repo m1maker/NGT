@@ -3,17 +3,21 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#ifdef _WIN32
 #define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
 #include <windows.h>
+#endif
 #include <assert.h>  // assert()
 #include "angelscript.h"
 #include "ngt.h"
 #include "pack.h"
 #include "sound.h"
+#ifdef _WIN32
 HWND g_hwndEdit;
 HWND hwnd;
 HWND buttonc;
 WNDPROC originalEditProc;
+#endif
 const int EVENT_NONE = ENET_EVENT_TYPE_NONE;
 const int EVENT_CONNECT = ENET_EVENT_TYPE_CONNECT;
 const int EVENT_RECEIVE = ENET_EVENT_TYPE_RECEIVE;
@@ -229,6 +233,8 @@ const int AS_SDLK_SLEEP = SDL_SCANCODE_SLEEP;
 const int AS_MESSAGEBOX_ERROR = SDL_MESSAGEBOX_ERROR;
 const int AS_MESSAGEBOX_WARN = SDL_MESSAGEBOX_WARNING;
 const int AS_MESSAGEBOX_INFO = SDL_MESSAGEBOX_INFORMATION;
+using namespace std;
+#ifdef _WIN32
 LRESULT CALLBACK EditSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg) {
@@ -249,13 +255,13 @@ std::wstring ouou;
 int currentLine;
 int currentLineUp;
 std::wstring result_message;
-using namespace std;
 int nCmdShow;
 HINSTANCE hInstance;
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
+#endif
 void show_message()
 {
+#ifdef _WIN32
 	const wchar_t CLASS_NAME[] = L"NGTTextbox";
 
 	WNDCLASS wc = {};
@@ -311,8 +317,11 @@ void show_message()
 		}
 
 	}
-
+#else 
+	return;// Shutting down
+#endif
 }
+#ifdef _WIN32
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	static int lineCount = 0;
@@ -351,20 +360,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	}
 
 }
-
-void add_text(std::wstring text)
-{
-	SetWindowText(g_hwndEdit, L"RRRRRRRRRRR");
-	int len = GetWindowTextLength(g_hwndEdit);
-	SendMessage(g_hwndEdit, EM_SETSEL, len, len);
-	SendMessage(g_hwndEdit, EM_REPLACESEL, FALSE, (LPARAM)text.c_str());
-	InvalidateRect(g_hwndEdit, NULL, TRUE);
-	UpdateWindow(g_hwndEdit);
-}
-
-
-
-
+#endif
 timer* ftimer() { return new timer; }
 user_idle* fuser_idle() { return new user_idle; }
 asIScriptFunction* fscript_function() { asIScriptFunction* r = nullptr; return r; }
@@ -393,8 +389,10 @@ void MessageCallback(const asSMessageInfo* msg, void* param)
 	_itoa_s(msg->col, colStr, 10);
 	std::string messageStr(msg->message);
 	std::string output = "File: " + std::string(msg->section) + "\r\nLine (" + rowStr + ", " + colStr + ") : \r\n" + type + " : " + messageStr;
+#ifdef _WIN32
 	ouou = wstr(output);
 	result_message += ouou + L"\r\n";
+#endif
 	cout << output << endl;
 }
 

@@ -31,8 +31,8 @@ key_timer.restart();
 key_flag=0;
 return false;
 }
-int keytimerelapsed=key_timer.elapsed_millis;
-if(keytimerelapsed>=repeat_time or wait_time>0 and(key_timer.elapsed_millis>wait_time))
+int elapsed=key_timer.elapsed_millis;
+if(elapsed>=repeat_time or wait_time>0 and(key_timer.elapsed_millis>wait_time))
 {
 switch(key_flag)
 {
