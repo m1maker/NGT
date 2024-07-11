@@ -47,7 +47,9 @@ extern "C"
 #include <openssl/aes.h>
 asIScriptFunction* exit_callback = nullptr;
 using namespace string_literals;
+#ifdef _WIN32
 tts_voice* voice_object = nullptr;
+#endif
 template<typename T, typename D>
 unique_ptr<T, D> make_handle(T* handle, D deleter)
 {
@@ -75,7 +77,6 @@ wstring wstr(const string& utf8String)
 	wstring str;
 	Poco::UnicodeConverter::convert(utf8String, str);
 	return str;
-	wstring reader;
 }
 wstring reader;
 #endif
@@ -728,11 +729,11 @@ string input_box(const string& title, const string& text, const string& default_
 	if (default_text != "")gui::add_text(edit, wstr(default_text).c_str());
 	while (true) {
 		gui::update_window(main_window);
-		if (gui::is_pressed(ok) or gui::key_down(0x0d)) {
+		if (gui::is_pressed(ok) or gui::key_pressed(0x0d)) {
 			user_pressed = 1;
 			break;
 		}
-		else if (gui::is_pressed(cancel) or gui::key_down(0x1b)) {
+		else if (gui::is_pressed(cancel) or gui::key_pressed(0x1b)) {
 			user_pressed = 2;
 			break;
 		}

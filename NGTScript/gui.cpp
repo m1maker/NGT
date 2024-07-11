@@ -8,7 +8,6 @@ namespace gui {
 	bool g_KeysPressed[256];
 	bool g_KeysReleased[256];
 	bool g_KeysDown[256];
-	bool g_WindowShown = false;
 	HWND g_CurrentFocused;
 	HWND g_MainWindow;
 	LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -17,7 +16,7 @@ namespace gui {
 		{
 		case WM_DESTROY:
 		{
-			break;
+			return 0;
 		}
 		case WM_CLOSE:
 			return 0;
@@ -26,16 +25,19 @@ namespace gui {
 		}
 		return DefWindowProc(hwnd, msg, wParam, lParam);
 	}
+	WNDCLASSEXW wc;
 	HWND show_window(std::wstring title)
 	{
 		for (auto i = 0; i < 256; i++)
 		{
 			g_KeysReleased[i] = true;
 		}
-
+		if (IsWindow(g_MainWindow)) {
+			ShowWindow(g_MainWindow, SW_SHOW);
+			return g_MainWindow;
+		}
 		HINSTANCE hInstance = GetModuleHandle(NULL);
 
-		WNDCLASSEXW wc;
 		wc.cbSize = sizeof(WNDCLASSEXW);
 		wc.style = 0;
 		wc.lpfnWndProc = WndProc;
@@ -59,23 +61,17 @@ namespace gui {
 		{
 			return nullptr;
 		}
-
+		ShowWindow(hwnd, SW_SHOW);
 		UpdateWindow(hwnd);
 		g_MainWindow = hwnd;
 		return hwnd;
 	}
 	bool hide_window(HWND window) {
 		if (window == nullptr)return false;
-		return DestroyWindow(window);
+		return ShowWindow(window, SW_HIDE);
 	}
 	void update_window(HWND window)
 	{
-		if (!g_WindowShown)
-		{
-			ShowWindow(window, SW_SHOW);
-			g_WindowShown = true;
-		}
-
 		MSG msg;
 		UpdateWindow(window);
 

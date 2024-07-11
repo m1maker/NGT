@@ -6,8 +6,7 @@ wait(500);
 speak("Press Enter to stop recording");
 ar.start();
 while(true){
-delay(5);
-update_window();
+wait(5);
 if(key_pressed(SDLK_RETURN))break;
 }
 ar.stop();
