@@ -235,14 +235,14 @@ public:
 			Poco::Mutex::ScopedLock lock(window_mtx);
 			if (window_event_show) {
 				window_event_show = false;
+				SDL_WindowFlags flags = 0;
+#ifdef _WIN32
 				if (reader == L"JAWS") {
 					SDL_SetHint(SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED, "1");
-					win = SDL_CreateWindow(window_title, window_w, window_h, SDL_WINDOW_KEYBOARD_GRABBED | SDL_WINDOW_INPUT_FOCUS);
+					flags |= SDL_WINDOW_KEYBOARD_GRABBED;
 				}
-				else
-					SDL_SetHint(SDL_HINT_APP_NAME, "NGTGame");
-
-				win = SDL_CreateWindow(window_title, window_w, window_h, SDL_WINDOW_INPUT_FOCUS);
+#endif
+				win = SDL_CreateWindow(window_title, window_w, window_h, flags);
 
 				if (win != nullptr)
 				{

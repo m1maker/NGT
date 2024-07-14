@@ -594,9 +594,13 @@ IPLHRTF iplHRTF;
 
 bool g_SoundInitialized = false;
 ma_engine sound_default_mixer;
-
+ma_device sound_mixer_device;
 ma_engine_config engineConfig;
 asUINT period_size = 256;
+static void sound_mixer_device_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount) {
+	ma_engine_read_pcm_frames(&sound_default_mixer, pOutput, frameCount, nullptr);
+	(void)pInput;
+}
 struct AudioDevice {
 	std::string name;
 	ma_device_id id;
@@ -651,15 +655,14 @@ bool set_output_audio_device(asUINT id) {
 	if (!g_SoundInitialized)soundsystem_init();
 	if (devs.size() == 0)devs = GetOutputAudioDevices();
 	mixer_stop();// Need to reset and uninitialize audio_device
-	ma_device_uninit(sound_default_mixer.pDevice);
-	sound_default_mixer.pDevice = nullptr;
-	sound_default_mixer.pDevice = (ma_device*)ma_malloc(sizeof(*sound_default_mixer.pDevice), &sound_default_mixer.allocationCallbacks);
+	ma_device_uninit(&sound_mixer_device);
 	ma_device_config devConfig = ma_device_config_init(ma_device_type_playback);;
 	devConfig.playback.pDeviceID = &devs[id].id;
 	devConfig.periodSizeInFrames = period_size;
 	devConfig.playback.channels = CHANNELS;
 	devConfig.sampleRate = SAMPLE_RATE;
-	if (ma_device_init(nullptr, &devConfig, sound_default_mixer.pDevice) != MA_SUCCESS)return false;
+	devConfig.dataCallback = sound_mixer_device_callback;
+	if (ma_device_init(nullptr, &devConfig, &sound_mixer_device) != MA_SUCCESS)return false;
 	mixer_start();
 	return true;
 }
@@ -948,14 +951,21 @@ IPLSimulationSharedInputs simulator_inputs;
 void soundsystem_init() {
 	if (g_SoundInitialized == true)return;
 	engineConfig = ma_engine_config_init();
+	engineConfig.noDevice = MA_TRUE;
 	engineConfig.channels = CHANNELS;
 	engineConfig.sampleRate = SAMPLE_RATE;
-	engineConfig.periodSizeInFrames = period_size;
+	ma_device_config devConfig = ma_device_config_init(ma_device_type_playback);;
+	devConfig.periodSizeInFrames = period_size;
+	devConfig.playback.channels = CHANNELS;
+	devConfig.sampleRate = SAMPLE_RATE;
+	devConfig.dataCallback = sound_mixer_device_callback;
+	if (ma_device_init(nullptr, &devConfig, &sound_mixer_device) != MA_SUCCESS)return;
+	mixer_start();
 	ma_engine_init(&engineConfig, &sound_default_mixer);
 	MA_ZERO_OBJECT(&iplAudioSettings);
-	iplAudioSettings.samplingRate = ma_engine_get_sample_rate(&sound_default_mixer);
+	iplAudioSettings.samplingRate = SAMPLE_RATE;
 
-	iplAudioSettings.frameSize = engineConfig.periodSizeInFrames;
+	iplAudioSettings.frameSize = devConfig.periodSizeInFrames;
 
 
 	/* IPLContext */
@@ -994,6 +1004,7 @@ void soundsystem_init() {
 }
 void soundsystem_free() {
 	if (g_SoundInitialized == false)return;
+	ma_device_uninit(&sound_mixer_device);
 	ma_engine_uninit(&sound_default_mixer);
 	iplHRTFRelease(&iplHRTF);
 	iplContextRelease(&iplContext);
@@ -1030,10 +1041,10 @@ float get_master_volume() {
 
 }
 void mixer_start() {
-	ma_engine_start(&sound_default_mixer);
+	ma_device_start(&sound_mixer_device);
 }
 void mixer_stop() {
-	ma_engine_stop(&sound_default_mixer);
+	ma_device_stop(&sound_mixer_device);
 }
 bool mixer_play_sound(const string& filename) {
 	if (!g_SoundInitialized) {
@@ -1201,7 +1212,6 @@ MA_API void ma_playback_speed_node_uninit(ma_playback_speed_node* pPlaybackSpeed
 	/* The base node is always uninitialized first. */
 	ma_node_uninit(pPlaybackSpeedNode, pAllocationCallbacks);
 }
-
 
 
 
