@@ -48,7 +48,8 @@ extern "C"
 asIScriptFunction* exit_callback = nullptr;
 using namespace string_literals;
 #ifdef _WIN32
-tts_voice* voice_object = nullptr;
+TTSVoice* voice_object = nullptr;
+bool g_COMInitialized = false;
 #endif
 template<typename T, typename D>
 unique_ptr<T, D> make_handle(T* handle, D deleter)
@@ -337,7 +338,7 @@ void init_engine() {
 	if (SDL_Init(SDL_INIT_VIDEO) != 0)exit_engine((int)SDL_GetError());
 #ifdef  _WIN32
 	if (!tolk_library_load("Tolk.dll")) {
-		voice_object = new tts_voice;
+		voice_object = new TTSVoice;
 	}
 	Tolk_Load();
 	Tolk_TrySAPI(true);
@@ -364,7 +365,7 @@ void set_library_path(const string& path) {
 	filesystem::current_path(new_dir);
 #ifdef _WIN32
 	if (!tolk_library_load("Tolk.dll")) {
-		voice_object = new tts_voice;
+		voice_object = new TTSVoice;
 	}
 	Tolk_Load();
 #endif

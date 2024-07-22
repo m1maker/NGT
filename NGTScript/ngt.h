@@ -74,6 +74,7 @@ public:
 
 #ifdef _WIN32
 wstring wstr(const string& utf8String);
+extern bool g_COMInitialized;
 #endif
 string unicode_convert(string str, string from, string to);
 uint64_t get_time_stamp_millis();

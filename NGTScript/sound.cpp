@@ -5,6 +5,7 @@
 #include "ngt.h"
 #include "scriptarray/scriptarray.h"
 #include "sound.h"
+#include <numeric>
 #include <thread>
 using namespace std;
 #define MINIAUDIO_IMPLEMENTATION
@@ -661,6 +662,7 @@ bool set_output_audio_device(asUINT id) {
 	devConfig.periodSizeInFrames = period_size;
 	devConfig.playback.channels = CHANNELS;
 	devConfig.sampleRate = SAMPLE_RATE;
+	devConfig.noClip = MA_TRUE;
 	devConfig.dataCallback = sound_mixer_device_callback;
 	if (ma_device_init(nullptr, &devConfig, &sound_mixer_device) != MA_SUCCESS)return false;
 	mixer_start();
@@ -955,6 +957,7 @@ void soundsystem_init() {
 	engineConfig.channels = CHANNELS;
 	engineConfig.sampleRate = SAMPLE_RATE;
 	ma_device_config devConfig = ma_device_config_init(ma_device_type_playback);;
+	devConfig.noClip = MA_TRUE;
 	devConfig.periodSizeInFrames = period_size;
 	devConfig.playback.channels = CHANNELS;
 	devConfig.sampleRate = SAMPLE_RATE;
@@ -1929,37 +1932,42 @@ bool get_sound_global_hrtf() {
 	return sound_global_hrtf;
 }
 ma_result ma_encoder_write_callback(ma_encoder* encoder, const void* buffer, size_t bytesToWrite, size_t* pBytesWritten) {
-	std::vector<string>* data = (std::vector<string>*)encoder->pUserData;
-	data->push_back(string((char*)buffer, bytesToWrite));
+	std::vector<char>* data = static_cast<std::vector<char>*>(encoder->pUserData);
+	const char* charBuffer = static_cast<const char*>(buffer);
+	data->insert(data->end(), charBuffer, charBuffer + bytesToWrite);
 	*pBytesWritten = bytesToWrite;
 	return MA_SUCCESS;
 }
+
 ma_result ma_encoder_seek_callback(ma_encoder* pEncoder, ma_int64 offset, ma_seek_origin origin) {
 	return MA_SUCCESS;
 }
+
 class audio_encoder {
 public:
-	std::vector<string> data;
+	std::vector<char> data;
 	ma_encoder_config encoderConfig;
 	ma_encoder encoder;
+
 	audio_encoder() {
-		encoderConfig = ma_encoder_config_init(ma_encoding_format_wav, ma_format_f32, 2, 44100);
+		encoderConfig = ma_encoder_config_init(ma_encoding_format_wav, ma_format_s16, 2, 44100);
 		ma_encoder_init(ma_encoder_write_callback, ma_encoder_seek_callback, &data, &encoderConfig, &encoder);
-
 	}
-	void encode(string audio_data) {
-		ma_encoder_write_pcm_frames(&encoder, audio_data.c_str(), strlen(audio_data.c_str()), NULL);
-
+	~audio_encoder() {
+		ma_encoder_uninit(&encoder);
 	}
-	string get_data() {
-		return *data.data();
+	void encode(const std::string& audio_data) {
+		ma_encoder_write_pcm_frames(&encoder, audio_data.c_str(), audio_data.size(), nullptr);
+	}
+
+	std::string get_data() {
+		return std::string(data.begin(), data.end());
 	}
 };
 
-void audio_recorder_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount)
-{
-	audio_encoder* encoder = (audio_encoder*)pDevice->pUserData;
-	ma_encoder_write_pcm_frames(&encoder->encoder, pInput, frameCount, NULL);
+void audio_recorder_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount) {
+	audio_encoder* encoder = static_cast<audio_encoder*>(pDevice->pUserData);
+	ma_encoder_write_pcm_frames(&encoder->encoder, pInput, frameCount, nullptr);
 
 	(void)pOutput;
 }
@@ -1969,26 +1977,29 @@ public:
 	audio_encoder encoder;
 	ma_device_config deviceConfig;
 	ma_device recording_device;
+
 	void start() {
 		deviceConfig = ma_device_config_init(ma_device_type_capture);
-		deviceConfig.capture.format = ma_format_f32;
+		deviceConfig.capture.format = ma_format_s16;
 		deviceConfig.capture.channels = 2;
 		deviceConfig.sampleRate = 44100;
 		deviceConfig.dataCallback = audio_recorder_callback;
 		deviceConfig.pUserData = &encoder;
 
-		ma_device_init(NULL, &deviceConfig, &recording_device);
-
+		ma_device_init(nullptr, &deviceConfig, &recording_device);
 		ma_device_start(&recording_device);
-
 	}
+
 	void stop() {
 		ma_device_uninit(&recording_device);
 	}
-	string get_data() {
+
+	std::string get_data() {
 		return encoder.get_data();
 	}
 };
+
+
 ma_result audio_stream_callback(ma_decoder* pDecoder, void* buffer, size_t bytesToRead, size_t* pBytesRead) {
 	string temp((char*)buffer, bytesToRead);
 	temp.resize(bytesToRead);
@@ -2106,7 +2117,7 @@ void register_sound(asIScriptEngine* engine) {
 	engine->RegisterObjectMethod("audio_recorder", "void stop()const", asMETHOD(audio_recorder, stop), asCALL_THISCALL);
 	engine->RegisterObjectMethod("audio_recorder", "string get_data()const property", asMETHOD(audio_recorder, get_data), asCALL_THISCALL);
 	engine->RegisterObjectType("audio_encoder", sizeof(audio_encoder), asOBJ_REF | asOBJ_NOCOUNT);
-	engine->RegisterObjectBehaviour("audio_encoder", asBEHAVE_FACTORY, "audio_encoder@raw()", asFUNCTION(faudio_encoder), asCALL_CDECL);
+	engine->RegisterObjectBehaviour("audio_encoder", asBEHAVE_FACTORY, "audio_encoder@ raw()", asFUNCTION(faudio_encoder), asCALL_CDECL);
 	engine->RegisterObjectMethod("audio_encoder", "void encode(const string &in)const", asMETHOD(audio_encoder, encode), asCALL_THISCALL);
 	engine->RegisterObjectMethod("audio_encoder", "string get_data()const property", asMETHOD(audio_encoder, get_data), asCALL_THISCALL);
 

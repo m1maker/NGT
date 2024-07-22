@@ -370,7 +370,7 @@ void fscript_thread(asIScriptGeneric* gen) {
 	script_thread* th = new script_thread(func);
 	gen->SetReturnObject(th);
 }
-tts_voice* ftts_voice() { return new tts_voice(); }
+TTSVoice* ftts_voice() { return new TTSVoice(); }
 instance* finstance(std::string app) { return new instance(app); }
 network_event* fnetwork_event() { return new network_event; }
 ngtvector* fngtvector() { return new ngtvector; }
@@ -550,18 +550,23 @@ void RegisterFunctions(asIScriptEngine* engine)
 
 	register_pack(engine);
 	register_sound(engine);
-	engine->RegisterObjectType("tts_voice", sizeof(tts_voice), asOBJ_REF);
+	engine->RegisterObjectType("tts_voice", sizeof(TTSVoice), asOBJ_REF);
 	engine->RegisterObjectBehaviour("tts_voice", asBEHAVE_FACTORY, "tts_voice@ v()", asFUNCTION(ftts_voice), asCALL_CDECL);
-	engine->RegisterObjectBehaviour("tts_voice", asBEHAVE_ADDREF, "void f()", asMETHOD(tts_voice, add_ref), asCALL_THISCALL);
-	engine->RegisterObjectBehaviour("tts_voice", asBEHAVE_RELEASE, "void f()", asMETHOD(tts_voice, release), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("tts_voice", asBEHAVE_ADDREF, "void f()", asMETHOD(TTSVoice, add_ref), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("tts_voice", asBEHAVE_RELEASE, "void f()", asMETHOD(TTSVoice, release), asCALL_THISCALL);
 
 
-	engine->RegisterObjectMethod("tts_voice", "void speak(const string& in)const", asMETHOD(tts_voice, speak), asCALL_THISCALL);
-	engine->RegisterObjectMethod("tts_voice", "void speak_wait(const string& in)const", asMETHOD(tts_voice, speak_wait), asCALL_THISCALL);
-	engine->RegisterObjectMethod("tts_voice", "void speak_interrupt(const string& in)const", asMETHOD(tts_voice, speak_interrupt), asCALL_THISCALL);
-	engine->RegisterObjectMethod("tts_voice", "void speak_interrupt_wait(const string& in)const", asMETHOD(tts_voice, speak_interrupt_wait), asCALL_THISCALL);
-	engine->RegisterObjectMethod("tts_voice", "int get_rate()const property", asMETHOD(tts_voice, get_rate), asCALL_THISCALL);
-	engine->RegisterObjectMethod("tts_voice", "void set_rate(int)property", asMETHOD(tts_voice, set_rate), asCALL_THISCALL);
+	engine->RegisterObjectMethod("tts_voice", "void speak(const string& in)const", asMETHOD(TTSVoice, speak), asCALL_THISCALL);
+	engine->RegisterObjectMethod("tts_voice", "void speak_wait(const string& in)const", asMETHOD(TTSVoice, speak_wait), asCALL_THISCALL);
+	engine->RegisterObjectMethod("tts_voice", "void speak_interrupt(const string& in)const", asMETHOD(TTSVoice, speak_interrupt), asCALL_THISCALL);
+	engine->RegisterObjectMethod("tts_voice", "void speak_interrupt_wait(const string& in)const", asMETHOD(TTSVoice, speak_interrupt_wait), asCALL_THISCALL);
+	engine->RegisterObjectMethod("tts_voice", "int get_rate()const property", asMETHOD(TTSVoice, get_rate), asCALL_THISCALL);
+	engine->RegisterObjectMethod("tts_voice", "void set_rate(int)property", asMETHOD(TTSVoice, set_rate), asCALL_THISCALL);
+	engine->RegisterObjectMethod("tts_voice", "int get_volume()const property", asMETHOD(TTSVoice, get_volume), asCALL_THISCALL);
+	engine->RegisterObjectMethod("tts_voice", "void set_volume(int)property", asMETHOD(TTSVoice, set_volume), asCALL_THISCALL);
+	engine->RegisterObjectMethod("tts_voice", "void set_voice(uint64)property", asMETHOD(TTSVoice, set_voice), asCALL_THISCALL);
+	engine->RegisterObjectMethod("tts_voice", "array<string>@ get_voice_names()const property", asMETHOD(TTSVoice, get_voice_names), asCALL_THISCALL);
+
 	engine->RegisterObjectType("user_idle", sizeof(user_idle), asOBJ_REF);
 	engine->RegisterObjectBehaviour("user_idle", asBEHAVE_FACTORY, "user_idle@ u()", asFUNCTION(fuser_idle), asCALL_CDECL);
 	engine->RegisterObjectBehaviour("user_idle", asBEHAVE_ADDREF, "void f()", asMETHOD(user_idle, add_ref), asCALL_THISCALL);

@@ -1,26 +1,34 @@
-#ifndef TTS_VOICE_H
-#define TTS_VOICE_H
 #pragma once
-#include "as_class.h"
-#ifdef _WIN32
-#include"sapi/SpeechEngine.h"
-#endif
-#include<string>
-class tts_voice : public as_class
+#include "scriptarray/scriptarray.h"
+#include<atlbase.h>
+#include<atlcom.h>
+#include <sapi.h>
+#include <string>
+#include <vector>
+class TTSVoice
 {
 public:
-	tts_voice();
-	~tts_voice();
-
-	void speak(const std::string&);
-	void speak_wait(const std::string&);
-	void speak_interrupt(const std::string&);
-	void speak_interrupt_wait(const std::string&);
+	void add_ref();
+	void release();
+	TTSVoice();
+	~TTSVoice();
+	bool speak(const std::string& text);
+	bool speak_wait(const std::string& text);
+	bool speak_interrupt(const std::string& text);
+	bool speak_interrupt_wait(const std::string& text);
+	std::vector<std::string> get_voice_names();
+	CScriptArray* get_voice_names_script();
+	void set_voice(uint64_t voice_index);
 	int get_rate() const;
-	void set_rate(int);
+	void set_rate(int rate);
+	int get_volume() const;
+	void set_volume(int volume);
+
 private:
-#ifdef _WIN32
-	SpeechEngine* speaker = nullptr;
-#endif
+	mutable int ref;
+	CComPtr<ISpVoice> pVoice;
+	std::vector<CComPtr<ISpObjectToken>> voices;
+	int rate;
+	int volume;
+	void initialize();
 };
-#endif

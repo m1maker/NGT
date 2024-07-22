@@ -1,0 +1,27 @@
+sound s;
+void main(){
+show_window("Audio device test");
+s.load("C:/windows/media/ring01.wav");
+s.play_looped();
+array<string>@ devices=get_output_audio_devices();
+if(devices.length()==0){
+alert("Error", "Your system has not devices!", "Exit");
+exit(-1);
+}
+speak("Select audio device by pressing arrow keys. To switch to the selected device, press Enter");
+int device_id=0;
+while(true){
+wait(5);
+if(key_repeat(SDLK_DOWN) and device_id<devices.length()-1){
+device_id+=1;
+speak(devices[device_id]);
+}
+if(key_repeat(SDLK_UP) and device_id>0){
+device_id-=1;
+speak(devices[device_id]);
+}
+if(key_pressed(SDLK_RETURN)){
+set_output_audio_device(device_id);
+}
+}
+}

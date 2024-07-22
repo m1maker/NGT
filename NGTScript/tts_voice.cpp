@@ -1,56 +1,129 @@
-#ifdef _WIN32
-#include"sapi/SpeechEngine.h"
-#endif //  _WIN32
-#include"tts_voice.h"
-#include<string>
-#ifdef _WIN32
-tts_voice::tts_voice()
-{
-	speaker = new SpeechEngine();
+#include "angelscript.h"
+#include"ngt.h"
+#include "tts_voice.h"
+#include<atlbase.h>
+#include<atlcom.h>
+#include <sapi.h>
+#include <sphelper.h>
+#include <stdexcept>
+void TTSVoice::add_ref() {
+	asAtomicInc(ref);
 }
-tts_voice::~tts_voice()
-{
-	delete speaker;
-	speaker = nullptr;
+void TTSVoice::release() {
+	if (asAtomicDec(ref) < 1)
+		delete this;
 }
-void tts_voice::speak(const std::string& text)
+TTSVoice::TTSVoice() : rate(0), volume(100)
 {
-	speaker->speak(text);
+	ref = 1;
+	if (g_COMInitialized == true)return;
+	if (FAILED(::CoInitialize(nullptr)))
+	{
+		alert("COM Init Error", "Could not initialize component object model");
+	}
+	initialize();
 }
-void tts_voice::speak_wait(const std::string& text)
-{
-	speaker->speak_wait(text);
-}
-void tts_voice::speak_interrupt(const std::string& text)
-{
-	speaker->speak_interrupt(text);
-}
-void tts_voice::speak_interrupt_wait(const std::string& text)
-{
-	speaker->speak_interrupt_wait(text);
-}
-int tts_voice::get_rate() const
-{
-	return speaker->getRate();
-}
-void tts_voice::set_rate(int rate)
-{
-	speaker->setRate(rate);
-}
-#else
-tts_voice::tts_voice() {}
 
-tts_voice::~tts_voice() {}
+TTSVoice::~TTSVoice()
+{
+	::CoUninitialize();
+	g_COMInitialized = false;
+}
 
-void tts_voice::speak(const std::string& text) {}
+void TTSVoice::initialize()
+{
+	if (FAILED(pVoice.CoCreateInstance(CLSID_SpVoice)))
+	{
+		alert("Speech API Error", "Could not create SAPI Voice");
+	}
 
-void tts_voice::speak_wait(const std::string& text) {}
+	CComPtr<IEnumSpObjectTokens> cpEnum;
+	if (SUCCEEDED(SpEnumTokens(SPCAT_VOICES, nullptr, nullptr, &cpEnum)))
+	{
+		CComPtr<ISpObjectToken> pToken;
+		while (cpEnum->Next(1, &pToken, nullptr) == S_OK)
+		{
+			voices.push_back(pToken);
+			pToken.Release();
+		}
+	}
+	g_COMInitialized = true;
+}
 
-void tts_voice::speak_interrupt(const std::string& text) {}
+bool TTSVoice::speak(const std::string& text)
+{
+	return SUCCEEDED(pVoice->Speak(CComBSTR(text.c_str()), SPF_ASYNC, nullptr));
+}
 
-void tts_voice::speak_interrupt_wait(const std::string& text) {}
+bool TTSVoice::speak_wait(const std::string& text)
+{
+	return SUCCEEDED(pVoice->Speak(CComBSTR(text.c_str()), SPF_DEFAULT, nullptr));
+}
 
-int tts_voice::get_rate() const { return 0; }
+bool TTSVoice::speak_interrupt(const std::string& text)
+{
+	return SUCCEEDED(pVoice->Speak(CComBSTR(text.c_str()), SPF_ASYNC | SPF_PURGEBEFORESPEAK, nullptr));
+}
 
-void tts_voice::set_rate(int rate) {}
-#endif
+bool TTSVoice::speak_interrupt_wait(const std::string& text)
+{
+	return SUCCEEDED(pVoice->Speak(CComBSTR(text.c_str()), SPF_PURGEBEFORESPEAK, nullptr));
+}
+
+std::vector<std::string> TTSVoice::get_voice_names()
+{
+	std::vector<std::string> voice_names;
+	for (auto& voice : voices)
+	{
+		CSpDynamicString dstrDesc;
+		if (SUCCEEDED(SpGetDescription(voice, &dstrDesc)))
+		{
+			voice_names.push_back(std::string(CW2A(dstrDesc)));
+		}
+	}
+	return voice_names;
+}
+CScriptArray* TTSVoice::get_voice_names_script() {
+	asIScriptContext* ctx = asGetActiveContext();
+	asIScriptEngine* engine = ctx->GetEngine();
+	asITypeInfo* arrayType = engine->GetTypeInfoById(engine->GetTypeIdByDecl("array<string>"));
+	CScriptArray* array = CScriptArray::Create(arrayType, (asUINT)0);
+	std::vector<std::string> voice_names = this->get_voice_names();
+	if (voice_names.size() == 0)return array;
+	for (uint64_t i = 0; i < voice_names.size(); i++)
+	{
+		array->Resize(array->GetSize() + 1);
+		((string*)array->At(i))->assign(voice_names[i]);
+	}
+	return array;
+
+}
+void TTSVoice::set_voice(uint64_t voice_index)
+{
+	if (voice_index < voices.size())
+	{
+		pVoice->SetVoice(voices[voice_index]);
+	}
+}
+
+int TTSVoice::get_rate() const
+{
+	return rate;
+}
+
+void TTSVoice::set_rate(int new_rate)
+{
+	rate = new_rate;
+	pVoice->SetRate(rate);
+}
+
+int TTSVoice::get_volume() const
+{
+	return volume;
+}
+
+void TTSVoice::set_volume(int new_volume)
+{
+	volume = new_volume;
+	pVoice->SetVolume(volume);
+}
