@@ -591,8 +591,6 @@ IPLContextSettings iplContextSettings;
 IPLContext iplContext;
 IPLHRTFSettings iplHRTFSettings;
 IPLHRTF iplHRTF;
-
-
 bool g_SoundInitialized = false;
 ma_engine sound_default_mixer;
 ma_device sound_mixer_device;
@@ -1226,7 +1224,87 @@ public:
 void at_stop(ma_node* fx, ma_sound* hndl) {
 	//    ma_node_detach_output_bus(fx, 0);
 }
-class sound {
+class MemoryStream {
+public:
+	MemoryStream(size_t initialSize = 1024)
+		: buffer(initialSize), position(0) {}
+
+	void write(const char* data, size_t size) {
+		ensureCapacity(position + size);
+		std::copy(data, data + size, buffer.begin() + position);
+		position += size;
+	}
+
+	void read(char* data, size_t size) {
+		if (position + size > buffer.size()) {
+			return;
+		}
+		std::copy(buffer.begin() + position, buffer.begin() + position + size, data);
+		position += size;
+	}
+
+	void seek(size_t pos) {
+		if (pos > buffer.size()) {
+			return;
+		}
+		position = pos;
+	}
+	void seek(ma_seek_origin origin, int offset) {
+		switch (origin) {
+		case ma_seek_origin_start:
+			if (offset < 0 || static_cast<size_t>(offset) > buffer.size()) {
+				return;
+			}
+			position = static_cast<size_t>(offset);
+			break;
+
+		case ma_seek_origin_current:
+			if (position + offset > buffer.size() || position + offset < 0) {
+				return;
+			}
+			position += offset;
+			break;
+
+		case ma_seek_origin_end:
+			if (offset > 0 || static_cast<size_t>(-offset) > buffer.size()) {
+				return;
+			}
+			position = buffer.size() + static_cast<size_t>(offset);
+			break;
+
+		default:
+			return;
+		}
+	}
+
+
+	size_t tell() const {
+		return position;
+	}
+
+	size_t size() const {
+		return buffer.size();
+	}
+
+	void clear() {
+		buffer.clear();
+		position = 0;
+	}
+
+private:
+	std::vector<char> buffer; // Memory buffer
+	size_t position;          // Current position in the stream
+
+	// Ensure that the buffer has enough capacity
+	void ensureCapacity(size_t requiredSize) {
+		if (requiredSize > buffer.size()) {
+			buffer.resize(requiredSize * 2); // Double the size for future writes
+		}
+	}
+};
+
+
+class MINIAUDIO_IMPLEMENTATION sound {
 public:
 	bool is_3d_;
 	bool playing = false, paused = false, active = false;
@@ -1284,10 +1362,8 @@ public:
 		ref += 1;
 	}
 	void release() {
-		if (--ref == 0) {
-			if (!this->is_playing()) {
-				delete this;
-			}
+		if (--ref < 1) {
+			delete this;
 		}
 	}
 	bool load(const string& filename, bool set3d) {
@@ -1932,26 +2008,26 @@ bool get_sound_global_hrtf() {
 	return sound_global_hrtf;
 }
 ma_result ma_encoder_write_callback(ma_encoder* encoder, const void* buffer, size_t bytesToWrite, size_t* pBytesWritten) {
-	std::vector<char>* data = static_cast<std::vector<char>*>(encoder->pUserData);
-	const char* charBuffer = static_cast<const char*>(buffer);
-	data->insert(data->end(), charBuffer, charBuffer + bytesToWrite);
-	*pBytesWritten = bytesToWrite;
+	MemoryStream* stream = reinterpret_cast<MemoryStream*>(encoder->pUserData);
+	stream->write((const char*)buffer, bytesToWrite);
 	return MA_SUCCESS;
 }
 
 ma_result ma_encoder_seek_callback(ma_encoder* pEncoder, ma_int64 offset, ma_seek_origin origin) {
+	MemoryStream* stream = reinterpret_cast<MemoryStream*>(pEncoder->pUserData);
+	stream->seek(origin, offset);
 	return MA_SUCCESS;
 }
 
-class audio_encoder {
+class MINIAUDIO_IMPLEMENTATION audio_encoder {
 public:
-	std::vector<char> data;
+	MemoryStream stream;
 	ma_encoder_config encoderConfig;
 	ma_encoder encoder;
 
 	audio_encoder() {
 		encoderConfig = ma_encoder_config_init(ma_encoding_format_wav, ma_format_s16, 2, 44100);
-		ma_encoder_init(ma_encoder_write_callback, ma_encoder_seek_callback, &data, &encoderConfig, &encoder);
+		ma_encoder_init(ma_encoder_write_callback, ma_encoder_seek_callback, &stream, &encoderConfig, &encoder);
 	}
 	~audio_encoder() {
 		ma_encoder_uninit(&encoder);
@@ -1959,10 +2035,15 @@ public:
 	void encode(const std::string& audio_data) {
 		ma_encoder_write_pcm_frames(&encoder, audio_data.c_str(), audio_data.size(), nullptr);
 	}
-
 	std::string get_data() {
-		return std::string(data.begin(), data.end());
+		stream.seek(ma_seek_origin_start, 0);
+		size_t dataSize = stream.size();
+		std::vector<char> buffer(dataSize);
+		stream.read(buffer.data(), dataSize);
+		return std::string(buffer.data(), dataSize);
 	}
+
+
 };
 
 void audio_recorder_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount) {
@@ -1972,7 +2053,7 @@ void audio_recorder_callback(ma_device* pDevice, void* pOutput, const void* pInp
 	(void)pOutput;
 }
 
-class audio_recorder {
+class MINIAUDIO_IMPLEMENTATION audio_recorder {
 public:
 	audio_encoder encoder;
 	ma_device_config deviceConfig;

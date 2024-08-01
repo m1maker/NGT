@@ -730,7 +730,11 @@ string input_box(const string& title, const string& text, const string& default_
 	if (default_text != "")gui::add_text(edit, wstr(default_text).c_str());
 	while (true) {
 		gui::update_window(main_window);
-		if (gui::is_pressed(ok) or gui::key_pressed(0x0d)) {
+		if (gui::try_close) {
+			gui::try_close = false;
+			MessageBeep(MB_ICONERROR);
+		}
+		if (gui::is_pressed(ok) or (gui::key_pressed(0x0d) and gui::get_current_focus() != cancel)) {
 			user_pressed = 1;
 			break;
 		}

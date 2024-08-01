@@ -9,14 +9,17 @@
 
 namespace gui {
 	LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	extern bool try_close;
 	HWND show_window(std::wstring title);
 	bool hide_window(HWND window);
-	void update_window(HWND window);
+	void update_window(HWND window, bool wait_event = true);
 	bool key_pressed(int keyCode);
 	bool key_released(int keyCode);
 	bool key_down(int keyCode);
 	int alert(std::wstring title, std::wstring text, int flags = 0);
+	bool parse_hotkey(const std::string& hotkeyStr, DWORD& modKeys, int& vkKey);
 	void wait(int time);
+	bool hotkey_pressed(int id);
 	class timer;
 	class timer {
 	public:

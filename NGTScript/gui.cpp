@@ -1,25 +1,26 @@
 ﻿#include<chrono>
 #include <iostream>
+#include <sstream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 #include <Windows.h>
 
 namespace gui {
+	bool g_Hotkeys[512];
 	bool g_KeysPressed[256];
 	bool g_KeysReleased[256];
 	bool g_KeysDown[256];
 	HWND g_CurrentFocused;
 	HWND g_MainWindow;
+	bool try_close = false;
 	LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
-		switch (msg)
-		{
-		case WM_DESTROY:
-		{
+		switch (msg) {
+		case WM_CLOSE: {
+			try_close = true;
 			return 0;
 		}
-		case WM_CLOSE:
-			return 0;
 		default:
 			return DefWindowProc(hwnd, msg, wParam, lParam);
 		}
@@ -56,13 +57,14 @@ namespace gui {
 			return nullptr;
 		}
 
-		HWND hwnd = CreateWindowExW(256, L"NGTApp", title.c_str(), WS_OVERLAPPEDWINDOW | WS_CAPTION | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 800, 600, NULL, NULL, hInstance, NULL);
+		HWND hwnd = CreateWindowExW(256, L"NGTApp", title.c_str(), WS_VISIBLE | WS_CAPTION | WS_OVERLAPPED, CW_USEDEFAULT, CW_USEDEFAULT, 800, 600, NULL, NULL, hInstance, NULL);
 		if (!hwnd)
 		{
 			return nullptr;
 		}
 		ShowWindow(hwnd, SW_SHOW);
 		UpdateWindow(hwnd);
+		SetForegroundWindow(hwnd);
 		g_MainWindow = hwnd;
 		return hwnd;
 	}
@@ -70,36 +72,42 @@ namespace gui {
 		if (window == nullptr)return false;
 		return ShowWindow(window, SW_HIDE);
 	}
-	void update_window(HWND window)
+	void update_window(HWND window, bool wait_event)
 	{
 		MSG msg;
 		UpdateWindow(window);
-
-		if (GetMessage(&msg, NULL, 0, 0))
-		{
-			switch (msg.message) {
-			case WM_KEYDOWN:
-				g_KeysDown[msg.wParam] = true;
-				if (g_KeysPressed[msg.wParam] == false && g_KeysReleased[msg.wParam] == true && g_KeysDown[msg.wParam] == true)
-				{
-					g_KeysPressed[msg.wParam] = true;
-					g_KeysReleased[msg.wParam] = false;
-				}
-				else if (g_KeysReleased[msg.wParam] == false)
-				{
-					g_KeysPressed[msg.wParam] = false;
-				}
-				break;
-			case WM_KEYUP:
-				g_KeysDown[msg.wParam] = false;
-				g_KeysPressed[msg.wParam] = false;
-				g_KeysReleased[msg.wParam] = true;
-				break;
-			}
-			if (!IsDialogMessage(window, &msg))
+		if (wait_event)
+			GetMessage(&msg, NULL, 0, 0);
+		else
+			PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
+		switch (msg.message) {
+		case WM_HOTKEY: {
+			g_Hotkeys[msg.wParam] = true;
+		}
+		case WM_KEYDOWN:
+			g_KeysDown[msg.wParam] = true;
+			if (g_KeysPressed[msg.wParam] == false && g_KeysReleased[msg.wParam] == true && g_KeysDown[msg.wParam] == true)
 			{
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
+				g_KeysPressed[msg.wParam] = true;
+				g_KeysReleased[msg.wParam] = false;
+			}
+			else if (g_KeysReleased[msg.wParam] == false)
+			{
+				g_KeysPressed[msg.wParam] = false;
+			}
+			break;
+		case WM_KEYUP:
+			g_KeysDown[msg.wParam] = false;
+			g_KeysPressed[msg.wParam] = false;
+			g_KeysReleased[msg.wParam] = true;
+			break;
+		}
+		if (!IsDialogMessage(window, &msg))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+			if (GetForegroundWindow() == window) {
+				g_CurrentFocused = GetFocus();
 			}
 		}
 	}
@@ -140,7 +148,144 @@ namespace gui {
 		HWND windowHandle = GetForegroundWindow();
 		return MessageBoxW(windowHandle, text.c_str(), title.c_str(), flags);
 	}
+	int get_vk_code(const std::string& key) {
+		static const std::unordered_map<std::string, int> keyMap = {
+			{ "Backspace", VK_BACK },
+			{ "Tab", VK_TAB },
+			{ "Enter", VK_RETURN },
+			{ "Shift", VK_SHIFT },
+			{ "Control", VK_CONTROL },
+			{ "Alt", VK_MENU },
+			{ "Pause", VK_PAUSE },
+			{ "CapsLock", VK_CAPITAL },
+			{ "Escape", VK_ESCAPE },
+			{ "Space", VK_SPACE },
+			{ "PageUp", VK_PRIOR },
+			{ "PageDown", VK_NEXT },
+			{ "End", VK_END },
+			{ "Home", VK_HOME },
+			{ "Left", VK_LEFT },
+			{ "Up", VK_UP },
+			{ "Right", VK_RIGHT },
+			{ "Down", VK_DOWN },
+			{ "Insert", VK_INSERT },
+			{ "Delete", VK_DELETE },
+			{ "F1", VK_F1 },
+			{ "F2", VK_F2 },
+			{ "F3", VK_F3 },
+			{ "F4", VK_F4 },
+			{ "F5", VK_F5 },
+			{ "F6", VK_F6 },
+			{ "F7", VK_F7 },
+			{ "F8", VK_F8 },
+			{ "F9", VK_F9 },
+			{ "F10", VK_F10 },
+			{ "F11", VK_F11 },
+			{ "F12", VK_F12 },
+			{ "0", '0' },
+			{ "1", '1' },
+			{ "2", '2' },
+			{ "3", '3' },
+			{ "4", '4' },
+			{ "5", '5' },
+			{ "6", '6' },
+			{ "7", '7' },
+			{ "8", '8' },
+			{ "9", '9' },
+			{ "A", 'A' },
+			{ "B", 'B' },
+			{ "C", 'C' },
+			{ "D", 'D' },
+			{ "E", 'E' },
+			{ "F", 'F' },
+			{ "G", 'G' },
+			{ "H", 'H' },
+			{ "I", 'I' },
+			{ "J", 'J' },
+			{ "K", 'K' },
+			{ "L", 'L' },
+			{ "M", 'M' },
+			{ "N", 'N' },
+			{ "O", 'O' },
+			{ "P", 'P' },
+			{ "Q", 'Q' },
+			{ "R", 'R' },
+			{ "S", 'S' },
+			{ "T", 'T' },
+			{ "U", 'U' },
+			{ "V", 'V' },
+			{ "W", 'W' },
+			{ "X", 'X' },
+			{ "Y", 'Y' },
+			{ "Z", 'Z' },
+			{ "`", VK_OEM_3 },
+			{ "-", VK_OEM_MINUS },
+			{ "=", VK_OEM_PLUS },
+			{ "[", VK_OEM_4 },
+			{ "]", VK_OEM_5 },
+			{ "\\\\", VK_OEM_6 },
+			{ ";", VK_OEM_1 },
+			{ "'", VK_OEM_7 },
+			{ ",", VK_OEM_COMMA },
+			{ ".", VK_OEM_PERIOD },
+			{ "/", VK_OEM_2 }
+		};
 
+		auto it = keyMap.find(key);
+		if (it != keyMap.end()) {
+			return it->second;
+		}
+		return 0;
+	}
+
+	DWORD get_mod_code(const std::string& key) {
+		if (key == "Ctrl") {
+			return MOD_CONTROL;
+		}
+		else if (key == "Alt") {
+			return MOD_ALT;
+		}
+		else if (key == "Shift") {
+			return MOD_SHIFT;
+		}
+		else if (key == "Windows") {
+			return MOD_WIN;
+		}
+
+		return 0; // No modifier
+	}
+
+	// Function to parse hotkey string
+	bool parse_hotkey(const std::string& hotkeyStr, DWORD& modKeys, int& vkKey) {
+		std::stringstream ss(hotkeyStr);
+		std::string keyPart;
+		modKeys = 0;
+		vkKey = 0;
+
+		while (std::getline(ss, keyPart, '+')) {
+
+			DWORD mod = get_mod_code(keyPart);
+			if (mod != 0) {
+				modKeys |= mod;
+			}
+			else {
+				vkKey = get_vk_code(keyPart);
+				if (vkKey == 0) {
+					return false; // Invalid key
+				}
+			}
+		}
+
+		return true; // Success
+	}
+
+	bool hotkey_pressed(int id) {
+		if (g_Hotkeys[id] == true) {
+			g_Hotkeys[id] = false;
+			return true;
+		}
+		return false;
+	}
 	void wait(int time)
 	{
 		std::chrono::steady_clock::time_point startTime = std::chrono::steady_clock::now();
@@ -148,7 +293,7 @@ namespace gui {
 
 		while (elapsed < time)
 		{
-			update_window(GetActiveWindow());
+			update_window(g_MainWindow, false);
 			elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startTime).count();
 		}
 	}
@@ -410,7 +555,7 @@ namespace gui {
 
 	bool is_pressed(HWND hwndButton)
 	{
-		return SendMessage(hwndButton, BM_GETSTATE, 0, 0) & BST_PUSHED;
+		return (SendMessage(hwndButton, BM_GETSTATE, 0, 0) & BST_PUSHED) or (GetFocus() == hwndButton && key_pressed(VK_RETURN));
 	}
 
 	bool is_readOnly(HWND hwndEdit)
