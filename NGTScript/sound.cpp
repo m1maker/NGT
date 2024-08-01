@@ -1310,6 +1310,7 @@ public:
 	bool playing = false, paused = false, active = false;
 	ma_sound* handle_ = nullptr;
 	ma_decoder decoder;
+	bool decoderInitialized = false;
 	ma_steamaudio_binaural_node g_binauralNode;   /* The echo effect is achieved using a delay node. */
 	ma_reverb_node      g_reverbNode;        /* The reverb node. */
 	ma_reverb_node_config reverbNodeConfig;
@@ -1395,7 +1396,6 @@ public:
 		return true;
 	}
 	bool load_from_memory(string data, size_t stream_size, bool set3d) {
-		return false;// Stop yet
 		if (active)this->close();
 		handle_ = new ma_sound;
 		ma_result r = ma_decoder_init_memory(data.c_str(), stream_size, NULL, &decoder);
@@ -1405,6 +1405,7 @@ public:
 			active = false;
 			return false;
 		}
+		decoderInitialized = true;
 		active = true;
 		if (sound_global_hrtf)
 			this->set_hrtf(true);
@@ -1546,6 +1547,10 @@ public:
 
 		}
 		current_fx = nullptr;
+		if (decoderInitialized) {
+			ma_decoder_uninit(&decoder);
+			decoderInitialized = false;
+		}
 		ma_sound_uninit(handle_);
 		delete handle_;
 		handle_ = nullptr;
