@@ -55,4 +55,3 @@ The compiled scripts can be found in the x64 folder.
 
 - [Official News Telegram Channel](https://t.me/newgametoolkit)
 - [Website](https://ngtcode.dev/)
-- [Scripts and includes repo](https://github.com/m1maker/ngt-includes)
