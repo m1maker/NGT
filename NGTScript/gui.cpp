@@ -14,9 +14,27 @@ namespace gui {
 	HWND g_CurrentFocused;
 	HWND g_MainWindow;
 	bool try_close = false;
+	HWND g_LastFocused;
+	WNDPROC originalEditProc;
+	LRESULT CALLBACK Edit_Prc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+	{
+		if (msg == WM_CHAR && wParam == 1)
+		{
+			SendMessage(hwnd, EM_SETSEL, 0, -1);
+			return 1;
+		}
+		else
+		{
+			return CallWindowProc(originalEditProc, hwnd, msg, wParam, lParam);
+		}
+	}
 	LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		switch (msg) {
+		case WM_SETFOCUS: {
+			SetFocus(g_CurrentFocused);
+			break;
+		}
 		case WM_CLOSE: {
 			try_close = true;
 			return 0;
@@ -57,7 +75,7 @@ namespace gui {
 			return nullptr;
 		}
 
-		HWND hwnd = CreateWindowExW(256, L"NGTApp", title.c_str(), WS_VISIBLE | WS_CAPTION | WS_OVERLAPPED, CW_USEDEFAULT, CW_USEDEFAULT, 800, 600, NULL, NULL, hInstance, NULL);
+		HWND hwnd = CreateWindowExW(256, L"NGTApp", title.c_str(), WS_VISIBLE | WS_CAPTION | WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 800, 600, NULL, NULL, hInstance, NULL);
 		if (!hwnd)
 		{
 			return nullptr;
@@ -106,6 +124,7 @@ namespace gui {
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
+
 			if (GetForegroundWindow() == window) {
 				g_CurrentFocused = GetFocus();
 			}
@@ -437,7 +456,7 @@ namespace gui {
 			style |= ES_PASSWORD;
 		}
 
-		return CreateWindow(
+		HWND window = CreateWindow(
 			TEXT("EDIT"),
 			NULL,
 			style,
@@ -450,6 +469,9 @@ namespace gui {
 			NULL,
 			NULL
 		);
+		originalEditProc = (WNDPROC)SetWindowLongPtr(window, GWLP_WNDPROC, (LONG_PTR)Edit_Prc);
+
+		return window;
 	}
 
 	HWND create_list(HWND hwndParent, int x, int y, int width, int height, int id)

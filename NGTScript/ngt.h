@@ -70,6 +70,8 @@ public:
 	float x, y, z;
 	float get_length()const;
 	ngtvector& operator=(const ngtvector);
+	void reset();
+	ngtvector();
 };
 
 #ifdef _WIN32

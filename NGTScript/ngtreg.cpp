@@ -1,4 +1,5 @@
-﻿#include "scriptbuilder/scriptbuilder.h"
+﻿#include "MemoryStream.h"
+#include "scriptbuilder/scriptbuilder.h"
 #include "scriptstdstring/scriptstdstring.h"
 #include <cstdlib>
 #include <fstream>
@@ -239,6 +240,9 @@ LRESULT CALLBACK EditSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 {
 	switch (uMsg) {
 	case WM_KEYDOWN:
+		if (GetKeyState(VK_CONTROL) & 0x8000 && wParam == 'A') {
+			SendMessage(hwnd, EM_SETSEL, 0, -1);
+		}
 		if (wParam == VK_TAB)
 		{
 			SetFocus(buttonc); // Set focus to the next control
@@ -258,6 +262,7 @@ std::wstring result_message;
 int nCmdShow;
 HINSTANCE hInstance;
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+HWND g_CurrentFocus;
 #endif
 void show_message()
 {
@@ -312,8 +317,8 @@ void show_message()
 		{
 			TranslateMessage(&messagege);
 			DispatchMessage(&messagege);
-
-
+			if (GetForegroundWindow() == hwnd)
+				g_CurrentFocus = GetFocus();
 		}
 
 	}
@@ -328,6 +333,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 	switch (msg)
 	{
+	case WM_SETFOCUS: {
+		SetFocus(g_CurrentFocus);
+		break;
+	}
 	case WM_CREATE:
 		g_hwndEdit = CreateWindowEx(
 			0, L"EDIT",
@@ -419,7 +428,6 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterTypedef("c_str", "int8");
 	engine->RegisterTypedef("hwnd", "uint8");
 	engine->RegisterTypedef("surface", "int64");
-	engine->RegisterObjectType("ptr", sizeof(void*), asOBJ_VALUE | asOBJ_POD);
 	engine->RegisterObjectType("rect", sizeof(SDL_Rect), asOBJ_REF | asOBJ_NOCOUNT);
 	engine->RegisterObjectBehaviour("rect", asBEHAVE_FACTORY, "rect@ r()", asFUNCTION(frect), asCALL_CDECL);
 	engine->RegisterObjectProperty("rect", "int x", asOFFSET(SDL_Rect, x));
@@ -436,6 +444,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterObjectProperty("vector", "float z", asOFFSET(ngtvector, z));
 	engine->RegisterObjectMethod("vector", "float get_length()const property", asMETHOD(ngtvector, get_length), asCALL_THISCALL);
 	engine->RegisterObjectMethod("vector", "vector &opAssign(const vector&in)", asMETHOD(ngtvector, operator=), asCALL_THISCALL);
+	engine->RegisterObjectMethod("vector", "void reset()const", asMETHOD(ngtvector, reset), asCALL_THISCALL);
 	engine->RegisterGlobalFunction("int get_cpu_count()property", asFUNCTION(get_cpu_count), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int get_system_ram()property", asFUNCTION(get_system_ram), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string get_platform()property", asFUNCTION(get_platform), asCALL_CDECL);
@@ -550,6 +559,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 
 	register_pack(engine);
 	register_sound(engine);
+	RegisterMemstream(engine);
 	engine->RegisterObjectType("tts_voice", sizeof(TTSVoice), asOBJ_REF);
 	engine->RegisterObjectBehaviour("tts_voice", asBEHAVE_FACTORY, "tts_voice@ v()", asFUNCTION(ftts_voice), asCALL_CDECL);
 	engine->RegisterObjectBehaviour("tts_voice", asBEHAVE_ADDREF, "void f()", asMETHOD(TTSVoice, add_ref), asCALL_THISCALL);

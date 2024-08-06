@@ -206,6 +206,7 @@
     <ClInclude Include="gui.h" />
     <ClInclude Include="http.h" />
     <ClInclude Include="joystick.h" />
+    <ClInclude Include="MemoryStream.h" />
     <ClInclude Include="miniaudio.h" />
     <ClInclude Include="ngt.h" />
     <ClInclude Include="ngtreg.h" />
@@ -475,6 +476,7 @@
     <ClCompile Include="http.cpp" />
     <ClCompile Include="joystick.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MemoryStream.cpp" />
     <ClCompile Include="ngt.cpp" />
     <ClCompile Include="ngtreg.cpp" />
     <ClCompile Include="openssl\applink.c" />

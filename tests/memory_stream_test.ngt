@@ -1,0 +1,27 @@
+void main() {
+    show_console();
+    memory_stream stream(0);
+
+    // Writing to the stream
+    stream.write("Hello, World!");
+
+    // Getting current position
+    int pos = stream.tell();
+    printf("Current Position: " + pos);
+
+    // Seeking back to the start
+    stream.seek(0);
+
+    // Reading from the stream
+    string data;
+    stream.read(data, 13); // Read 13 bytes
+    printf("Data read from stream: " + data);
+
+    // Checking the size of the stream
+    size_t size = stream.size;
+    printf("Size of stream: " + size);
+    stream.clear();
+    exec("pause");
+    hide_console();
+}
+

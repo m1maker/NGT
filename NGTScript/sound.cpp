@@ -1,5 +1,6 @@
 //NGTAUDIO
 #define NOMINMAX
+#include "MemoryStream.h"
 #define CURL_STATICLIB
 #include "curl/curl.h"
 #include "ngt.h"
@@ -1224,86 +1225,6 @@ public:
 void at_stop(ma_node* fx, ma_sound* hndl) {
 	//    ma_node_detach_output_bus(fx, 0);
 }
-class MemoryStream {
-public:
-	MemoryStream(size_t initialSize = 1024)
-		: buffer(initialSize), position(0) {}
-
-	void write(const char* data, size_t size) {
-		ensureCapacity(position + size);
-		std::copy(data, data + size, buffer.begin() + position);
-		position += size;
-	}
-
-	void read(char* data, size_t size) {
-		if (position + size > buffer.size()) {
-			return;
-		}
-		std::copy(buffer.begin() + position, buffer.begin() + position + size, data);
-		position += size;
-	}
-
-	void seek(size_t pos) {
-		if (pos > buffer.size()) {
-			return;
-		}
-		position = pos;
-	}
-	void seek(ma_seek_origin origin, int offset) {
-		switch (origin) {
-		case ma_seek_origin_start:
-			if (offset < 0 || static_cast<size_t>(offset) > buffer.size()) {
-				return;
-			}
-			position = static_cast<size_t>(offset);
-			break;
-
-		case ma_seek_origin_current:
-			if (position + offset > buffer.size() || position + offset < 0) {
-				return;
-			}
-			position += offset;
-			break;
-
-		case ma_seek_origin_end:
-			if (offset > 0 || static_cast<size_t>(-offset) > buffer.size()) {
-				return;
-			}
-			position = buffer.size() + static_cast<size_t>(offset);
-			break;
-
-		default:
-			return;
-		}
-	}
-
-
-	size_t tell() const {
-		return position;
-	}
-
-	size_t size() const {
-		return buffer.size();
-	}
-
-	void clear() {
-		buffer.clear();
-		position = 0;
-	}
-
-private:
-	std::vector<char> buffer; // Memory buffer
-	size_t position;          // Current position in the stream
-
-	// Ensure that the buffer has enough capacity
-	void ensureCapacity(size_t requiredSize) {
-		if (requiredSize > buffer.size()) {
-			buffer.resize(requiredSize * 2); // Double the size for future writes
-		}
-	}
-};
-
-
 class MINIAUDIO_IMPLEMENTATION sound {
 public:
 	bool is_3d_;
@@ -1346,6 +1267,8 @@ public:
 	bool sound_hrtf = false;
 	ma_node* current_fx = nullptr;
 	mutable int ref = 0;
+	string file;
+	ngtvector position;
 	sound(const string& filename = "", bool set3d = false) {
 		ref = 1;
 		if (!g_SoundInitialized) {
@@ -1388,7 +1311,7 @@ public:
 			return false;
 		}
 		active = true;
-
+		file = result;
 		if (sound_global_hrtf)
 			this->set_hrtf(true);
 		ma_sound_set_rolloff(handle_, 2);
@@ -1428,6 +1351,7 @@ public:
 			return false;
 		}
 		active = true;
+		file = result;
 		if (sound_global_hrtf)
 			this->set_hrtf(true);
 		ma_sound_set_end_callback(handle_, at_stop, current_fx);
@@ -1458,6 +1382,9 @@ public:
 		if (!active)return"";
 		char* source = (char*)ma_sound_get_data_source(handle_);
 		return string(source);
+	}
+	string get_file_path() {
+		return this->file;
 	}
 	void set_faid_time(float volume_beg, float volume_end, float time) {
 		ma_sound_set_fade_in_milliseconds(handle_, volume_beg / 100, volume_end / 100, static_cast<ma_uint64>(time));
@@ -1553,6 +1480,7 @@ public:
 		}
 		ma_sound_uninit(handle_);
 		delete handle_;
+		file = "";
 		handle_ = nullptr;
 		active = false;
 		return true;
@@ -2013,14 +1941,37 @@ bool get_sound_global_hrtf() {
 	return sound_global_hrtf;
 }
 ma_result ma_encoder_write_callback(ma_encoder* encoder, const void* buffer, size_t bytesToWrite, size_t* pBytesWritten) {
+	if (encoder == nullptr) {
+		return MA_INVALID_ARGS;
+	}
+
 	MemoryStream* stream = reinterpret_cast<MemoryStream*>(encoder->pUserData);
+	if (buffer == nullptr || stream == nullptr)return MA_INVALID_ARGS;
 	stream->write((const char*)buffer, bytesToWrite);
 	return MA_SUCCESS;
 }
 
+
+
 ma_result ma_encoder_seek_callback(ma_encoder* pEncoder, ma_int64 offset, ma_seek_origin origin) {
 	MemoryStream* stream = reinterpret_cast<MemoryStream*>(pEncoder->pUserData);
-	stream->seek(origin, offset);
+	seek_origin so;
+	switch (origin) {
+	case ma_seek_origin_start: {
+		so = seek_origin_start;
+		break;
+	}
+	case ma_seek_origin_current: {
+		so = seek_origin_current;
+		break;
+	}
+	case ma_seek_origin_end: {
+		so = seek_origin_end;
+		break;
+	}
+	default:return MA_ERROR;
+	}
+	stream->seek(so, offset);
 	return MA_SUCCESS;
 }
 
@@ -2030,7 +1981,7 @@ public:
 	ma_encoder_config encoderConfig;
 	ma_encoder encoder;
 
-	audio_encoder() {
+	audio_encoder() : stream(0) {
 		encoderConfig = ma_encoder_config_init(ma_encoding_format_wav, ma_format_s16, 2, 44100);
 		ma_encoder_init(ma_encoder_write_callback, ma_encoder_seek_callback, &stream, &encoderConfig, &encoder);
 	}
@@ -2041,7 +1992,7 @@ public:
 		ma_encoder_write_pcm_frames(&encoder, audio_data.c_str(), audio_data.size(), nullptr);
 	}
 	std::string get_data() {
-		stream.seek(ma_seek_origin_start, 0);
+		stream.seek(0);
 		size_t dataSize = stream.size();
 		std::vector<char> buffer(dataSize);
 		stream.read(buffer.data(), dataSize);
@@ -2150,6 +2101,7 @@ void register_sound(asIScriptEngine* engine) {
 	engine->RegisterObjectMethod("sound", "bool load_url(const string &in, bool=false)const", asMETHOD(sound, load_url), asCALL_THISCALL);
 
 	engine->RegisterObjectMethod("sound", "string push_memory()const", asMETHOD(sound, push_memory), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "string get_file_path()const property", asMETHOD(sound, get_file_path), asCALL_THISCALL);
 	engine->RegisterObjectMethod("sound", "void set_faid_time(float, float, float)const", asMETHOD(sound, set_faid_time), asCALL_THISCALL);
 
 	engine->RegisterObjectMethod("sound", "bool play()const", asMETHOD(sound, play), asCALL_THISCALL);

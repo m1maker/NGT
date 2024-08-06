@@ -1732,10 +1732,11 @@ void library_call(asIScriptGeneric* gen) {
 	library* lib_obj = (library*)gen->GetObject();
 
 	void* ref = gen->GetArgAddress(0);
-	string func_name = *static_cast<string*>(ref);
-	//Function signature parser:
-	vector<string> tokens;
-	string token;
+	std::string func_name = *static_cast<std::string*>(ref);
+
+	// Function signature parser:
+	std::vector<std::string> tokens;
+	std::string token;
 	for (char c : func_name) {
 		if (c == ' ' || c == '(' || c == ')' || c == ',' || c == ';') {
 			if (!token.empty()) {
@@ -1749,12 +1750,12 @@ void library_call(asIScriptGeneric* gen) {
 	}
 
 	// First array: Return type and function name
-	vector<string> first;
+	std::vector<std::string> first;
 	first.push_back(tokens[0]);  // Return type
 	first.push_back(tokens[1]);  // Function name
 
 	// Second array: Parameters
-	vector<string> last;
+	std::vector<std::string> last;
 	for (size_t i = 2; i < tokens.size(); ++i) {
 		if (!tokens[i].empty()) {
 			last.push_back(tokens[i]);
@@ -1764,96 +1765,67 @@ void library_call(asIScriptGeneric* gen) {
 	void* address = SDL_LoadFunction(lib_obj->lib, first[1].c_str());
 	if (address == NULL) {
 		const char* name = first[1].c_str();
-		string message = "Signature parse error: GetProcAddress failed for '" + string(name) + "'";
+		std::string message = "Signature parse error: GetProcAddress failed for '" + std::string(name) + "'";
 		ctx->SetException(message.c_str());
 		return;
 	}
-	asIScriptEngine* engine = ctx->GetEngine();
-	int func_id = engine->RegisterGlobalFunction(func_name.c_str(), asFUNCTION(address), asCALL_CDECL);
-	asIScriptFunction* script_func = engine->GetFunctionById(func_id);
-	asIScriptContext* call_ctx = engine->CreateContext();
-	call_ctx->Prepare(script_func);
-	for (int i = 1; i <= 10; i++) {
-		int arg_count = i - 1;
-		if (arg_count < last.size()) {
-			if (last[arg_count] == "void") {
-				call_ctx->Release();
-				call_ctx = NULL;
-				ctx->SetException("A type ID can not be void");
-				return;
-			}
-			else if (last[arg_count] == "int" or last[arg_count] == "int8" or last[arg_count] == "int16" or last[arg_count] == "int32" or last[arg_count] == "int64") {
-				asINT64 value = *static_cast<asINT64*>(gen->GetArgAddress(i));
-				call_ctx->SetArgDWord(arg_count, value);
-			}
-			else if (last[arg_count] == "uint" or last[arg_count] == "uint8" or last[arg_count] == "uint16" or last[arg_count] == "uint32" or last[arg_count] == "uint64") {
-				asUINT value = *static_cast<asUINT*>(gen->GetArgAddress(i));
-				call_ctx->SetArgDWord(arg_count, value);
-			}
-			else if (last[arg_count] == "short") {
-				short value = *static_cast<short*>(gen->GetArgAddress(i));
-				call_ctx->SetArgWord(arg_count, value);
-			}
-			else if (last[arg_count] == "long") {
-				long value = *static_cast<long*>(gen->GetArgAddress(i));
-				call_ctx->SetArgQWord(arg_count, value);
-			}
-			else if (last[arg_count] == "double") {
-				double value = *static_cast<double*>(gen->GetArgAddress(i));
-				call_ctx->SetArgDouble(arg_count, value);
-			}
-			else if (last[arg_count] == "float") {
-				float value = *static_cast<float*>(gen->GetArgAddress(i));
-				call_ctx->SetArgFloat(arg_count, value);
-			}
-			else if (last[arg_count] == "string") {
-				void* ref = gen->GetArgAddress(i);
-				string value = *static_cast<string*>(ref);
-				call_ctx->SetArgObject(arg_count, &value);
-			}
-			if (last[arg_count] == "ptr") {
-				void* ref = gen->GetArgAddress(i);
-				call_ctx->SetArgObject(arg_count, ref);
-			}
+
+	// Prepare to call the function using libffi
+	ffi_cif cif;
+	std::vector<ffi_type*> arg_types;
+
+	// Determine return type and argument types for libffi
+	ffi_type* return_type;
+
+	// Example for setting up return_type and arg_types based on first and last vectors
+	if (first[0] == "int") {
+		return_type = &ffi_type_sint32; // Example for int return type
+	}
+	else if (first[0] == "void") {
+		return_type = &ffi_type_void;
+	}
+
+	for (const auto& arg : last) {
+		if (arg == "int") {
+			arg_types.push_back(&ffi_type_sint32);
+		}
+		else if (arg == "float") {
+			arg_types.push_back(&ffi_type_float);
+		}
+		else if (arg == "double") {
+			arg_types.push_back(&ffi_type_double);
+		}
+		else {
+			// Handle other types as needed
 		}
 	}
-	call_ctx->Execute();
-	CScriptDictionary* dict = CScriptDictionary::Create(engine);
-	if (first[0] == "int" or first[0] == "int8" or first[0] == "int16" or first[0] == "int32" or first[0] == "int64" or first[0] == "uint" or first[0] == "uint8" or first[0] == "uint16" or first[0] == "uint32" or first[0] == "uint64" or first[0] == "short" or first[0] == "long") {
-		asINT64 value = call_ctx->GetReturnDWord();
-		dict->Set("0", value);
+
+	// Prepare the CIF
+	if (ffi_prep_cif(&cif, FFI_DEFAULT_ABI, arg_types.size(), return_type, arg_types.data()) != FFI_OK) {
+		ctx->SetException("Failed to prepare CIF for libffi");
+		return;
 	}
-	if (first[0] == "double" or first[0] == "float") {
-		double value = call_ctx->GetReturnDouble();
-		dict->Set("0", value);
+
+	// Prepare arguments for the call
+	std::vector<void*> args(arg_types.size());
+	for (size_t i = 0; i < arg_types.size(); ++i) {
+		args[i] = gen->GetArgAddress(i + 1); // Adjust index for the arguments
 	}
-	for (int i = 1; i <= 10; i++) {
-		int arg_count = i - 1;
-		if (arg_count < last.size()) {
-			if (last[arg_count] == "int" or last[arg_count] == "int8" or last[arg_count] == "int16" or last[arg_count] == "int32" or last[arg_count] == "int64" or last[arg_count] == "uint" or last[arg_count] == "uint8" or last[arg_count] == "uint16" or last[arg_count] == "uint32" or last[arg_count] == "uint64" or last[arg_count] == "short" or last[arg_count] == "long") {
-				asINT64 value = *static_cast<asINT64*>(gen->GetArgAddress(i));
-				dict->Set(to_string(i), value);
-			}
-			else if (last[arg_count] == "double" or last[arg_count] == "float") {
-				double value = *static_cast<double*>(gen->GetArgAddress(i));
-				dict->Set(to_string(i), value);
 
-			}
-			else if (last[arg_count] == "string") {
-				void* ref = gen->GetArgAddress(i);
+	// Call the function
+	void* retval;
+	ffi_call(&cif, FFI_FN(address), &retval, args.data());
 
-				string value = *static_cast<string*>(ref);
-				dict->Set(to_string(i), &value, 67108876);
-			}
-			if (last[arg_count] == "ptr") {
-				void* ref = gen->GetArgAddress(i);
-				dict->Set(to_string(i), ref, 67108876);
-
-			}
-
-		}
+	// Handle return value if necessary
+	if (first[0] == "int") {
+		int return_value = *static_cast<int*>(retval);
+		// Set return value in your context or dictionary as needed
 	}
-	gen->SetReturnObject(dict);
+	else if (first[0] == "void") {
+		// No return value to handle
+	}
+
+	//	gen->SetReturnObject(dict);
 }
 void library::unload() {
 	SDL_UnloadObject(lib);
@@ -1941,8 +1913,14 @@ ngtvector& ngtvector::operator=(const ngtvector new_vector) {
 
 	return *this;
 }
-
-
+void ngtvector::reset() {
+	x = 0;
+	y = 0;
+	z = 0;
+}
+ngtvector::ngtvector() {
+	this->reset();
+}
 int sqlite3statement::step() { return sqlite3_step(stmt); }
 int sqlite3statement::reset() { return sqlite3_reset(stmt); }
 string sqlite3statement::get_expanded_sql_statement() const { return sqlite3_expanded_sql(stmt); }

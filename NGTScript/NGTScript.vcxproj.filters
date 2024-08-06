@@ -66,6 +66,7 @@
     <ClCompile Include="cmp.c" />
     <ClCompile Include="docgen.cpp" />
     <ClCompile Include="gui.cpp" />
+    <ClCompile Include="MemoryStream.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="angelscript.h" />
@@ -375,6 +376,7 @@
     <ClInclude Include="SDL3\SDL_vulkan.h" />
     <ClInclude Include="docgen.h" />
     <ClInclude Include="gui.h" />
+    <ClInclude Include="MemoryStream.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="pack\physfs_platform_apple.m" />
