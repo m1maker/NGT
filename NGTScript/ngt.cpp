@@ -1429,13 +1429,18 @@ std::string c_str_to_string(const char* ptr, size_t length) {
 		return std::string(ptr, length);
 	}
 }
-char* c_str_alloc(size_t length) {
-	char* str = (char*)malloc(length + 1); // Allocate memory for the string, including the null terminator
-	if (str == NULL) {
-		return NULL; // Return NULL if the memory allocation fails
-	}
-	str[length] = '\0'; // Null-terminate the string
-	return str;
+const wchar_t* c_str_to_wc_str(const char* ptr) {
+	std::string str(ptr);
+	std::wstring str_u;
+	Poco::UnicodeConverter::convert(str, str_u);
+	return str_u.c_str();
+}
+const char* wc_str_to_c_str(const wchar_t* ptr) {
+	std::wstring str_u(ptr);
+	std::string str;
+	Poco::UnicodeConverter::convert(str_u, str);
+	return str.c_str();
+
 }
 uint64_t timer::elapsed_seconds() {
 	return pausedNanos != 0 ? chrono::duration_cast<chrono::seconds>(chrono::nanoseconds(pausedNanos)).count()
@@ -1846,9 +1851,22 @@ void library_call(asIScriptGeneric* gen) {
 	// Prepare arguments for the call
 	std::vector<void*> args(arg_types.size());
 	for (size_t i = 0; i < arg_types.size(); ++i) {
-		args[i] = gen->GetArgAddress(i + 1);
-	}
-	asIScriptEngine* engine = ctx->GetEngine();
+		if (arg_types[i] == &ffi_type_pointer) {
+			// It's a pointer, but check if it's char
+			if (last[i].find("char") != std::string::npos) {
+				// It's a char - use GetArgAddress
+				args[i] = gen->GetArgAddress(i + 1);
+			}
+			else {
+				// It's a pointer other than char - use GetAddressOfArg
+				args[i] = gen->GetAddressOfArg(i + 1);
+			}
+		}
+		else {
+			// Not a pointer - use GetArgAddress
+			args[i] = gen->GetArgAddress(i + 1);
+		}
+	}	asIScriptEngine* engine = ctx->GetEngine();
 	CScriptDictionary* dict = CScriptDictionary::Create(engine);
 	// Call the function
 	// Handle return value if necessary

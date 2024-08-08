@@ -558,7 +558,8 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("void free(uint64)", asFUNCTION(free), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string c_str_to_string(uint64, size_t=0)", asFUNCTION(c_str_to_string), asCALL_CDECL);
 	engine->RegisterGlobalFunction("size_t c_str_len(uint64)", asFUNCTION(strlen), asCALL_CDECL);
-	engine->RegisterGlobalFunction("uint64 c_str_alloc(size_t)", asFUNCTION(c_str_alloc), asCALL_CDECL);
+	engine->RegisterGlobalFunction("uint64 c_str_to_wc_str(uint64)", asFUNCTION(c_str_to_wc_str), asCALL_CDECL);
+	engine->RegisterGlobalFunction("uint64 wc_str_to_c_str(uint64)", asFUNCTION(wc_str_to_c_str), asCALL_CDECL);
 	register_pack(engine);
 	register_sound(engine);
 	RegisterMemstream(engine);
