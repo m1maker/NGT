@@ -1,0 +1,8 @@
+namespace unicode{
+bool convert_to_utf16(const string &in utf8_string, string &out utf16_string){
+return true;
+}
+bool convert_to_utf8(const string &in utf16_string, string &out utf8_string){
+return true;
+}
+}

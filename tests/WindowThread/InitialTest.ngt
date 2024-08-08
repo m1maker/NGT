@@ -1,0 +1,23 @@
+array<int> pressed;
+array<int> released;
+void main(){
+screen_reader_interrupt=true;
+speak("Opening window");
+wait(500);
+show_window("Window test");
+speak("Press and release any key");
+wait(100);
+while(true){
+//wait(7);
+wait(4);
+if(key_pressed(SDLK_SPACE))speak("Test");
+pressed=keys_pressed();
+for(uint i=0;i<pressed.length();i++){
+speak(key_to_string(pressed[i]));
+}
+released=keys_released();
+for(uint i=0;i<released.length();i++){
+speak(key_to_string(released[i]));
+}
+}
+}

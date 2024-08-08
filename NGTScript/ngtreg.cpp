@@ -556,7 +556,9 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("uint64 calloc(uint64, uint64)", asFUNCTION(calloc), asCALL_CDECL);
 	engine->RegisterGlobalFunction("uint64 realloc(uint64, uint64)", asFUNCTION(realloc), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void free(uint64)", asFUNCTION(free), asCALL_CDECL);
-
+	engine->RegisterGlobalFunction("string c_str_to_string(uint64, size_t=0)", asFUNCTION(c_str_to_string), asCALL_CDECL);
+	engine->RegisterGlobalFunction("size_t c_str_len(uint64)", asFUNCTION(strlen), asCALL_CDECL);
+	engine->RegisterGlobalFunction("uint64 c_str_alloc(size_t)", asFUNCTION(c_str_alloc), asCALL_CDECL);
 	register_pack(engine);
 	register_sound(engine);
 	RegisterMemstream(engine);
@@ -618,6 +620,8 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterObjectBehaviour("library", asBEHAVE_ADDREF, "void f()", asMETHOD(library, add_ref), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("library", asBEHAVE_RELEASE, "void f()", asMETHOD(library, release), asCALL_THISCALL);
 	engine->RegisterObjectMethod("library", "bool load(const string&in)const", asMETHOD(library, load), asCALL_THISCALL);
+	engine->RegisterObjectMethod("library", "bool get_active()const property", asMETHOD(library, active), asCALL_THISCALL);
+
 	engine->RegisterObjectMethod("library", "dictionary@ call(const string&in, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null)const", asFUNCTION(library_call), asCALL_GENERIC);
 	engine->RegisterObjectMethod("library", "void unload()const", asMETHOD(library, unload), asCALL_THISCALL);
 	engine->RegisterFuncdef("void thread_func()");
@@ -720,6 +724,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterObjectMethod("sqlite3", "int get_last_error()", asMETHOD(ngtsqlite3, get_last_error), asCALL_THISCALL);
 	engine->RegisterObjectMethod("sqlite3", "string get_last_error_text()", asMETHOD(ngtsqlite3, get_last_error_text), asCALL_THISCALL);
 	engine->RegisterObjectMethod("sqlite3", "bool get_active() property", asMETHOD(ngtsqlite3, get_active), asCALL_THISCALL);
+	engine->RegisterObjectMethod("string", "uint64 c_str()", asMETHOD(std::string, c_str), asCALL_THISCALL);
 
 	engine->RegisterGlobalProperty("const int SDLK_UNKNOWN", (void*)&AS_SDLK_UNKNOWN);
 	engine->RegisterGlobalProperty("const int SDLK_BACKSPACE", (void*)&AS_SDLK_BACKSPACE);

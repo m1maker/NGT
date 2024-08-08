@@ -1,0 +1,15 @@
+void main(){
+uint64 ptr=malloc(6);
+library l;
+l.load("buffdll");
+dictionary@res=l.call("void get_input(char*, int);", ptr, 5);
+array<string>@ keys=res.get_keys();
+for (uint i=0;i<keys.length();i++){
+alert("WKey", keys[i]);
+}
+res.get(1, ptr);
+alert("W", ptr);
+string result=c_str_to_string(ptr, 6);
+alert("Result", result);
+free(ptr);
+}

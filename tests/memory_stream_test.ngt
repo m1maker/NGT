@@ -3,8 +3,9 @@ void main() {
     memory_stream stream(0);
 
     // Writing to the stream
-    stream.write("Hello, World!");
-
+    stream.write("Hello");
+    string str=", world!";
+    stream.write(str.c_str(), str.length());
     // Getting current position
     int pos = stream.tell();
     printf("Current Position: " + pos);

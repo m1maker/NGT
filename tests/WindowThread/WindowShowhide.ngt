@@ -1,0 +1,11 @@
+void main(){
+show_window("First");
+wait(5000);
+hide_window();
+wait(200);
+show_window("Last");
+wait(5000);
+hide_window();
+wait(500);
+speak("EEEEEEEEEEEEEEEEEEEExiting");
+}

@@ -1,0 +1,37 @@
+/*
+Mail sending example using SMTP.
+If exception will be resulted, runtime error will be triggerd.
+*/
+const string APP="Mail sender";
+void main(){
+string content;
+uint8 host_port;
+string username=input_box(APP, "User name");
+if(username=="")exit(-1);
+string password=input_box(APP, "User password", "", true);
+if(password=="")exit(-1);
+string host=input_box(APP, "Host name or IP address");
+if(host=="")exit(-1);
+string port=input_box(APP, "Server port");
+if(port=="")exit(-1);
+host_port=string_to_number(port);
+string sender=input_box(APP, "Sender");
+if(sender=="")exit(-1);
+string recipient=input_box(APP, "Recipient");
+if(recipient=="")exit(-1);
+string subject=input_box(APP, "Subject");
+if(subject=="")exit(-1);
+string content_path=input_box(APP, "File path, optional");
+if(content_path!=""){
+file f;
+int result=f.open(content_path, "r");
+if(result!=0)exit(-2);
+content=f.read(f.get_size());
+f.close();
+}
+show_window("Sending...");
+mail_send(AUTH_LOGIN, host_port, username, password, host, sender, recipient, subject, content);
+speak("Complete!");
+wait(500);
+exit(0);
+}

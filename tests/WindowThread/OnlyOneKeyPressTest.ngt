@@ -1,0 +1,11 @@
+ulong number;
+void main(){
+show_window("Test");
+while(true){
+wait(5);
+if(key_pressed(SDLK_SPACE)){
+number+=1;
+speak(""+number);
+}
+}
+}

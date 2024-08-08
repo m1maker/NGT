@@ -1,0 +1,13 @@
+timer say;
+void main(){
+show_window("Test");
+while(true){
+wait(1);
+if(!window_active){
+if(say.elapsed_millis>1000){
+speak("Come back!");
+say.restart();
+}
+}
+}
+}

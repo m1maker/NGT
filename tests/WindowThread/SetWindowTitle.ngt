@@ -1,0 +1,11 @@
+timer random_timer;
+void main(){
+show_window("Test");
+while(true){
+wait(5);
+if(random_timer.elapsed_millis>1000){
+set_window_title("Random number "+random(0, 1000));
+random_timer.restart();
+}
+}
+}

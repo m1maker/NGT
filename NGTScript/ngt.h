@@ -165,6 +165,9 @@ CScriptDictionary* deserialize(const string&);
 string serialize_array(CScriptArray*);
 CScriptArray* deserialize_array(const string&);
 bool urlopen(const string& url);
+std::string c_str_to_string(const char* ptr, size_t length = 0);
+char* c_str_alloc(size_t length);
+
 class timer : public as_class {
 public:
 	chrono::time_point<chrono::steady_clock> inittime;
@@ -263,6 +266,7 @@ private:
 class library : public as_class {
 public:
 	void* lib;
+	bool active()const;
 	bool load(const string&);
 	void unload();
 };

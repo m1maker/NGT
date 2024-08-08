@@ -140,7 +140,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);angelscript64.lib;;SDL3.lib;winmm.lib;imm32.lib;version.lib;setupapi.lib;libcmt.lib;ws2_32.lib;iphlpapi.lib;enet64.lib;libcurl.lib;libdyncall_s.lib;libdynload_s.lib;Wldap32.lib;PocoFoundationmt.lib;PocoNetmt.lib;libcrypto_static.lib;libssl_static.lib;CRYPT32.lib;phonon.lib;delayimp.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);angelscript64.lib;;SDL3.lib;winmm.lib;imm32.lib;version.lib;setupapi.lib;libcmt.lib;ws2_32.lib;iphlpapi.lib;enet64.lib;libcurl.lib;libdyncall_s.lib;libdynload_s.lib;Wldap32.lib;PocoFoundationmt.lib;PocoNetmt.lib;libcrypto_static.lib;libssl_static.lib;CRYPT32.lib;phonon.lib;delayimp.lib;libffi.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>
       </IgnoreAllDefaultLibraries>
@@ -201,6 +201,9 @@
     <ClInclude Include="enet\unix.h" />
     <ClInclude Include="enet\utility.h" />
     <ClInclude Include="enet\win32.h" />
+    <ClInclude Include="ffi.h" />
+    <ClInclude Include="ffi_cfi.h" />
+    <ClInclude Include="ffi_common.h" />
     <ClInclude Include="fx\freeverb.h" />
     <ClInclude Include="fx\verblib.h" />
     <ClInclude Include="gui.h" />

@@ -1,0 +1,8 @@
+sound s;
+void main(){
+show_window("Test", 640, 480, false);
+s.load("C:/windows/media/ring01.wav");
+s.play_wait();
+s.close();
+exit();
+}

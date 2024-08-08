@@ -2028,6 +2028,7 @@ public:
 	}
 
 	void stop() {
+		ma_encoder_uninit(&encoder.encoder);
 		ma_device_uninit(&recording_device);
 	}
 

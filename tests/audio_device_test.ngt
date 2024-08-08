@@ -8,6 +8,7 @@ if(devices.length()==0){
 alert("Error", "Your system has not devices!", "Exit");
 exit(-1);
 }
+wait(500);
 speak("Select audio device by pressing arrow keys. To switch to the selected device, press Enter");
 int device_id=0;
 while(true){

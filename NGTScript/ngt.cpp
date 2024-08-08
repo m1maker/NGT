@@ -1,5 +1,9 @@
 ﻿#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS 
 #include "cmp.h"
+#define FFI_BUILDING
+#include "ffi.h"
+#include "ffi_cfi.h"
+#include "ffi_common.h"
 #include "ngtreg.h"
 #include "Poco/BinaryReader.h"
 #include "Poco/Event.h"
@@ -747,6 +751,9 @@ string input_box(const string& title, const string& text, const string& default_
 		std::string result;
 		std::wstring Wtext = gui::get_text(edit);
 		Poco::UnicodeConverter::convert(Wtext, result);
+		gui::delete_control(edit);
+		gui::delete_control(ok);
+		gui::delete_control(cancel);
 		gui::hide_window(main_window);
 		return result;
 	}
@@ -1414,6 +1421,22 @@ CScriptArray* deserialize_array(const string& data) {
 bool urlopen(const string& url) {
 	return SDL_OpenURL(url.c_str()) == 0;
 }
+std::string c_str_to_string(const char* ptr, size_t length) {
+	if (length == 0) {
+		return std::string(ptr);
+	}
+	else {
+		return std::string(ptr, length);
+	}
+}
+char* c_str_alloc(size_t length) {
+	char* str = (char*)malloc(length + 1); // Allocate memory for the string, including the null terminator
+	if (str == NULL) {
+		return NULL; // Return NULL if the memory allocation fails
+	}
+	str[length] = '\0'; // Null-terminate the string
+	return str;
+}
 uint64_t timer::elapsed_seconds() {
 	return pausedNanos != 0 ? chrono::duration_cast<chrono::seconds>(chrono::nanoseconds(pausedNanos)).count()
 		: chrono::duration_cast<chrono::seconds>(
@@ -1726,6 +1749,9 @@ bool library::load(const string& libname) {
 	lib = SDL_LoadObject(libname.c_str());
 	return lib != NULL;
 }
+bool library::active()const {
+	return lib != nullptr;
+}
 void library_call(asIScriptGeneric* gen) {
 #undef GetObject
 	asIScriptContext* ctx = asGetActiveContext();
@@ -1772,31 +1798,42 @@ void library_call(asIScriptGeneric* gen) {
 
 	// Prepare to call the function using libffi
 	ffi_cif cif;
-	std::vector<ffi_type*> arg_types;
+	std::vector<ffi_type*> arg_types(last.size());
 
 	// Determine return type and argument types for libffi
-	ffi_type* return_type;
+	ffi_type* return_type = new ffi_type;
 
-	// Example for setting up return_type and arg_types based on first and last vectors
-	if (first[0] == "int") {
-		return_type = &ffi_type_sint32; // Example for int return type
+	if (first[0] == "int" || first[0] == "char" || first[0] == "short" || first[0] == "long" || first[0] == "unsigned int" || first[0] == "unsigned char" || first[0] == "unsigned short" || first[0] == "unsigned long") {
+		return_type = &ffi_type_sint64;
+	}
+	else if (first[0] == "float" or first[0] == "double") {
+		return_type = &ffi_type_float;
 	}
 	else if (first[0] == "void") {
 		return_type = &ffi_type_void;
 	}
+	size_t pos = first[0].find("*");
 
-	for (const auto& arg : last) {
-		if (arg == "int") {
-			arg_types.push_back(&ffi_type_sint32);
+	if (pos != std::string::npos) {
+		return_type = &ffi_type_pointer;
+	}
+	for (size_t i = 0; i < last.size(); ++i) {
+		if (last[i] == "int" || last[i] == "char" || last[i] == "short" || last[i] == "long" || last[i] == "unsigned int" || last[i] == "unsigned char" || last[i] == "unsigned short" || last[i] == "unsigned long") {
+			arg_types[i] = &ffi_type_sint64;
 		}
-		else if (arg == "float") {
-			arg_types.push_back(&ffi_type_float);
+		else if (last[i] == "float") {
+			arg_types[i] = &ffi_type_float;
 		}
-		else if (arg == "double") {
-			arg_types.push_back(&ffi_type_double);
+		else if (last[i] == "double") {
+			arg_types[i] = &ffi_type_double;
 		}
 		else {
-			// Handle other types as needed
+			size_t pos = last[i].find("*");
+
+			if (pos != std::string::npos) {
+				arg_types[i] = &ffi_type_pointer;
+			}
+
 		}
 	}
 
@@ -1809,23 +1846,40 @@ void library_call(asIScriptGeneric* gen) {
 	// Prepare arguments for the call
 	std::vector<void*> args(arg_types.size());
 	for (size_t i = 0; i < arg_types.size(); ++i) {
-		args[i] = gen->GetArgAddress(i + 1); // Adjust index for the arguments
+		args[i] = gen->GetArgAddress(i + 1);
 	}
-
+	asIScriptEngine* engine = ctx->GetEngine();
+	CScriptDictionary* dict = CScriptDictionary::Create(engine);
 	// Call the function
-	void* retval;
-	ffi_call(&cif, FFI_FN(address), &retval, args.data());
-
 	// Handle return value if necessary
-	if (first[0] == "int") {
-		int return_value = *static_cast<int*>(retval);
-		// Set return value in your context or dictionary as needed
+	if (first[0] == "int" || first[0] == "char" || first[0] == "short" || first[0] == "long" || first[0] == "unsigned int" || first[0] == "unsigned char" || first[0] == "unsigned short" || first[0] == "unsigned long") {
+		asINT64 return_value;
+		ffi_call(&cif, FFI_FN(address), &return_value, args.data());
+		dict->Set("0", return_value);
+	}
+	else if (first[0] == "double" || first[0] == "float") {
+		double return_value;
+		ffi_call(&cif, FFI_FN(address), &return_value, args.data());
+		dict->Set("0", return_value);
 	}
 	else if (first[0] == "void") {
 		// No return value to handle
+		ffi_call(&cif, FFI_FN(address), nullptr, args.data());
 	}
+	else {
+		pos = first[0].find("*");
 
-	//	gen->SetReturnObject(dict);
+		if (pos != std::string::npos) {
+			void* retval = nullptr;
+			ffi_call(&cif, FFI_FN(address), &retval, args.data());
+			dict->Set("0", retval, asTYPEID_UINT64);
+		}
+	}
+	for (size_t i = 0; i < args.size(); ++i) {
+		asINT64 ptr = *(asINT64*)args[i];
+		dict->Set(std::to_string(i + 1), ptr);
+	}
+	gen->SetReturnObject(dict);
 }
 void library::unload() {
 	SDL_UnloadObject(lib);

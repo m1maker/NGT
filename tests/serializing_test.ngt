@@ -1,0 +1,98 @@
+void main()
+{
+dictionary d;
+
+bool b = true;
+float f = 3.14;
+double db = 6.28;
+int8 i8 = 50;
+int16 i16 = 500;
+int32 i32 = 5000;
+int64 i64 = 1234567890;
+uint8 ui8 = 255;
+uint16 ui16 = 65535;
+uint32 ui32 = 4294967295;
+uint64 ui64 = 18446744073709551615;
+
+d.set("b", b);
+d.set("f", f);
+d.set("db", db);
+d.set("i8", i8);
+d.set("i16", i16);
+d.set("i32", i32);
+d.set("i64", i64);
+d.set("ui8", ui8);
+d.set("ui16", ui16);
+d.set("ui32", ui32);
+d.set("ui64", ui64);
+string str="\"hello world!\n\"";
+d.set("str", str);
+
+string s = serialize(d);
+
+dictionary d2 = deserialize(s);
+
+bool b_2;
+d2.get("b", b_2);
+float f_2;
+d2.get("f", f_2);
+double db_2;
+d2.get("db", db_2);
+int8 i8_2;
+d2.get("i8", i8_2);
+int16 i16_2;
+d2.get("i16", i16_2);
+int32 i32_2;
+d2.get("i32", i32_2);
+int64 i64_2;
+d2.get("i64", i64_2);
+uint8 ui8_2;
+d2.get("ui8", ui8_2);
+uint16 ui16_2;
+d2.get("ui16", ui16_2);
+uint32 ui32_2;
+d2.get("ui32", ui32_2);
+uint64 ui64_2;
+d2.get("ui64", ui64_2);
+string str_2;
+d.get("str", str_2);
+
+if (b != b_2) {
+    alert("error", "bool is not same");
+}
+if (f != f_2) {
+    alert("error", "float is not same");
+}
+if (db != db_2) {
+    alert("error", "double is not same");
+}
+if (i8 != i8_2) {
+    alert("error", "int8 is not same");
+}
+if (i16 != i16_2) {
+    alert("error", "int16 is not same");
+}
+if (i32 != i32_2) {
+    alert("error", "int32 is not same");
+}
+if (i64 != i64_2) {
+    alert("error", "int64 is not same");
+}
+if (ui8 != ui8_2) {
+    alert("error", "uint8 is not same");
+}
+if (ui16 != ui16_2) {
+    alert("error", "uint16 is not same");
+}
+if (ui32 != ui32_2) {
+    alert("error", "uint32 is not same");
+}
+if (ui64 != ui64_2) {
+    alert("error", "uint64 is not same");
+}
+if(str != str_2) {
+    alert("error", "string is not same");
+}
+alert("finished", "finished!");
+alert("types", b_2+", "+db_2+", "+f_2+", "+ui8_2+", "+ui16_2+", "+ui32_2+", "+ui64_2+", "+i8_2+", "+i16_2+", "+i32_2+", "+i64_2+", "+str_2);
+}

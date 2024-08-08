@@ -377,6 +377,9 @@
     <ClInclude Include="docgen.h" />
     <ClInclude Include="gui.h" />
     <ClInclude Include="MemoryStream.h" />
+    <ClInclude Include="ffi.h" />
+    <ClInclude Include="ffi_cfi.h" />
+    <ClInclude Include="ffi_common.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="pack\physfs_platform_apple.m" />
