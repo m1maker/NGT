@@ -19,29 +19,25 @@ wstring text_u;
 wstring title_u;
 unicode_convert(text, text_u);
 unicode_convert(title, title_u);
-dictionary@ result=user32.call("int MessageBoxW(int, char*, char*, int);", 0, text_u.c_str(), title_u.c_str(), 0x00000001);
-int val=int(result[0]);
+int val=int(user32.call("int MessageBoxW(int, char*, char*, int);", 0, text_u.c_str(), title_u.c_str(), 0x00000001)[0]);
 if(val==2){
 exit(0);
 }
 // Allocating memory for output buffer;
 uint64 name_ptr=malloc(500);
-dictionary@ call_result=kernel32.call("int GetComputerNameW(char*, int*);", name_ptr, 500);
-name_ptr=uint64(call_result["1"]);
+name_ptr=uint64(kernel32.call("int GetComputerNameW(char*, int*);", name_ptr, 500)[1]);
 wstring name=wc_str_to_wstring(name_ptr, 500);
 // name_ptr is no longer needed. Let's free it.
 free(name_ptr);
 show_window("Window");
 set_window_closable(false);
 // Now, set window text from a DLL.
-@call_result=user32.call("long GetForegroundWindow();");
-uint64 window=uint64(call_result[0]);
+uint64 window = uint64(user32.call("long GetForegroundWindow();")[0]);
 user32.call("int SetWindowTextW(long, char*);", window, name.c_str());
 while(true){
 kernel32.call("void Sleep(int);", 5);
 if(key_pressed(SDLK_ESCAPE))hide_window();
-@call_result=user32.call("long IsWindow(long);", window);
-bool is_window=bool(call_result[0]);
+bool is_window=bool(user32.call("long IsWindow(long);", window)[0]);
 if(!is_window)break;
 }
 user32.unload();
