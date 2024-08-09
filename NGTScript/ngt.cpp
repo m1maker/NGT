@@ -1890,7 +1890,8 @@ void library_call(asIScriptGeneric* gen) {
 		if (pos != std::string::npos) {
 			void* retval = nullptr;
 			ffi_call(&cif, FFI_FN(address), &retval, args.data());
-			dict->Set("0", retval, asTYPEID_UINT64);
+			asINT64 ptr = *(asINT64*)retval;
+			dict->Set("0", ptr);
 		}
 	}
 	for (size_t i = 0; i < args.size(); ++i) {
