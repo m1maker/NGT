@@ -24,6 +24,7 @@
 #include "scripthelper/scripthelper.h"
 #include "scriptmath/scriptmath.h"
 #include "scriptstdstring/scriptstdstring.h"
+#include "scriptstdstring/scriptstdwstring.h"
 #include "sdl3/sdl_main.h"
 #include <assert.h>  // assert()
 #include <cstdlib>
@@ -265,6 +266,7 @@ auto main(int argc, char* argv[]) -> int {
 		// Register any necessary functions and types
 		// ...
 		RegisterStdString(engine);
+		RegisterStdWstring(engine);
 		RegisterScriptArray(engine, true);
 		RegisterStdStringUtils(engine);
 		RegisterScriptDictionary(engine);
@@ -334,6 +336,7 @@ auto main(int argc, char* argv[]) -> int {
 		// Register any necessary functions and types
 		// ...
 		RegisterStdString(engine);
+		RegisterStdWstring(engine);
 		RegisterScriptArray(engine, true);
 		RegisterStdStringUtils(engine);
 		RegisterScriptDictionary(engine);
@@ -427,6 +430,7 @@ auto main(int argc, char* argv[]) -> int {
 		engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
 
 		RegisterStdString(engine);
+		RegisterStdWstring(engine);
 		RegisterScriptArray(engine, true);
 		RegisterStdStringUtils(engine);
 		RegisterScriptDictionary(engine);
@@ -538,6 +542,7 @@ auto main(int argc, char* argv[]) -> int {
 		engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
 
 		RegisterStdString(engine);
+		RegisterStdWstring(engine);
 		RegisterScriptArray(engine, true);
 		RegisterStdStringUtils(engine);
 		RegisterScriptDictionary(engine);

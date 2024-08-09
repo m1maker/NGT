@@ -166,8 +166,7 @@ string serialize_array(CScriptArray*);
 CScriptArray* deserialize_array(const string&);
 bool urlopen(const string& url);
 std::string c_str_to_string(const char* ptr, size_t length = 0);
-const wchar_t* c_str_to_wc_str(const char* ptr);
-const char* wc_str_to_c_str(const wchar_t* ptr);
+std::wstring wc_str_to_wstring(const wchar_t* ptr, size_t length = 0);
 class timer : public as_class {
 public:
 	chrono::time_point<chrono::steady_clock> inittime;

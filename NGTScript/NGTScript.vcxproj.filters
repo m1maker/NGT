@@ -67,6 +67,7 @@
     <ClCompile Include="docgen.cpp" />
     <ClCompile Include="gui.cpp" />
     <ClCompile Include="MemoryStream.cpp" />
+    <ClCompile Include="scriptstdstring\scriptstdwstring.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="angelscript.h" />
@@ -380,6 +381,7 @@
     <ClInclude Include="ffi.h" />
     <ClInclude Include="ffi_cfi.h" />
     <ClInclude Include="ffi_common.h" />
+    <ClInclude Include="scriptstdstring\scriptstdwstring.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="pack\physfs_platform_apple.m" />

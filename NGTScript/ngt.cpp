@@ -1429,19 +1429,16 @@ std::string c_str_to_string(const char* ptr, size_t length) {
 		return std::string(ptr, length);
 	}
 }
-const wchar_t* c_str_to_wc_str(const char* ptr) {
-	std::string str(ptr);
-	std::wstring str_u;
-	Poco::UnicodeConverter::convert(str, str_u);
-	return str_u.c_str();
+std::wstring wc_str_to_wstring(const wchar_t* ptr, size_t length) {
+	if (length == 0) {
+		return std::wstring(ptr);
+	}
+	else {
+		return std::wstring(ptr, length);
+	}
 }
-const char* wc_str_to_c_str(const wchar_t* ptr) {
-	std::wstring str_u(ptr);
-	std::string str;
-	Poco::UnicodeConverter::convert(str_u, str);
-	return str.c_str();
 
-}
+
 uint64_t timer::elapsed_seconds() {
 	return pausedNanos != 0 ? chrono::duration_cast<chrono::seconds>(chrono::nanoseconds(pausedNanos)).count()
 		: chrono::duration_cast<chrono::seconds>(

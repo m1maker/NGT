@@ -9,60 +9,17 @@ All subsequent arguments are those that will have to be passed to the library.
 Returns a dictionary with values, where 0 is what the function returned, and the rest is everything that relates to pointers.
 */
 library kernel32;
-dictionary@ encoder_result;
-string to_utf16(int encoding, string text) {
-string utf16_str;
-int buffer_length;
-@encoder_result = kernel32.call("int MultiByteToWideChar(int, int, char*, int, char*, int);", encoding, 0, text.c_str(), text.length(), null, 0);
-encoder_result.get("0", buffer_length);
-utf16_str.resize(buffer_length*2+2);
-uint64 ptr=malloc(utf16_str.length()*2+2);
-@encoder_result = kernel32.call("int MultiByteToWideChar(int, int, char*, int, char*, int);", encoding, 0, text.c_str(), text.length(), ptr, buffer_length);
-encoder_result.get("5", ptr);
-utf16_str=c_str_to_string(ptr, utf16_str.length()-2);
-free(ptr);
-return utf16_str;
-}
-
-
-string from_utf16(uint encoding, string text) {
-string user_encoding_str;
-int buffer_length;
-int text_length = (text.length()-2)/2;
-if(text_length < 0)
-text_length = 0;
-@encoder_result = kernel32.call("int WideCharToMultiByte(int, int, char*, int, char*, int, char*, long*);", encoding, 0, text.c_str(), text_length, null, 0, null, null);
-encoder_result.get("0", buffer_length);
-user_encoding_str.resize(buffer_length);
-uint64 ptr=malloc(user_encoding_str.length());
-@encoder_result = kernel32.call("int WideCharToMultiByte(int, int, char*, int, char*, int, char*, long*);", encoding, 0, text.c_str(), text_length, ptr, buffer_length, null, null);
-encoder_result.get("5", ptr);
-user_encoding_str=c_str_to_string(ptr);
-free(ptr);
-return user_encoding_str;
-}
-
-
-string utf8_to_utf16(string text) {
-return to_utf16(65001, text);
-}
-
-string user_encoding_to_utf8(string text) {
-string result = to_utf16(0, text);
-return from_utf16(65001, result);
-}
-string utf8_to_user_encoding(string text) {
-string result = to_utf16(65001, text);
-return from_utf16(0, result);
-}
-
 void main(){
 library user32;
 user32.load("user32");
 kernel32.load("kernel32");
-string text=utf8_to_utf16("Now we will get your computer name using the pointers, and show a window with it. Are you ready?");
-string title=utf8_to_utf16("Hello");
-dictionary@ result=user32.call("int MessageBoxW(int, char*, char*, int);", 0, text.c_str(), title.c_str(), 0x00000001);
+string text="Now we will get your computer name using the pointers, and show a window with it. Are you ready?";
+string title="Hello";
+wstring text_u;
+wstring title_u;
+unicode_convert(text, text_u);
+unicode_convert(title, title_u);
+dictionary@ result=user32.call("int MessageBoxW(int, char*, char*, int);", 0, text_u.c_str(), title_u.c_str(), 0x00000001);
 int val=int(result[0]);
 if(val==2){
 exit(0);
@@ -71,7 +28,7 @@ exit(0);
 uint64 name_ptr=malloc(500);
 dictionary@ call_result=kernel32.call("int GetComputerNameW(char*, int*);", name_ptr, 500);
 name_ptr=uint64(call_result["1"]);
-string name=c_str_to_string(name_ptr, 500);
+wstring name=wc_str_to_wstring(name_ptr, 500);
 // name_ptr is no longer needed. Let's free it.
 free(name_ptr);
 show_window("Window");
@@ -87,9 +44,6 @@ if(key_pressed(SDLK_ESCAPE))hide_window();
 bool is_window=bool(call_result[0]);
 if(!is_window)break;
 }
-title=utf8_to_utf16("Info");
-text=utf8_to_utf16("Window closed. Exiting.");
-user32.call("int MessageBoxW(int, char*, char*, int);", 0, text.c_str(), title.c_str(), 0x430);
 user32.unload();
 kernel32.unload();
 exit(0);

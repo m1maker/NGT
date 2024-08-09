@@ -1,4 +1,5 @@
 ﻿#include "MemoryStream.h"
+#include "Poco/UnicodeConverter.h"
 #include "scriptbuilder/scriptbuilder.h"
 #include "scriptstdstring/scriptstdstring.h"
 #include <cstdlib>
@@ -557,9 +558,12 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("uint64 realloc(uint64, uint64)", asFUNCTION(realloc), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void free(uint64)", asFUNCTION(free), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string c_str_to_string(uint64, size_t=0)", asFUNCTION(c_str_to_string), asCALL_CDECL);
+	engine->RegisterGlobalFunction("wstring wc_str_to_wstring(uint64, size_t=0)", asFUNCTION(wc_str_to_wstring), asCALL_CDECL);
+
 	engine->RegisterGlobalFunction("size_t c_str_len(uint64)", asFUNCTION(strlen), asCALL_CDECL);
-	engine->RegisterGlobalFunction("uint64 c_str_to_wc_str(uint64)", asFUNCTION(c_str_to_wc_str), asCALL_CDECL);
-	engine->RegisterGlobalFunction("uint64 wc_str_to_c_str(uint64)", asFUNCTION(wc_str_to_c_str), asCALL_CDECL);
+	engine->RegisterGlobalFunction("size_t wc_str_len(uint64)", asFUNCTION(wcslen), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void unicode_convert(const string &in, wstring &out)", asFUNCTIONPR(Poco::UnicodeConverter::convert, (const std::string&, std::wstring&), void), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void unicode_convert(const wstring &in, string &out)", asFUNCTIONPR(Poco::UnicodeConverter::convert, (const std::wstring&, std::string&), void), asCALL_CDECL);
 	register_pack(engine);
 	register_sound(engine);
 	RegisterMemstream(engine);
@@ -726,7 +730,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterObjectMethod("sqlite3", "string get_last_error_text()", asMETHOD(ngtsqlite3, get_last_error_text), asCALL_THISCALL);
 	engine->RegisterObjectMethod("sqlite3", "bool get_active() property", asMETHOD(ngtsqlite3, get_active), asCALL_THISCALL);
 	engine->RegisterObjectMethod("string", "uint64 c_str()", asMETHOD(std::string, c_str), asCALL_THISCALL);
-
+	engine->RegisterObjectMethod("wstring", "uint64 c_str()", asMETHOD(std::wstring, c_str), asCALL_THISCALL);
 	engine->RegisterGlobalProperty("const int SDLK_UNKNOWN", (void*)&AS_SDLK_UNKNOWN);
 	engine->RegisterGlobalProperty("const int SDLK_BACKSPACE", (void*)&AS_SDLK_BACKSPACE);
 	engine->RegisterGlobalProperty("const int SDLK_TAB", (void*)&AS_SDLK_TAB);

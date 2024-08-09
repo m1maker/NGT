@@ -377,6 +377,7 @@
     <ClInclude Include="scriptmath\scriptmath.h" />
     <ClInclude Include="scriptmath\scriptmathcomplex.h" />
     <ClInclude Include="scriptstdstring\scriptstdstring.h" />
+    <ClInclude Include="scriptstdstring\scriptstdwstring.h" />
     <ClInclude Include="SDL3\SDL.h" />
     <ClInclude Include="SDL3\SDL_assert.h" />
     <ClInclude Include="SDL3\SDL_atomic.h" />
@@ -525,6 +526,7 @@
     <ClCompile Include="scriptmath\scriptmathcomplex.cpp" />
     <ClCompile Include="scriptstdstring\scriptstdstring.cpp" />
     <ClCompile Include="scriptstdstring\scriptstdstring_utils.cpp" />
+    <ClCompile Include="scriptstdstring\scriptstdwstring.cpp" />
     <ClCompile Include="serializer\serializer.cpp" />
     <ClCompile Include="sound.cpp" />
     <ClCompile Include="sqlite3.c" />
