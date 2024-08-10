@@ -96,6 +96,21 @@ static void replace(string& str, const string& from, const string& to) {
 		start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
 	}
 }
+static std::vector<std::string> split(const std::string& str, const std::string& delimiter) {
+	std::vector<std::string> tokens;
+	size_t start = 0;
+	size_t end = str.find(delimiter);
+	while (end != std::string::npos) {
+		tokens.push_back(str.substr(start, end - start));
+		start = end + delimiter.length();
+		end = str.find(delimiter, start);
+	}
+	tokens.push_back(str.substr(start));
+	return tokens;
+}
+
+
+
 void as_printf(asIScriptGeneric* gen)
 {
 	void* ref = gen->GetArgAddress(0);
@@ -1790,6 +1805,32 @@ void library_call(asIScriptGeneric* gen) {
 		}
 	}
 
+	// Now handle keywords
+	std::vector<std::string> returnType = split(first[0], " "); // Split the return type string 
+	std::vector<std::string> paramTypes;
+	for (auto& param : last) {
+		paramTypes.push_back(split(param, " ")[0]); // Split the parameter type string
+	}
+
+	// Handle return type
+	std::string realReturnType = returnType[returnType.size() - 1]; // Get the last part as the actual type
+	for (auto& type : returnType) {
+		if (type == "const" || type == "unsigned" || type == "signed") {
+			realReturnType = type + " " + realReturnType; // Add keyword to the type
+		}
+	}
+
+	// Handle parameter types
+	for (size_t i = 0; i < paramTypes.size(); i++) {
+		std::string realParamType = paramTypes[i];
+		for (auto& type : split(last[i], " ")) {
+			if (type == "const" || type == "unsigned" || type == "signed") {
+				realParamType = type + " " + realParamType; // Add keyword to the type
+			}
+		}
+		paramTypes[i] = realParamType;
+	}
+
 	void* address = SDL_LoadFunction(lib_obj->lib, first[1].c_str());
 	if (address == NULL) {
 		const char* name = first[1].c_str();
@@ -1803,39 +1844,57 @@ void library_call(asIScriptGeneric* gen) {
 	std::vector<ffi_type*> arg_types(last.size());
 
 	// Determine return type and argument types for libffi
-	ffi_type* return_type = new ffi_type;
+	ffi_type* return_type = nullptr;
 
-	if (first[0] == "int" || first[0] == "char" || first[0] == "short" || first[0] == "long" || first[0] == "unsigned int" || first[0] == "unsigned char" || first[0] == "unsigned short" || first[0] == "unsigned long") {
-		return_type = &ffi_type_sint64;
-	}
-	else if (first[0] == "float" or first[0] == "double") {
-		return_type = &ffi_type_float;
-	}
-	else if (first[0] == "void") {
+	if (realReturnType.find("void") != std::string::npos) {
 		return_type = &ffi_type_void;
 	}
-	size_t pos = first[0].find("*");
-
-	if (pos != std::string::npos) {
+	else if (realReturnType.find("*") != std::string::npos) {
 		return_type = &ffi_type_pointer;
 	}
-	for (size_t i = 0; i < last.size(); ++i) {
-		if (last[i] == "int" || last[i] == "char" || last[i] == "short" || last[i] == "long" || last[i] == "unsigned int" || last[i] == "unsigned char" || last[i] == "unsigned short" || last[i] == "unsigned long") {
-			arg_types[i] = &ffi_type_sint64;
+	else {
+		// Handle all integer types as int64_t
+		if (realReturnType.find("char") != std::string::npos ||
+			realReturnType.find("int") != std::string::npos ||
+			realReturnType.find("short") != std::string::npos ||
+			realReturnType.find("long") != std::string::npos) {
+			return_type = &ffi_type_sint64;
 		}
-		else if (last[i] == "float") {
-			arg_types[i] = &ffi_type_float;
-		}
-		else if (last[i] == "double") {
-			arg_types[i] = &ffi_type_double;
+		else if (realReturnType.find("float") != std::string::npos ||
+			realReturnType.find("double") != std::string::npos) {
+			return_type = &ffi_type_double;
 		}
 		else {
-			size_t pos = last[i].find("*");
+			// Handle unexpected type
+			std::string message = "Unsupported return type: " + realReturnType;
+			ctx->SetException(message.c_str());
+			return;
+		}
+	}
 
-			if (pos != std::string::npos) {
-				arg_types[i] = &ffi_type_pointer;
+	// Handle parameter types
+	for (size_t i = 0; i < last.size(); ++i) {
+		if (paramTypes[i].find("*") != std::string::npos) {
+			arg_types[i] = &ffi_type_pointer;
+		}
+		else {
+			// Handle all integer types as int64_t
+			if (paramTypes[i].find("char") != std::string::npos ||
+				paramTypes[i].find("int") != std::string::npos ||
+				paramTypes[i].find("short") != std::string::npos ||
+				paramTypes[i].find("long") != std::string::npos) {
+				arg_types[i] = &ffi_type_sint64;
 			}
-
+			else if (paramTypes[i].find("float") != std::string::npos ||
+				paramTypes[i].find("double") != std::string::npos) {
+				arg_types[i] = &ffi_type_double;
+			}
+			else {
+				// Handle unexpected type
+				std::string message = "Unsupported parameter type: " + paramTypes[i];
+				ctx->SetException(message.c_str());
+				return;
+			}
 		}
 	}
 
@@ -1850,7 +1909,7 @@ void library_call(asIScriptGeneric* gen) {
 	for (size_t i = 0; i < arg_types.size(); ++i) {
 		if (arg_types[i] == &ffi_type_pointer) {
 			// It's a pointer, but check if it's char
-			if (last[i].find("char") != std::string::npos) {
+			if (paramTypes[i].find("char") != std::string::npos) {
 				// It's a char - use GetArgAddress
 				args[i] = gen->GetArgAddress(i + 1);
 			}
@@ -1867,29 +1926,25 @@ void library_call(asIScriptGeneric* gen) {
 	CScriptDictionary* dict = CScriptDictionary::Create(engine);
 	// Call the function
 	// Handle return value if necessary
-	if (first[0] == "int" || first[0] == "char" || first[0] == "short" || first[0] == "long" || first[0] == "unsigned int" || first[0] == "unsigned char" || first[0] == "unsigned short" || first[0] == "unsigned long") {
+	if (return_type == &ffi_type_sint64) {
 		asINT64 return_value;
 		ffi_call(&cif, FFI_FN(address), &return_value, args.data());
 		dict->Set("0", return_value);
 	}
-	else if (first[0] == "double" || first[0] == "float") {
+	else if (return_type == &ffi_type_double) {
 		double return_value;
 		ffi_call(&cif, FFI_FN(address), &return_value, args.data());
 		dict->Set("0", return_value);
 	}
-	else if (first[0] == "void") {
+	else if (return_type == &ffi_type_void) {
 		// No return value to handle
 		ffi_call(&cif, FFI_FN(address), nullptr, args.data());
 	}
-	else {
-		pos = first[0].find("*");
-
-		if (pos != std::string::npos) {
-			void* retval = nullptr;
-			ffi_call(&cif, FFI_FN(address), &retval, args.data());
-			asINT64 ptr = *(asINT64*)retval;
-			dict->Set("0", ptr);
-		}
+	else if (return_type == &ffi_type_pointer) {
+		void* retval = nullptr;
+		ffi_call(&cif, FFI_FN(address), &retval, args.data());
+		asINT64 ptr = *(asINT64*)retval;
+		dict->Set("0", ptr);
 	}
 	for (size_t i = 0; i < args.size(); ++i) {
 		asINT64 ptr = *(asINT64*)args[i];

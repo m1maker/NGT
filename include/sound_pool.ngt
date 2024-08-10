@@ -1,0 +1,46 @@
+/*
+Sound Pool(An alternative way to manage sounds.)
+*/
+array<sound_pool> g_sound_pools;
+shared class sound_pool {
+	private array<sound@> sounds;
+	bool in_window;
+	long free_time;
+	timer free_timer;
+	protected bool pool_thread_active;
+	vector@ listener;
+	private array<audio_effect> effects;
+	protected thread@ pool_thread;
+	long max_sounds;
+};
+shared class audio_effect {
+	string type;
+	audio_effect(const string&in type) {
+		this.type = type;
+	}
+	audio_effect() {
+	}
+	protected bool in_range(float value, float min, float max) {
+		bool ir = true;
+		if(value>max || value<min) ir = false;
+		return ir;
+	}
+	bool is_safe(sound@handle) {
+		if(@handle == null) return false;
+		if(!handle.active) return false;
+		return true;
+	}
+	protected bool attach(sound@handle) {
+		if(!this.is_safe(handle)) return false;
+		handle.set_fx(this.type);
+		return this.configure_effect(handle);
+	}
+	protected bool detach(sound@handle) {
+		if(!this.is_safe(handle)) return false;
+		handle.delete_fx(this.type);
+		return true;
+	}
+	bool configure_effect(sound@handle) {
+		return false;
+	}
+};

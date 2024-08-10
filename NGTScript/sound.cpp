@@ -1378,10 +1378,9 @@ public:
 
 		return active;
 	}
-	string push_memory() {
+	const void* push_memory() {
 		if (!active)return"";
-		char* source = (char*)ma_sound_get_data_source(handle_);
-		return string(source);
+		return ma_sound_get_data_source(handle_);
 	}
 	string get_file_path() {
 		return this->file;
@@ -2101,7 +2100,7 @@ void register_sound(asIScriptEngine* engine) {
 	engine->RegisterObjectMethod("sound", "bool stream(const string &in, bool=false)const", asMETHOD(sound, stream), asCALL_THISCALL);
 	engine->RegisterObjectMethod("sound", "bool load_url(const string &in, bool=false)const", asMETHOD(sound, load_url), asCALL_THISCALL);
 
-	engine->RegisterObjectMethod("sound", "string push_memory()const", asMETHOD(sound, push_memory), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "uint64 push_memory()const", asMETHOD(sound, push_memory), asCALL_THISCALL);
 	engine->RegisterObjectMethod("sound", "string get_file_path()const property", asMETHOD(sound, get_file_path), asCALL_THISCALL);
 	engine->RegisterObjectMethod("sound", "void set_faid_time(float, float, float)const", asMETHOD(sound, set_faid_time), asCALL_THISCALL);
 
