@@ -616,6 +616,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterObjectMethod("timer", "void pause()const", asMETHOD(timer, pause), asCALL_THISCALL);
 	engine->RegisterObjectMethod("timer", "void resume()const", asMETHOD(timer, resume), asCALL_THISCALL);
 	engine->RegisterObjectMethod("timer", "bool get_running()const property", asMETHOD(timer, is_running), asCALL_THISCALL);
+
 	engine->RegisterObjectType("script_function", sizeof(asIScriptFunction), asOBJ_REF);
 	engine->RegisterObjectBehaviour("script_function", asBEHAVE_FACTORY, "script_function@ asIScriptFunction()", asFUNCTION(fscript_function), asCALL_CDECL);
 	engine->RegisterObjectBehaviour("script_function", asBEHAVE_ADDREF, "void f()", asMETHOD(asIScriptFunction, AddRef), asCALL_THISCALL);
@@ -643,6 +644,8 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterObjectBehaviour("instance", asBEHAVE_ADDREF, "void f()", asMETHOD(instance, add_ref), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("instance", asBEHAVE_RELEASE, "void f()", asMETHOD(instance, release), asCALL_THISCALL);
 	engine->RegisterObjectMethod("instance", "bool is_running()", asMETHOD(instance, is_running), asCALL_THISCALL);
+
+
 	engine->RegisterGlobalProperty("const int EVENT_NONE", (void*)&EVENT_NONE);
 	engine->RegisterGlobalProperty("const int EVENT_CONNECT", (void*)&EVENT_CONNECT);
 	engine->RegisterGlobalProperty("const int EVENT_RECEIVE", (void*)&EVENT_RECEIVE);

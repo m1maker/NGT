@@ -26,9 +26,10 @@ exit(0);
 // Allocating memory for output buffer;
 uint64 name_ptr=malloc(500);
 name_ptr=uint64(kernel32.call("int GetComputerNameW(char*, int*);", name_ptr, 500)[1]);
-wstring name=wc_str_to_wstring(name_ptr, 500);
+wstring name=wc_str_to_wstring(name_ptr);
 // name_ptr is no longer needed. Let's free it.
 free(name_ptr);
+name_ptr=0;
 show_window("Window");
 set_window_closable(false);
 // Now, set window text from a DLL.

@@ -1898,7 +1898,7 @@ public:
 		return g_speed_config.playbackSpeed * 100;
 	}
 	bool is_active() const {
-		return active;
+		return active || handle_ != nullptr;
 	}
 
 	bool is_playing() const {
