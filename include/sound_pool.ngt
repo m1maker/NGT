@@ -2,9 +2,10 @@
 Sound Pool(An alternative way to manage sounds.)
 */
 array<sound_pool@> g_sound_pools(0);
-enum sound_pool_error_codes {
-	SP_OK = 0,
-	SP_ALL_SOUNDS_BUSY = -1
+enum sp_result {
+	SP_SUCCESS = 0,
+	SP_ALL_SOUNDS_BUSY = -1,
+	SP_INVALID_ARGS = -2
 };
 class sound_pool {
 	private array<sound@> sounds;
@@ -12,13 +13,13 @@ class sound_pool {
 	long free_time;
 	timer free_timer;
 	protected bool pool_thread_active;
-	vector@ listener;
+	vector@ listener = null;
 	private array<audio_effect> effects;
 	protected thread@ pool_thread;
 	long max_sounds;
 	private bool use_hrtf;
 	private uint64 id;
-	sound_pool_error_codes last_error;
+	sp_result last_error;
 	sound_pool() {
 		this.reset();
 		g_sound_pools.insert_last(this);
@@ -29,7 +30,7 @@ class sound_pool {
 		g_sound_pools.remove_at(this.id);
 	}
 	void reset() {
-		last_error=SP_OK;
+		last_error=SP_SUCCESS;
 		in_window = false;
 		free_time = 3000;
 		free_timer.restart();
@@ -41,19 +42,31 @@ class sound_pool {
 		sounds.resize(max_sounds);
 		use_hrtf = true;
 	}
-	protected uint get_free_sound_handle() {
-		last_error=SP_OK;
+	protected uint get_free_sound_id() {
+		last_error=SP_SUCCESS;
 		uint it;
 		bool found = false;
 		for (it = 0; it < sounds.length(); it++) {
-			if (!sounds[it].active) {
+			if (sounds[it] is null) {
+				found = true;
+				break;
+			}
+			else if(sounds[it].active && !sounds[it].playing) {
+				sounds[it].close();
+				found = true;
+				break;
+			}
+			else if (!sounds[it].active) {
 				found = true;
 				break;
 			}
 		}
 		if (found)return it;
-		last_error=SP_ALL_SOUNDS_BUSY;
+		last_error = SP_ALL_SOUNDS_BUSY;
 		return last_error;
+	}
+	int play_stationary(const string &in filename, bool looping = false) {
+		
 	}
 };
 shared class audio_effect {
