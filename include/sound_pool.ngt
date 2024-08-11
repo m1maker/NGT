@@ -71,7 +71,7 @@ class sound_pool {
 			last_error = SP_INVALID_ARGS;
 			return last_error;
 		}
-		
+		return SP_SUCCESS;
 	}
 };
 shared class audio_effect {
