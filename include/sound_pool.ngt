@@ -65,7 +65,12 @@ class sound_pool {
 		last_error = SP_ALL_SOUNDS_BUSY;
 		return last_error;
 	}
-	int play_stationary(const string &in filename, bool looping = false) {
+	int play(const string &in filename, float listener_x = 0, float listener_y = 0, float listener_z = 0, float source_x = 0, float source_y = 0, float source_z = 0, double rotation = 0, int left_range = 0, int right_range = 0, int backward_range = 0, int forward_range = 0, int upper_range = 0, int lower_range = 0, bool loop = false, bool wait = false, double offset = 0, float start_pan = 0, float start_volume = 0, float start_pitch = 100.0f, bool memory = false) {
+		last_error=SP_SUCCESS;
+		if(loop && wait){
+			last_error = SP_INVALID_ARGS;
+			return last_error;
+		}
 		
 	}
 };
