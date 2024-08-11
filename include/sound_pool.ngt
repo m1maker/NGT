@@ -2,6 +2,10 @@
 Sound Pool(An alternative way to manage sounds.)
 */
 array<sound_pool@> g_sound_pools(0);
+enum sound_pool_error_codes {
+	SP_OK = 0,
+	SP_ALL_SOUNDS_BUSY = -1
+};
 class sound_pool {
 	private array<sound@> sounds;
 	bool in_window;
@@ -14,6 +18,7 @@ class sound_pool {
 	long max_sounds;
 	private bool use_hrtf;
 	private uint64 id;
+	sound_pool_error_codes last_error;
 	sound_pool() {
 		this.reset();
 		g_sound_pools.insert_last(this);
@@ -24,16 +29,31 @@ class sound_pool {
 		g_sound_pools.remove_at(this.id);
 	}
 	void reset() {
-		sounds.resize(0);
-		in_window=false;
-		free_time=3000;
+		last_error=SP_OK;
+		in_window = false;
+		free_time = 3000;
 		free_timer.restart();
-		pool_thread_active=false;
-		@listener=null;
+		pool_thread_active = false;
+		@listener = null;
 		effects.resize(0);
-		@pool_thread=null;
-		max_sounds=100;
-		use_hrtf=true;
+		@pool_thread = null;
+		max_sounds = 100;
+		sounds.resize(max_sounds);
+		use_hrtf = true;
+	}
+	protected uint get_free_sound_handle() {
+		last_error=SP_OK;
+		uint it;
+		bool found = false;
+		for (it = 0; it < sounds.length(); it++) {
+			if (!sounds[it].active) {
+				found = true;
+				break;
+			}
+		}
+		if (found)return it;
+		last_error=SP_ALL_SOUNDS_BUSY;
+		return last_error;
 	}
 };
 shared class audio_effect {
