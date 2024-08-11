@@ -1,8 +1,8 @@
 /*
 Sound Pool(An alternative way to manage sounds.)
 */
-array<sound_pool> g_sound_pools;
-shared class sound_pool {
+array<sound_pool@> g_sound_pools(0);
+class sound_pool {
 	private array<sound@> sounds;
 	bool in_window;
 	long free_time;
@@ -12,6 +12,29 @@ shared class sound_pool {
 	private array<audio_effect> effects;
 	protected thread@ pool_thread;
 	long max_sounds;
+	private bool use_hrtf;
+	private uint64 id;
+	sound_pool() {
+		this.reset();
+		g_sound_pools.insert_last(this);
+		this.id=g_sound_pools.length()-1;
+	}
+	~sound_pool() {
+		this.reset();
+		g_sound_pools.remove_at(this.id);
+	}
+	void reset() {
+		sounds.resize(0);
+		in_window=false;
+		free_time=3000;
+		free_timer.restart();
+		pool_thread_active=false;
+		@listener=null;
+		effects.resize(0);
+		@pool_thread=null;
+		max_sounds=100;
+		use_hrtf=true;
+	}
 };
 shared class audio_effect {
 	string type;

@@ -1,0 +1,5 @@
+#include "../include/sound_pool.ngt"
+void main(){
+sound_pool sp;
+alert("W", "W");
+}
