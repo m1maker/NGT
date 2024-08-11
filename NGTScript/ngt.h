@@ -6,6 +6,10 @@
 #define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
 #include "gui.h"
 #include <Windows.h>
+#define FFI_BUILDING
+#include "ffi.h"
+#include "ffi_cfi.h"
+#include "ffi_common.h"
 #include"tts_voice.h"
 #endif
 #include "Poco/Base32Decoder.h"
@@ -262,9 +266,15 @@ private:
 	double m_bytesReceived;
 	bool m_active;
 };
+typedef struct {
+	ffi_type* returnType;
+	std::vector<ffi_type*> parameters;
+	std::vector<std::string> parameterTypes; // For pointers handling.
+}LibraryFunction;
 class library : public as_class {
 public:
 	void* lib;
+	std::map<std::string, LibraryFunction> functions;
 	bool active()const;
 	bool load(const string&);
 	void unload();
