@@ -154,8 +154,6 @@ extern SDL_DECLSPEC int SDLCALL SDL_GetNumRenderDrivers(void);
  * "direct3d12" or "metal". These never have Unicode characters, and are not
  * meant to be proper names.
  *
- * The returned string follows the SDL_GetStringRule.
- *
  * \param index the index of the rendering driver; the value ranges from 0 to
  *              SDL_GetNumRenderDrivers() - 1.
  * \returns the name of the rendering driver at the requested index, or NULL
@@ -165,7 +163,7 @@ extern SDL_DECLSPEC int SDLCALL SDL_GetNumRenderDrivers(void);
  *
  * \sa SDL_GetNumRenderDrivers
  */
-extern SDL_DECLSPEC const char *SDLCALL SDL_GetRenderDriver(int index);
+extern SDL_DECLSPEC const char * SDLCALL SDL_GetRenderDriver(int index);
 
 /**
  * Create a window and default renderer.
@@ -297,7 +295,7 @@ extern SDL_DECLSPEC SDL_Renderer * SDLCALL SDL_CreateRendererWithProperties(SDL_
  *
  * \sa SDL_DestroyRenderer
  */
-extern SDL_DECLSPEC SDL_Renderer *SDLCALL SDL_CreateSoftwareRenderer(SDL_Surface *surface);
+extern SDL_DECLSPEC SDL_Renderer * SDLCALL SDL_CreateSoftwareRenderer(SDL_Surface *surface);
 
 /**
  * Get the renderer associated with a window.
@@ -308,7 +306,7 @@ extern SDL_DECLSPEC SDL_Renderer *SDLCALL SDL_CreateSoftwareRenderer(SDL_Surface
  *
  * \since This function is available since SDL 3.0.0.
  */
-extern SDL_DECLSPEC SDL_Renderer *SDLCALL SDL_GetRenderer(SDL_Window *window);
+extern SDL_DECLSPEC SDL_Renderer * SDLCALL SDL_GetRenderer(SDL_Window *window);
 
 /**
  * Get the window associated with a renderer.
@@ -319,23 +317,21 @@ extern SDL_DECLSPEC SDL_Renderer *SDLCALL SDL_GetRenderer(SDL_Window *window);
  *
  * \since This function is available since SDL 3.0.0.
  */
-extern SDL_DECLSPEC SDL_Window *SDLCALL SDL_GetRenderWindow(SDL_Renderer *renderer);
+extern SDL_DECLSPEC SDL_Window * SDLCALL SDL_GetRenderWindow(SDL_Renderer *renderer);
 
 /**
  * Get the name of a renderer.
  *
- * The returned string follows the SDL_GetStringRule.
- *
  * \param renderer the rendering context.
- * \returns the name of the selected renderer, or NULL if the renderer is
- *          invalid.
+ * \returns the name of the selected renderer, or NULL on failure; call
+ *          SDL_GetError() for more information.
  *
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_CreateRenderer
  * \sa SDL_CreateRendererWithProperties
  */
-extern SDL_DECLSPEC const char *SDLCALL SDL_GetRendererName(SDL_Renderer *renderer);
+extern SDL_DECLSPEC const char * SDLCALL SDL_GetRendererName(SDL_Renderer *renderer);
 
 /**
  * Get the properties associated with a renderer.
@@ -350,8 +346,8 @@ extern SDL_DECLSPEC const char *SDLCALL SDL_GetRendererName(SDL_Renderer *render
  * - `SDL_PROP_RENDERER_VSYNC_NUMBER`: the current vsync setting
  * - `SDL_PROP_RENDERER_MAX_TEXTURE_SIZE_NUMBER`: the maximum texture width
  *   and height
- * - `SDL_PROP_RENDERER_TEXTURE_FORMATS_POINTER`: a (const SDL_PixelFormatEnum
- *   *) array of pixel formats, terminated with SDL_PIXELFORMAT_UNKNOWN,
+ * - `SDL_PROP_RENDERER_TEXTURE_FORMATS_POINTER`: a (const SDL_PixelFormat *)
+ *   array of pixel formats, terminated with SDL_PIXELFORMAT_UNKNOWN,
  *   representing the available texture formats for this renderer.
  * - `SDL_PROP_RENDERER_OUTPUT_COLORSPACE_NUMBER`: an SDL_ColorSpace value
  *   describing the colorspace for output to the display, defaults to
@@ -413,9 +409,6 @@ extern SDL_DECLSPEC const char *SDLCALL SDL_GetRendererName(SDL_Renderer *render
  *          SDL_GetError() for more information.
  *
  * \since This function is available since SDL 3.0.0.
- *
- * \sa SDL_GetProperty
- * \sa SDL_SetProperty
  */
 extern SDL_DECLSPEC SDL_PropertiesID SDLCALL SDL_GetRendererProperties(SDL_Renderer *renderer);
 
@@ -485,7 +478,7 @@ extern SDL_DECLSPEC int SDLCALL SDL_GetCurrentRenderOutputSize(SDL_Renderer *ren
  * Create a texture for a rendering context.
  *
  * \param renderer the rendering context.
- * \param format one of the enumerated values in SDL_PixelFormatEnum.
+ * \param format one of the enumerated values in SDL_PixelFormat.
  * \param access one of the enumerated values in SDL_TextureAccess.
  * \param w the width of the texture in pixels.
  * \param h the height of the texture in pixels.
@@ -501,7 +494,7 @@ extern SDL_DECLSPEC int SDLCALL SDL_GetCurrentRenderOutputSize(SDL_Renderer *ren
  * \sa SDL_GetTextureSize
  * \sa SDL_UpdateTexture
  */
-extern SDL_DECLSPEC SDL_Texture *SDLCALL SDL_CreateTexture(SDL_Renderer *renderer, SDL_PixelFormatEnum format, int access, int w, int h);
+extern SDL_DECLSPEC SDL_Texture * SDLCALL SDL_CreateTexture(SDL_Renderer *renderer, SDL_PixelFormat format, SDL_TextureAccess access, int w, int h);
 
 /**
  * Create a texture from an existing surface.
@@ -527,7 +520,7 @@ extern SDL_DECLSPEC SDL_Texture *SDLCALL SDL_CreateTexture(SDL_Renderer *rendere
  * \sa SDL_CreateTextureWithProperties
  * \sa SDL_DestroyTexture
  */
-extern SDL_DECLSPEC SDL_Texture *SDLCALL SDL_CreateTextureFromSurface(SDL_Renderer *renderer, SDL_Surface *surface);
+extern SDL_DECLSPEC SDL_Texture * SDLCALL SDL_CreateTextureFromSurface(SDL_Renderer *renderer, SDL_Surface *surface);
 
 /**
  * Create a texture for a rendering context with the specified properties.
@@ -540,7 +533,7 @@ extern SDL_DECLSPEC SDL_Texture *SDLCALL SDL_CreateTextureFromSurface(SDL_Render
  *   SDL_COLORSPACE_SRGB for other RGB textures and SDL_COLORSPACE_JPEG for
  *   YUV textures.
  * - `SDL_PROP_TEXTURE_CREATE_FORMAT_NUMBER`: one of the enumerated values in
- *   SDL_PixelFormatEnum, defaults to the best RGBA format for the renderer
+ *   SDL_PixelFormat, defaults to the best RGBA format for the renderer
  * - `SDL_PROP_TEXTURE_CREATE_ACCESS_NUMBER`: one of the enumerated values in
  *   SDL_TextureAccess, defaults to SDL_TEXTUREACCESS_STATIC
  * - `SDL_PROP_TEXTURE_CREATE_WIDTH_NUMBER`: the width of the texture in
@@ -638,7 +631,7 @@ extern SDL_DECLSPEC SDL_Texture *SDLCALL SDL_CreateTextureFromSurface(SDL_Render
  * \sa SDL_GetTextureSize
  * \sa SDL_UpdateTexture
  */
-extern SDL_DECLSPEC SDL_Texture *SDLCALL SDL_CreateTextureWithProperties(SDL_Renderer *renderer, SDL_PropertiesID props);
+extern SDL_DECLSPEC SDL_Texture * SDLCALL SDL_CreateTextureWithProperties(SDL_Renderer *renderer, SDL_PropertiesID props);
 
 #define SDL_PROP_TEXTURE_CREATE_COLORSPACE_NUMBER           "colorspace"
 #define SDL_PROP_TEXTURE_CREATE_FORMAT_NUMBER               "format"
@@ -672,7 +665,7 @@ extern SDL_DECLSPEC SDL_Texture *SDLCALL SDL_CreateTextureWithProperties(SDL_Ren
  * - `SDL_PROP_TEXTURE_COLORSPACE_NUMBER`: an SDL_ColorSpace value describing
  *   the texture colorspace.
  * - `SDL_PROP_TEXTURE_FORMAT_NUMBER`: one of the enumerated values in
- *   SDL_PixelFormatEnum.
+ *   SDL_PixelFormat.
  * - `SDL_PROP_TEXTURE_ACCESS_NUMBER`: one of the enumerated values in
  *   SDL_TextureAccess.
  * - `SDL_PROP_TEXTURE_WIDTH_NUMBER`: the width of the texture in pixels.
@@ -758,9 +751,6 @@ extern SDL_DECLSPEC SDL_Texture *SDLCALL SDL_CreateTextureWithProperties(SDL_Ren
  *          SDL_GetError() for more information.
  *
  * \since This function is available since SDL 3.0.0.
- *
- * \sa SDL_GetProperty
- * \sa SDL_SetProperty
  */
 extern SDL_DECLSPEC SDL_PropertiesID SDLCALL SDL_GetTextureProperties(SDL_Texture *texture);
 
@@ -802,7 +792,7 @@ extern SDL_DECLSPEC SDL_PropertiesID SDLCALL SDL_GetTextureProperties(SDL_Textur
  *
  * \since This function is available since SDL 3.0.0.
  */
-extern SDL_DECLSPEC SDL_Renderer *SDLCALL SDL_GetRendererFromTexture(SDL_Texture *texture);
+extern SDL_DECLSPEC SDL_Renderer * SDLCALL SDL_GetRendererFromTexture(SDL_Texture *texture);
 
 /**
  * Get the size of a texture, as floating point values.
@@ -1269,7 +1259,7 @@ extern SDL_DECLSPEC int SDLCALL SDL_SetRenderTarget(SDL_Renderer *renderer, SDL_
  *
  * \sa SDL_SetRenderTarget
  */
-extern SDL_DECLSPEC SDL_Texture *SDLCALL SDL_GetRenderTarget(SDL_Renderer *renderer);
+extern SDL_DECLSPEC SDL_Texture * SDLCALL SDL_GetRenderTarget(SDL_Renderer *renderer);
 
 /**
  * Set a device independent resolution and presentation mode for rendering.
@@ -1446,6 +1436,26 @@ extern SDL_DECLSPEC int SDLCALL SDL_GetRenderViewport(SDL_Renderer *renderer, SD
  * \sa SDL_SetRenderViewport
  */
 extern SDL_DECLSPEC SDL_bool SDLCALL SDL_RenderViewportSet(SDL_Renderer *renderer);
+
+/**
+ * Get the safe area for rendering within the current viewport.
+ *
+ * Some devices have portions of the screen which are partially obscured or
+ * not interactive, possibly due to on-screen controls, curved edges, camera
+ * notches, TV overscan, etc. This function provides the area of the current
+ * viewport which is safe to have interactible content. You should continue
+ * rendering into the rest of the render target, but it should not contain
+ * visually important or interactible content.
+ *
+ * \param renderer the rendering context.
+ * \param rect a pointer filled in with the area that is safe for interactive
+ *             content.
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 3.0.0.
+ */
+extern SDL_DECLSPEC int SDLCALL SDL_GetRenderSafeArea(SDL_Renderer *renderer, SDL_Rect *rect);
 
 /**
  * Set the clip rectangle for rendering on the specified target.
@@ -1711,7 +1721,8 @@ extern SDL_DECLSPEC int SDLCALL SDL_RenderClear(SDL_Renderer *renderer);
  * \param renderer the renderer which should draw a point.
  * \param x the x coordinate of the point.
  * \param y the y coordinate of the point.
- * \returns 0 on success, or -1 on error.
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
  *
  * \since This function is available since SDL 3.0.0.
  *
@@ -1742,7 +1753,8 @@ extern SDL_DECLSPEC int SDLCALL SDL_RenderPoints(SDL_Renderer *renderer, const S
  * \param y1 the y coordinate of the start point.
  * \param x2 the x coordinate of the end point.
  * \param y2 the y coordinate of the end point.
- * \returns 0 on success, or -1 on error.
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
  *
  * \since This function is available since SDL 3.0.0.
  *
@@ -1772,7 +1784,8 @@ extern SDL_DECLSPEC int SDLCALL SDL_RenderLines(SDL_Renderer *renderer, const SD
  * \param renderer the renderer which should draw a rectangle.
  * \param rect a pointer to the destination rectangle, or NULL to outline the
  *             entire rendering target.
- * \returns 0 on success, or -1 on error.
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
  *
  * \since This function is available since SDL 3.0.0.
  *
@@ -1803,7 +1816,8 @@ extern SDL_DECLSPEC int SDLCALL SDL_RenderRects(SDL_Renderer *renderer, const SD
  * \param renderer the renderer which should fill a rectangle.
  * \param rect a pointer to the destination rectangle, or NULL for the entire
  *             rendering target.
- * \returns 0 on success, or -1 on error.
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
  *
  * \since This function is available since SDL 3.0.0.
  *
@@ -1837,11 +1851,13 @@ extern SDL_DECLSPEC int SDLCALL SDL_RenderFillRects(SDL_Renderer *renderer, cons
  *                texture.
  * \param dstrect a pointer to the destination rectangle, or NULL for the
  *                entire rendering target.
- * \returns 0 on success, or -1 on error.
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
  *
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_RenderTextureRotated
+ * \sa SDL_RenderTextureTiled
  */
 extern SDL_DECLSPEC int SDLCALL SDL_RenderTexture(SDL_Renderer *renderer, SDL_Texture *texture, const SDL_FRect *srcrect, const SDL_FRect *dstrect);
 
@@ -1875,6 +1891,63 @@ extern SDL_DECLSPEC int SDLCALL SDL_RenderTextureRotated(SDL_Renderer *renderer,
                                                      const SDL_FlipMode flip);
 
 /**
+ * Tile a portion of the texture to the current rendering target at subpixel
+ * precision.
+ *
+ * The pixels in `srcrect` will be repeated as many times as needed to
+ * completely fill `dstrect`.
+ *
+ * \param renderer the renderer which should copy parts of a texture.
+ * \param texture the source texture.
+ * \param srcrect a pointer to the source rectangle, or NULL for the entire
+ *                texture.
+ * \param scale the scale used to transform srcrect into the destination
+ *              rectangle, e.g. a 32x32 texture with a scale of 2 would fill
+ *              64x64 tiles.
+ * \param dstrect a pointer to the destination rectangle, or NULL for the
+ *                entire rendering target.
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 3.0.0.
+ *
+ * \sa SDL_RenderTexture
+ */
+extern SDL_DECLSPEC int SDLCALL SDL_RenderTextureTiled(SDL_Renderer *renderer, SDL_Texture *texture, const SDL_FRect *srcrect, float scale, const SDL_FRect *dstrect);
+
+/**
+ * Perform a scaled copy using the 9-grid algorithm to the current rendering
+ * target at subpixel precision.
+ *
+ * The pixels in the texture are split into a 3x3 grid, using the different
+ * corner sizes for each corner, and the sides and center making up the
+ * remaining pixels. The corners are then scaled using `scale` and fit into
+ * the corners of the destination rectangle. The sides and center are then
+ * stretched into place to cover the remaining destination rectangle.
+ *
+ * \param renderer the renderer which should copy parts of a texture.
+ * \param texture the source texture.
+ * \param srcrect the SDL_Rect structure representing the rectangle to be used
+ *                for the 9-grid, or NULL to use the entire texture.
+ * \param left_width the width, in pixels, of the left corners in `srcrect`.
+ * \param right_width the width, in pixels, of the right corners in `srcrect`.
+ * \param top_height the height, in pixels, of the top corners in `srcrect`.
+ * \param bottom_height the height, in pixels, of the bottom corners in
+ *                      `srcrect`.
+ * \param scale the scale used to transform the corner of `srcrect` into the
+ *              corner of `dstrect`, or 0.0f for an unscaled copy.
+ * \param dstrect a pointer to the destination rectangle, or NULL for the
+ *                entire rendering target.
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \since This function is available since SDL 3.0.0.
+ *
+ * \sa SDL_RenderTexture
+ */
+extern SDL_DECLSPEC int SDLCALL SDL_RenderTexture9Grid(SDL_Renderer *renderer, SDL_Texture *texture, const SDL_FRect *srcrect, float left_width, float right_width, float top_height, float bottom_height, float scale, const SDL_FRect *dstrect);
+
+/**
  * Render a list of triangles, optionally using a texture and indices into the
  * vertex array Color and alpha modulation is done per vertex
  * (SDL_SetTextureColorMod and SDL_SetTextureAlphaMod are ignored).
@@ -1887,7 +1960,8 @@ extern SDL_DECLSPEC int SDLCALL SDL_RenderTextureRotated(SDL_Renderer *renderer,
  *                array, if NULL all vertices will be rendered in sequential
  *                order.
  * \param num_indices number of indices.
- * \returns 0 on success, or -1 if the operation is not supported.
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
  *
  * \since This function is available since SDL 3.0.0.
  *
@@ -1969,6 +2043,12 @@ extern SDL_DECLSPEC SDL_Surface * SDLCALL SDL_RenderReadPixels(SDL_Renderer *ren
  * starting each new frame's drawing, even if you plan to overwrite every
  * pixel.
  *
+ * Please note, that in case of rendering to a texture - there is **no need**
+ * to call `SDL_RenderPresent` after drawing needed objects to a texture, you
+ * are only required to change back the rendering target to default via
+ * `SDL_SetRenderTarget(renderer, NULL)` afterwards, as textures by themselves
+ * do not have a concept of backbuffers.
+ *
  * \param renderer the rendering context.
  * \returns 0 on success or a negative error code on failure; call
  *          SDL_GetError() for more information.
@@ -1977,15 +2057,16 @@ extern SDL_DECLSPEC SDL_Surface * SDLCALL SDL_RenderReadPixels(SDL_Renderer *ren
  *
  * \since This function is available since SDL 3.0.0.
  *
+ * \sa SDL_CreateRenderer
  * \sa SDL_RenderClear
+ * \sa SDL_RenderFillRect
+ * \sa SDL_RenderFillRects
  * \sa SDL_RenderLine
  * \sa SDL_RenderLines
  * \sa SDL_RenderPoint
  * \sa SDL_RenderPoints
  * \sa SDL_RenderRect
  * \sa SDL_RenderRects
- * \sa SDL_RenderFillRect
- * \sa SDL_RenderFillRects
  * \sa SDL_SetRenderDrawBlendMode
  * \sa SDL_SetRenderDrawColor
  */
@@ -2065,7 +2146,7 @@ extern SDL_DECLSPEC int SDLCALL SDL_FlushRenderer(SDL_Renderer *renderer);
  *
  * \sa SDL_GetRenderMetalCommandEncoder
  */
-extern SDL_DECLSPEC void *SDLCALL SDL_GetRenderMetalLayer(SDL_Renderer *renderer);
+extern SDL_DECLSPEC void * SDLCALL SDL_GetRenderMetalLayer(SDL_Renderer *renderer);
 
 /**
  * Get the Metal command encoder for the current frame.
@@ -2086,7 +2167,7 @@ extern SDL_DECLSPEC void *SDLCALL SDL_GetRenderMetalLayer(SDL_Renderer *renderer
  *
  * \sa SDL_GetRenderMetalLayer
  */
-extern SDL_DECLSPEC void *SDLCALL SDL_GetRenderMetalCommandEncoder(SDL_Renderer *renderer);
+extern SDL_DECLSPEC void * SDLCALL SDL_GetRenderMetalCommandEncoder(SDL_Renderer *renderer);
 
 
 /**

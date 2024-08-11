@@ -43,7 +43,12 @@
  * if you aren't reading from a file) as a basic means to load sound data into
  * your program.
  *
- * ## Channel layouts as SDL expects them
+ * ## Channel layouts
+ *
+ * Audio data passing through SDL is uncompressed PCM data, interleaved. One
+ * can provide their own decompression through an MP3, etc, decoder, but SDL
+ * does not provide this directly. Each interleaved channel of data is meant
+ * to be in a specific order.
  *
  * Abbreviations:
  *
@@ -76,7 +81,7 @@
  * platforms; SDL will swizzle the channels as necessary if a platform expects
  * something different.
  *
- * SDL_AudioStream can also be provided a channel map to change this ordering
+ * SDL_AudioStream can also be provided channel maps to change this ordering
  * to whatever is necessary, in other audio processing scenarios.
  */
 
@@ -97,27 +102,19 @@
 extern "C" {
 #endif
 
+/* masks for different parts of SDL_AudioFormat. */
+#define SDL_AUDIO_MASK_BITSIZE       (0xFFu)
+#define SDL_AUDIO_MASK_FLOAT         (1u<<8)
+#define SDL_AUDIO_MASK_BIG_ENDIAN    (1u<<12)
+#define SDL_AUDIO_MASK_SIGNED        (1u<<15)
+
+#define SDL_DEFINE_AUDIO_FORMAT(signed, bigendian, float, size) \
+    (((Uint16)(signed) << 15) | ((Uint16)(bigendian) << 12) | ((Uint16)(float) << 8) | ((size) & SDL_AUDIO_MASK_BITSIZE))
+
 /**
- * Audio format flags.
+ * Audio format.
  *
- * These are what the 16 bits in SDL_AudioFormat currently mean...
- * (Unspecified bits are always zero).
- *
- * ```
- * ++-----------------------sample is signed if set
- * ||
- * ||       ++-----------sample is bigendian if set
- * ||       ||
- * ||       ||          ++---sample is float if set
- * ||       ||          ||
- * ||       ||          || +=--sample bit size--++
- * ||       ||          || ||                   ||
- * 15 14 13 12 11 10 09 08 07 06 05 04 03 02 01 00
- * ```
- *
- * There are macros to query these bits.
- *
- * \since This datatype is available since SDL 3.0.0.
+ * \since This enum is available since SDL 3.0.0.
  *
  * \sa SDL_AUDIO_BITSIZE
  * \sa SDL_AUDIO_BYTESIZE
@@ -128,16 +125,25 @@ extern "C" {
  * \sa SDL_AUDIO_ISSIGNED
  * \sa SDL_AUDIO_ISUNSIGNED
  */
-typedef Uint16 SDL_AudioFormat;
-
-#define SDL_AUDIO_U8        0x0008u /**< Unsigned 8-bit samples */
-#define SDL_AUDIO_S8        0x8008u /**< Signed 8-bit samples */
-#define SDL_AUDIO_S16LE     0x8010u /**< Signed 16-bit samples */
-#define SDL_AUDIO_S16BE     0x9010u /**< As above, but big-endian byte order */
-#define SDL_AUDIO_S32LE     0x8020u /**< 32-bit integer samples */
-#define SDL_AUDIO_S32BE     0x9020u /**< As above, but big-endian byte order */
-#define SDL_AUDIO_F32LE     0x8120u /**< 32-bit floating point samples */
-#define SDL_AUDIO_F32BE     0x9120u /**< As above, but big-endian byte order */
+typedef enum SDL_AudioFormat
+{
+    SDL_AUDIO_U8        = 0x0008u,  /**< Unsigned 8-bit samples */
+        /* SDL_DEFINE_AUDIO_FORMAT(0, 0, 0, 8), */
+    SDL_AUDIO_S8        = 0x8008u,  /**< Signed 8-bit samples */
+        /* SDL_DEFINE_AUDIO_FORMAT(1, 0, 0, 8), */
+    SDL_AUDIO_S16LE     = 0x8010u,  /**< Signed 16-bit samples */
+        /* SDL_DEFINE_AUDIO_FORMAT(1, 0, 0, 16), */
+    SDL_AUDIO_S16BE     = 0x9010u,  /**< As above, but big-endian byte order */
+        /* SDL_DEFINE_AUDIO_FORMAT(1, 1, 0, 16), */
+    SDL_AUDIO_S32LE     = 0x8020u,  /**< 32-bit integer samples */
+        /* SDL_DEFINE_AUDIO_FORMAT(1, 0, 0, 32), */
+    SDL_AUDIO_S32BE     = 0x9020u,  /**< As above, but big-endian byte order */
+        /* SDL_DEFINE_AUDIO_FORMAT(1, 1, 0, 32), */
+    SDL_AUDIO_F32LE     = 0x8120u,  /**< 32-bit floating point samples */
+        /* SDL_DEFINE_AUDIO_FORMAT(1, 0, 1, 32), */
+    SDL_AUDIO_F32BE     = 0x9120u,  /**< As above, but big-endian byte order */
+        /* SDL_DEFINE_AUDIO_FORMAT(1, 1, 1, 32), */
+} SDL_AudioFormat;
 
 #if SDL_BYTEORDER == SDL_LIL_ENDIAN
 #define SDL_AUDIO_S16    SDL_AUDIO_S16LE
@@ -148,13 +154,6 @@ typedef Uint16 SDL_AudioFormat;
 #define SDL_AUDIO_S32    SDL_AUDIO_S32BE
 #define SDL_AUDIO_F32    SDL_AUDIO_F32BE
 #endif
-
-
-/* masks for different parts of SDL_AudioFormat. */
-#define SDL_AUDIO_MASK_BITSIZE       (0xFFu)
-#define SDL_AUDIO_MASK_FLOAT         (1u<<8)
-#define SDL_AUDIO_MASK_BIG_ENDIAN    (1u<<12)
-#define SDL_AUDIO_MASK_SIGNED        (1u<<15)
 
 
 /**
@@ -288,7 +287,7 @@ typedef Uint32 SDL_AudioDeviceID;
  *
  * \since This macro is available since SDL 3.0.0.
  */
-#define SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK ((SDL_AudioDeviceID) 0xFFFFFFFF)
+#define SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK ((SDL_AudioDeviceID) 0xFFFFFFFFu)
 
 /**
  * A value used to request a default recording audio device.
@@ -299,19 +298,7 @@ typedef Uint32 SDL_AudioDeviceID;
  *
  * \since This macro is available since SDL 3.0.0.
  */
-#define SDL_AUDIO_DEVICE_DEFAULT_RECORDING ((SDL_AudioDeviceID) 0xFFFFFFFE)
-
-/**
- * Maximum channels that an SDL_AudioSpec channel map can handle.
- *
- * This is (currently) double the number of channels that SDL supports, to
- * allow for future expansion while maintaining binary compatibility.
- *
- * \since This macro is available since SDL 3.0.0.
- *
- * \sa SDL_AudioSpec
- */
-#define SDL_MAX_CHANNEL_MAP_SIZE 16
+#define SDL_AUDIO_DEVICE_DEFAULT_RECORDING ((SDL_AudioDeviceID) 0xFFFFFFFEu)
 
 /**
  * Format specifier for audio data.
@@ -325,8 +312,6 @@ typedef struct SDL_AudioSpec
     SDL_AudioFormat format;     /**< Audio data format */
     int channels;               /**< Number of channels: 1 mono, 2 stereo, etc */
     int freq;                   /**< sample rate: sample frames per second */
-    SDL_bool use_channel_map;   /**< If SDL_FALSE, ignore `channel_map` and use default order. */
-    Uint8 channel_map[SDL_MAX_CHANNEL_MAP_SIZE];      /**< `channels` items of channel order. */
 } SDL_AudioSpec;
 
 /**
@@ -415,8 +400,6 @@ extern SDL_DECLSPEC int SDLCALL SDL_GetNumAudioDrivers(void);
  * "coreaudio" or "wasapi". These never have Unicode characters, and are not
  * meant to be proper names.
  *
- * The returned string follows the SDL_GetStringRule.
- *
  * \param index the index of the audio driver; the value ranges from 0 to
  *              SDL_GetNumAudioDrivers() - 1.
  * \returns the name of the audio driver at the requested index, or NULL if an
@@ -428,7 +411,7 @@ extern SDL_DECLSPEC int SDLCALL SDL_GetNumAudioDrivers(void);
  *
  * \sa SDL_GetNumAudioDrivers
  */
-extern SDL_DECLSPEC const char *SDLCALL SDL_GetAudioDriver(int index);
+extern SDL_DECLSPEC const char * SDLCALL SDL_GetAudioDriver(int index);
 /* @} */
 
 /**
@@ -438,8 +421,6 @@ extern SDL_DECLSPEC const char *SDLCALL SDL_GetAudioDriver(int index);
  * "coreaudio" or "wasapi". These never have Unicode characters, and are not
  * meant to be proper names.
  *
- * The returned string follows the SDL_GetStringRule.
- *
  * \returns the name of the current audio driver or NULL if no driver has been
  *          initialized.
  *
@@ -447,7 +428,7 @@ extern SDL_DECLSPEC const char *SDLCALL SDL_GetAudioDriver(int index);
  *
  * \since This function is available since SDL 3.0.0.
  */
-extern SDL_DECLSPEC const char *SDLCALL SDL_GetCurrentAudioDriver(void);
+extern SDL_DECLSPEC const char * SDLCALL SDL_GetCurrentAudioDriver(void);
 
 /**
  * Get a list of currently-connected audio playback devices.
@@ -463,11 +444,11 @@ extern SDL_DECLSPEC const char *SDLCALL SDL_GetCurrentAudioDriver(void);
  * If this function returns NULL, to signify an error, `*count` will be set to
  * zero.
  *
- * \param count a pointer filled in with the number of devices returned. NULL
- *              is allowed.
- * \returns a 0 terminated array of device instance IDs which should be freed
- *          with SDL_free(), or NULL on error; call SDL_GetError() for more
- *          details.
+ * \param count a pointer filled in with the number of devices returned, may
+ *              be NULL.
+ * \returns a 0 terminated array of device instance IDs or NULL on error; call
+ *          SDL_GetError() for more information. This should be freed with
+ *          SDL_free() when it is no longer needed.
  *
  * \threadsafety It is safe to call this function from any thread.
  *
@@ -476,7 +457,7 @@ extern SDL_DECLSPEC const char *SDLCALL SDL_GetCurrentAudioDriver(void);
  * \sa SDL_OpenAudioDevice
  * \sa SDL_GetAudioRecordingDevices
  */
-extern SDL_DECLSPEC SDL_AudioDeviceID *SDLCALL SDL_GetAudioPlaybackDevices(int *count);
+extern SDL_DECLSPEC SDL_AudioDeviceID * SDLCALL SDL_GetAudioPlaybackDevices(int *count);
 
 /**
  * Get a list of currently-connected audio recording devices.
@@ -492,11 +473,11 @@ extern SDL_DECLSPEC SDL_AudioDeviceID *SDLCALL SDL_GetAudioPlaybackDevices(int *
  * If this function returns NULL, to signify an error, `*count` will be set to
  * zero.
  *
- * \param count a pointer filled in with the number of devices returned. NULL
- *              is allowed.
- * \returns a 0 terminated array of device instance IDs which should be freed
- *          with SDL_free(), or NULL on error; call SDL_GetError() for more
- *          details.
+ * \param count a pointer filled in with the number of devices returned, may
+ *              be NULL.
+ * \returns a 0 terminated array of device instance IDs, or NULL on failure;
+ *          call SDL_GetError() for more information. This should be freed
+ *          with SDL_free() when it is no longer needed.
  *
  * \threadsafety It is safe to call this function from any thread.
  *
@@ -505,15 +486,14 @@ extern SDL_DECLSPEC SDL_AudioDeviceID *SDLCALL SDL_GetAudioPlaybackDevices(int *
  * \sa SDL_OpenAudioDevice
  * \sa SDL_GetAudioPlaybackDevices
  */
-extern SDL_DECLSPEC SDL_AudioDeviceID *SDLCALL SDL_GetAudioRecordingDevices(int *count);
+extern SDL_DECLSPEC SDL_AudioDeviceID * SDLCALL SDL_GetAudioRecordingDevices(int *count);
 
 /**
  * Get the human-readable name of a specific audio device.
  *
- * The returned string follows the SDL_GetStringRule.
- *
  * \param devid the instance ID of the device to query.
- * \returns the name of the audio device, or NULL on error.
+ * \returns the name of the audio device, or NULL on failure; call
+ *          SDL_GetError() for more information.
  *
  * \threadsafety It is safe to call this function from any thread.
  *
@@ -523,7 +503,7 @@ extern SDL_DECLSPEC SDL_AudioDeviceID *SDLCALL SDL_GetAudioRecordingDevices(int 
  * \sa SDL_GetAudioRecordingDevices
  * \sa SDL_GetDefaultAudioInfo
  */
-extern SDL_DECLSPEC const char *SDLCALL SDL_GetAudioDeviceName(SDL_AudioDeviceID devid);
+extern SDL_DECLSPEC const char * SDLCALL SDL_GetAudioDeviceName(SDL_AudioDeviceID devid);
 
 /**
  * Get the current audio format of a specific audio device.
@@ -560,6 +540,28 @@ extern SDL_DECLSPEC const char *SDLCALL SDL_GetAudioDeviceName(SDL_AudioDeviceID
  */
 extern SDL_DECLSPEC int SDLCALL SDL_GetAudioDeviceFormat(SDL_AudioDeviceID devid, SDL_AudioSpec *spec, int *sample_frames);
 
+/**
+ * Get the current channel map of an audio device.
+ *
+ * Channel maps are optional; most things do not need them, instead passing
+ * data in the [order that SDL expects](CategoryAudio#channel-layouts).
+ *
+ * Audio devices usually have no remapping applied. This is represented by
+ * returning NULL, and does not signify an error.
+ *
+ * \param devid the instance ID of the device to query.
+ * \param count On output, set to number of channels in the map. Can be NULL.
+ * \returns an array of the current channel mapping, with as many elements as
+ *          the current output spec's channels, or NULL if default. This
+ *          should be freed with SDL_free() when it is no longer needed.
+ *
+ * \threadsafety It is safe to call this function from any thread.
+ *
+ * \since This function is available since SDL 3.0.0.
+ *
+ * \sa SDL_SetAudioStreamInputChannelMap
+ */
+extern SDL_DECLSPEC int * SDLCALL SDL_GetAudioDeviceChannelMap(SDL_AudioDeviceID devid, int *count);
 
 /**
  * Open a specific audio device.
@@ -625,8 +627,8 @@ extern SDL_DECLSPEC int SDLCALL SDL_GetAudioDeviceFormat(SDL_AudioDeviceID devid
  *              default device.
  * \param spec the requested device configuration. Can be NULL to use
  *             reasonable defaults.
- * \returns the device ID on success, 0 on error; call SDL_GetError() for more
- *          information.
+ * \returns the device ID on success or 0 on failure; call SDL_GetError() for
+ *          more information.
  *
  * \threadsafety It is safe to call this function from any thread.
  *
@@ -730,7 +732,8 @@ extern SDL_DECLSPEC SDL_bool SDLCALL SDL_AudioDevicePaused(SDL_AudioDeviceID dev
  * this function will always return -1.0f when used on physical devices.
  *
  * \param devid the audio device to query.
- * \returns the gain of the device, or -1.0f on error.
+ * \returns the gain of the device or -1.0f on failure; call SDL_GetError()
+ *          for more information.
  *
  * \threadsafety It is safe to call this function from any thread.
  *
@@ -763,7 +766,8 @@ extern SDL_DECLSPEC float SDLCALL SDL_GetAudioDeviceGain(SDL_AudioDeviceID devid
  *
  * \param devid the audio device on which to change gain.
  * \param gain the gain. 1.0f is no change, 0.0f is silence.
- * \returns 0 on success, or -1 on error.
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
  *
  * \threadsafety It is safe to call this function from any thread, as it holds
  *               a stream-specific mutex while running.
@@ -817,10 +821,10 @@ extern SDL_DECLSPEC void SDLCALL SDL_CloseAudioDevice(SDL_AudioDeviceID devid);
  * stream's format at any time.
  *
  * \param devid an audio device to bind a stream to.
- * \param streams an array of audio streams to unbind.
+ * \param streams an array of audio streams to bind.
  * \param num_streams number streams listed in the `streams` array.
- * \returns 0 on success, -1 on error; call SDL_GetError() for more
- *          information.
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
  *
  * \threadsafety It is safe to call this function from any thread.
  *
@@ -840,8 +844,8 @@ extern SDL_DECLSPEC int SDLCALL SDL_BindAudioStreams(SDL_AudioDeviceID devid, SD
  *
  * \param devid an audio device to bind a stream to.
  * \param stream an audio stream to bind to a device.
- * \returns 0 on success, -1 on error; call SDL_GetError() for more
- *          information.
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
  *
  * \threadsafety It is safe to call this function from any thread.
  *
@@ -914,7 +918,8 @@ extern SDL_DECLSPEC SDL_AudioDeviceID SDLCALL SDL_GetAudioStreamDevice(SDL_Audio
  *
  * \param src_spec the format details of the input audio.
  * \param dst_spec the format details of the output audio.
- * \returns a new audio stream on success, or NULL on failure.
+ * \returns a new audio stream on success or NULL on failure; call
+ *          SDL_GetError() for more information.
  *
  * \threadsafety It is safe to call this function from any thread.
  *
@@ -928,7 +933,7 @@ extern SDL_DECLSPEC SDL_AudioDeviceID SDLCALL SDL_GetAudioStreamDevice(SDL_Audio
  * \sa SDL_SetAudioStreamFormat
  * \sa SDL_DestroyAudioStream
  */
-extern SDL_DECLSPEC SDL_AudioStream *SDLCALL SDL_CreateAudioStream(const SDL_AudioSpec *src_spec, const SDL_AudioSpec *dst_spec);
+extern SDL_DECLSPEC SDL_AudioStream * SDLCALL SDL_CreateAudioStream(const SDL_AudioSpec *src_spec, const SDL_AudioSpec *dst_spec);
 
 /**
  * Get the properties associated with an audio stream.
@@ -938,9 +943,6 @@ extern SDL_DECLSPEC SDL_AudioStream *SDLCALL SDL_CreateAudioStream(const SDL_Aud
  *          SDL_GetError() for more information.
  *
  * \since This function is available since SDL 3.0.0.
- *
- * \sa SDL_GetProperty
- * \sa SDL_SetProperty
  */
 extern SDL_DECLSPEC SDL_PropertiesID SDLCALL SDL_GetAudioStreamProperties(SDL_AudioStream *stream);
 
@@ -950,7 +952,8 @@ extern SDL_DECLSPEC SDL_PropertiesID SDLCALL SDL_GetAudioStreamProperties(SDL_Au
  * \param stream the SDL_AudioStream to query.
  * \param src_spec where to store the input audio format; ignored if NULL.
  * \param dst_spec where to store the output audio format; ignored if NULL.
- * \returns 0 on success, or -1 on error.
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
  *
  * \threadsafety It is safe to call this function from any thread, as it holds
  *               a stream-specific mutex while running.
@@ -981,7 +984,8 @@ extern SDL_DECLSPEC int SDLCALL SDL_GetAudioStreamFormat(SDL_AudioStream *stream
  *                 changed.
  * \param dst_spec the new format of the audio output; if NULL, it is not
  *                 changed.
- * \returns 0 on success, or -1 on error.
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
  *
  * \threadsafety It is safe to call this function from any thread, as it holds
  *               a stream-specific mutex while running.
@@ -999,7 +1003,8 @@ extern SDL_DECLSPEC int SDLCALL SDL_SetAudioStreamFormat(SDL_AudioStream *stream
  * Get the frequency ratio of an audio stream.
  *
  * \param stream the SDL_AudioStream to query.
- * \returns the frequency ratio of the stream, or 0.0 on error.
+ * \returns the frequency ratio of the stream or 0.0 on failure; call
+ *          SDL_GetError() for more information.
  *
  * \threadsafety It is safe to call this function from any thread, as it holds
  *               a stream-specific mutex while running.
@@ -1025,7 +1030,8 @@ extern SDL_DECLSPEC float SDLCALL SDL_GetAudioStreamFrequencyRatio(SDL_AudioStre
  * \param stream the stream the frequency ratio is being changed.
  * \param ratio the frequency ratio. 1.0 is normal speed. Must be between 0.01
  *              and 100.
- * \returns 0 on success, or -1 on error.
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
  *
  * \threadsafety It is safe to call this function from any thread, as it holds
  *               a stream-specific mutex while running.
@@ -1046,7 +1052,8 @@ extern SDL_DECLSPEC int SDLCALL SDL_SetAudioStreamFrequencyRatio(SDL_AudioStream
  * Audio streams default to a gain of 1.0f (no change in output).
  *
  * \param stream the SDL_AudioStream to query.
- * \returns the gain of the stream, or -1.0f on error.
+ * \returns the gain of the stream or -1.0f on failure; call SDL_GetError()
+ *          for more information.
  *
  * \threadsafety It is safe to call this function from any thread, as it holds
  *               a stream-specific mutex while running.
@@ -1070,7 +1077,8 @@ extern SDL_DECLSPEC float SDLCALL SDL_GetAudioStreamGain(SDL_AudioStream *stream
  *
  * \param stream the stream on which the gain is being changed.
  * \param gain the gain. 1.0f is no change, 0.0f is silence.
- * \returns 0 on success, or -1 on error.
+ * \returns 0 on successor a negative error code on failure; call
+ *          SDL_GetError() for more information.
  *
  * \threadsafety It is safe to call this function from any thread, as it holds
  *               a stream-specific mutex while running.
@@ -1081,6 +1089,151 @@ extern SDL_DECLSPEC float SDLCALL SDL_GetAudioStreamGain(SDL_AudioStream *stream
  */
 extern SDL_DECLSPEC int SDLCALL SDL_SetAudioStreamGain(SDL_AudioStream *stream, float gain);
 
+/**
+ * Get the current input channel map of an audio stream.
+ *
+ * Channel maps are optional; most things do not need them, instead passing
+ * data in the [order that SDL expects](CategoryAudio#channel-layouts).
+ *
+ * Audio streams default to no remapping applied. This is represented by
+ * returning NULL, and does not signify an error.
+ *
+ * \param stream the SDL_AudioStream to query.
+ * \param count On output, set to number of channels in the map. Can be NULL.
+ * \returns an array of the current channel mapping, with as many elements as
+ *          the current output spec's channels, or NULL if default. This
+ *          should be freed with SDL_free() when it is no longer needed.
+ *
+ * \threadsafety It is safe to call this function from any thread, as it holds
+ *               a stream-specific mutex while running.
+ *
+ * \since This function is available since SDL 3.0.0.
+ *
+ * \sa SDL_SetAudioStreamInputChannelMap
+ */
+extern SDL_DECLSPEC int * SDLCALL SDL_GetAudioStreamInputChannelMap(SDL_AudioStream *stream, int *count);
+
+/**
+ * Get the current output channel map of an audio stream.
+ *
+ * Channel maps are optional; most things do not need them, instead passing
+ * data in the [order that SDL expects](CategoryAudio#channel-layouts).
+ *
+ * Audio streams default to no remapping applied. This is represented by
+ * returning NULL, and does not signify an error.
+ *
+ * \param stream the SDL_AudioStream to query.
+ * \param count On output, set to number of channels in the map. Can be NULL.
+ * \returns an array of the current channel mapping, with as many elements as
+ *          the current output spec's channels, or NULL if default. This
+ *          should be freed with SDL_free() when it is no longer needed.
+ *
+ * \threadsafety It is safe to call this function from any thread, as it holds
+ *               a stream-specific mutex while running.
+ *
+ * \since This function is available since SDL 3.0.0.
+ *
+ * \sa SDL_SetAudioStreamInputChannelMap
+ */
+extern SDL_DECLSPEC int * SDLCALL SDL_GetAudioStreamOutputChannelMap(SDL_AudioStream *stream, int *count);
+
+/**
+ * Set the current input channel map of an audio stream.
+ *
+ * Channel maps are optional; most things do not need them, instead passing
+ * data in the [order that SDL expects](CategoryAudio#channel-layouts).
+ *
+ * The input channel map reorders data that is added to a stream via
+ * SDL_PutAudioStreamData. Future calls to SDL_PutAudioStreamData must provide
+ * data in the new channel order.
+ *
+ * Each item in the array represents an input channel, and its value is the
+ * channel that it should be remapped to. To reverse a stereo signal's left
+ * and right values, you'd have an array of `{ 1, 0 }`. It is legal to remap
+ * multiple channels to the same thing, so `{ 1, 1 }` would duplicate the
+ * right channel to both channels of a stereo signal. You cannot change the
+ * number of channels through a channel map, just reorder them.
+ *
+ * Data that was previously queued in the stream will still be operated on in
+ * the order that was current when it was added, which is to say you can put
+ * the end of a sound file in one order to a stream, change orders for the
+ * next sound file, and start putting that new data while the previous sound
+ * file is still queued, and everything will still play back correctly.
+ *
+ * Audio streams default to no remapping applied. Passing a NULL channel map
+ * is legal, and turns off remapping.
+ *
+ * SDL will copy the channel map; the caller does not have to save this array
+ * after this call.
+ *
+ * If `count` is not equal to the current number of channels in the audio
+ * stream's format, this will fail. This is a safety measure to make sure a a
+ * race condition hasn't changed the format while you this call is setting the
+ * channel map.
+ *
+ * \param stream the SDL_AudioStream to change.
+ * \param chmap the new channel map, NULL to reset to default.
+ * \param count The number of channels in the map.
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \threadsafety It is safe to call this function from any thread, as it holds
+ *               a stream-specific mutex while running. Don't change the
+ *               stream's format to have a different number of channels from a
+ *               a different thread at the same time, though!
+ *
+ * \since This function is available since SDL 3.0.0.
+ *
+ * \sa SDL_SetAudioStreamInputChannelMap
+ */
+extern SDL_DECLSPEC int SDLCALL SDL_SetAudioStreamInputChannelMap(SDL_AudioStream *stream, const int *chmap, int count);
+
+/**
+ * Set the current output channel map of an audio stream.
+ *
+ * Channel maps are optional; most things do not need them, instead passing
+ * data in the [order that SDL expects](CategoryAudio#channel-layouts).
+ *
+ * The output channel map reorders data that leaving a stream via
+ * SDL_GetAudioStreamData.
+ *
+ * Each item in the array represents an output channel, and its value is the
+ * channel that it should be remapped to. To reverse a stereo signal's left
+ * and right values, you'd have an array of `{ 1, 0 }`. It is legal to remap
+ * multiple channels to the same thing, so `{ 1, 1 }` would duplicate the
+ * right channel to both channels of a stereo signal. You cannot change the
+ * number of channels through a channel map, just reorder them.
+ *
+ * The output channel map can be changed at any time, as output remapping is
+ * applied during SDL_GetAudioStreamData.
+ *
+ * Audio streams default to no remapping applied. Passing a NULL channel map
+ * is legal, and turns off remapping.
+ *
+ * SDL will copy the channel map; the caller does not have to save this array
+ * after this call.
+ *
+ * If `count` is not equal to the current number of channels in the audio
+ * stream's format, this will fail. This is a safety measure to make sure a a
+ * race condition hasn't changed the format while you this call is setting the
+ * channel map.
+ *
+ * \param stream the SDL_AudioStream to change.
+ * \param chmap the new channel map, NULL to reset to default.
+ * \param count The number of channels in the map.
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
+ *
+ * \threadsafety It is safe to call this function from any thread, as it holds
+ *               a stream-specific mutex while running. Don't change the
+ *               stream's format to have a different number of channels from a
+ *               a different thread at the same time, though!
+ *
+ * \since This function is available since SDL 3.0.0.
+ *
+ * \sa SDL_SetAudioStreamInputChannelMap
+ */
+extern SDL_DECLSPEC int SDLCALL SDL_SetAudioStreamOutputChannelMap(SDL_AudioStream *stream, const int *chmap, int count);
 
 /**
  * Add data to the stream.
@@ -1127,7 +1280,8 @@ extern SDL_DECLSPEC int SDLCALL SDL_PutAudioStreamData(SDL_AudioStream *stream, 
  * \param stream the stream the audio is being requested from.
  * \param buf a buffer to fill with audio data.
  * \param len the maximum number of bytes to fill.
- * \returns the number of bytes read from the stream, or -1 on error.
+ * \returns the number of bytes read from the stream or a negative error code
+ *          on failure; call SDL_GetError() for more information.
  *
  * \threadsafety It is safe to call this function from any thread, but if the
  *               stream has a callback set, the caller might need to manage
@@ -1155,7 +1309,8 @@ extern SDL_DECLSPEC int SDLCALL SDL_GetAudioStreamData(SDL_AudioStream *stream, 
  * clamped.
  *
  * \param stream the audio stream to query.
- * \returns the number of converted/resampled bytes available.
+ * \returns the number of converted/resampled bytes available or a negative
+ *          error code on failure; call SDL_GetError() for more information.
  *
  * \threadsafety It is safe to call this function from any thread.
  *
@@ -1187,7 +1342,8 @@ extern SDL_DECLSPEC int SDLCALL SDL_GetAudioStreamAvailable(SDL_AudioStream *str
  * clamped.
  *
  * \param stream the audio stream to query.
- * \returns the number of bytes queued.
+ * \returns the number of bytes queued or a negative error code on failure;
+ *          call SDL_GetError() for more information.
  *
  * \threadsafety It is safe to call this function from any thread.
  *
@@ -1408,7 +1564,9 @@ typedef void (SDLCALL *SDL_AudioStreamCallback)(void *userdata, SDL_AudioStream 
  *                 stream.
  * \param userdata an opaque pointer provided to the callback for its own
  *                 personal use.
- * \returns 0 on success, -1 on error. This only fails if `stream` is NULL.
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information. This only fails if `stream`
+ *          is NULL.
  *
  * \threadsafety It is safe to call this function from any thread.
  *
@@ -1456,7 +1614,9 @@ extern SDL_DECLSPEC int SDLCALL SDL_SetAudioStreamGetCallback(SDL_AudioStream *s
  *                 stream.
  * \param userdata an opaque pointer provided to the callback for its own
  *                 personal use.
- * \returns 0 on success, -1 on error. This only fails if `stream` is NULL.
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information. This only fails if `stream`
+ *          is NULL.
  *
  * \threadsafety It is safe to call this function from any thread.
  *
@@ -1505,7 +1665,7 @@ extern SDL_DECLSPEC void SDLCALL SDL_DestroyAudioStream(SDL_AudioStream *stream)
  * Also unlike other functions, the audio device begins paused. This is to map
  * more closely to SDL2-style behavior, since there is no extra step here to
  * bind a stream to begin audio flowing. The audio device should be resumed
- * with `SDL_ResumeAudioDevice(SDL_GetAudioStreamDevice(stream));`
+ * with `SDL_ResumeAudioStreamDevice(stream);`
  *
  * This function works with both playback and recording devices.
  *
@@ -1537,7 +1697,7 @@ extern SDL_DECLSPEC void SDLCALL SDL_DestroyAudioStream(SDL_AudioStream *stream)
  *                 necessary.
  * \param userdata app-controlled pointer passed to callback. Can be NULL.
  *                 Ignored if callback is NULL.
- * \returns an audio stream on success, ready to use. NULL on error; call
+ * \returns an audio stream on success, ready to use, or NULL on failure; call
  *          SDL_GetError() for more information. When done with this stream,
  *          call SDL_DestroyAudioStream to free resources and close the
  *          device.
@@ -1547,9 +1707,9 @@ extern SDL_DECLSPEC void SDLCALL SDL_DestroyAudioStream(SDL_AudioStream *stream)
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_GetAudioStreamDevice
- * \sa SDL_ResumeAudioDevice
+ * \sa SDL_ResumeAudioStreamDevice
  */
-extern SDL_DECLSPEC SDL_AudioStream *SDLCALL SDL_OpenAudioDeviceStream(SDL_AudioDeviceID devid, const SDL_AudioSpec *spec, SDL_AudioStreamCallback callback, void *userdata);
+extern SDL_DECLSPEC SDL_AudioStream * SDLCALL SDL_OpenAudioDeviceStream(SDL_AudioDeviceID devid, const SDL_AudioSpec *spec, SDL_AudioStreamCallback callback, void *userdata);
 
 /**
  * A callback that fires when data is about to be fed to an audio device.
@@ -1633,8 +1793,8 @@ typedef void (SDLCALL *SDL_AudioPostmixCallback)(void *userdata, const SDL_Audio
  * \param devid the ID of an opened audio device.
  * \param callback a callback function to be called. Can be NULL.
  * \param userdata app-controlled pointer passed to callback. Can be NULL.
- * \returns zero on success, -1 on error; call SDL_GetError() for more
- *          information.
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
  *
  * \threadsafety It is safe to call this function from any thread.
  *
@@ -1836,6 +1996,18 @@ extern SDL_DECLSPEC int SDLCALL SDL_ConvertAudioSamples(const SDL_AudioSpec *src
                                                     Uint8 **dst_data,
                                                     int *dst_len);
 
+/**
+ * Get the human readable name of an audio format.
+ *
+ * \param format the audio format to query.
+ * \returns the human readable name of the specified audio format or
+ *          "SDL_AUDIO_UNKNOWN" if the format isn't recognized.
+ *
+ * \threadsafety It is safe to call this function from any thread.
+ *
+ * \since This function is available since SDL 3.0.0.
+ */
+extern SDL_DECLSPEC const char * SDLCALL SDL_GetAudioFormatName(SDL_AudioFormat format);
 
 /**
  * Get the appropriate memset value for silencing an audio format.

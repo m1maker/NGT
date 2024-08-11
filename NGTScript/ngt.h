@@ -108,6 +108,7 @@ string screen_reader_detect();
 void show_console();
 void hide_console();
 bool show_window(const string& title, int width = 640, int height = 480, bool closable = true);
+void* get_window_handle();
 void hide_window();
 void set_window_title(const string&);
 void set_window_closable(bool);

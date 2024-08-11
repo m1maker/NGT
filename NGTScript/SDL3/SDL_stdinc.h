@@ -91,8 +91,9 @@ void *alloca(size_t);
 /**
  * The number of elements in an array.
  *
- * NOTE: This macro double-evaluates the argument, so you should never have
- * side effects in the parameter.
+ * This macro looks like it double-evaluates the argument, but it does so
+ * inside of `sizeof`, so there are no side-effects here, as expressions do
+ * not actually run any code in these cases.
  *
  * \since This macro is available since SDL 3.0.0.
  */
@@ -136,20 +137,45 @@ void *alloca(size_t);
      (SDL_static_cast(Uint32, SDL_static_cast(Uint8, (C))) << 16) | \
      (SDL_static_cast(Uint32, SDL_static_cast(Uint8, (D))) << 24))
 
+#ifdef SDL_WIKI_DOCUMENTATION_SECTION
+
 /**
- * Append the 64 bit integer suffix to an integer literal.
+ * Append the 64 bit integer suffix to a signed integer literal.
+ *
+ * This helps compilers that might believe a integer literal larger than
+ * 0xFFFFFFFF is overflowing a 32-bit value. Use `SDL_SINT64_C(0xFFFFFFFF1)`
+ * instead of `0xFFFFFFFF1` by itself.
+ *
+ * \since This macro is available since SDL 3.0.0.
+ *
+ * \sa SDL_UINT64_C
  */
-#if defined(INT64_C)
+#define SDL_SINT64_C(c)  c ## LL  /* or whatever the current compiler uses. */
+
+/**
+ * Append the 64 bit integer suffix to an unsigned integer literal.
+ *
+ * This helps compilers that might believe a integer literal larger than
+ * 0xFFFFFFFF is overflowing a 32-bit value. Use `SDL_UINT64_C(0xFFFFFFFF1)`
+ * instead of `0xFFFFFFFF1` by itself.
+ *
+ * \since This macro is available since SDL 3.0.0.
+ *
+ * \sa SDL_SINT64_C
+ */
+#define SDL_UINT64_C(c)  c ## ULL /* or whatever the current compiler uses. */
+
+#elif defined(INT64_C)
 #define SDL_SINT64_C(c)  INT64_C(c)
 #define SDL_UINT64_C(c)  UINT64_C(c)
 #elif defined(_MSC_VER)
-#define SDL_INT64_C(c)   c ## i64
+#define SDL_SINT64_C(c)  c ## i64
 #define SDL_UINT64_C(c)  c ## ui64
 #elif defined(__LP64__) || defined(_LP64)
-#define SDL_INT64_C(c)   c ## L
+#define SDL_SINT64_C(c)  c ## L
 #define SDL_UINT64_C(c)  c ## UL
 #else
-#define SDL_INT64_C(c)   c ## LL
+#define SDL_SINT64_C(c)  c ## LL
 #define SDL_UINT64_C(c)  c ## ULL
 #endif
 
@@ -191,72 +217,76 @@ typedef int SDL_bool;
  *
  * \since This macro is available since SDL 3.0.0.
  */
+typedef int8_t Sint8;
 #define SDL_MAX_SINT8   ((Sint8)0x7F)           /* 127 */
 #define SDL_MIN_SINT8   ((Sint8)(~0x7F))        /* -128 */
-typedef int8_t Sint8;
 
 /**
  * An unsigned 8-bit integer type.
  *
  * \since This macro is available since SDL 3.0.0.
  */
+typedef uint8_t Uint8;
 #define SDL_MAX_UINT8   ((Uint8)0xFF)           /* 255 */
 #define SDL_MIN_UINT8   ((Uint8)0x00)           /* 0 */
-typedef uint8_t Uint8;
 
 /**
  * A signed 16-bit integer type.
  *
  * \since This macro is available since SDL 3.0.0.
  */
+typedef int16_t Sint16;
 #define SDL_MAX_SINT16  ((Sint16)0x7FFF)        /* 32767 */
 #define SDL_MIN_SINT16  ((Sint16)(~0x7FFF))     /* -32768 */
-typedef int16_t Sint16;
 
 /**
  * An unsigned 16-bit integer type.
  *
  * \since This macro is available since SDL 3.0.0.
  */
+typedef uint16_t Uint16;
 #define SDL_MAX_UINT16  ((Uint16)0xFFFF)        /* 65535 */
 #define SDL_MIN_UINT16  ((Uint16)0x0000)        /* 0 */
-typedef uint16_t Uint16;
 
 /**
  * A signed 32-bit integer type.
  *
  * \since This macro is available since SDL 3.0.0.
  */
+typedef int32_t Sint32;
 #define SDL_MAX_SINT32  ((Sint32)0x7FFFFFFF)    /* 2147483647 */
 #define SDL_MIN_SINT32  ((Sint32)(~0x7FFFFFFF)) /* -2147483648 */
-typedef int32_t Sint32;
 
 /**
  * An unsigned 32-bit integer type.
  *
  * \since This macro is available since SDL 3.0.0.
  */
+typedef uint32_t Uint32;
 #define SDL_MAX_UINT32  ((Uint32)0xFFFFFFFFu)   /* 4294967295 */
 #define SDL_MIN_UINT32  ((Uint32)0x00000000)    /* 0 */
-typedef uint32_t Uint32;
 
 /**
  * A signed 64-bit integer type.
  *
  * \since This macro is available since SDL 3.0.0.
+ *
+ * \sa SDL_SINT64_C
  */
+typedef int64_t Sint64;
 #define SDL_MAX_SINT64  SDL_SINT64_C(0x7FFFFFFFFFFFFFFF)   /* 9223372036854775807 */
 #define SDL_MIN_SINT64  ~SDL_SINT64_C(0x7FFFFFFFFFFFFFFF)  /* -9223372036854775808 */
-typedef int64_t Sint64;
 
 /**
  * An unsigned 64-bit integer type.
  *
  * \since This macro is available since SDL 3.0.0.
+ *
+ * \sa SDL_UINT64_C
  */
+typedef uint64_t Uint64;
 #define SDL_MAX_UINT64  SDL_UINT64_C(0xFFFFFFFFFFFFFFFF)   /* 18446744073709551615 */
 #define SDL_MIN_UINT64  SDL_UINT64_C(0x0000000000000000)   /* 0 */
-typedef uint64_t Uint64;
 
 /**
  * SDL times are signed, 64-bit integers representing nanoseconds since the
@@ -267,10 +297,13 @@ typedef uint64_t Uint64;
  * SDL_TimeToWindows() and SDL_TimeFromWindows().
  *
  * \since This macro is available since SDL 3.0.0.
+ *
+ * \sa SDL_MAX_SINT64
+ * \sa SDL_MIN_SINT64
  */
+typedef Sint64 SDL_Time;
 #define SDL_MAX_TIME SDL_MAX_SINT64
 #define SDL_MIN_TIME SDL_MIN_SINT64
-typedef Sint64 SDL_Time;
 
 /* @} *//* Basic data types */
 
@@ -429,10 +462,13 @@ typedef Sint64 SDL_Time;
 #endif /* SDL_DISABLE_ANALYZE_MACROS */
 
 #ifndef SDL_COMPILE_TIME_ASSERT
-#ifdef __cplusplus
+#if defined(__cplusplus)
+/* Keep C++ case alone: Some versions of gcc will define __STDC_VERSION__ even when compiling in C++ mode. */
 #if (__cplusplus >= 201103L)
 #define SDL_COMPILE_TIME_ASSERT(name, x)  static_assert(x, #x)
 #endif
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 202311L)
+#define SDL_COMPILE_TIME_ASSERT(name, x)  static_assert(x, #x)
 #elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)
 #define SDL_COMPILE_TIME_ASSERT(name, x) _Static_assert(x, #x)
 #endif
@@ -491,9 +527,9 @@ extern "C" {
 #define SDL_stack_free(data)            SDL_free(data)
 #endif
 
-extern SDL_DECLSPEC SDL_MALLOC void *SDLCALL SDL_malloc(size_t size);
-extern SDL_DECLSPEC SDL_MALLOC SDL_ALLOC_SIZE2(1, 2) void *SDLCALL SDL_calloc(size_t nmemb, size_t size);
-extern SDL_DECLSPEC SDL_ALLOC_SIZE(2) void *SDLCALL SDL_realloc(void *mem, size_t size);
+extern SDL_DECLSPEC SDL_MALLOC void * SDLCALL SDL_malloc(size_t size);
+extern SDL_DECLSPEC SDL_MALLOC SDL_ALLOC_SIZE2(1, 2) void * SDLCALL SDL_calloc(size_t nmemb, size_t size);
+extern SDL_DECLSPEC SDL_ALLOC_SIZE(2) void * SDLCALL SDL_realloc(void *mem, size_t size);
 extern SDL_DECLSPEC void SDLCALL SDL_free(void *mem);
 
 typedef void *(SDLCALL *SDL_malloc_func)(size_t size);
@@ -598,7 +634,7 @@ extern SDL_DECLSPEC int SDLCALL SDL_SetMemoryFunctions(SDL_malloc_func malloc_fu
  *
  * \sa SDL_aligned_free
  */
-extern SDL_DECLSPEC SDL_MALLOC void *SDLCALL SDL_aligned_alloc(size_t alignment, size_t size);
+extern SDL_DECLSPEC SDL_MALLOC void * SDLCALL SDL_aligned_alloc(size_t alignment, size_t size);
 
 /**
  * Free memory allocated by SDL_aligned_alloc().
@@ -627,8 +663,9 @@ extern SDL_DECLSPEC void SDLCALL SDL_aligned_free(void *mem);
  */
 extern SDL_DECLSPEC int SDLCALL SDL_GetNumAllocations(void);
 
-extern SDL_DECLSPEC char *SDLCALL SDL_getenv(const char *name);
+extern SDL_DECLSPEC const char * SDLCALL SDL_getenv(const char *name);
 extern SDL_DECLSPEC int SDLCALL SDL_setenv(const char *name, const char *value, int overwrite);
+extern SDL_DECLSPEC int SDLCALL SDL_unsetenv(const char *name);
 
 typedef int (SDLCALL *SDL_CompareCallback)(const void *a, const void *b);
 extern SDL_DECLSPEC void SDLCALL SDL_qsort(void *base, size_t nmemb, size_t size, SDL_CompareCallback compare);
@@ -884,7 +921,7 @@ extern SDL_DECLSPEC int SDLCALL SDL_tolower(int x);
 extern SDL_DECLSPEC Uint16 SDLCALL SDL_crc16(Uint16 crc, const void *data, size_t len);
 extern SDL_DECLSPEC Uint32 SDLCALL SDL_crc32(Uint32 crc, const void *data, size_t len);
 
-extern SDL_DECLSPEC void *SDLCALL SDL_memcpy(SDL_OUT_BYTECAP(len) void *dst, SDL_IN_BYTECAP(len) const void *src, size_t len);
+extern SDL_DECLSPEC void * SDLCALL SDL_memcpy(SDL_OUT_BYTECAP(len) void *dst, SDL_IN_BYTECAP(len) const void *src, size_t len);
 
 /* Take advantage of compiler optimizations for memcpy */
 #ifndef SDL_SLOW_MEMCPY
@@ -898,7 +935,7 @@ extern SDL_DECLSPEC void *SDLCALL SDL_memcpy(SDL_OUT_BYTECAP(len) void *dst, SDL
     { SDL_COMPILE_TIME_ASSERT(SDL_copyp, sizeof (*(dst)) == sizeof (*(src))); }             \
     SDL_memcpy((dst), (src), sizeof(*(src)))
 
-extern SDL_DECLSPEC void *SDLCALL SDL_memmove(SDL_OUT_BYTECAP(len) void *dst, SDL_IN_BYTECAP(len) const void *src, size_t len);
+extern SDL_DECLSPEC void * SDLCALL SDL_memmove(SDL_OUT_BYTECAP(len) void *dst, SDL_IN_BYTECAP(len) const void *src, size_t len);
 
 /* Take advantage of compiler optimizations for memmove */
 #ifndef SDL_SLOW_MEMMOVE
@@ -908,8 +945,8 @@ extern SDL_DECLSPEC void *SDLCALL SDL_memmove(SDL_OUT_BYTECAP(len) void *dst, SD
 #define SDL_memmove memmove
 #endif
 
-extern SDL_DECLSPEC void *SDLCALL SDL_memset(SDL_OUT_BYTECAP(len) void *dst, int c, size_t len);
-extern SDL_DECLSPEC void *SDLCALL SDL_memset4(void *dst, Uint32 val, size_t dwords);
+extern SDL_DECLSPEC void * SDLCALL SDL_memset(SDL_OUT_BYTECAP(len) void *dst, int c, size_t len);
+extern SDL_DECLSPEC void * SDLCALL SDL_memset4(void *dst, Uint32 val, size_t dwords);
 
 /* Take advantage of compiler optimizations for memset */
 #ifndef SDL_SLOW_MEMSET
@@ -929,9 +966,9 @@ extern SDL_DECLSPEC size_t SDLCALL SDL_wcslen(const wchar_t *wstr);
 extern SDL_DECLSPEC size_t SDLCALL SDL_wcsnlen(const wchar_t *wstr, size_t maxlen);
 extern SDL_DECLSPEC size_t SDLCALL SDL_wcslcpy(SDL_OUT_Z_CAP(maxlen) wchar_t *dst, const wchar_t *src, size_t maxlen);
 extern SDL_DECLSPEC size_t SDLCALL SDL_wcslcat(SDL_INOUT_Z_CAP(maxlen) wchar_t *dst, const wchar_t *src, size_t maxlen);
-extern SDL_DECLSPEC wchar_t *SDLCALL SDL_wcsdup(const wchar_t *wstr);
-extern SDL_DECLSPEC wchar_t *SDLCALL SDL_wcsstr(const wchar_t *haystack, const wchar_t *needle);
-extern SDL_DECLSPEC wchar_t *SDLCALL SDL_wcsnstr(const wchar_t *haystack, const wchar_t *needle, size_t maxlen);
+extern SDL_DECLSPEC wchar_t * SDLCALL SDL_wcsdup(const wchar_t *wstr);
+extern SDL_DECLSPEC wchar_t * SDLCALL SDL_wcsstr(const wchar_t *haystack, const wchar_t *needle);
+extern SDL_DECLSPEC wchar_t * SDLCALL SDL_wcsnstr(const wchar_t *haystack, const wchar_t *needle, size_t maxlen);
 
 /**
  * Compare two null-terminated wide strings.
@@ -1062,9 +1099,9 @@ extern SDL_DECLSPEC size_t SDLCALL SDL_strnlen(const char *str, size_t maxlen);
 extern SDL_DECLSPEC size_t SDLCALL SDL_strlcpy(SDL_OUT_Z_CAP(maxlen) char *dst, const char *src, size_t maxlen);
 extern SDL_DECLSPEC size_t SDLCALL SDL_utf8strlcpy(SDL_OUT_Z_CAP(dst_bytes) char *dst, const char *src, size_t dst_bytes);
 extern SDL_DECLSPEC size_t SDLCALL SDL_strlcat(SDL_INOUT_Z_CAP(maxlen) char *dst, const char *src, size_t maxlen);
-extern SDL_DECLSPEC SDL_MALLOC char *SDLCALL SDL_strdup(const char *str);
-extern SDL_DECLSPEC SDL_MALLOC char *SDLCALL SDL_strndup(const char *str, size_t maxlen);
-extern SDL_DECLSPEC char *SDLCALL SDL_strrev(char *str);
+extern SDL_DECLSPEC SDL_MALLOC char * SDLCALL SDL_strdup(const char *str);
+extern SDL_DECLSPEC SDL_MALLOC char * SDLCALL SDL_strndup(const char *str, size_t maxlen);
+extern SDL_DECLSPEC char * SDLCALL SDL_strrev(char *str);
 
 /**
  * Convert a string to uppercase.
@@ -1085,7 +1122,7 @@ extern SDL_DECLSPEC char *SDLCALL SDL_strrev(char *str);
  *
  * \sa SDL_strlwr
  */
-extern SDL_DECLSPEC char *SDLCALL SDL_strupr(char *str);
+extern SDL_DECLSPEC char * SDLCALL SDL_strupr(char *str);
 
 /**
  * Convert a string to lowercase.
@@ -1106,23 +1143,23 @@ extern SDL_DECLSPEC char *SDLCALL SDL_strupr(char *str);
  *
  * \sa SDL_strupr
  */
-extern SDL_DECLSPEC char *SDLCALL SDL_strlwr(char *str);
+extern SDL_DECLSPEC char * SDLCALL SDL_strlwr(char *str);
 
-extern SDL_DECLSPEC char *SDLCALL SDL_strchr(const char *str, int c);
-extern SDL_DECLSPEC char *SDLCALL SDL_strrchr(const char *str, int c);
-extern SDL_DECLSPEC char *SDLCALL SDL_strstr(const char *haystack, const char *needle);
-extern SDL_DECLSPEC char *SDLCALL SDL_strnstr(const char *haystack, const char *needle, size_t maxlen);
-extern SDL_DECLSPEC char *SDLCALL SDL_strcasestr(const char *haystack, const char *needle);
-extern SDL_DECLSPEC char *SDLCALL SDL_strtok_r(char *s1, const char *s2, char **saveptr);
+extern SDL_DECLSPEC char * SDLCALL SDL_strchr(const char *str, int c);
+extern SDL_DECLSPEC char * SDLCALL SDL_strrchr(const char *str, int c);
+extern SDL_DECLSPEC char * SDLCALL SDL_strstr(const char *haystack, const char *needle);
+extern SDL_DECLSPEC char * SDLCALL SDL_strnstr(const char *haystack, const char *needle, size_t maxlen);
+extern SDL_DECLSPEC char * SDLCALL SDL_strcasestr(const char *haystack, const char *needle);
+extern SDL_DECLSPEC char * SDLCALL SDL_strtok_r(char *s1, const char *s2, char **saveptr);
 extern SDL_DECLSPEC size_t SDLCALL SDL_utf8strlen(const char *str);
 extern SDL_DECLSPEC size_t SDLCALL SDL_utf8strnlen(const char *str, size_t bytes);
 
-extern SDL_DECLSPEC char *SDLCALL SDL_itoa(int value, char *str, int radix);
-extern SDL_DECLSPEC char *SDLCALL SDL_uitoa(unsigned int value, char *str, int radix);
-extern SDL_DECLSPEC char *SDLCALL SDL_ltoa(long value, char *str, int radix);
-extern SDL_DECLSPEC char *SDLCALL SDL_ultoa(unsigned long value, char *str, int radix);
-extern SDL_DECLSPEC char *SDLCALL SDL_lltoa(Sint64 value, char *str, int radix);
-extern SDL_DECLSPEC char *SDLCALL SDL_ulltoa(Uint64 value, char *str, int radix);
+extern SDL_DECLSPEC char * SDLCALL SDL_itoa(int value, char *str, int radix);
+extern SDL_DECLSPEC char * SDLCALL SDL_uitoa(unsigned int value, char *str, int radix);
+extern SDL_DECLSPEC char * SDLCALL SDL_ltoa(long value, char *str, int radix);
+extern SDL_DECLSPEC char * SDLCALL SDL_ultoa(unsigned long value, char *str, int radix);
+extern SDL_DECLSPEC char * SDLCALL SDL_lltoa(Sint64 value, char *str, int radix);
+extern SDL_DECLSPEC char * SDLCALL SDL_ulltoa(Uint64 value, char *str, int radix);
 
 extern SDL_DECLSPEC int SDLCALL SDL_atoi(const char *str);
 extern SDL_DECLSPEC double SDLCALL SDL_atof(const char *str);
@@ -2862,14 +2899,78 @@ extern SDL_DECLSPEC float SDLCALL SDL_tanf(float x);
 #define SDL_ICONV_EILSEQ    (size_t)-3
 #define SDL_ICONV_EINVAL    (size_t)-4
 
-/* SDL_iconv_* are now always real symbols/types, not macros or inlined. */
 typedef struct SDL_iconv_data_t *SDL_iconv_t;
+
+/**
+ * This function allocates a context for the specified character set
+ * conversion.
+ *
+ * \param tocode The target character encoding, must not be NULL.
+ * \param fromcode The source character encoding, must not be NULL.
+ * \returns a handle that must be freed with SDL_iconv_close, or
+ *          SDL_ICONV_ERROR on failure.
+ *
+ * \since This function is available since SDL 3.0.0.
+ *
+ * \sa SDL_iconv
+ * \sa SDL_iconv_close
+ * \sa SDL_iconv_string
+ */
 extern SDL_DECLSPEC SDL_iconv_t SDLCALL SDL_iconv_open(const char *tocode,
                                                    const char *fromcode);
+
+/**
+ * This function frees a context used for character set conversion.
+ *
+ * \param cd The character set conversion handle.
+ * \returns 0 on success, or -1 on failure.
+ *
+ * \since This function is available since SDL 3.0.0.
+ *
+ * \sa SDL_iconv
+ * \sa SDL_iconv_open
+ * \sa SDL_iconv_string
+ */
 extern SDL_DECLSPEC int SDLCALL SDL_iconv_close(SDL_iconv_t cd);
+
+/**
+ * This function converts text between encodings, reading from and writing to
+ * a buffer.
+ *
+ * It returns the number of succesful conversions.
+ *
+ * \param cd The character set conversion context, created in
+ *           SDL_iconv_open().
+ * \param inbuf Address of variable that points to the first character of the
+ *              input sequence.
+ * \param inbytesleft The number of bytes in the input buffer.
+ * \param outbuf Address of variable that points to the output buffer.
+ * \param outbytesleft The number of bytes in the output buffer.
+ * \returns the number of conversions on success, else SDL_ICONV_E2BIG is
+ *          returned when the output buffer is too small, or SDL_ICONV_EILSEQ
+ *          is returned when an invalid input sequence is encountered, or
+ *          SDL_ICONV_EINVAL is returned when an incomplete input sequence is
+ *          encountered.
+ *
+ *          On exit:
+ *
+ *          - inbuf will point to the beginning of the next multibyte
+ *            sequence. On error, this is the location of the problematic
+ *            input sequence. On success, this is the end of the input
+ *            sequence. - inbytesleft will be set to the number of bytes left
+ *            to convert, which will be 0 on success. - outbuf will point to
+ *            the location where to store the next output byte. - outbytesleft
+ *            will be set to the number of bytes left in the output buffer.
+ *
+ * \since This function is available since SDL 3.0.0.
+ *
+ * \sa SDL_iconv_open
+ * \sa SDL_iconv_close
+ * \sa SDL_iconv_string
+ */
 extern SDL_DECLSPEC size_t SDLCALL SDL_iconv(SDL_iconv_t cd, const char **inbuf,
-                                         size_t * inbytesleft, char **outbuf,
-                                         size_t * outbytesleft);
+                                         size_t *inbytesleft, char **outbuf,
+                                         size_t *outbytesleft);
 
 /**
  * Helper function to convert a string's encoding in one call.
@@ -2891,8 +2992,12 @@ extern SDL_DECLSPEC size_t SDLCALL SDL_iconv(SDL_iconv_t cd, const char **inbuf,
  * \returns a new string, converted to the new encoding, or NULL on error.
  *
  * \since This function is available since SDL 3.0.0.
+ *
+ * \sa SDL_iconv_open
+ * \sa SDL_iconv_close
+ * \sa SDL_iconv
  */
-extern SDL_DECLSPEC char *SDLCALL SDL_iconv_string(const char *tocode,
+extern SDL_DECLSPEC char * SDLCALL SDL_iconv_string(const char *tocode,
                                                const char *fromcode,
                                                const char *inbuf,
                                                size_t inbytesleft);
@@ -2909,12 +3014,12 @@ extern SDL_DECLSPEC char *SDLCALL SDL_iconv_string(const char *tocode,
 
 /* The analyzer knows about strlcpy even when the system doesn't provide it */
 #if !defined(HAVE_STRLCPY) && !defined(strlcpy)
-size_t strlcpy(char* dst, const char* src, size_t size);
+size_t strlcpy(char *dst, const char *src, size_t size);
 #endif
 
 /* The analyzer knows about strlcat even when the system doesn't provide it */
 #if !defined(HAVE_STRLCAT) && !defined(strlcat)
-size_t strlcat(char* dst, const char* src, size_t size);
+size_t strlcat(char *dst, const char *src, size_t size);
 #endif
 
 #if !defined(HAVE_WCSLCPY) && !defined(wcslcpy)
@@ -2927,8 +3032,9 @@ size_t wcslcat(wchar_t *dst, const wchar_t *src, size_t size);
 
 /* Starting LLVM 16, the analyser errors out if these functions do not have
    their prototype defined (clang-diagnostic-implicit-function-declaration) */
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <strings.h>
 
 #define SDL_malloc malloc
 #define SDL_calloc calloc

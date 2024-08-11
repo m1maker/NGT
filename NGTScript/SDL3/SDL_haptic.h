@@ -127,7 +127,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-/* FIXME: For SDL 2.1, adjust all the magnitude variables to be Uint16 (0xFFFF).
+/* FIXME:
  *
  * At the moment the magnitude variables are mixed between signed/unsigned, and
  * it is also not made clear that ALL of those variables expect a max of 0x7FFF.
@@ -933,23 +933,21 @@ typedef Uint32 SDL_HapticID;
  * Get a list of currently connected haptic devices.
  *
  * \param count a pointer filled in with the number of haptic devices
- *              returned.
- * \returns a 0 terminated array of haptic device instance IDs which should be
- *          freed with SDL_free(), or NULL on error; call SDL_GetError() for
- *          more details.
+ *              returned, may be NULL.
+ * \returns a 0 terminated array of haptic device instance IDs or NULL on
+ *          failure; call SDL_GetError() for more information. This should be
+ *          freed with SDL_free() when it is no longer needed.
  *
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_OpenHaptic
  */
-extern SDL_DECLSPEC SDL_HapticID *SDLCALL SDL_GetHaptics(int *count);
+extern SDL_DECLSPEC SDL_HapticID * SDLCALL SDL_GetHaptics(int *count);
 
 /**
  * Get the implementation dependent name of a haptic device.
  *
  * This can be called before any haptic devices are opened.
- *
- * The returned string follows the SDL_GetStringRule.
  *
  * \param instance_id the haptic device instance ID.
  * \returns the name of the selected haptic device. If no name can be found,
@@ -961,7 +959,7 @@ extern SDL_DECLSPEC SDL_HapticID *SDLCALL SDL_GetHaptics(int *count);
  * \sa SDL_GetHapticName
  * \sa SDL_OpenHaptic
  */
-extern SDL_DECLSPEC const char *SDLCALL SDL_GetHapticInstanceName(SDL_HapticID instance_id);
+extern SDL_DECLSPEC const char * SDLCALL SDL_GetHapticNameForID(SDL_HapticID instance_id);
 
 /**
  * Open a haptic device for use.
@@ -986,7 +984,7 @@ extern SDL_DECLSPEC const char *SDLCALL SDL_GetHapticInstanceName(SDL_HapticID i
  * \sa SDL_SetHapticAutocenter
  * \sa SDL_SetHapticGain
  */
-extern SDL_DECLSPEC SDL_Haptic *SDLCALL SDL_OpenHaptic(SDL_HapticID instance_id);
+extern SDL_DECLSPEC SDL_Haptic * SDLCALL SDL_OpenHaptic(SDL_HapticID instance_id);
 
 
 /**
@@ -998,7 +996,7 @@ extern SDL_DECLSPEC SDL_Haptic *SDLCALL SDL_OpenHaptic(SDL_HapticID instance_id)
  *
  * \since This function is available since SDL 3.0.0.
  */
-extern SDL_DECLSPEC SDL_Haptic *SDLCALL SDL_GetHapticFromInstanceID(SDL_HapticID instance_id);
+extern SDL_DECLSPEC SDL_Haptic * SDLCALL SDL_GetHapticFromID(SDL_HapticID instance_id);
 
 /**
  * Get the instance ID of an opened haptic device.
@@ -1009,12 +1007,10 @@ extern SDL_DECLSPEC SDL_Haptic *SDLCALL SDL_GetHapticFromInstanceID(SDL_HapticID
  *
  * \since This function is available since SDL 3.0.0.
  */
-extern SDL_DECLSPEC SDL_HapticID SDLCALL SDL_GetHapticInstanceID(SDL_Haptic *haptic);
+extern SDL_DECLSPEC SDL_HapticID SDLCALL SDL_GetHapticID(SDL_Haptic *haptic);
 
 /**
  * Get the implementation dependent name of a haptic device.
- *
- * The returned string follows the SDL_GetStringRule.
  *
  * \param haptic the SDL_Haptic obtained from SDL_OpenJoystick().
  * \returns the name of the selected haptic device. If no name can be found,
@@ -1023,9 +1019,9 @@ extern SDL_DECLSPEC SDL_HapticID SDLCALL SDL_GetHapticInstanceID(SDL_Haptic *hap
  *
  * \since This function is available since SDL 3.0.0.
  *
- * \sa SDL_GetHapticInstanceName
+ * \sa SDL_GetHapticNameForID
  */
-extern SDL_DECLSPEC const char *SDLCALL SDL_GetHapticName(SDL_Haptic *haptic);
+extern SDL_DECLSPEC const char * SDLCALL SDL_GetHapticName(SDL_Haptic *haptic);
 
 /**
  * Query whether or not the current mouse has haptic capabilities.
@@ -1049,7 +1045,7 @@ extern SDL_DECLSPEC SDL_bool SDLCALL SDL_IsMouseHaptic(void);
  * \sa SDL_CloseHaptic
  * \sa SDL_IsMouseHaptic
  */
-extern SDL_DECLSPEC SDL_Haptic *SDLCALL SDL_OpenHapticFromMouse(void);
+extern SDL_DECLSPEC SDL_Haptic * SDLCALL SDL_OpenHapticFromMouse(void);
 
 /**
  * Query if a joystick has haptic features.
@@ -1083,7 +1079,7 @@ extern SDL_DECLSPEC SDL_bool SDLCALL SDL_IsJoystickHaptic(SDL_Joystick *joystick
  * \sa SDL_CloseHaptic
  * \sa SDL_IsJoystickHaptic
  */
-extern SDL_DECLSPEC SDL_Haptic *SDLCALL SDL_OpenHapticFromJoystick(SDL_Joystick *joystick);
+extern SDL_DECLSPEC SDL_Haptic * SDLCALL SDL_OpenHapticFromJoystick(SDL_Joystick *joystick);
 
 /**
  * Close a haptic device previously opened with SDL_OpenHaptic().

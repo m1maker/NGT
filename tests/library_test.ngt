@@ -33,10 +33,20 @@ name_ptr=0;
 show_window("Window");
 set_window_closable(false);
 // Now, set window text from a DLL.
-uint64 window = uint64(user32.call("long GetForegroundWindow();")[0]);
+wait(1000);
+uint64 window = get_window_handle();
 user32.call("int SetWindowTextW(long, char*);", window, name.c_str());
+string window_class="Button";
+string window_name="Test";
+wstring window_class_u;
+wstring window_name_u;
+unicode_convert(window_class, window_class_u);
+unicode_convert(window_name, window_name_u);
+uint64 button = uint64(user32.call("long CreateWindowExW(int, char*, char*, int, int, int, int, int, long, long, long, long);", 0x00000000, window_class_u.c_str(), window_name_u.c_str(), 0x40000000 | 0x00010000 | 0x10000000, 10, 10, 100, 50, window, 0, 0, 0)[0]);
+user32.call("long SetFocus(long);", button);
 while(true){
 kernel32.call("void Sleep(int);", 5);
+user32.call("long UpdateWindow(long);", button);
 if(key_pressed(SDLK_ESCAPE))hide_window();
 bool is_window=bool(user32.call("long IsWindow(long);", window)[0]);
 if(!is_window)break;

@@ -57,15 +57,14 @@ extern "C" {
 extern SDL_DECLSPEC int SDLCALL SDL_SetClipboardText(const char *text);
 
 /**
- * Get UTF-8 text from the clipboard, which must be freed with SDL_free().
+ * Get UTF-8 text from the clipboard.
  *
  * This functions returns empty string if there was not enough memory left for
  * a copy of the clipboard's content.
  *
  * \returns the clipboard text on success or an empty string on failure; call
- *          SDL_GetError() for more information. Caller must call SDL_free()
- *          on the returned pointer when done with it (even if there was an
- *          error).
+ *          SDL_GetError() for more information. This should be freed with
+ *          SDL_free() when it is no longer needed.
  *
  * \since This function is available since SDL 3.0.0.
  *
@@ -101,16 +100,14 @@ extern SDL_DECLSPEC SDL_bool SDLCALL SDL_HasClipboardText(void);
 extern SDL_DECLSPEC int SDLCALL SDL_SetPrimarySelectionText(const char *text);
 
 /**
- * Get UTF-8 text from the primary selection, which must be freed with
- * SDL_free().
+ * Get UTF-8 text from the primary selection.
  *
  * This functions returns empty string if there was not enough memory left for
  * a copy of the primary selection's content.
  *
  * \returns the primary selection text on success or an empty string on
- *          failure; call SDL_GetError() for more information. Caller must
- *          call SDL_free() on the returned pointer when done with it (even if
- *          there was an error).
+ *          failure; call SDL_GetError() for more information. This should be
+ *          freed with SDL_free() when it is no longer needed.
  *
  * \since This function is available since SDL 3.0.0.
  *
@@ -220,15 +217,15 @@ extern SDL_DECLSPEC int SDLCALL SDL_ClearClipboardData(void);
  * \param mime_type the mime type to read from the clipboard.
  * \param size a pointer filled in with the length of the returned data.
  * \returns the retrieved data buffer or NULL on failure; call SDL_GetError()
- *          for more information. Caller must call SDL_free() on the returned
- *          pointer when done with it.
+ *          for more information. This should be freed with SDL_free() when it
+ *          is no longer needed.
  *
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_HasClipboardData
  * \sa SDL_SetClipboardData
  */
-extern SDL_DECLSPEC void *SDLCALL SDL_GetClipboardData(const char *mime_type, size_t *size);
+extern SDL_DECLSPEC void * SDLCALL SDL_GetClipboardData(const char *mime_type, size_t *size);
 
 /**
  * Query whether there is data in the clipboard for the provided mime type.

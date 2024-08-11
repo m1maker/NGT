@@ -164,7 +164,7 @@ typedef struct SDL_Mutex SDL_Mutex;
  * \sa SDL_TryLockMutex
  * \sa SDL_UnlockMutex
  */
-extern SDL_DECLSPEC SDL_Mutex *SDLCALL SDL_CreateMutex(void);
+extern SDL_DECLSPEC SDL_Mutex * SDLCALL SDL_CreateMutex(void);
 
 /**
  * Lock the mutex.
@@ -331,7 +331,7 @@ typedef struct SDL_RWLock SDL_RWLock;
  * \sa SDL_TryLockRWLockForWriting
  * \sa SDL_UnlockRWLock
  */
-extern SDL_DECLSPEC SDL_RWLock *SDLCALL SDL_CreateRWLock(void);
+extern SDL_DECLSPEC SDL_RWLock * SDLCALL SDL_CreateRWLock(void);
 
 /**
  * Lock the read/write lock for _read only_ operations.
@@ -544,13 +544,13 @@ typedef struct SDL_Semaphore SDL_Semaphore;
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_DestroySemaphore
- * \sa SDL_PostSemaphore
+ * \sa SDL_SignalSemaphore
  * \sa SDL_TryWaitSemaphore
  * \sa SDL_GetSemaphoreValue
  * \sa SDL_WaitSemaphore
  * \sa SDL_WaitSemaphoreTimeout
  */
-extern SDL_DECLSPEC SDL_Semaphore *SDLCALL SDL_CreateSemaphore(Uint32 initial_value);
+extern SDL_DECLSPEC SDL_Semaphore * SDLCALL SDL_CreateSemaphore(Uint32 initial_value);
 
 /**
  * Destroy a semaphore.
@@ -583,7 +583,7 @@ extern SDL_DECLSPEC void SDLCALL SDL_DestroySemaphore(SDL_Semaphore *sem);
  *
  * \since This function is available since SDL 3.0.0.
  *
- * \sa SDL_PostSemaphore
+ * \sa SDL_SignalSemaphore
  * \sa SDL_TryWaitSemaphore
  * \sa SDL_WaitSemaphoreTimeout
  */
@@ -604,7 +604,7 @@ extern SDL_DECLSPEC int SDLCALL SDL_WaitSemaphore(SDL_Semaphore *sem);
  *
  * \since This function is available since SDL 3.0.0.
  *
- * \sa SDL_PostSemaphore
+ * \sa SDL_SignalSemaphore
  * \sa SDL_WaitSemaphore
  * \sa SDL_WaitSemaphoreTimeout
  */
@@ -626,7 +626,7 @@ extern SDL_DECLSPEC int SDLCALL SDL_TryWaitSemaphore(SDL_Semaphore *sem);
  *
  * \since This function is available since SDL 3.0.0.
  *
- * \sa SDL_PostSemaphore
+ * \sa SDL_SignalSemaphore
  * \sa SDL_TryWaitSemaphore
  * \sa SDL_WaitSemaphore
  */
@@ -645,7 +645,7 @@ extern SDL_DECLSPEC int SDLCALL SDL_WaitSemaphoreTimeout(SDL_Semaphore *sem, Sin
  * \sa SDL_WaitSemaphore
  * \sa SDL_WaitSemaphoreTimeout
  */
-extern SDL_DECLSPEC int SDLCALL SDL_PostSemaphore(SDL_Semaphore *sem);
+extern SDL_DECLSPEC int SDLCALL SDL_SignalSemaphore(SDL_Semaphore *sem);
 
 /**
  * Get the current value of a semaphore.
@@ -694,7 +694,7 @@ typedef struct SDL_Condition SDL_Condition;
  * \sa SDL_WaitConditionTimeout
  * \sa SDL_DestroyCondition
  */
-extern SDL_DECLSPEC SDL_Condition *SDLCALL SDL_CreateCondition(void);
+extern SDL_DECLSPEC SDL_Condition * SDLCALL SDL_CreateCondition(void);
 
 /**
  * Destroy a condition variable.

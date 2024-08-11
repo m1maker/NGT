@@ -237,9 +237,9 @@ Poco::Mutex window_mtx;
 class WindowThread : public Poco::Runnable {
 private:
 	Poco::Thread thread;
+public:
 	SDL_Window* win = nullptr;
 	SDL_Renderer* renderer = nullptr;
-public:
 	void start() {
 		thread.start(*this);
 	}
@@ -498,13 +498,53 @@ bool show_window(const string& title, int width, int height, bool closable)
 	window_closable = closable;
 	// Starting window
 	window_event_show = true;
-	wait(20);// Get window_thread time to create window
+	while (windowRunnable->win == NULL) {}
 	// Initialize mouse and keyboard state.
 	keys_released();
 	for (int i = 0; i < 8; i++) {
 		mouse_released(i);
 	}
 	return windowRunnable->IsRunning();
+}
+void* get_window_handle() {
+	if (windowRunnable == nullptr || windowRunnable->win == NULL) {
+		return NULL;
+	}
+#if defined(SDL_PLATFORM_WIN32)
+	HWND hwnd = (HWND)SDL_GetPointerProperty(SDL_GetWindowProperties(windowRunnable->win), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
+	if (hwnd) {
+		return(void*)hwnd;
+	}
+#elif defined(SDL_PLATFORM_MACOS)
+	NSWindow* nswindow = (__bridge NSWindow*)SDL_GetPointerProperty(SDL_GetWindowProperties(windowRunnable->win), SDL_PROP_WINDOW_COCOA_WINDOW_POINTER, NULL);
+	if (nswindow) {
+		return (void*)nswindow;
+	}
+#elif defined(SDL_PLATFORM_LINUX)
+	if (SDL_strcmp(SDL_GetCurrentVideoDriver(), "x11") == 0) {
+		Display* xdisplay = (Display*)SDL_GetPointerProperty(SDL_GetWindowProperties(windowRunnable->win), SDL_PROP_WINDOW_X11_DISPLAY_POINTER, NULL);
+		Window xwindow = (Window)SDL_GetNumberProperty(SDL_GetWindowProperties(windowRunnable->win), SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0);
+		if (xdisplay && xwindow) {
+			return(void*)xwindow;
+		}
+	}
+	else if (SDL_strcmp(SDL_GetCurrentVideoDriver(), "wayland") == 0) {
+		struct wl_display* display = (struct wl_display*)SDL_GetPointerProperty(SDL_GetWindowProperties(windowRunnable->win), SDL_PROP_WINDOW_WAYLAND_DISPLAY_POINTER, NULL);
+		struct wl_surface* surface = (struct wl_surface*)SDL_GetPointerProperty(SDL_GetWindowProperties(windowRunnable->win), SDL_PROP_WINDOW_WAYLAND_SURFACE_POINTER, NULL);
+		if (display && surface) {
+			return(void*)display;
+		}
+	}
+#elif defined(SDL_PLATFORM_IOS)
+	SDL_PropertiesID props = SDL_GetWindowProperties(windowRunnable->win);
+	UIWindow* uiwindow = (__bridge UIWindow*)SDL_GetPointerProperty(props, SDL_PROP_WINDOW_UIKIT_WINDOW_POINTER, NULL);
+	if (uiwindow) {
+		GLuint framebuffer = (GLuint)SDL_GetNumberProperty(props, SDL_PROP_WINDOW_UIKIT_OPENGL_FRAMEBUFFER_NUMBER, 0);
+		GLuint colorbuffer = (GLuint)SDL_GetNumberProperty(props, SDL_PROP_WINDOW_UIKIT_OPENGL_RENDERBUFFER_NUMBER, 0);
+		GLuint resolveFramebuffer = (GLuint)SDL_GetNumberProperty(props, SDL_PROP_WINDOW_UIKIT_OPENGL_RESOLVE_FRAMEBUFFER_NUMBER, 0);
+		return (void*)uiwindow;
+	}
+#endif
 }
 void hide_window() {
 	window_event_hide = true;
@@ -708,7 +748,7 @@ string number_to_words(uint64_t num, bool include_and)
 	return string(buf.data());
 }
 string read_environment_variable(const string& path) {
-	char* value;
+	const char* value;
 	value = SDL_getenv(path.c_str());
 	return string(value);
 }

@@ -474,6 +474,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("void hide_console()", asFUNCTION(hide_console), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool show_window(const string &in,int=640,int=480, bool=true)", asFUNCTION(show_window), asCALL_CDECL);
 	//	engine->RegisterGlobalFunction("bool focus_window()", asFUNCTION(focus_window), asCALL_CDECL);
+	engine->RegisterGlobalFunction("uint64 get_window_handle()", asFUNCTION(get_window_handle), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void hide_window()", asFUNCTION(hide_window), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void set_update_window_freq(long)property", asFUNCTION(set_update_window_freq), asCALL_CDECL);
 	engine->RegisterGlobalFunction("long get_update_window_freq()property", asFUNCTION(get_update_window_freq), asCALL_CDECL);
@@ -628,7 +629,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterObjectMethod("library", "bool load(const string&in)const", asMETHOD(library, load), asCALL_THISCALL);
 	engine->RegisterObjectMethod("library", "bool get_active()const property", asMETHOD(library, active), asCALL_THISCALL);
 
-	engine->RegisterObjectMethod("library", "dictionary@ call(const string&in, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null)const", asFUNCTION(library_call), asCALL_GENERIC);
+	engine->RegisterObjectMethod("library", "dictionary@ call(const string&in, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null)const", asFUNCTION(library_call), asCALL_GENERIC);
 	engine->RegisterObjectMethod("library", "void unload()const", asMETHOD(library, unload), asCALL_THISCALL);
 	engine->RegisterFuncdef("void thread_func()");
 	engine->RegisterObjectType("thread", sizeof(script_thread), asOBJ_REF);

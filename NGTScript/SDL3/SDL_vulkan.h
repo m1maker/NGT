@@ -51,6 +51,7 @@ extern "C" {
 #endif
 
 VK_DEFINE_HANDLE(VkInstance)
+VK_DEFINE_HANDLE(VkPhysicalDevice)
 VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkSurfaceKHR)
 struct VkAllocationCallbacks;
 
@@ -118,7 +119,8 @@ extern SDL_DECLSPEC int SDLCALL SDL_Vulkan_LoadLibrary(const char *path);
  * `vkGetInstanceProcAddr =
  * (PFN_vkGetInstanceProcAddr)SDL_Vulkan_GetVkGetInstanceProcAddr();`
  *
- * \returns the function pointer for `vkGetInstanceProcAddr` or NULL on error.
+ * \returns the function pointer for `vkGetInstanceProcAddr` or NULL on
+ *          failure; call SDL_GetError() for more information.
  *
  * \since This function is available since SDL 3.0.0.
  */
@@ -148,13 +150,14 @@ extern SDL_DECLSPEC void SDLCALL SDL_Vulkan_UnloadLibrary(void);
  * You should not free the returned array; it is owned by SDL.
  *
  * \param count a pointer filled in with the number of extensions returned.
- * \returns an array of extension name strings on success, NULL on error.
+ * \returns an array of extension name strings on success, NULL on failure;
+ *          call SDL_GetError() for more information.
  *
  * \since This function is available since SDL 3.0.0.
  *
  * \sa SDL_Vulkan_CreateSurface
  */
-extern SDL_DECLSPEC char const* const* SDLCALL SDL_Vulkan_GetInstanceExtensions(Uint32 *count);
+extern SDL_DECLSPEC char const * const * SDLCALL SDL_Vulkan_GetInstanceExtensions(Uint32 *count);
 
 /**
  * Create a Vulkan rendering surface for a window.
@@ -172,7 +175,8 @@ extern SDL_DECLSPEC char const* const* SDLCALL SDL_Vulkan_GetInstanceExtensions(
  *                  allocator that creates the surface. Can be NULL.
  * \param surface a pointer to a VkSurfaceKHR handle to output the newly
  *                created surface.
- * \returns 0 on success, -1 on error (check SDL_GetError() for specifics).
+ * \returns 0 on success or a negative error code on failure; call
+ *          SDL_GetError() for more information.
  *
  * \since This function is available since SDL 3.0.0.
  *
@@ -210,6 +214,28 @@ extern SDL_DECLSPEC int SDLCALL SDL_Vulkan_CreateSurface(SDL_Window *window,
 extern SDL_DECLSPEC void SDLCALL SDL_Vulkan_DestroySurface(VkInstance instance,
                                                        VkSurfaceKHR surface,
                                                        const struct VkAllocationCallbacks *allocator);
+
+/**
+ * Query support for presentation via a given physical device and queue
+ * family.
+ *
+ * The `instance` must have been created with extensions returned by
+ * SDL_Vulkan_GetInstanceExtensions() enabled.
+ *
+ * \param instance the Vulkan instance handle.
+ * \param physicalDevice a valid Vulkan physical device handle.
+ * \param queueFamilyIndex a valid queue family index for the given physical
+ *                         device.
+ * \returns SDL_TRUE if supported, SDL_FALSE if unsupported or an error
+ *          occurred.
+ *
+ * \since This function is available since SDL 3.0.0.
+ *
+ * \sa SDL_Vulkan_GetInstanceExtensions
+ */
+extern SDL_DECLSPEC SDL_bool SDLCALL SDL_Vulkan_GetPresentationSupport(VkInstance instance,
+                                                                       VkPhysicalDevice physicalDevice,
+                                                                       Uint32 queueFamilyIndex);
 
 /* @} *//* Vulkan support functions */
 
