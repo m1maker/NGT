@@ -1,6 +1,7 @@
 audio_recorder ar;
 file encoded;
 void main(){
+wait(500);
 show_window("Audio recorder", 640, 480, false);
 wait(500);
 speak("Press Enter to stop recording");

@@ -15,7 +15,7 @@ void main() {
 
     // Reading from the stream
     string data;
-    stream.read(data, 13); // Read 13 bytes
+    stream.read(data, stream.size); // Read 13 bytes
     printf("Data read from stream: " + data);
 
     // Checking the size of the stream

@@ -15,14 +15,19 @@ MemoryStream::~MemoryStream() {
 }
 void MemoryStream::write(const char* data, size_t size) {
 	ensureCapacity(position + size);
-	std::copy(data, data + size, buffer.begin() + position);
-	position += size;
-}
 
+	// Increment position BEFORE copying
+	position += size;
+
+	// Copy the data
+	std::copy(data, data + size, buffer.begin() + position - size);
+
+	// Add the null terminator (if needed)
+	buffer[position] = '\0';
+}
 void MemoryStream::write(const std::string& str) {
 	write(str.data(), str.size());
 }
-
 void MemoryStream::read(char* data, size_t size) {
 	if (position + size > buffer.size()) {
 		return;
@@ -86,7 +91,7 @@ void MemoryStream::clear() {
 
 void MemoryStream::ensureCapacity(size_t requiredSize) {
 	if (requiredSize > buffer.size()) {
-		buffer.resize(requiredSize * 2); // Double the size for future writes
+		buffer.resize(requiredSize); // Double the size for future writes
 	}
 };
 MemoryStream* fmemoryStream(size_t size) { return new MemoryStream(size); }
