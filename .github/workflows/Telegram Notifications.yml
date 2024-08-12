@@ -23,7 +23,7 @@ jobs:
 
       - name: Send Telegram Notification
         run: |
-          python -c "import asyncio;from telegram import Bot;async def send_message():    bot = Bot(token='${{ secrets.TELEGRAM_BOT_TOKEN }}');    chat_id = '${{ secrets.TELEGRAM_CHANNEL_ID }}';    commit_link = '${{ github.event.head_commit.url }}';    await bot.send_message(chat_id=chat_id, text=f'New commit! {commit_link}');asyncio.run(send_message())"
+          python -c "import asyncio; from telegram import Bot; async def send_message(): bot = Bot(token='${{ secrets.TELEGRAM_BOT_TOKEN }}'); chat_id = '${{ secrets.TELEGRAM_CHANNEL_ID }}'; commit_link = '${{ github.event.head_commit.url }}'; await bot.send_message(chat_id=chat_id, text=f'New commit! {commit_link}'); asyncio.run(send_message())"
 
 
 
