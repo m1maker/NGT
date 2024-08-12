@@ -23,7 +23,7 @@ jobs:
 
       - name: Send Telegram Notification
         run: |
-          python -c "
+          python - <<EOF
 import asyncio
 from telegram import Bot
 
@@ -34,7 +34,7 @@ async def send_message():
     await bot.send_message(chat_id=chat_id, text=f'New commit! {commit_link}')
 
 asyncio.run(send_message())
-"
+EOF
 
 
 
