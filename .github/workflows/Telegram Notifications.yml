@@ -1,35 +1,28 @@
-   name: Telegram Notifications
+name: Telegram Notifications
 
-   on:
-     push:
-       branches:
-         - main
+on:
+  push:
+    branches:
+      - main
 
-   jobs:
-     send-telegram-notification:
-       runs-on: ubuntu-latest
+jobs:
+  send-telegram-notification:
+    runs-on: ubuntu-latest
 
-       steps:
-         - name: Checkout code
-           uses: actions/checkout@v3
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-         - name: Set up Python
-           uses: actions/setup-python@v4
-           with:
-             python-version: '3.10'
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
 
-         - name: Install Dependencies
-           run: pip install python-telegram-bot
+      - name: Install Dependencies
+        run: pip install python-telegram-bot
 
-         - name: Send Telegram Notification
-           run: |
-             python -c "import asyncio; from telegram import Bot; async def send_message(): bot = Bot(token='${{ secrets.TELEGRAM_BOT_TOKEN }}'); chat_id = '${{ secrets.TELEGRAM_CHANNEL_ID }}'; commit_link = '${{ github.event.commits[0].url }}'; await bot.send_message(chat_id=chat_id, text=f'New commit! {commit_link}'); asyncio.run(send_message())"
-         - name: Delete sensitive data
-           run: |
-             rm -f ./secrets.txt
-           env:
-             secrets.TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-             secrets.TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+      - name: Send Telegram Notification
+        run: |
+          python -c "import asyncio; from telegram import Bot; async def send_message(): bot = Bot(token='${{ secrets.TELEGRAM_BOT_TOKEN }}'); chat_id = '${{ secrets.TELEGRAM_CHANNEL_ID }}'; commit_link = '${{ github.event.commits[0].url }}'; await bot.send_message(chat_id=chat_id, text=f'New commit! {commit_link}'); await send_message()"
 
-   
 
