@@ -91,7 +91,7 @@ void MemoryStream::clear() {
 
 void MemoryStream::ensureCapacity(size_t requiredSize) {
 	if (requiredSize > buffer.size()) {
-		buffer.resize(requiredSize); // Double the size for future writes
+		buffer.resize(requiredSize);
 	}
 };
 MemoryStream* fmemoryStream(size_t size) { return new MemoryStream(size); }

@@ -1,0 +1,39 @@
+   name: Telegram Notifications
+
+   on:
+     push:
+       branches:
+         - main
+
+   jobs:
+     send-telegram-notification:
+       runs-on: ubuntu-latest
+
+       steps:
+         - name: Checkout code
+           uses: actions/checkout@v3
+
+         - name: Set up Python
+           uses: actions/setup-python@v4
+           with:
+             python-version: '3.10'
+
+         - name: Install Dependencies
+           run: pip install python-telegram-bot
+
+         - name: Send Telegram Notification
+           run: |
+             python -c "import telegram; bot = telegram.Bot(token='BTID'); chat_id = 'NGTID'; bot.send_message(chat_id=chat_id, text='New commit! [commit link]')"
+           env:
+             BTID: ${{ secrets.TELEGRAM_BOT_TOKEN }} 
+             NGTID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+             commit_link: ${{ github.event.commits[0].url }}
+         - name: Delete sensitive data
+           run: |
+             rm -f ./secrets.txt
+           env:
+             secrets.TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+             secrets.TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+
+   ```
+
