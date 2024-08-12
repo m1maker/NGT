@@ -1,5 +1,5 @@
 void main(){
-    show_window("Window");
-    wait(1000);
-    alert("Handle", get_window_handle());
+show_window("Window");
+wait(1000);
+alert("Handle", get_window_handle());
 }
