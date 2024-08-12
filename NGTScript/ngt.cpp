@@ -66,6 +66,8 @@ bool window_event_hide = false;
 bool window_event_set_title = false;
 bool window_event_push = false;
 bool window_event_keyboard_reset = false;
+bool window_event_fullscreen = false;
+bool window_fullscreen = false;
 long update_window_freq = 5;
 const char* window_title = nullptr;
 int window_w, window_h;
@@ -277,6 +279,11 @@ public:
 				if (win == nullptr)continue;
 				SDL_SetWindowTitle(win, window_title);
 			}
+			if (window_event_fullscreen) {
+				window_event_fullscreen = false;
+				if (win == nullptr)continue;
+				SDL_SetWindowFullscreen(win, window_fullscreen);
+			}
 			if (win != nullptr) {
 				SDL_bool result = SDL_PollEvent(&e);
 				//if (result == SDL_FALSE) continue;
@@ -432,7 +439,7 @@ void speak(const string& text, bool stop) {
 #else
 	return; // Not usable in other platforms yet.
 #endif
-}
+	}
 void speak_wait(const string& text, bool stop) {
 #ifdef _WIN32
 	speak(text, stop);
@@ -447,7 +454,7 @@ void speak_wait(const string& text, bool stop) {
 #else
 	return; // Not usable in other platforms yet.
 #endif
-}
+	}
 
 void stop_speech() {
 #ifdef _WIN32
@@ -458,7 +465,7 @@ void stop_speech() {
 #else
 	return; // Not usable in other platforms yet.
 #endif
-}
+	}
 string screen_reader_detect() {
 #ifdef _WIN32
 	reader = Tolk_DetectScreenReader();
@@ -478,7 +485,7 @@ void show_console() {
 #else 
 	return; // Don't need to allocating console in other platforms.
 #endif
-}
+	}
 
 void hide_console() {
 #ifdef _WIN32
@@ -567,7 +574,8 @@ void garbage_collect() {
 	engine->GarbageCollect(1 | 2, 1);
 }
 SDL_Surface* get_window_surface() {
-	return nullptr;
+	if (windowRunnable == nullptr || windowRunnable->win == nullptr)return NULL;
+	SDL_GetWindowSurface(windowRunnable->win);
 }
 SDL_Surface* load_bmp(const string& file) {
 	return SDL_LoadBMP(file.c_str());
@@ -582,6 +590,8 @@ bool get_window_active() {
 	return window_is_focused;
 }
 void set_window_fullscreen(bool fullscreen) {
+	window_fullscreen = fullscreen;
+	window_event_fullscreen = true;
 }
 bool mouse_pressed(Uint8 button)
 {
@@ -817,7 +827,7 @@ string input_box(const string& title, const string& text, const string& default_
 #else 
 	return ""; // Needs to implement in other platforms also.
 #endif
-}
+	}
 bool key_pressed(int key_code)
 {
 	if (keys[key_code].isDown == true and keys[key_code].isPressed == false)
