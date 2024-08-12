@@ -1,10 +1,9 @@
 # NGT: (New Game Toolkit)
 
-Welcome to NGT! An open source game engine using AngelScript as its internal scripting language.
+Welcome to NGT! An open source game engine using [AngelScript](https://www.angelcode.com/angelscript/) as its internal scripting language.
 
 Currently, NGT is positioned as a game engine for users with visual impairments, but we should think about the possibility of making it possible to create visual games.
 
-Now the engine is under development, it contains some problems and bugs that we need to fix, but we can still say about a few features.
 ## Features
 
 - **Support for Multiple Screen Readers:** Accessibility is key for users with visual impairments, allowing user to receive speech messages with any screen reader.
@@ -13,7 +12,6 @@ Now the engine is under development, it contains some problems and bugs that we 
 - **Encryption:** Use the AES256 algorithm to protect user passwords, game resources, etc.
 - **Networking system:** Create online games.
 
-Since NGT is not yet ready for use and contains many problems, your contribution to this project to improve it is very important to us.
 
 # Building and Contribution
 
@@ -49,9 +47,10 @@ To compile the source into the executable,
 
 Congratulations! The result window will appear, and the engine will try to be compiled.
 
-The compiled scripts can be found in the x64 folder.
+The compiled executable can be found in the x64 folder.
 
 # Additional Resources
 
 - [Official News Telegram Channel](https://t.me/newgametoolkit)
 - [Website](https://ngtcode.dev/)
+- [Documentation Repository](https://github.com/m1maker/ngt-docs)
