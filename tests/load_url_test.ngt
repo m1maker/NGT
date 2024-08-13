@@ -1,0 +1,7 @@
+void main(){
+sound s;
+bool result = s.load_url("https://www.synthmania.com/Yamaha DX7/Audio/INT/INT22 MARIMBA.mp3");
+alert("Loaded", result);
+s.play_wait();
+s.close();
+}

@@ -51,8 +51,6 @@ using Poco::Net::MailRecipient;
 using Poco::Net::SMTPClientSession;
 using Poco::Net::StringPartSource;
 
-#include "dyn/dyncall.h"
-#include "dyn/dynload.h"
 #include "enet/enet.h"
 #include <fcntl.h>
 #include <io.h>

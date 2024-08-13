@@ -43,8 +43,7 @@ extern "C"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <openssl/evp.h>
-#include <openssl/aes.h>
+#include "AES/aes.hpp"
 asIScriptFunction* exit_callback = nullptr;
 using namespace string_literals;
 #ifdef _WIN32
@@ -439,7 +438,7 @@ void speak(const string& text, bool stop) {
 #else
 	return; // Not usable in other platforms yet.
 #endif
-	}
+}
 void speak_wait(const string& text, bool stop) {
 #ifdef _WIN32
 	speak(text, stop);
@@ -454,7 +453,7 @@ void speak_wait(const string& text, bool stop) {
 #else
 	return; // Not usable in other platforms yet.
 #endif
-	}
+}
 
 void stop_speech() {
 #ifdef _WIN32
@@ -465,7 +464,7 @@ void stop_speech() {
 #else
 	return; // Not usable in other platforms yet.
 #endif
-	}
+}
 string screen_reader_detect() {
 #ifdef _WIN32
 	reader = Tolk_DetectScreenReader();
@@ -485,7 +484,7 @@ void show_console() {
 #else 
 	return; // Don't need to allocating console in other platforms.
 #endif
-	}
+}
 
 void hide_console() {
 #ifdef _WIN32
@@ -827,7 +826,7 @@ string input_box(const string& title, const string& text, const string& default_
 #else 
 	return ""; // Needs to implement in other platforms also.
 #endif
-	}
+}
 bool key_pressed(int key_code)
 {
 	if (keys[key_code].isDown == true and keys[key_code].isPressed == false)
@@ -881,48 +880,15 @@ void reset_all_forced_keys() {
 	window_event_keyboard_reset = true;
 }
 string string_encrypt(string the_string, string encryption_key) {
-	string iv = "abcdabcdabcdabcd";
-	auto const MAX_BUFFER_SIZE = the_string.length();
-
-	auto const ctx = make_handle(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
-
-	EVP_CipherInit(ctx.get(), EVP_aes_256_cbc(), reinterpret_cast<unsigned char const*>(encryption_key.data()), reinterpret_cast<unsigned char const*>(iv.data()), true);
-	const int block_size = EVP_CIPHER_CTX_block_size(ctx.get());
-
-	vector<unsigned char> cipherBuffer;
-	cipherBuffer.resize(MAX_BUFFER_SIZE + block_size);
-
-	int out_length;
-	EVP_CipherUpdate(ctx.get(), cipherBuffer.data(), &out_length, reinterpret_cast<unsigned char const*>(the_string.data()), static_cast<int>(the_string.length()));
-	cipherBuffer.resize(out_length + MAX_BUFFER_SIZE + block_size);
-	auto totalLength = out_length;
-
-	EVP_CipherFinal(ctx.get(), cipherBuffer.data() + totalLength, &out_length);
-	totalLength += out_length;
-	cipherBuffer.resize(totalLength);
-	return string(cipherBuffer.begin(), cipherBuffer.end());
+	AES_ctx crypt;
+	AES_init_ctx(&crypt, (uint8_t*)encryption_key.c_str());
+	AES_ECB_encrypt(&crypt, (uint8_t*)the_string.c_str());
 }
 string string_decrypt(string the_string, string encryption_key) {
-	string iv = "abcdabcdabcdabcd";
-	auto const MAX_BUFFER_SIZE = the_string.size();
-
-	auto const ctx = make_handle(EVP_CIPHER_CTX_new(), EVP_CIPHER_CTX_free);
-	EVP_CipherInit(ctx.get(), EVP_aes_256_cbc(), reinterpret_cast<unsigned char const*>(encryption_key.data()), reinterpret_cast<unsigned char const*>(iv.data()), false);
-	const int block_size = EVP_CIPHER_CTX_block_size(ctx.get());
-
-	string rv;
-	rv.resize(MAX_BUFFER_SIZE + block_size);
-
-	int out_length;
-	EVP_CipherUpdate(ctx.get(), reinterpret_cast<unsigned char*>(rv.data()), &out_length, reinterpret_cast<unsigned char const*>(the_string.data()), static_cast<int>(the_string.length()));
-	rv.resize(out_length + MAX_BUFFER_SIZE + block_size);
-	auto totalLength = out_length;
-
-	EVP_CipherFinal(ctx.get(), reinterpret_cast<unsigned char*>(rv.data()) + totalLength, &out_length);
-	totalLength += out_length;
-	rv.resize(totalLength);
-
-	return rv;
+	AES_ctx crypt;
+	AES_init_ctx(&crypt, (uint8_t*)encryption_key.c_str());
+	AES_CBC_decrypt_buffer(&crypt, (uint8_t*)&the_string.front(), the_string.size());
+	return the_string;
 }
 string url_decode(const string& url) {
 	URI uri(url);

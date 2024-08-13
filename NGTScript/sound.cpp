@@ -1,9 +1,12 @@
 //NGTAUDIO
 #define NOMINMAX
 #include "MemoryStream.h"
-#define CURL_STATICLIB
-#include "curl/curl.h"
 #include "ngt.h"
+#include "Poco/Exception.h"
+#include "Poco/Net/HTTPClientSession.h"
+#include "Poco/Net/HTTPResponse.h"
+#include "Poco/StreamCopier.h"
+#include "Poco/URI.h"
 #include "scriptarray/scriptarray.h"
 #include "sound.h"
 #include <numeric>
@@ -1072,60 +1075,55 @@ void mixer_reinit() {
 	soundsystem_init();
 }
 bool sound_global_hrtf = false;
-struct MemoryStruct {
-	char* memory;
-	size_t size;
-};
 
-static size_t write_memory_callback(void* contents, size_t size, size_t nmemb, void* userp) {
-	size_t realsize = size * nmemb;
-	struct MemoryStruct* mem = (struct MemoryStruct*)userp;
 
-	char* ptr = (char*)realloc(mem->memory, mem->size + realsize + 1);
-	if (ptr == NULL) {
-		return 0;
+std::vector<char> load_audio_from_url(const std::string& url) {
+	Poco::URI uri(url);
+	int redirectCount = 0;
+	const std::string userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
+
+	Poco::Net::HTTPClientSession session(uri.getHost(), uri.getPort() == -1 ? (uri.getScheme() == "https" ? 443 : 80) : uri.getPort());
+
+	while (redirectCount < 5) {
+		Poco::Net::HTTPRequest request(Poco::Net::HTTPRequest::HTTP_GET, uri.getPathAndQuery());
+		request.set("User-Agent", userAgent);
+		Poco::Net::HTTPResponse response;
+
+		try {
+			session.sendRequest(request);
+			std::istream& rs = session.receiveResponse(response);
+
+			if (response.getStatus() == Poco::Net::HTTPResponse::HTTP_OK) {
+				std::vector<char> audioData;
+				audioData.reserve(response.getContentLength());
+				audioData.insert(audioData.end(), std::istreambuf_iterator<char>(rs), std::istreambuf_iterator<char>());
+				return audioData;
+			}
+			else if (response.getStatus() == Poco::Net::HTTPResponse::HTTP_FOUND ||
+				response.getStatus() == Poco::Net::HTTPResponse::HTTP_MOVED_PERMANENTLY) {
+				std::string location = response.get("Location");
+				uri = Poco::URI(location);
+				redirectCount++;
+			}
+			else {
+				asIScriptContext* ctx = asGetActiveContext();
+				std::string text = std::to_string(response.getStatus()) + " " + response.getReasonForStatus(response.getStatus());
+				ctx->SetException(text.c_str());
+				return {};
+			}
+		}
+		catch (const Poco::Exception& ex) {
+			asIScriptContext* ctx = asGetActiveContext();
+			ctx->SetException(ex.displayText().c_str());
+			return {};
+		}
 	}
 
-	mem->memory = ptr;
-	memcpy(&(mem->memory[mem->size]), contents, realsize);
-	mem->size += realsize;
-	mem->memory[mem->size] = 0;
-
-	return realsize;
+	asIScriptContext* ctx = asGetActiveContext();
+	ctx->SetException("Слишком много перенаправлений");
+	return {};
 }
 
-vector<float> load_audio_from_url(const char* url) {
-	CURL* curl_handle;
-	CURLcode res;
-	struct MemoryStruct chunk;
-
-	chunk.memory = (char*)malloc(1);
-	chunk.size = 0;
-
-	curl_global_init(CURL_GLOBAL_ALL);
-	curl_handle = curl_easy_init();
-
-	curl_easy_setopt(curl_handle, CURLOPT_URL, url);
-
-	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_memory_callback);
-	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void*)&chunk);
-
-	res = curl_easy_perform(curl_handle);
-
-	if (res != CURLE_OK) {
-		free(chunk.memory);
-		return vector<float>();
-	}
-
-	vector<float> audioData(chunk.size / sizeof(float));
-	memcpy(audioData.data(), chunk.memory, chunk.size);
-
-	free(chunk.memory);
-	curl_easy_cleanup(curl_handle);
-	curl_global_cleanup();
-
-	return audioData;
-}
 typedef struct
 {
 	ma_node_config nodeConfig;
@@ -1360,17 +1358,19 @@ public:
 	}
 	bool load_url(const string& url, bool set3d) {
 		handle_ = new ma_sound;
-		ma_sound_config c;
+		vector<char> audio = load_audio_from_url(url.c_str());
+		alert("W", std::to_string(audio.size()));
+		ma_result init_result = ma_decoder_init_memory(audio.data(), audio.size(), NULL, &decoder);
+		if (init_result != MA_SUCCESS) {
+			return false;
+		}
+		ma_result loading_result = ma_sound_init_from_data_source(&sound_default_mixer, &decoder, 0, 0, handle_);
+		if (loading_result != MA_SUCCESS) {
+			active = false;
+			return false;
+		}
+		decoderInitialized = true;
 
-		ma_decoder decoder;
-		vector<float> audio = load_audio_from_url(url.c_str());
-		ma_decoder_init_memory(audio.data(), audio.size(), NULL, &decoder);
-		c = ma_sound_config_init();
-		c.pDataSource = &decoder;
-
-		if (!set3d)
-			c.flags |= MA_SOUND_FLAG_NO_SPATIALIZATION;
-		ma_sound_init_ex(&sound_default_mixer, &c, handle_);
 		active = true;
 		if (sound_global_hrtf)
 			this->set_hrtf(true);
