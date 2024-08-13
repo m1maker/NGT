@@ -1,0 +1,7 @@
+const string key = string_base64_encode("AbCdEfGHIJkLmNOPqRs");
+void main(){
+string test = string_encrypt("Hello, world!", key);
+alert("Encrypted", test);
+string test2=string_decrypt(test, key);
+alert("Decrypted", test2);
+}

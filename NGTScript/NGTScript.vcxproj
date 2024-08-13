@@ -140,7 +140,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);angelscript64.lib;SDL3.lib;winmm.lib;imm32.lib;version.lib;setupapi.lib;libcmt.lib;ws2_32.lib;iphlpapi.lib;enet64.lib;Wldap32.lib;PocoFoundationmt.lib;PocoNetmt.lib;lib;phonon.lib;delayimp.lib;libffi.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);angelscript64.lib;SDL3.lib;winmm.lib;imm32.lib;version.lib;setupapi.lib;libcmt.lib;ws2_32.lib;iphlpapi.lib;enet64.lib;Wldap32.lib;PocoFoundationmt.lib;PocoNetmt.lib;phonon.lib;delayimp.lib;libffi.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>
       </IgnoreAllDefaultLibraries>

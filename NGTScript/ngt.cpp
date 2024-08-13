@@ -5,6 +5,7 @@
 #include "Poco/Event.h"
 #include "Poco/Mutex.h"
 #include "Poco/Runnable.h"
+#include "Poco/SHA2Engine.h"
 #include "Poco/TextConverter.h"
 #include "Poco/Thread.h"
 #include "Poco/Unicode.h"
@@ -879,15 +880,67 @@ void reset_all_forced_keys() {
 	}
 	window_event_keyboard_reset = true;
 }
-string string_encrypt(string the_string, string encryption_key) {
-	AES_ctx crypt;
-	AES_init_ctx(&crypt, (uint8_t*)encryption_key.c_str());
-	AES_ECB_encrypt(&crypt, (uint8_t*)the_string.c_str());
+void string_pad(std::string& text) {
+	int padding_size = 16 - (text.length() % 16);
+	if (padding_size == 0) {
+		padding_size = 16;
+	}
+	text.append(padding_size, (char)padding_size);
 }
-string string_decrypt(string the_string, string encryption_key) {
+
+void string_unpad(std::string& text) {
+	int padding_size = (unsigned char)text.back();
+	if (padding_size > 0 && padding_size <= 16) {
+		text.resize(text.size() - padding_size);
+	}
+}
+
+
+
+std::string string_encrypt(const string& str, std::string& encryption_key) {
+	string the_string = str;
+	Poco::SHA2Engine hash;
+	hash.update(encryption_key);
+	const unsigned char* key_hash = hash.digest().data();
+
+	unsigned char iv[16];
+	for (int i = 0; i < 16; ++i) {
+		iv[i] = key_hash[i * 2] ^ (4 * i + 1);
+	}
+
 	AES_ctx crypt;
-	AES_init_ctx(&crypt, (uint8_t*)encryption_key.c_str());
-	AES_CBC_decrypt_buffer(&crypt, (uint8_t*)&the_string.front(), the_string.size());
+	AES_init_ctx_iv(&crypt, key_hash, iv);
+	string_pad(the_string);
+	AES_CBC_encrypt_buffer(&crypt, reinterpret_cast<uint8_t*>(&the_string.front()), the_string.size());
+
+	// Clear sensitive data
+	std::fill(std::begin(iv), std::end(iv), 0);
+	std::fill(reinterpret_cast<uint8_t*>(&crypt), reinterpret_cast<uint8_t*>(&crypt) + sizeof(AES_ctx), 0);
+
+	return the_string;
+}
+
+std::string string_decrypt(const string& str, string& encryption_key) {
+	if (str.size() % 16 != 0) return "";
+	string the_string = str;
+	Poco::SHA2Engine hash;
+	hash.update(encryption_key);
+	const unsigned char* key_hash = hash.digest().data();
+
+	unsigned char iv[16];
+	for (int i = 0; i < 16; ++i) {
+		iv[i] = key_hash[i * 2] ^ (4 * i + 1);
+	}
+
+	AES_ctx crypt;
+	AES_init_ctx_iv(&crypt, key_hash, iv);
+	AES_CBC_decrypt_buffer(&crypt, reinterpret_cast<uint8_t*>(&the_string.front()), the_string.size());
+
+	// Clear sensitive data
+	std::fill(std::begin(iv), std::end(iv), 0);
+	std::fill(reinterpret_cast<uint8_t*>(&crypt), reinterpret_cast<uint8_t*>(&crypt) + sizeof(AES_ctx), 0);
+
+	string_unpad(the_string);
 	return the_string;
 }
 string url_decode(const string& url) {
