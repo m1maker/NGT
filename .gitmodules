@@ -1,6 +1,0 @@
-[submodule "ngt-docs"]
-	path = ngt-docs
-	url = https://github.com/m1maker/ngt-docs
-[submodule "GUI"]
-	path = GUI
-	url = https://github.com/m1maker/GUI
