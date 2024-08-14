@@ -1,5 +1,5 @@
 [submodule "ngt-docs"]
-	path = docs
+	path = ngt-docs
 	url = https://github.com/m1maker/ngt-docs
 [submodule "GUI"]
 	path = GUI
