@@ -512,7 +512,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("bool clipboard_copy_text(const string &in)", asFUNCTION(clipboard_copy_text), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string clipboard_read_text()", asFUNCTION(clipboard_read_text), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string get_input()", asFUNCTION(get_input), asCALL_CDECL);
-	engine->RegisterGlobalFunction("string input_box(const string &in, const string &in, const string &in=\"\", bool=false)", asFUNCTION(input_box), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string input_box(const string &in, const string &in, const string &in=\"\", bool=false, bool=false)", asFUNCTION(input_box), asCALL_CDECL);
 
 	engine->RegisterTypedef("keycode", "int");
 	engine->RegisterGlobalFunction("bool key_pressed(keycode)", asFUNCTION(key_pressed), asCALL_CDECL);

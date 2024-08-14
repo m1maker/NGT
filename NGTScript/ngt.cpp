@@ -778,7 +778,7 @@ string get_input() {
 	inputtext = "";
 	return temp;
 }
-string input_box(const string& title, const string& text, const string& default_text, bool secure) {
+string input_box(const string& title, const string& text, const string& default_text, bool secure, bool multiline) {
 	int user_pressed;
 #ifdef _WIN32
 	HWND main_window;
@@ -788,7 +788,7 @@ string input_box(const string& title, const string& text, const string& default_
 	main_window = gui::show_window(wstr(title));
 	if (main_window == nullptr)return "";
 	gui::create_text(main_window, wstr(text).c_str(), 0, 0, 0, 0, 0);
-	edit = gui::create_input_box(main_window, secure, 10, 70, 200, 30, 0);
+	edit = gui::create_input_box(main_window, secure, multiline, 10, 70, 200, 30, 0);
 	ok = gui::create_button(main_window, L"&OK", 50, 120, 80, 30, 0);
 	cancel = gui::create_button(main_window, L"&Cancel", 150, 120, 80, 30, 0);
 	gui::focus(edit);
@@ -799,7 +799,7 @@ string input_box(const string& title, const string& text, const string& default_
 			gui::try_close = false;
 			MessageBeep(MB_ICONERROR);
 		}
-		if (gui::is_pressed(ok) or (gui::key_pressed(0x0d) and gui::get_current_focus() != cancel)) {
+		if (gui::is_pressed(ok) or (gui::key_pressed(0x0d) and gui::get_current_focus() != cancel) && multiline == false) {
 			user_pressed = 1;
 			break;
 		}

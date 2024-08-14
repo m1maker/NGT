@@ -40,7 +40,7 @@ namespace gui {
 	HWND create_button(HWND hwndParent, LPCTSTR lpszCaption, int x, int y, int width, int height, int id);
 	HWND create_text(HWND hwndParent, LPCTSTR lpszCaption, int x, int y, int width, int height, int id);
 	HWND create_checkbox(HWND hwndParent, LPCTSTR lpszCaption, int x, int y, int width, int height, int id);
-	HWND create_input_box(HWND hwndParent, bool secure, int x, int y, int width, int height, int id);
+	HWND create_input_box(HWND hwndParent, bool secure, bool multiline, int x, int y, int width, int height, int id);
 	HWND create_list(HWND hwndParent, int x, int y, int width, int height, int id);
 	void delete_control(HWND hwnd);
 	void delete_list_item(HWND hwndList, int index);

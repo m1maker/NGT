@@ -1,0 +1,5 @@
+void main(){
+alert("Result", input_box("Input box test", "Enter username"));
+alert("Result", input_box("Input box test", "Enter password", "", true));
+alert("Result", input_box("Input box test", "Enter message", "Hello", false, true));
+}

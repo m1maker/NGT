@@ -448,14 +448,15 @@ namespace gui {
 		);
 	}
 
-	HWND create_input_box(HWND hwndParent, bool secure, int x, int y, int width, int height, int id)
+	HWND create_input_box(HWND hwndParent, bool secure, bool multiline, int x, int y, int width, int height, int id)
 	{
 		DWORD style = WS_VISIBLE | WS_CHILD | ES_AUTOHSCROLL | WS_TABSTOP;
 		if (secure)
 		{
 			style |= ES_PASSWORD;
 		}
-
+		if (multiline)
+			style |= ES_MULTILINE | ES_AUTOVSCROLL;
 		HWND window = CreateWindow(
 			TEXT("EDIT"),
 			NULL,

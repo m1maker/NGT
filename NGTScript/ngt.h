@@ -128,7 +128,7 @@ string number_to_words(uint64_t, bool);
 bool clipboard_copy_text(const string&);
 string clipboard_read_text();
 string get_input();
-string input_box(const string& title, const string& text, const string& default_text = "", bool secure = false);
+string input_box(const string& title, const string& text, const string& default_text = "", bool secure = false, bool multiline = false);
 bool key_pressed(int);
 bool key_released(int);
 bool key_down(int);
