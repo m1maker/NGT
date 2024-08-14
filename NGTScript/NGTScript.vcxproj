@@ -153,6 +153,7 @@
     </Xdcmake>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\GUI\gui.h" />
     <ClInclude Include="AES\aes.h" />
     <ClInclude Include="AES\aes.hpp" />
     <ClInclude Include="angelscript.h" />
@@ -179,7 +180,6 @@
     <ClInclude Include="ffi_common.h" />
     <ClInclude Include="fx\freeverb.h" />
     <ClInclude Include="fx\verblib.h" />
-    <ClInclude Include="gui.h" />
     <ClInclude Include="http.h" />
     <ClInclude Include="joystick.h" />
     <ClInclude Include="MemoryStream.h" />
@@ -294,6 +294,7 @@
     <ClInclude Include="uni_algo.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\GUI\gui.cpp" />
     <ClCompile Include="AES\aes.c" />
     <ClCompile Include="as_class.cpp" />
     <ClCompile Include="cmp.c" />
@@ -303,7 +304,6 @@
     <ClCompile Include="dlibrary.cpp" />
     <ClCompile Include="docgen.cpp" />
     <ClCompile Include="fx\freeverb.c" />
-    <ClCompile Include="gui.cpp" />
     <ClCompile Include="http.cpp" />
     <ClCompile Include="joystick.cpp" />
     <ClCompile Include="main.cpp" />

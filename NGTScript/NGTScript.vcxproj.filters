@@ -37,10 +37,10 @@
     <ClCompile Include="fx\freeverb.c" />
     <ClCompile Include="cmp.c" />
     <ClCompile Include="docgen.cpp" />
-    <ClCompile Include="gui.cpp" />
     <ClCompile Include="MemoryStream.cpp" />
     <ClCompile Include="scriptstdstring\scriptstdwstring.cpp" />
     <ClCompile Include="AES\aes.c" />
+    <ClCompile Include="..\GUI\gui.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="angelscript.h" />
@@ -174,7 +174,6 @@
     <ClInclude Include="SDL3\SDL_video.h" />
     <ClInclude Include="SDL3\SDL_vulkan.h" />
     <ClInclude Include="docgen.h" />
-    <ClInclude Include="gui.h" />
     <ClInclude Include="MemoryStream.h" />
     <ClInclude Include="ffi.h" />
     <ClInclude Include="ffi_cfi.h" />
@@ -182,5 +181,6 @@
     <ClInclude Include="scriptstdstring\scriptstdwstring.h" />
     <ClInclude Include="AES\aes.h" />
     <ClInclude Include="AES\aes.hpp" />
+    <ClInclude Include="..\GUI\gui.h" />
   </ItemGroup>
 </Project>

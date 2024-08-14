@@ -4,7 +4,7 @@
 #include"as_class.h"
 #ifdef _WIN32
 #define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
-#include "gui.h"
+#include "../GUI/GUI.h"
 #include <Windows.h>
 #define FFI_BUILDING
 #include "ffi.h"
