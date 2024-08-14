@@ -9,4 +9,5 @@ NGTScript/NGTScript
 *.swp
 *.pdb
 *.reapeaks
-ngt-docs/
+docs/
+GUI/

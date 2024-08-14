@@ -2,5 +2,5 @@
 	path = docs
 	url = https://github.com/m1maker/ngt-docs
 [submodule "GUI"]
-	path = NGTScript/GUI
+	path = GUI
 	url = https://github.com/m1maker/GUI
