@@ -8,8 +8,6 @@
     <ClCompile Include="ngt.cpp" />
     <ClCompile Include="ngtreg.cpp" />
     <ClCompile Include="pack.cpp" />
-    <ClCompile Include="sapi\SpeechEngine.cpp" />
-    <ClCompile Include="sapi\Voice.cpp" />
     <ClCompile Include="scriptany\scriptany.cpp" />
     <ClCompile Include="scriptarray\scriptarray.cpp" />
     <ClCompile Include="scriptbuilder\scriptbuilder.cpp" />
@@ -65,8 +63,6 @@
     <ClInclude Include="phonon.h" />
     <ClInclude Include="phonon_interfaces.h" />
     <ClInclude Include="phonon_version.h" />
-    <ClInclude Include="sapi\SpeechEngine.h" />
-    <ClInclude Include="sapi\Voice.h" />
     <ClInclude Include="scriptany\scriptany.h" />
     <ClInclude Include="scriptarray\scriptarray.h" />
     <ClInclude Include="scriptbuilder\scriptbuilder.h" />

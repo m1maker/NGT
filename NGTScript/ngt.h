@@ -6,12 +6,12 @@
 #define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
 #include "../GUI/GUI.h"
 #include <Windows.h>
+#include"tts_voice.h"
+#endif
 #define FFI_BUILDING
 #include "ffi.h"
 #include "ffi_cfi.h"
 #include "ffi_common.h"
-#include"tts_voice.h"
-#endif
 #include "Poco/Base32Decoder.h"
 #include "Poco/Base32Encoder.h"
 #include "Poco/Base64Decoder.h"

@@ -12,9 +12,10 @@
 #include "Poco/UnicodeConverter.h"
 #include"sdl3/SDL.h"
 #include "sound.h"
-#ifdef _WIN32
-#include "Tolk.h"
-#endif
+extern "C" {
+#define SRAL_STATIC
+#include "SRAL.h"
+}
 #include <chrono>
 #include<condition_variable>
 #include <filesystem>
@@ -358,39 +359,16 @@ long get_update_window_freq() {
 }
 void init_engine() {
 	if (SDL_Init(SDL_INIT_VIDEO) != 0)exit_engine((int)SDL_GetError());
-#ifdef  _WIN32
-	if (!tolk_library_load("Tolk.dll")) {
-		voice_object = new TTSVoice;
-	}
-	Tolk_Load();
-	Tolk_TrySAPI(true);
-	reader = Tolk_DetectScreenReader();
-	if (!Tolk_HasSpeech()) {
-		Tolk_PreferSAPI(true);
-	}
-#endif //  _WIN32
+	SRAL_Initialize("", 0);
 	enet_initialize();
 }
 void set_library_path(const string& path) {
-#ifdef _WIN32
-
-	if (Tolk_IsLoaded())Tolk_Unload();
-	tolk_library_unload();
-	if (voice_object != nullptr) {
-		delete voice_object;
-		voice_object = nullptr;
-	}
-#endif
+	SRAL_Uninitialize();
 	filesystem::path current_dir = filesystem::current_path();
 	filesystem::path new_dir = filesystem::current_path() / path;
 
 	filesystem::current_path(new_dir);
-#ifdef _WIN32
-	if (!tolk_library_load("Tolk.dll")) {
-		voice_object = new TTSVoice;
-	}
-	Tolk_Load();
-#endif
+	SRAL_Initialize(path.c_str(), 0);
 	soundsystem_free();
 	soundsystem_init();
 	filesystem::current_path(current_dir);
@@ -427,53 +405,33 @@ bool get_screen_reader_interrupt() {
 }
 
 void speak(const string& text, bool stop) {
-#ifdef _WIN32
-	wstring textstr = wstr(text);
-	Tolk_Speak(textstr.c_str(), stop);
-	if (voice_object != nullptr) {
-		if (stop)
-			voice_object->speak_interrupt(text);
-		else
-			voice_object->speak(text);
-	}
-#else
-	return; // Not usable in other platforms yet.
-#endif
+	SRAL_Speak(text.c_str(), stop);
 }
 void speak_wait(const string& text, bool stop) {
-#ifdef _WIN32
-	speak(text, stop);
-	while (Tolk_IsSpeaking()) {
-	}
-	if (voice_object != nullptr) {
-		if (stop)
-			voice_object->speak_interrupt_wait(text);
-		else
-			voice_object->speak_wait(text);
-	}
-#else
-	return; // Not usable in other platforms yet.
-#endif
 }
 
 void stop_speech() {
-#ifdef _WIN32
-	Tolk_Silence();
-	if (voice_object != nullptr) {
-		voice_object->speak_interrupt(nullptr);
-	}
-#else
-	return; // Not usable in other platforms yet.
-#endif
+	SRAL_StopSpeech();
 }
 string screen_reader_detect() {
-#ifdef _WIN32
-	reader = Tolk_DetectScreenReader();
-	return string(reader.begin(), reader.end());
-#else
-	return ""; // Not usable in other platforms yet.
-#endif
-
+	int reader = SRAL_GetCurrentEngine();
+	switch (reader) {
+	case ENGINE_NONE:
+		return "None";
+	case ENGINE_NVDA:
+		return "NVDA";
+	case ENGINE_SAPI:
+		return "Sapi";
+	case ENGINE_JAWS:
+		return "Jaws";
+	case ENGINE_SPEECH_DISPATCHER:
+		return "SpeechDispatcher";
+	case ENGINE_UIA:
+		return "UIAutomation";
+	default:
+		return "None";
+	}
+	return "None";
 }
 void show_console() {
 #ifdef _WIN32
@@ -485,7 +443,7 @@ void show_console() {
 #else 
 	return; // Don't need to allocating console in other platforms.
 #endif
-}
+	}
 
 void hide_console() {
 #ifdef _WIN32
@@ -691,14 +649,7 @@ void exit_engine(int return_number)
 	soundsystem_free();
 	hide_window();
 	enet_deinitialize();
-#ifdef _WIN32
-	Tolk_Unload();
-	tolk_library_unload();
-	if (voice_object != nullptr) {
-		delete voice_object;
-		voice_object = nullptr;
-	}
-#endif
+	SRAL_Uninitialize();
 	SDL_Quit();
 	std::exit(0);
 }

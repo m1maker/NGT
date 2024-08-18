@@ -1,8 +1,5 @@
 #pragma once
 #include "scriptarray/scriptarray.h"
-#include<atlbase.h>
-#include<atlcom.h>
-#include <sapi.h>
 #include <string>
 #include <vector>
 class TTSVoice
@@ -26,9 +23,4 @@ public:
 
 private:
 	mutable int ref;
-	CComPtr<ISpVoice> pVoice;
-	std::vector<CComPtr<ISpObjectToken>> voices;
-	int rate;
-	int volume;
-	void initialize();
 };

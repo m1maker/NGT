@@ -140,7 +140,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);angelscript64.lib;SDL3.lib;winmm.lib;imm32.lib;version.lib;setupapi.lib;libcmt.lib;ws2_32.lib;iphlpapi.lib;enet64.lib;Wldap32.lib;PocoFoundationmt.lib;PocoNetmt.lib;phonon.lib;delayimp.lib;libffi.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);angelscript64.lib;SDL3.lib;winmm.lib;imm32.lib;version.lib;setupapi.lib;libcmt.lib;ws2_32.lib;iphlpapi.lib;enet64.lib;Wldap32.lib;PocoFoundationmt.lib;PocoNetmt.lib;phonon.lib;delayimp.lib;libffi.lib;SRAL_static.lib;uiautomationcore.lib</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>
       </IgnoreAllDefaultLibraries>
@@ -190,8 +190,6 @@
     <ClInclude Include="phonon.h" />
     <ClInclude Include="phonon_interfaces.h" />
     <ClInclude Include="phonon_version.h" />
-    <ClInclude Include="sapi\SpeechEngine.h" />
-    <ClInclude Include="sapi\Voice.h" />
     <ClInclude Include="scriptany\scriptany.h" />
     <ClInclude Include="scriptarray\scriptarray.h" />
     <ClInclude Include="scriptbuilder\scriptbuilder.h" />
@@ -311,8 +309,6 @@
     <ClCompile Include="ngt.cpp" />
     <ClCompile Include="ngtreg.cpp" />
     <ClCompile Include="pack.cpp" />
-    <ClCompile Include="sapi\SpeechEngine.cpp" />
-    <ClCompile Include="sapi\Voice.cpp" />
     <ClCompile Include="scriptany\scriptany.cpp" />
     <ClCompile Include="scriptarray\scriptarray.cpp" />
     <ClCompile Include="scriptbuilder\scriptbuilder.cpp" />

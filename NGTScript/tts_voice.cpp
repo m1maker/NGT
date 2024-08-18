@@ -1,11 +1,7 @@
 #include "angelscript.h"
 #include"ngt.h"
+#include "SRAL.h"
 #include "tts_voice.h"
-#include<atlbase.h>
-#include<atlcom.h>
-#include <sapi.h>
-#include <sphelper.h>
-#include <stdexcept>
 void TTSVoice::add_ref() {
 	asAtomicInc(ref);
 }
@@ -13,75 +9,39 @@ void TTSVoice::release() {
 	if (asAtomicDec(ref) < 1)
 		delete this;
 }
-TTSVoice::TTSVoice() : rate(0), volume(100)
+TTSVoice::TTSVoice()
 {
 	ref = 1;
-	if (g_COMInitialized == true)return;
-	if (FAILED(::CoInitialize(nullptr)))
-	{
-		alert("COM Init Error", "Could not initialize component object model");
-	}
-	initialize();
+	if (!SRAL_Initialized())SRAL_Initialize("", 0);
 }
 
 TTSVoice::~TTSVoice()
 {
-	::CoUninitialize();
-	g_COMInitialized = false;
-}
-
-void TTSVoice::initialize()
-{
-	if (FAILED(pVoice.CoCreateInstance(CLSID_SpVoice)))
-	{
-		alert("Speech API Error", "Could not create SAPI Voice");
-	}
-
-	CComPtr<IEnumSpObjectTokens> cpEnum;
-	if (SUCCEEDED(SpEnumTokens(SPCAT_VOICES, nullptr, nullptr, &cpEnum)))
-	{
-		CComPtr<ISpObjectToken> pToken;
-		while (cpEnum->Next(1, &pToken, nullptr) == S_OK)
-		{
-			voices.push_back(pToken);
-			pToken.Release();
-		}
-	}
-	g_COMInitialized = true;
 }
 
 bool TTSVoice::speak(const std::string& text)
 {
-	return SUCCEEDED(pVoice->Speak(CComBSTR(text.c_str()), SPF_ASYNC, nullptr));
+	return SRAL_SpeakExtended(ENGINE_SAPI, text.c_str(), false);
 }
 
 bool TTSVoice::speak_wait(const std::string& text)
 {
-	return SUCCEEDED(pVoice->Speak(CComBSTR(text.c_str()), SPF_DEFAULT, nullptr));
+	return SRAL_SpeakExtended(ENGINE_SAPI, text.c_str(), false);
 }
 
 bool TTSVoice::speak_interrupt(const std::string& text)
 {
-	return SUCCEEDED(pVoice->Speak(CComBSTR(text.c_str()), SPF_ASYNC | SPF_PURGEBEFORESPEAK, nullptr));
+	return SRAL_SpeakExtended(ENGINE_SAPI, text.c_str(), true);
 }
 
 bool TTSVoice::speak_interrupt_wait(const std::string& text)
 {
-	return SUCCEEDED(pVoice->Speak(CComBSTR(text.c_str()), SPF_PURGEBEFORESPEAK, nullptr));
+	return SRAL_SpeakExtended(ENGINE_SAPI, text.c_str(), true);
 }
 
 std::vector<std::string> TTSVoice::get_voice_names()
 {
-	std::vector<std::string> voice_names;
-	for (auto& voice : voices)
-	{
-		CSpDynamicString dstrDesc;
-		if (SUCCEEDED(SpGetDescription(voice, &dstrDesc)))
-		{
-			voice_names.push_back(std::string(CW2A(dstrDesc)));
-		}
-	}
-	return voice_names;
+	return {};
 }
 CScriptArray* TTSVoice::get_voice_names_script() {
 	asIScriptContext* ctx = asGetActiveContext();
@@ -100,30 +60,22 @@ CScriptArray* TTSVoice::get_voice_names_script() {
 }
 void TTSVoice::set_voice(uint64_t voice_index)
 {
-	if (voice_index < voices.size())
-	{
-		pVoice->SetVoice(voices[voice_index]);
-	}
 }
 
 int TTSVoice::get_rate() const
 {
-	return rate;
+	return 0;
 }
 
 void TTSVoice::set_rate(int new_rate)
 {
-	rate = new_rate;
-	pVoice->SetRate(rate);
 }
 
 int TTSVoice::get_volume() const
 {
-	return volume;
+	return 0;
 }
 
 void TTSVoice::set_volume(int new_volume)
 {
-	volume = new_volume;
-	pVoice->SetVolume(volume);
 }

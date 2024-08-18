@@ -1,0 +1,21 @@
+tts_voice v;
+bool interrupt = true;
+array<int> pressed;
+void main() {
+	show_window("TTSVoice");
+	v.speak("Press any key. Press f 1 to switch interrupt.");
+	while(true) {
+		wait(5);
+		if (key_pressed(SDLK_F1)) {
+			interrupt = interrupt ? false : true;
+			v.speak_interrupt("Interrupt : " + interrupt);
+		}
+		pressed = keys_pressed();
+		for(uint i=0;i<pressed.length();i++) {
+			if (interrupt)
+				v.speak_interrupt(key_to_string(pressed[i]));
+			else
+				v.speak(key_to_string(pressed[i]));
+		}
+	}
+}

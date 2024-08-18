@@ -5,7 +5,7 @@ while(true){
 wait(5);
 if(key_pressed(SDLK_SPACE)){
 number+=1;
-speak(""+number);
+speak(""+number, true);
 }
 }
 }
