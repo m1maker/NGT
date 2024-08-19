@@ -558,6 +558,8 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("uint64 calloc(uint64, uint64)", asFUNCTION(calloc), asCALL_CDECL);
 	engine->RegisterGlobalFunction("uint64 realloc(uint64, uint64)", asFUNCTION(realloc), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void free(uint64)", asFUNCTION(free), asCALL_CDECL);
+	engine->RegisterGlobalFunction("uint64 memcpy(uint64, uint64, size_t)", asFUNCTION(memcpy), asCALL_CDECL);
+
 	engine->RegisterGlobalFunction("string c_str_to_string(uint64, size_t=0)", asFUNCTION(c_str_to_string), asCALL_CDECL);
 	engine->RegisterGlobalFunction("wstring wc_str_to_wstring(uint64, size_t=0)", asFUNCTION(wc_str_to_wstring), asCALL_CDECL);
 

@@ -243,7 +243,7 @@ auto main(int argc, char* argv[]) -> int {
 	}
 	else {
 		if (argc < 2) {
-			asIScriptEngine* engine = asCreateScriptEngine();
+			asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 			engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
 			show_console();
 			engine->WriteMessage(get_exe().c_str(), 0, 0, asMSGTYPE_INFORMATION, "Something went wrong when starting the engine.\r\nNothing to debug, nothing to compile.\r\nArguments and flags that can be used:\r\n\"NGTScript.exe <filename> -d\" - Debug a script.\r\n\"NGTScript.exe <filename> -c\" - Compile a script to executable file.\r\n\"NGTScript.exe <output file> -i\" - Write engine config to a file.");
@@ -260,7 +260,7 @@ auto main(int argc, char* argv[]) -> int {
 	g_argv = argv + (scriptArg + 1);
 
 	if (flag == "-c") {
-		asIScriptEngine* engine = asCreateScriptEngine();
+		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
 
 		// Register any necessary functions and types
@@ -330,7 +330,7 @@ auto main(int argc, char* argv[]) -> int {
 
 
 	else if (flag == "-d") {
-		asIScriptEngine* engine = asCreateScriptEngine();
+		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
 
 		// Register any necessary functions and types
@@ -426,7 +426,7 @@ auto main(int argc, char* argv[]) -> int {
 	}
 	else if (flag == "-b") {
 		SCRIPT_COMPILED = true;
-		asIScriptEngine* engine = asCreateScriptEngine();
+		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
 
 		RegisterStdString(engine);
@@ -538,7 +538,7 @@ auto main(int argc, char* argv[]) -> int {
 
 	}
 	else if (flag == "-i") {
-		asIScriptEngine* engine = asCreateScriptEngine();
+		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
 
 		RegisterStdString(engine);

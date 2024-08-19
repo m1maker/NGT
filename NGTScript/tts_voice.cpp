@@ -1,6 +1,7 @@
 #include "angelscript.h"
 #include"ngt.h"
-#include "SRAL.h"
+#define SRAL_STATIC
+#include "../SRAL/Include/SRAL.h"
 #include "tts_voice.h"
 void TTSVoice::add_ref() {
 	asAtomicInc(ref);
@@ -12,7 +13,7 @@ void TTSVoice::release() {
 TTSVoice::TTSVoice()
 {
 	ref = 1;
-	if (!SRAL_Initialized())SRAL_Initialize("", 0);
+	if (!SRAL_IsInitialized())SRAL_Initialize(0);
 }
 
 TTSVoice::~TTSVoice()
@@ -21,22 +22,22 @@ TTSVoice::~TTSVoice()
 
 bool TTSVoice::speak(const std::string& text)
 {
-	return SRAL_SpeakExtended(ENGINE_SAPI, text.c_str(), false);
+	return SRAL_SpeakEx(ENGINE_SAPI, text.c_str(), false);
 }
 
 bool TTSVoice::speak_wait(const std::string& text)
 {
-	return SRAL_SpeakExtended(ENGINE_SAPI, text.c_str(), false);
+	return SRAL_SpeakEx(ENGINE_SAPI, text.c_str(), false);
 }
 
 bool TTSVoice::speak_interrupt(const std::string& text)
 {
-	return SRAL_SpeakExtended(ENGINE_SAPI, text.c_str(), true);
+	return SRAL_SpeakEx(ENGINE_SAPI, text.c_str(), true);
 }
 
 bool TTSVoice::speak_interrupt_wait(const std::string& text)
 {
-	return SRAL_SpeakExtended(ENGINE_SAPI, text.c_str(), true);
+	return SRAL_SpeakEx(ENGINE_SAPI, text.c_str(), true);
 }
 
 std::vector<std::string> TTSVoice::get_voice_names()

@@ -4,3 +4,6 @@
 [submodule "GUI"]
 	path = GUI
 	url = https://github.com/m1maker/GUI
+[submodule "SRAL"]
+	path = SRAL
+	url = https://github.com/m1maker/SRAL

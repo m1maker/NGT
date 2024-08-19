@@ -1,3 +1,4 @@
+// Copyright (c) 2011 rubicon IT GmbH
 #ifndef NGT_H
 #define NGT_H
 #pragma once

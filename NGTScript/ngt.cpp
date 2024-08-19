@@ -14,7 +14,7 @@
 #include "sound.h"
 extern "C" {
 #define SRAL_STATIC
-#include "SRAL.h"
+#include "../SRAL/Include/SRAL.h"
 }
 #include <chrono>
 #include<condition_variable>
@@ -359,7 +359,7 @@ long get_update_window_freq() {
 }
 void init_engine() {
 	if (SDL_Init(SDL_INIT_VIDEO) != 0)exit_engine((int)SDL_GetError());
-	SRAL_Initialize("", 0);
+	SRAL_Initialize(0);
 	enet_initialize();
 }
 void set_library_path(const string& path) {
@@ -368,7 +368,7 @@ void set_library_path(const string& path) {
 	filesystem::path new_dir = filesystem::current_path() / path;
 
 	filesystem::current_path(new_dir);
-	SRAL_Initialize(path.c_str(), 0);
+	SRAL_Initialize(0);
 	soundsystem_free();
 	soundsystem_init();
 	filesystem::current_path(current_dir);
@@ -443,7 +443,7 @@ void show_console() {
 #else 
 	return; // Don't need to allocating console in other platforms.
 #endif
-	}
+}
 
 void hide_console() {
 #ifdef _WIN32
