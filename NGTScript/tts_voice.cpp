@@ -42,7 +42,14 @@ bool TTSVoice::speak_interrupt_wait(const std::string& text)
 
 std::vector<std::string> TTSVoice::get_voice_names()
 {
-	return {};
+	std::vector<std::string> names;
+	uint64_t count = SRAL_GetVoiceCountEx(ENGINE_SAPI);
+	if (count == 0)return{};
+	for (uint64_t i = 0; i < count; ++i) {
+		const char* name = SRAL_GetVoiceNameEx(ENGINE_SAPI, i);
+		names.push_back(std::string(name));
+	}
+	return names;
 }
 CScriptArray* TTSVoice::get_voice_names_script() {
 	asIScriptContext* ctx = asGetActiveContext();
@@ -61,22 +68,25 @@ CScriptArray* TTSVoice::get_voice_names_script() {
 }
 void TTSVoice::set_voice(uint64_t voice_index)
 {
+	SRAL_SetVoiceEx(ENGINE_SAPI, voice_index);
 }
 
 int TTSVoice::get_rate() const
 {
-	return 0;
+	return SRAL_GetRateEx(ENGINE_SAPI);
 }
 
 void TTSVoice::set_rate(int new_rate)
 {
+	SRAL_SetRateEx(ENGINE_SAPI, new_rate);
 }
 
 int TTSVoice::get_volume() const
 {
-	return 0;
+	return SRAL_GetVolumeEx(ENGINE_SAPI);;
 }
 
 void TTSVoice::set_volume(int new_volume)
 {
+	SRAL_SetVolumeEx(ENGINE_SAPI, new_volume);
 }
