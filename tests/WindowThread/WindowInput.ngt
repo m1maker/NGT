@@ -5,6 +5,7 @@ void main()
 {
 alert("Waiting", "You have eight seconds to type some text.");
 show_window("Typing test");
+update_window_freq = 0;
 while(true)
 {
 wait(5);

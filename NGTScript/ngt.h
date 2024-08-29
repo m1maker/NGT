@@ -267,6 +267,7 @@ private:
 	bool m_active;
 };
 typedef struct {
+	void* address;
 	ffi_type* returnType;
 	std::vector<ffi_type*> parameters;
 	std::vector<std::string> parameterTypes; // For pointers handling.

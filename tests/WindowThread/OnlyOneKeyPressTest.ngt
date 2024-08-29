@@ -1,6 +1,8 @@
-ulong number;
+#pragma
+long number=0;
 void main(){
 show_window("Test");
+update_window_freq=0;
 while(true){
 wait(5);
 if(key_pressed(SDLK_SPACE)){

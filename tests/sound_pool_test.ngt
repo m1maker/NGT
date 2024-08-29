@@ -1,5 +1,12 @@
-#include "../include/sound_pool.ngt"
+#include "../include/sound_pool.as"
 void main(){
 sound_pool sp;
-alert("W", "W");
+sp.volume = -4;
+show_window("Test");
+sp.maximum_sounds = 100;
+while(true){
+wait(5);
+if(key_repeat(SDLK_SPACE))
+sp.play("C:/windows/media/Windows Default.wav");
+}
 }

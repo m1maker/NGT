@@ -1,0 +1,17 @@
+string str;
+int main() {
+    show_console();
+    str = "Hello, World!";
+    uint64 source = str.c_str();
+    uint64 destination = malloc(20);
+
+    // Copy the contents of the source array to the destination array
+    memcpy(destination, source, c_str_len(source) + 1);
+
+    // Print the contents of the destination array
+    printf("Destination: %s\n", c_str_to_string(destination));
+    free(destination);
+    exec("pause");
+    return 0;
+}
+

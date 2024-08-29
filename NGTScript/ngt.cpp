@@ -1779,6 +1779,7 @@ bool network::is_active() const {
 	return m_active;
 }
 bool library::load(const string& libname) {
+	if (lib != nullptr)this->unload();
 	lib = SDL_LoadObject(libname.c_str());
 	return lib != NULL;
 }
@@ -1789,7 +1790,7 @@ void library_call(asIScriptGeneric* gen) {
 #undef GetObject
 	asIScriptContext* ctx = asGetActiveContext();
 	library* lib_obj = (library*)gen->GetObject();
-
+	void* address = nullptr;
 	void* ref = gen->GetArgAddress(0);
 	std::string func_name = *static_cast<std::string*>(ref);
 	ffi_cif cif;
@@ -1815,21 +1816,23 @@ void library_call(asIScriptGeneric* gen) {
 	std::vector<std::string> first;
 	first.push_back(tokens[0]);  // Return type
 	first.push_back(tokens[1]);  // Function name
-	void* address = SDL_LoadFunction(lib_obj->lib, first[1].c_str());
-	if (address == NULL) {
-		const char* name = first[1].c_str();
-		std::string message = "Signature parse error: GetProcAddress failed for '" + std::string(name) + "'";
-		ctx->SetException(message.c_str());
-		return;
-	}
 	auto it = lib_obj->functions.find(first[1]);
 	if (it != lib_obj->functions.end()) {
 		LibraryFunction func = it->second;
 		return_type = func.returnType;
 		arg_types = func.parameters;
 		paramTypes = func.parameterTypes;
+		address = (void*)func.address;
 	}
 	else {
+		address = SDL_LoadFunction(lib_obj->lib, first[1].c_str());
+		if (address == NULL) {
+			const char* name = first[1].c_str();
+			std::string message = "Signature parse error: GetProcAddress failed for '" + std::string(name) + "'";
+			ctx->SetException(message.c_str());
+			return;
+		}
+
 		// Second array: Parameters
 		std::vector<std::string> last;
 		for (size_t i = 2; i < tokens.size(); ++i) {
@@ -1919,6 +1922,7 @@ void library_call(asIScriptGeneric* gen) {
 			}
 		}
 		LibraryFunction lf;
+		lf.address = (void*)address;
 		lf.returnType = return_type;
 		lf.parameters = arg_types;
 		lf.parameterTypes = paramTypes;
@@ -1976,6 +1980,9 @@ void library_call(asIScriptGeneric* gen) {
 		asINT64 ptr = *(asINT64*)args[i];
 		dict->Set(std::to_string(i + 1), ptr);
 	}
+	arg_types.clear();
+	args.clear();
+	return_type = nullptr;
 	gen->SetReturnObject(dict);
 }
 void library::unload() {

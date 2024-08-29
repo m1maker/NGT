@@ -1,3 +1,4 @@
+const string key = string_base64_encode(string_to_hex("EeSr2op1i"));
 void main()
 {
 dictionary d;
@@ -28,9 +29,9 @@ d.set("ui64", ui64);
 string str="\"hello world!\n\"";
 d.set("str", str);
 
-string s = serialize(d);
+string s = string_encrypt(serialize(d), key);
 
-dictionary d2 = deserialize(s);
+dictionary d2 = deserialize(string_decrypt(s, key));
 
 bool b_2;
 d2.get("b", b_2);

@@ -1,8 +1,9 @@
 timer say;
 void main(){
 show_window("Test");
+update_window_freq = 60; // BGT window update stile
 while(true){
-wait(1);
+wait(5);
 if(!window_active){
 if(say.elapsed_millis>1000){
 speak("Come back!");

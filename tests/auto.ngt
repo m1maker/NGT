@@ -1,0 +1,7 @@
+const auto a = "Test";
+int main(void){
+    show_console();
+    printf("Value is: %s\n", a);
+    exec("pause");
+    return 0;
+}

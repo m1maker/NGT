@@ -1120,7 +1120,7 @@ std::vector<char> load_audio_from_url(const std::string& url) {
 	}
 
 	asIScriptContext* ctx = asGetActiveContext();
-	ctx->SetException("Слишком много перенаправлений");
+	ctx->SetException("");
 	return {};
 }
 
@@ -1278,13 +1278,13 @@ public:
 		current_fx = ma_engine_get_endpoint(&sound_default_mixer);
 	}
 	~sound() {
-		if (active)this->close();
 	}
 	void add() {
 		ref += 1;
 	}
 	void release() {
 		if (--ref < 1) {
+			if (active)this->close();
 			delete this;
 		}
 	}
@@ -1305,6 +1305,7 @@ public:
 		handle_ = new ma_sound;
 		ma_result loading_result = ma_sound_init_from_file(&sound_default_mixer, result.c_str(), 0, NULL, NULL, handle_);
 		if (loading_result != MA_SUCCESS) {
+			delete handle_;
 			active = false;
 			return false;
 		}
@@ -1323,6 +1324,7 @@ public:
 		if (r != MA_SUCCESS)return false;
 		ma_result loading_result = ma_sound_init_from_data_source(&sound_default_mixer, &decoder, 0, 0, handle_);
 		if (loading_result != MA_SUCCESS) {
+			delete handle_;
 			active = false;
 			return false;
 		}
@@ -1345,6 +1347,7 @@ public:
 		handle_ = new ma_sound;
 		ma_result loading_result = ma_sound_init_from_file(&sound_default_mixer, result.c_str(), MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_STREAM, NULL, NULL, handle_);
 		if (loading_result != MA_SUCCESS) {
+			delete handle_;
 			active = false;
 			return false;
 		}
@@ -1366,6 +1369,7 @@ public:
 		}
 		ma_result loading_result = ma_sound_init_from_data_source(&sound_default_mixer, &decoder, 0, 0, handle_);
 		if (loading_result != MA_SUCCESS) {
+			delete handle_;
 			active = false;
 			return false;
 		}
@@ -1424,7 +1428,7 @@ public:
 		ma_sound_seek_to_pcm_frame(handle_, 0);
 	}
 	bool close() {
-		if (!active)return false;
+		if (!is_active())return false;
 		if (reverb) {
 			ma_reverb_node_uninit(&m_reverbNode, NULL);
 			reverb = false;
@@ -1479,7 +1483,7 @@ public:
 		}
 		ma_sound_uninit(handle_);
 		delete handle_;
-		file = "";
+		file.clear();
 		listener_position.reset();
 		source_position.reset();
 		handle_ = nullptr;
@@ -1909,7 +1913,7 @@ public:
 		return m_speed_config.playbackSpeed * 100;
 	}
 	bool is_active() const {
-		return active || handle_ != nullptr;
+		return handle_ != nullptr;
 	}
 
 	bool is_playing() const {

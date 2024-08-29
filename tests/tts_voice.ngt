@@ -2,14 +2,24 @@ tts_voice v;
 bool interrupt = true;
 array<int> pressed;
 void main() {
+	update_window_freq = 0;
 	show_window("TTSVoice");
-	v.speak("Press any key. Press f 1 to switch interrupt.");
+	v.speak("Press any key. Press f 1 to switch interrupt. Press F2 / F3 to set speech rate.");
 	while(true) {
 		wait(5);
 		if (key_pressed(SDLK_F1)) {
 			interrupt = interrupt ? false : true;
 			v.speak_interrupt("Interrupt : " + interrupt);
 		}
+		else if (key_pressed(SDLK_F2) && v.rate > -10) {
+			v.rate = v.rate - 1;
+			v.speak_interrupt(v.rate);
+		}
+		else if (key_pressed(SDLK_F3) && v.rate < 10) {
+			v.rate = v.rate + 1;
+			v.speak_interrupt(v.rate);
+		}
+
 		pressed = keys_pressed();
 		for(uint i=0;i<pressed.length();i++) {
 			if (interrupt)

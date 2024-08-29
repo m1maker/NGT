@@ -1,12 +1,9 @@
-typedef uint64 pointer;
 string text="Hello!";
 void main(){
-pointer char=text.c_str();
+uint64 char=text.c_str();
 alert("Pointer value in memory is", char);
 string result=c_str_to_string(char);
 alert("Char len is", c_str_len(char));
 alert("Char text is", result);
-result.resize(0);
-char=0;
 exit(0);
 }

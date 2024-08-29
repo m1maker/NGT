@@ -1,5 +1,11 @@
 void main(){
 show_window("Window");
-wait(1000);
+timer window_creating;
+while(get_window_handle()==0){
+if(window_creating.elapsed_millis>2000){
+alert("Handle", "Failed to create window");
+exit(-1);
+}
+}
 alert("Handle", get_window_handle());
 }

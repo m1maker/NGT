@@ -1,5 +1,6 @@
 sound s;
 void main(){
+screen_reader_interrupt = true;
 show_window("Audio device test");
 s.load("C:/windows/media/ring01.wav");
 s.play_looped();

@@ -25,24 +25,29 @@ exit(0);
 }
 // Allocating memory for output buffer;
 uint64 name_ptr=malloc(500);
-name_ptr=uint64(kernel32.call("int GetComputerNameW(char*, int*);", name_ptr, 500)[1]);
+name_ptr=uint64(kernel32.call("int GetComputerNameW(char*, int*);", uint64(name_ptr), 500)[1]);
 wstring name=wc_str_to_wstring(name_ptr);
-// name_ptr is no longer needed. Let's free it.
 free(name_ptr);
-name_ptr=0;
 show_window("Window");
+timer window_creating;
+while(get_window_handle()==0){
+if(window_creating.elapsed_millis>2000){
+alert("LibraryTest", "Failed to create window");
+exit(-1);
+}
+}
+update_window_freq=0;
 set_window_closable(false);
 // Now, set window text from a DLL.
-wait(1000);
 uint64 window = get_window_handle();
 user32.call("int SetWindowTextW(long, char*);", window, name.c_str());
 while(true){
 kernel32.call("void Sleep(int);", 5);
 if(key_pressed(SDLK_ESCAPE))hide_window();
+if(key_pressed(SDLK_SPACE))kernel32.call("int Beep(int, int);", 500, 100);
 bool is_window=bool(user32.call("long IsWindow(long);", window)[0]);
 if(!is_window)break;
 }
-user32.unload();
 kernel32.unload();
 exit(0);
 }

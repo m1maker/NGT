@@ -5,6 +5,7 @@ screen_reader_interrupt=true;
 speak("Opening window");
 wait(500);
 show_window("Window test");
+update_window_freq=0;
 speak("Press and release any key");
 wait(100);
 while(true){

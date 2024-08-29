@@ -39,6 +39,7 @@ static void crypt(std::vector<asBYTE>& bytes) {
 }
 
 
+
 static std::string get_exe() {
 #ifdef _WIN32
 	std::vector<wchar_t> pathBuf;
@@ -89,6 +90,17 @@ static std::vector<std::string> string_split(const std::string& delim, const std
 
 	return array;
 }
+int PragmaCallback(const std::string& pragmaText, CScriptBuilder& builder, void* userParam) {
+	if (pragmaText.empty())return -1;
+	std::vector<std::string> split = string_split(" ", pragmaText);
+	if (split.size() == 0)return -2;
+	if (split[1] == "define") {
+		builder.DefineWord(split[2].c_str());
+	}
+	return 0;
+}
+
+
 
 std::vector <asBYTE> buffer;
 asUINT buffer_size;
@@ -285,6 +297,7 @@ auto main(int argc, char* argv[]) -> int {
 		engine->RegisterGlobalFunction("int exec(const string &in, string &out)", asFUNCTIONPR(ExecSystemCmd, (const string&, string&), int), asCALL_CDECL);
 		engine->RegisterGlobalProperty("const bool SCRIPT_COMPILED", (void*)&SCRIPT_COMPILED);
 		// Compile the script
+		builder.SetPragmaCallback(PragmaCallback, nullptr);
 		asIScriptModule* module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
 		int result = builder.StartNewModule(engine, "ngtgame");
 		result = builder.AddSectionFromFile(argv[1]);
@@ -357,9 +370,11 @@ auto main(int argc, char* argv[]) -> int {
 
 
 		// Compile the script
+		builder.SetPragmaCallback(PragmaCallback, nullptr);
 		asIScriptModule* module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
 		int result = builder.StartNewModule(engine, "ngtgame");
 		result = builder.AddSectionFromFile(argv[1]);
+
 		result = builder.BuildModule();
 
 		if (result < 0) {
