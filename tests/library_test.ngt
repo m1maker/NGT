@@ -36,7 +36,7 @@ alert("LibraryTest", "Failed to create window");
 exit(-1);
 }
 }
-update_window_freq=0;
+update_window_freq=5;
 set_window_closable(false);
 // Now, set window text from a DLL.
 uint64 window = get_window_handle();

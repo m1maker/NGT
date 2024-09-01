@@ -30,6 +30,55 @@
 #include <cstdlib>
 #include <fstream>
 #include <thread>
+#include "Poco/Glob.h"
+#include "Poco/Path.h"
+
+int IncludeCallback(const char* include, const char* from, CScriptBuilder* builder, void* userParam) {
+	// 1. Resolve the relative path
+	std::string absoluteIncludePath = Poco::Path(from).append("../" + std::string(include)).toString(); // Construct an absolute path
+	// 2. Try to find the file directly
+	if (builder->AddSectionFromFile(absoluteIncludePath.c_str()) > -1) {
+		return 0;
+	}
+
+	// 3. Try the 'include' directory
+	std::string includeDirectoryPath = Poco::Path("include", include).toString();
+	if (builder->AddSectionFromFile(includeDirectoryPath.c_str()) > -1) {
+		return 0;
+	}
+
+	// 4. Check for .as and .ngt extensions in both paths
+	std::string currentAsPath = absoluteIncludePath + ".as";
+	if (builder->AddSectionFromFile(currentAsPath.c_str()) > -1) {
+		return 0;
+	}
+	std::string currentNgtPath = absoluteIncludePath + ".ngt";
+	if (builder->AddSectionFromFile(currentNgtPath.c_str()) > -1) {
+		return 0;
+	}
+
+	std::string includeAsPath = includeDirectoryPath + ".as";
+	if (builder->AddSectionFromFile(includeAsPath.c_str()) > -1) {
+		return 0;
+	}
+	std::string includeNgtPath = includeDirectoryPath + ".ngt";
+	if (builder->AddSectionFromFile(includeNgtPath.c_str()) > -1) {
+		return 0;
+	}
+
+	// 5. Handle wildcards
+	std::set<std::string> matches;
+	Poco::Glob::glob(absoluteIncludePath, matches);
+	for (const auto& match : matches) {
+		builder->AddSectionFromFile(match.c_str());
+	}
+	Poco::Glob::glob(includeDirectoryPath, matches);
+	for (const auto& match : matches) {
+		builder->AddSectionFromFile(match.c_str());
+	}
+
+	return 0;
+}
 CContextMgr context_manager;
 CScriptBuilder builder;
 static void crypt(std::vector<asBYTE>& bytes) {
@@ -187,7 +236,7 @@ static int Compile(asIScriptEngine* engine, const char* outputFile)
 		return -1;
 	}
 
-	r = mod->SaveByteCode(&stream);
+	r = mod->SaveByteCode(&stream, false);
 	if (r < 0)
 	{
 		engine->WriteMessage(outputFile, 0, 0, asMSGTYPE_ERROR, "Failed to write the bytecode");
@@ -298,6 +347,7 @@ auto main(int argc, char* argv[]) -> int {
 		engine->RegisterGlobalProperty("const bool SCRIPT_COMPILED", (void*)&SCRIPT_COMPILED);
 		// Compile the script
 		builder.SetPragmaCallback(PragmaCallback, nullptr);
+		builder.SetIncludeCallback(IncludeCallback, nullptr);
 		asIScriptModule* module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
 		int result = builder.StartNewModule(engine, "ngtgame");
 		result = builder.AddSectionFromFile(argv[1]);
@@ -371,6 +421,8 @@ auto main(int argc, char* argv[]) -> int {
 
 		// Compile the script
 		builder.SetPragmaCallback(PragmaCallback, nullptr);
+		builder.SetIncludeCallback(IncludeCallback, nullptr);
+
 		asIScriptModule* module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
 		int result = builder.StartNewModule(engine, "ngtgame");
 		result = builder.AddSectionFromFile(argv[1]);

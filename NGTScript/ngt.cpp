@@ -360,6 +360,7 @@ long get_update_window_freq() {
 void init_engine() {
 	if (SDL_Init(SDL_INIT_VIDEO) != 0)exit_engine((int)SDL_GetError());
 	SRAL_Initialize(0);
+	SRAL_RegisterKeyboardHooks();
 	enet_initialize();
 }
 void set_library_path(const string& path) {
@@ -649,6 +650,7 @@ void exit_engine(int return_number)
 	soundsystem_free();
 	hide_window();
 	enet_deinitialize();
+	SRAL_UnregisterKeyboardHooks();
 	SRAL_Uninitialize();
 	SDL_Quit();
 	std::exit(0);
@@ -1067,13 +1069,7 @@ int question(const string& title, const string& text) {
 
 
 void wait(uint64_t time) {
-	timer waittimer;
-	int el = 0;
-	while (el < time) {
-		unsigned int wt = (time < 5 ? time : 5);
-		SDL_Delay(wt);
-		el = waittimer.elapsed_millis();
-	}
+	std::this_thread::sleep_for(std::chrono::milliseconds(time));
 }
 string serialize(CScriptDictionary* data) {
 	if (data == nullptr) return "";

@@ -1,4 +1,4 @@
-#include "../include/sound_pool.as"
+#include "../../include/sound_pool"
 void main(){
 sound_pool sp;
 sp.volume = -4;

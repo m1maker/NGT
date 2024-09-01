@@ -390,10 +390,8 @@ network* fnetwork() { return new network; }
 void MessageCallback(const asSMessageInfo* msg, void* param)
 {
 	const char* type = "ERR ";
-	if (msg->type == asMSGTYPE_WARNING)
+	if (msg->type == asMSGTYPE_WARNING || msg->type == asMSGTYPE_INFORMATION)
 		return;
-	else if (msg->type == asMSGTYPE_INFORMATION)
-		type = "INFO";
 	char rowStr[10], colStr[10];
 	_itoa_s(msg->row, rowStr, 10);
 	_itoa_s(msg->col, colStr, 10);
