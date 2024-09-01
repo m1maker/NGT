@@ -1481,9 +1481,11 @@ public:
 			ma_decoder_uninit(&decoder);
 			decoderInitialized = false;
 		}
-		ma_sound_uninit(handle_);
-		delete handle_;
-		file.clear();
+		if (handle_ != nullptr) {
+			ma_sound_uninit(handle_);
+			delete handle_;
+		}
+		if (!file.empty())file.clear();
 		listener_position.reset();
 		source_position.reset();
 		handle_ = nullptr;
@@ -1913,7 +1915,7 @@ public:
 		return m_speed_config.playbackSpeed * 100;
 	}
 	bool is_active() const {
-		return handle_ != nullptr;
+		return active;
 	}
 
 	bool is_playing() const {
