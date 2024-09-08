@@ -4,7 +4,7 @@ void main(){
 show_window("Test");
 update_window_freq=0;
 while(true){
-wait(5);
+wait_event();
 if(key_pressed(SDLK_SPACE)){
 number+=1;
 speak(""+number, true);

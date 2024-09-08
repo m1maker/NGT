@@ -414,18 +414,21 @@ void Print(const char* format, ...)
 	va_end(args);
 }
 SDL_Rect* frect() { return new SDL_Rect; }
+// One line sizeof
+void as_sizeof(asIScriptGeneric* gen) {
+	gen->SetReturnQWord(gen->GetEngine()->GetSizeOfPrimitiveType(gen->GetArgTypeId(0)));
+}
+
 void RegisterFunctions(asIScriptEngine* engine)
 {
 	engine->SetEngineProperty(asEP_ALLOW_MULTILINE_STRINGS, true);
 	engine->RegisterTypedef("long", "int64");
 	engine->RegisterTypedef("ulong", "uint64");
-	engine->RegisterTypedef("short", "int8");
-	engine->RegisterTypedef("ushort", "uint8");
-	engine->RegisterTypedef("dword", "uint64");
-	engine->RegisterTypedef("word", "uint8");
+	engine->RegisterTypedef("char", "int8");
+	engine->RegisterTypedef("uchar", "uint8");
+	engine->RegisterTypedef("short", "int16");
+	engine->RegisterTypedef("ushort", "uint16");
 	engine->RegisterTypedef("size_t", "uint64");
-	engine->RegisterTypedef("c_str", "int8");
-	engine->RegisterTypedef("hwnd", "uint8");
 	engine->RegisterTypedef("surface", "int64");
 	engine->RegisterObjectType("rect", sizeof(SDL_Rect), asOBJ_REF | asOBJ_NOCOUNT);
 	engine->RegisterObjectBehaviour("rect", asBEHAVE_FACTORY, "rect@ r()", asFUNCTION(frect), asCALL_CDECL);
@@ -444,9 +447,11 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterObjectMethod("vector", "float get_length()const property", asMETHOD(ngtvector, get_length), asCALL_THISCALL);
 	engine->RegisterObjectMethod("vector", "vector &opAssign(const vector&in)", asMETHOD(ngtvector, operator=), asCALL_THISCALL);
 	engine->RegisterObjectMethod("vector", "void reset()const", asMETHOD(ngtvector, reset), asCALL_THISCALL);
+	engine->SetDefaultNamespace("os");
 	engine->RegisterGlobalFunction("int get_cpu_count()property", asFUNCTION(get_cpu_count), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int get_system_ram()property", asFUNCTION(get_system_ram), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string get_platform()property", asFUNCTION(get_platform), asCALL_CDECL);
+	engine->SetDefaultNamespace("");
 
 	engine->RegisterGlobalFunction("uint64 get_time_stamp_millis()property", asFUNCTION(get_time_stamp_millis), asCALL_CDECL);
 	engine->RegisterGlobalFunction("uint64 get_time_stamp_seconds()property", asFUNCTION(get_time_stamp_seconds), asCALL_CDECL);
@@ -494,6 +499,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("int get_MOUSE_X()property", asFUNCTION(get_MOUSE_X), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int get_MOUSE_Y()property", asFUNCTION(get_MOUSE_Y), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int get_MOUSE_Z()property", asFUNCTION(get_MOUSE_Z), asCALL_CDECL);
+	engine->SetDefaultNamespace("internet");
 	engine->RegisterGlobalFunction("void ftp_download(const string& in, const string &in)", asFUNCTION(ftp_download), asCALL_CDECL);
 	engine->RegisterEnum("smtp_login_method");
 	engine->RegisterEnumValue("smtp_login_method", "AUTH_NONE", Poco::Net::SMTPClientSession::AUTH_NONE);
@@ -504,6 +510,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterEnumValue("smtp_login_method", "AUTH_XOAUTH2", Poco::Net::SMTPClientSession::AUTH_XOAUTH2);
 	engine->RegisterEnumValue("smtp_login_method", "AUTH_NTLM", Poco::Net::SMTPClientSession::AUTH_NTLM);
 	engine->RegisterGlobalFunction("void mail_send(smtp_login_method, uint, const string &in, const string &in, const string&in, const string&in, const string&in, const string&in, const string&in, const string&in=\"\")", asFUNCTION(mail_send), asCALL_CDECL);
+	engine->SetDefaultNamespace("");
 
 	engine->RegisterGlobalFunction("void exit(int=0)", asFUNCTION(exit_engine), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string number_to_words(uint64, bool)", asFUNCTION(number_to_words), asCALL_CDECL);
@@ -529,10 +536,12 @@ void RegisterFunctions(asIScriptEngine* engine)
 
 	engine->RegisterGlobalFunction("string string_encrypt(const string &in, string &in)", asFUNCTION(string_encrypt), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string string_decrypt(const string &in, string &in)", asFUNCTION(string_decrypt), asCALL_CDECL);
+	engine->SetDefaultNamespace("internet");
 	engine->RegisterGlobalFunction("string url_decode(const string &in)", asFUNCTION(url_decode), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string url_encode(const string &in)", asFUNCTION(url_encode), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string url_get(const string &in)", asFUNCTION(url_get), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string url_post(const string &in, const string &in)", asFUNCTION(url_post), asCALL_CDECL);
+	engine->SetDefaultNamespace("");
 	engine->RegisterGlobalFunction("string ascii_to_character(int)", asFUNCTION(ascii_to_character), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int character_to_ascii(const string      &in)", asFUNCTION(character_to_ascii), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string hex_to_string(const string& in)", asFUNCTION(hex_to_string), asCALL_CDECL);
@@ -546,6 +555,8 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("int question(const string &in, const string &in)", asFUNCTION(question), asCALL_CDECL);
 
 	engine->RegisterGlobalFunction("void wait(uint64)", asFUNCTION(wait), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void wait_event()", asFUNCTION(wait_event), asCALL_CDECL);
+
 	engine->RegisterGlobalFunction("string read_environment_variable(const string&in)", asFUNCTION(read_environment_variable), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool write_environment_variable(const string&in, const string &in)", asFUNCTION(write_environment_variable), asCALL_CDECL);
 
@@ -735,6 +746,8 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterObjectMethod("sqlite3", "bool get_active() property", asMETHOD(ngtsqlite3, get_active), asCALL_THISCALL);
 	engine->RegisterObjectMethod("string", "uint64 c_str()", asMETHOD(std::string, c_str), asCALL_THISCALL);
 	engine->RegisterObjectMethod("wstring", "uint64 c_str()", asMETHOD(std::wstring, c_str), asCALL_THISCALL);
+	engine->RegisterGlobalFunction("size_t sizeof(const ?&in = null)", asFUNCTION(as_sizeof), asCALL_GENERIC);
+
 	engine->RegisterGlobalProperty("const int SDLK_UNKNOWN", (void*)&AS_SDLK_UNKNOWN);
 	engine->RegisterGlobalProperty("const int SDLK_BACKSPACE", (void*)&AS_SDLK_BACKSPACE);
 	engine->RegisterGlobalProperty("const int SDLK_TAB", (void*)&AS_SDLK_TAB);

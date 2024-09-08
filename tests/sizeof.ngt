@@ -1,0 +1,20 @@
+void main(){
+int8 test8=44;
+int16 test16=233;
+int32 test32=21421;
+int64 test64=124433215;
+string test_str="Hello, world!";
+test test_type;
+alert("Char", sizeof(test8));
+alert("Short", sizeof(test16));
+alert("Int", sizeof(test32));
+alert("Long", sizeof(test64));
+alert("Void function", sizeof(f));
+alert("Test as class", sizeof(test_type));
+alert("String", sizeof(test_str));
+
+}
+void f(){
+throw("");
+}
+class test{int val;};

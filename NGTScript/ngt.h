@@ -162,6 +162,7 @@ string string_to_hex(string the_string);
 bool alert(const string& title, const string& text, const string& button_name = "OK");
 int question(const string& title, const string& text);
 void wait(uint64_t);
+void wait_event();
 string read_environment_variable(const string&);
 bool write_environment_variable(const string& path, const string& value);
 string serialize(CScriptDictionary*);

@@ -1,4 +1,4 @@
-void main(){
+shared void main(){
 show_window("Window");
 timer window_creating;
 while(get_window_handle()==0){

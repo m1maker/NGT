@@ -8,7 +8,7 @@ show_window("Typing test");
 update_window_freq = 0;
 while(true)
 {
-wait(5);
+wait_event();
 if(wait_time.elapsed_millis>= 8000)
 {
 wait_time.pause();

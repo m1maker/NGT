@@ -61,6 +61,7 @@ unique_ptr<T, D> make_handle(T* handle, D deleter)
 using namespace std;
 int mouse_x = 0, mouse_y = 0, mouse_z = 0;
 SDL_Event e;
+Poco::Event g_windowEvent;
 bool window_is_focused = false;
 bool window_event_show = false;
 bool window_event_hide = false;
@@ -287,7 +288,7 @@ public:
 			}
 			if (win != nullptr) {
 				SDL_bool result = SDL_PollEvent(&e);
-				//if (result == SDL_FALSE) continue;
+				if (result == SDL_TRUE)g_windowEvent.set();
 				if (window_event_push) {
 					window_event_push = false;
 					SDL_PushEvent(&e);
@@ -1070,6 +1071,9 @@ int question(const string& title, const string& text) {
 
 void wait(uint64_t time) {
 	std::this_thread::sleep_for(std::chrono::milliseconds(time));
+}
+void wait_event() {
+	g_windowEvent.wait();
 }
 string serialize(CScriptDictionary* data) {
 	if (data == nullptr) return "";

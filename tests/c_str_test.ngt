@@ -1,9 +1,9 @@
 string text="Hello!";
 void main(){
-uint64 char=text.c_str();
-alert("Pointer value in memory is", char);
-string result=c_str_to_string(char);
-alert("Char len is", c_str_len(char));
+uint64 c_str=text.c_str();
+alert("Pointer value in memory is", c_str);
+string result=c_str_to_string(c_str);
+alert("Char len is", c_str_len(c_str));
 alert("Char text is", result);
 exit(0);
 }

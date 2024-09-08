@@ -6,7 +6,7 @@ void main() {
 	show_window("TTSVoice");
 	v.speak("Press any key. Press f 1 to switch interrupt. Press F2 / F3 to set speech rate.");
 	while(true) {
-		wait(5);
+		wait_event();
 		if (key_pressed(SDLK_F1)) {
 			interrupt = interrupt ? false : true;
 			v.speak_interrupt("Interrupt : " + interrupt);

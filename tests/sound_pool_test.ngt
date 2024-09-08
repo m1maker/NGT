@@ -4,8 +4,9 @@ sound_pool sp;
 sp.volume = -4;
 show_window("Test");
 sp.maximum_sounds = 100;
+update_window_freq=0;
 while(true){
-wait(5);
+wait_event();
 if(key_repeat(SDLK_SPACE))
 sp.play("C:/windows/media/Windows Default.wav");
 }

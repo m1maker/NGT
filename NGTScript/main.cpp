@@ -32,7 +32,7 @@
 #include <thread>
 #include "Poco/Glob.h"
 #include "Poco/Path.h"
-
+#include "Poco/Exception.h"
 int IncludeCallback(const char* include, const char* from, CScriptBuilder* builder, void* userParam) {
 	// 1. Resolve the relative path
 	std::string absoluteIncludePath = Poco::Path(from).append("../" + std::string(include)).toString(); // Construct an absolute path
@@ -79,7 +79,6 @@ int IncludeCallback(const char* include, const char* from, CScriptBuilder* build
 
 	return 0;
 }
-CContextMgr context_manager;
 CScriptBuilder builder;
 static void crypt(std::vector<asBYTE>& bytes) {
 	for (size_t i = 0; i < bytes.size(); ++i) {
@@ -221,37 +220,46 @@ public:
 };
 
 
-static int Compile(asIScriptEngine* engine, const char* outputFile)
+asIScriptModule* Compile(asIScriptEngine* engine, const char* inputFile)
 {
-	int r;
+	builder.SetPragmaCallback(PragmaCallback, nullptr);
+	builder.SetIncludeCallback(IncludeCallback, nullptr);
+	asIScriptModule* module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
+	int result = builder.StartNewModule(engine, "ngtgame");
+	result = builder.AddSectionFromFile(inputFile);
+
+	result = builder.BuildModule();
+
+	if (result < 0) {
+		std::thread t(show_message);
+		t.join();
+
+		return nullptr;
+	}
 	CBytecodeStream stream;
-	asIScriptModule* mod = engine->GetModule("ngtgame");
-	if (mod == 0)
+	if (module == 0)
 	{
-		engine->WriteMessage(outputFile, 0, 0, asMSGTYPE_ERROR, "Failed to retrieve the compiled bytecode");
+		engine->WriteMessage(inputFile, 0, 0, asMSGTYPE_ERROR, "Failed to retrieve the compiled bytecode");
 
 		std::thread t(show_message);
 		t.join();
 
-		return -1;
+		return nullptr;
 	}
 
-	r = mod->SaveByteCode(&stream, false);
-	if (r < 0)
+	result = module->SaveByteCode(&stream, false);
+	if (result < 0)
 	{
-		engine->WriteMessage(outputFile, 0, 0, asMSGTYPE_ERROR, "Failed to write the bytecode");
+		engine->WriteMessage(inputFile, 0, 0, asMSGTYPE_ERROR, "Failed to write the bytecode");
 
 		std::thread t(show_message);
 		t.join();
 
-		return -1;
+		return nullptr;
 	}
 	buffer = stream.GetCode();
 	buffer_size = stream.GetSize();
-	alert("NGT", "Script was compiled successfully");
-
-
-	return 0;
+	return module;
 }
 
 static int Load(asIScriptEngine* engine, std::vector<asBYTE> code)
@@ -280,16 +288,90 @@ static int Load(asIScriptEngine* engine, std::vector<asBYTE> code)
 		return -1;
 	}
 
-
 	return 0;
 }
-
+class NGTScripting {
+public:
+	asIScriptEngine* scriptEngine;
+	asIScriptContext* scriptContext;
+	NGTScripting() {
+		scriptEngine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
+		if (scriptEngine == nullptr) {
+			std::cout << "Failed to create the script engine." << std::endl;
+			std::exit(-1);
+		}
+		scriptEngine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
+	}
+	~NGTScripting() {
+		if (scriptContext != nullptr) {
+			scriptContext->Release();
+		}
+		scriptEngine->ShutDownAndRelease();
+	}
+	void RegisterStd() {
+		RegisterStdString(scriptEngine);
+		RegisterStdWstring(scriptEngine);
+		RegisterScriptArray(scriptEngine, true);
+		RegisterStdStringUtils(scriptEngine);
+		RegisterScriptDictionary(scriptEngine);
+		RegisterScriptDateTime(scriptEngine);
+		RegisterScriptFile(scriptEngine);
+		RegisterScriptFileSystem(scriptEngine);
+		RegisterExceptionRoutines(scriptEngine);
+		RegisterScriptMath(scriptEngine);
+		RegisterScriptHandle(scriptEngine);
+		RegisterScriptAny(scriptEngine);
+		RegisterFunctions(scriptEngine);
+		scriptEngine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
+		scriptEngine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
+		scriptEngine->RegisterGlobalFunction("int exec(const string &in, string &out)", asFUNCTIONPR(ExecSystemCmd, (const string&, string&), int), asCALL_CDECL);
+		scriptEngine->RegisterGlobalProperty("const bool SCRIPT_COMPILED", (void*)&SCRIPT_COMPILED);
+	}
+	int Exec(asIScriptFunction* func) {
+		if (func == nullptr)return -1;
+		try {
+			scriptContext = scriptEngine->RequestContext();
+			if (scriptContext == nullptr) {
+				return -2;
+			}
+			scriptContext->Prepare(func);
+			int result = scriptContext->Execute();
+			if (result == asEXECUTION_ABORTED) {
+				return 0;
+			}
+			else if (result == asEXECUTION_FINISHED && func->GetReturnTypeId() != asTYPEID_VOID) {
+				return scriptContext->GetReturnDWord();
+			}
+			else {
+				alert("NGTRuntimeError", GetExceptionInfo(scriptContext, true));
+				return -1;
+			}
+		}
+		catch (const std::exception& e) {
+			alert("NGTRuntimeError", e.what());
+			return -1;
+		}
+		catch (const Poco::Exception& e) {
+			alert("NGTRuntimeError", e.displayText());
+			return -1;
+		}
+		catch (...) {
+			alert("NGTRuntimeError", "Unknown exception.");
+			return -1;
+		}
+		return 0;
+	};
+};
 
 std::string filename;
 std::string flag;
 int scriptArg = 0;
 std::string this_exe;
+NGTScripting app;
 auto main(int argc, char* argv[]) -> int {
+	asIScriptEngine* engine = app.scriptEngine;
+	app.RegisterStd();
+	asIScriptModule* module = nullptr;
 	this_exe = get_exe();
 	std::fstream read_file(this_exe.c_str(), std::ios::binary | std::ios::in);
 	read_file.seekg(0, std::ios::end);
@@ -304,11 +386,8 @@ auto main(int argc, char* argv[]) -> int {
 	}
 	else {
 		if (argc < 2) {
-			asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-			engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
 			show_console();
 			engine->WriteMessage(get_exe().c_str(), 0, 0, asMSGTYPE_INFORMATION, "Something went wrong when starting the engine.\r\nNothing to debug, nothing to compile.\r\nArguments and flags that can be used:\r\n\"NGTScript.exe <filename> -d\" - Debug a script.\r\n\"NGTScript.exe <filename> -c\" - Compile a script to executable file.\r\n\"NGTScript.exe <output file> -i\" - Write engine config to a file.");
-			engine->ShutDownAndRelease();
 			ExecSystemCmd("pause");
 			hide_console();
 			return -1;
@@ -321,52 +400,12 @@ auto main(int argc, char* argv[]) -> int {
 	g_argv = argv + (scriptArg + 1);
 
 	if (flag == "-c") {
-		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
-
-		// Register any necessary functions and types
-		// ...
-		RegisterStdString(engine);
-		RegisterStdWstring(engine);
-		RegisterScriptArray(engine, true);
-		RegisterStdStringUtils(engine);
-		RegisterScriptDictionary(engine);
-		RegisterScriptDateTime(engine);
-		RegisterScriptFile(engine);
-		RegisterScriptFileSystem(engine);
-		RegisterExceptionRoutines(engine);
-		RegisterScriptMath(engine);
-		RegisterScriptHandle(engine);
-		RegisterScriptAny(engine);
-		context_manager.RegisterThreadSupport(engine);
-		context_manager.RegisterCoRoutineSupport(engine);
-		RegisterFunctions(engine);
-		engine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
-		engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
-		engine->RegisterGlobalFunction("int exec(const string &in, string &out)", asFUNCTIONPR(ExecSystemCmd, (const string&, string&), int), asCALL_CDECL);
-		engine->RegisterGlobalProperty("const bool SCRIPT_COMPILED", (void*)&SCRIPT_COMPILED);
 		// Compile the script
-		builder.SetPragmaCallback(PragmaCallback, nullptr);
-		builder.SetIncludeCallback(IncludeCallback, nullptr);
-		asIScriptModule* module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
-		int result = builder.StartNewModule(engine, "ngtgame");
-		result = builder.AddSectionFromFile(argv[1]);
-
-		result = builder.BuildModule();
-
-		if (result < 0) {
-			std::thread t(show_message);
-			t.join();
-
-			return 1;
+		module = Compile(engine, argv[1]);
+		if (module == nullptr) {
+			std::cout << "Failed to compile script." << std::endl;
+			return -1;
 		}
-		module = engine->GetModule("ngtgame");
-		if (module)
-		{
-			Compile(engine, "game_object.ngtb");
-		}
-
-
 		// Call compiler to create executable file
 		std::string main_exe = get_exe();
 		std::vector<std::string> name_split = string_split(".", filename);
@@ -393,130 +432,25 @@ auto main(int argc, char* argv[]) -> int {
 
 
 	else if (flag == "-d") {
-		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
-
-		// Register any necessary functions and types
-		// ...
-		RegisterStdString(engine);
-		RegisterStdWstring(engine);
-		RegisterScriptArray(engine, true);
-		RegisterStdStringUtils(engine);
-		RegisterScriptDictionary(engine);
-		RegisterScriptDateTime(engine);
-		RegisterScriptFile(engine);
-		RegisterScriptFileSystem(engine);
-		RegisterExceptionRoutines(engine);
-		RegisterScriptMath(engine);
-		RegisterScriptHandle(engine);
-		RegisterScriptAny(engine);
-		context_manager.RegisterThreadSupport(engine);
-		context_manager.RegisterCoRoutineSupport(engine);
-		RegisterFunctions(engine);
-		engine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
-		engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
-		engine->RegisterGlobalFunction("int exec(const string &in, string &out)", asFUNCTIONPR(ExecSystemCmd, (const string&, string&), int), asCALL_CDECL);
-		engine->RegisterGlobalProperty("const bool SCRIPT_COMPILED", (void*)&SCRIPT_COMPILED);
-
-
 		// Compile the script
-		builder.SetPragmaCallback(PragmaCallback, nullptr);
-		builder.SetIncludeCallback(IncludeCallback, nullptr);
-
-		asIScriptModule* module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
-		int result = builder.StartNewModule(engine, "ngtgame");
-		result = builder.AddSectionFromFile(argv[1]);
-
-		result = builder.BuildModule();
-
-		if (result < 0) {
-			std::thread t(show_message);
-			t.join();
-
-
-			return 1;
+		module = Compile(engine, argv[1]);
+		if (module == nullptr) {
+			std::cout << "Failed to compile script." << std::endl;
+			return -1;
 		}
-		int r;
 		// Execute the script
-		asIScriptContext* ctx = engine->CreateContext();
-		if (ctx == 0)
-		{
-			alert("NGTExecutableError", "Failed to create the context.");
-			engine->Release();
-			return -1;
-		}
-		// We don't want to allow the script to hang the application, e.g. with an
-		// infinite loop, so we'll use the line callback function to set a timeout
-		// that will abort the script after a certain time. Before executing the 
-		// script the timeOut variable will be set to the time when the script must 
-		// stop executing. 
-		// Find the func        tion for the function we want to execute.
-		asIScriptFunction* func = engine->GetModule("ngtgame")->GetFunctionByName("main");
-		if (func == 0)
-		{
-			alert("NGTExecutableError", "No entry point found (either 'int main()' or 'void main()'.)");
-			ctx->Release();
-			engine->Release();
-			return -1;
-		}
-		// Prepare the script context with the function we wish to execute. Prepare()
-		// must be called on the context before each new script function that will be
-		// executed. Note, that if you intend to execute the same function several 
-		// times, it might be a good idea to store the function returned by 
-		// GetFunctionByDecl(), so that this relatively slow call can be skipped.
-		r = ctx->Prepare(func);
-		init_engine();
-		if (r < 0)
-		{
-			alert("NGTExecutableError", "Failed to prepare the context.");
-			ctx->Release();
-			engine->Release();
-			return -1;
-		}
-
-		// Set the timeout before executing the function. Give the function 1 sec
-		// to return before we'll abort it.
-
-		// Execute the function
-		result = ctx->Execute();
-		if (result != asEXECUTION_FINISHED) {
-			std::string output = GetExceptionInfo(ctx, true);
-			alert("NGTRuntimeError", "Info: " + output);
+		asIScriptFunction* func = module->GetFunctionByName("main");
+		if (func == 0) {
+			std::cout << "Failed to call invoke_main." << std::endl;
 			return 1;
 		}
-
-		// Clean up
-		ctx->Release();
-		engine->ShutDownAndRelease();
-
-
+		init_engine();
+		int result = app.Exec(func);
+		return result;
 	}
 	else if (flag == "-b") {
 		SCRIPT_COMPILED = true;
-		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
-
-		RegisterStdString(engine);
-		RegisterStdWstring(engine);
-		RegisterScriptArray(engine, true);
-		RegisterStdStringUtils(engine);
-		RegisterScriptDictionary(engine);
-		RegisterScriptDateTime(engine);
-		RegisterScriptFile(engine);
-		RegisterScriptFileSystem(engine);
-		RegisterExceptionRoutines(engine);
-		RegisterScriptMath(engine);
-		RegisterScriptHandle(engine);
-		RegisterScriptAny(engine);
-		context_manager.RegisterThreadSupport(engine);
-		context_manager.RegisterCoRoutineSupport(engine);
-		RegisterFunctions(engine);
-		engine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
-		engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
-		engine->RegisterGlobalFunction("int exec(const string &in, string &out)", asFUNCTIONPR(ExecSystemCmd, (const string&, string&), int), asCALL_CDECL);
-		engine->RegisterGlobalProperty("const bool SCRIPT_COMPILED", (void*)&SCRIPT_COMPILED);
-
-
+		// Execute the script
 		asIScriptModule* module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
 		int result;
 		module = engine->GetModule("ngtgame");
@@ -548,85 +482,16 @@ auto main(int argc, char* argv[]) -> int {
 
 			Load(engine, buffer);
 		}
-		asIScriptContext* ctx = engine->CreateContext();
-		if (ctx == 0)
-		{
-			alert("NGTExecutableError", "Failed to create the context.");
-			engine->Release();
-			return -1;
-		}
-
-		// We don't want to allow the script to hang the application, e.g. with an
-		// infinite loop, so we'll use the line callback function to set a timeout
-		// that will abort the script after a certain time. Before executing the 
-		// script the timeOut variable will be set to the time when the script must 
-		// stop executing. 
-		// Find the func        tion for the function we want to execute.
-		asIScriptFunction* func = engine->GetModule("ngtgame")->GetFunctionByName("main");
-		if (func == 0)
-		{
-			alert("NGTExecutableError", "No entry point found (either 'int main()' or 'void main()'.)");
-			ctx->Release();
-			engine->Release();
-			return -1;
-		}
-
-		// Prepare the script context with the function we wish to execute. Prepare()
-		// must be called on the context before each new script function that will be
-		// executed. Note, that if you intend to execute the same function several 
-		// times, it might be a good idea to store the function returned by 
-		// GetFunctionByDecl(), so that this relatively slow call can be skipped.
-
-		int r = ctx->Prepare(func);
-		init_engine();
-		if (r < 0)
-		{
-			alert("NGTExecutableError", "Failed to prepare the context.");
-			ctx->Release();
-			engine->Release();
-			return -1;
-		}
-
-		// Set the timeout before executing the function. Give the function 1 sec
-		// to return before we'll abort it.
-
-		// Execute the function
-		result = ctx->Execute();
-		if (result != asEXECUTION_FINISHED) {
-			std::string output = GetExceptionInfo(ctx, true);
-			alert("NGTRuntimeError", "Info: " + output);
+		asIScriptFunction* func = module->GetFunctionByName("main");
+		if (func == 0) {
+			std::cout << "Failed to call invoke_main." << std::endl;
 			return 1;
 		}
-
-		// Clean up
-		ctx->Release();
-		engine->ShutDownAndRelease();
-
-
+		init_engine();
+		result = app.Exec(func);
+		return result;
 	}
 	else if (flag == "-i") {
-		asIScriptEngine* engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
-		engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
-
-		RegisterStdString(engine);
-		RegisterStdWstring(engine);
-		RegisterScriptArray(engine, true);
-		RegisterStdStringUtils(engine);
-		RegisterScriptDictionary(engine);
-		RegisterScriptDateTime(engine);
-		RegisterScriptFile(engine);
-		RegisterScriptFileSystem(engine);
-		RegisterExceptionRoutines(engine);
-		RegisterScriptMath(engine);
-		RegisterScriptHandle(engine);
-		RegisterScriptAny(engine);
-		context_manager.RegisterThreadSupport(engine);
-		context_manager.RegisterCoRoutineSupport(engine);
-		RegisterFunctions(engine);
-		engine->RegisterGlobalFunction("array<string> @get_char_argv()", asFUNCTION(GetCommandLineArgs), asCALL_CDECL);
-		engine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
-		engine->RegisterGlobalFunction("int exec(const string &in, string &out)", asFUNCTIONPR(ExecSystemCmd, (const string&, string&), int), asCALL_CDECL);
-		engine->RegisterGlobalProperty("const bool SCRIPT_COMPILED", (void*)&SCRIPT_COMPILED);
 		ScriptDocumentationOptions sd;
 		sd.addTimestamp = true;
 		sd.documentationName = "NGT engine documentation";
@@ -639,7 +504,6 @@ auto main(int argc, char* argv[]) -> int {
 		sd.outputFile = filename.c_str();
 		DocumentationGenerator dg(engine, sd);
 		dg.Generate();
-		engine->ShutDownAndRelease();
 
 	}
 	exit_engine();

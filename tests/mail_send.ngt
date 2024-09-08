@@ -30,7 +30,7 @@ content=f.read(f.get_size());
 f.close();
 }
 show_window("Sending...");
-mail_send(AUTH_LOGIN, host_port, username, password, host, sender, recipient, subject, content);
+internet::mail_send(internet::AUTH_LOGIN, host_port, username, password, host, sender, recipient, subject, content);
 speak("Complete!");
 wait(500);
 exit(0);

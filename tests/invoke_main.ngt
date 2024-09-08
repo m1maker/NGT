@@ -1,0 +1,4 @@
+#pragma invoke_main
+int main(int argc, string[] argv){
+argv=get_char_argv();
+ar

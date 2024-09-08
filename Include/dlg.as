@@ -13,9 +13,13 @@ void dlg(string&in message = "", uint64 time = 0, dlg_callback @cb = null, bool 
 	speak(message);
 	while (true)
 	{
-		wait(5);
 		if (@cb != null)
+		{
 			cb();
+			wait(5);
+		}
+		else if (time == 0)
+			wait_event();
 		if (time > 0)
 		{
 			if (tiks.elapsed_millis > 1000 && t.elapsed_millis < time)

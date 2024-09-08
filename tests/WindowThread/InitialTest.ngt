@@ -5,11 +5,12 @@ screen_reader_interrupt=true;
 speak("Opening window");
 wait(500);
 show_window("Window test");
+while(get_window_handle()==0){}
 update_window_freq=0;
-speak("Press and release any key");
-wait(100);
+wait(500);
+speak("Press and release any key", false);
 while(true){
-wait(5);
+wait_event();
 if(key_pressed(SDLK_SPACE))speak("Test");
 pressed=keys_pressed();
 for(uint i=0;i<pressed.length();i++){
