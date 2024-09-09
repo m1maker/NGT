@@ -646,15 +646,14 @@ void exit_engine(int return_number)
 		e_ctx->Release();
 		exit_callback = nullptr;
 	}
-	if (ctx != nullptr)
-		ctx->Release();
 	soundsystem_free();
 	hide_window();
 	enet_deinitialize();
 	SRAL_UnregisterKeyboardHooks();
 	SRAL_Uninitialize();
 	SDL_Quit();
-	std::exit(0);
+	if (ctx != nullptr)ctx->Abort();
+	std::exit(return_number);
 }
 CScriptArray* keys_pressed() {
 	asIScriptContext* ctx = asGetActiveContext();

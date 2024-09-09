@@ -1,0 +1,5 @@
+array<char> a;
+int main(){
+a[5000];
+return 0;
+}

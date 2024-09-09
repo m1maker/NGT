@@ -247,7 +247,7 @@ asIScriptModule* Compile(asIScriptEngine* engine, const char* inputFile)
 		return nullptr;
 	}
 
-	result = module->SaveByteCode(&stream, false);
+	result = module->SaveByteCode(&stream, true);
 	if (result < 0)
 	{
 		engine->WriteMessage(inputFile, 0, 0, asMSGTYPE_ERROR, "Failed to write the bytecode");
@@ -386,10 +386,7 @@ auto main(int argc, char* argv[]) -> int {
 	}
 	else {
 		if (argc < 2) {
-			show_console();
 			engine->WriteMessage(get_exe().c_str(), 0, 0, asMSGTYPE_INFORMATION, "Something went wrong when starting the engine.\r\nNothing to debug, nothing to compile.\r\nArguments and flags that can be used:\r\n\"NGTScript.exe <filename> -d\" - Debug a script.\r\n\"NGTScript.exe <filename> -c\" - Compile a script to executable file.\r\n\"NGTScript.exe <output file> -i\" - Write engine config to a file.");
-			ExecSystemCmd("pause");
-			hide_console();
 			return -1;
 		}
 
