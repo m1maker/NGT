@@ -14,7 +14,7 @@ ctx.prepare(function);
 ctx.set_arg_dword(0, 1000);
 ctx.set_arg_dword(1, 100);
 ctx.execute();
-ctx.abort();
+ctx.unprepare();
 }
 }
 }
