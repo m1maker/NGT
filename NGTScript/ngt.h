@@ -158,6 +158,9 @@ string string_base64_encode(string the_string);
 string string_base32_decode(string base32_string);
 string string_base32_encode(string the_string);
 string string_to_hex(string the_string);
+void string_pad(std::string&);
+void string_unpad(std::string&);
+
 bool alert(const string& title, const string& text, const string& button_name = "OK");
 int question(const string& title, const string& text);
 void wait(uint64_t);

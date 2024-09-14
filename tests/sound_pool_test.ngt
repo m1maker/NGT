@@ -2,11 +2,11 @@
 void main(){
 sound_pool sp;
 show_window("Test");
-sp.maximum_sounds = 100;
 update_window_freq=0;
 while(true){
 wait_event();
-if(key_repeat(KEY_SPACE))
+if(key_repeat(KEY_SPACE)){
 sp.play("C:/windows/media/Windows Default.wav");
+}
 }
 }

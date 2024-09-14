@@ -10,6 +10,8 @@
 #include <filesystem>
 #include "angelscript.h"
 #include "contextmgr/contextmgr.h"
+#include "Poco/SHA2Engine.h"
+#include "aes/aes.hpp"
 #include "datetime/datetime.h"
 #include "docgen.h"
 #include "ngt.h"
@@ -33,6 +35,8 @@
 #include "Poco/Glob.h"
 #include "Poco/Path.h"
 #include "Poco/Exception.h"
+
+
 int IncludeCallback(const char* include, const char* from, CScriptBuilder* builder, void* userParam) {
 	// 1. Resolve the relative path
 	std::string absoluteIncludePath = Poco::Path(from).append("../" + std::string(include)).toString(); // Construct an absolute path
@@ -138,17 +142,22 @@ static std::vector<std::string> string_split(const std::string& delim, const std
 
 	return array;
 }
+
+std::vector<std::string> defines;
+
 int PragmaCallback(const std::string& pragmaText, CScriptBuilder& builder, void* userParam) {
-	if (pragmaText.empty())return -1;
-	std::vector<std::string> split = string_split(" ", pragmaText);
-	if (split.size() == 0)return -2;
-	if (split[1] == "define") {
-		builder.DefineWord(split[2].c_str());
+	const std::string definePrefix = " define ";
+	if (pragmaText.compare(0, definePrefix.length(), definePrefix) == 0) {
+		std::string word = pragmaText.substr(definePrefix.length());
+
+		word.erase(0, word.find_first_not_of(" \t\r\n"));
+		word.erase(word.find_last_not_of(" \t\r\n") + 1);
+		defines.push_back(word);
+		return 0;
 	}
-	return 0;
+
+	return -1;
 }
-
-
 
 std::vector <asBYTE> buffer;
 asUINT buffer_size;
@@ -160,6 +169,71 @@ CScriptArray* GetCommandLineArgs();
 CScriptArray* g_commandLineArgs = 0;
 int           g_argc = 0;
 char** g_argv = 0;
+
+
+void vector_pad(std::vector<unsigned char>& text) {
+	int padding_size = 16 - (text.size() % 16);
+	if (padding_size == 0) {
+		padding_size = 16;
+	}
+	text.insert(text.end(), padding_size, static_cast<unsigned char>(padding_size));
+}
+
+void vector_unpad(std::vector<unsigned char>& text) {
+	int padding_size = static_cast<unsigned char>(text.back());
+	if (padding_size > 0 && padding_size <= 16) {
+		text.resize(text.size() - padding_size);
+	}
+}
+
+std::vector<unsigned char> vector_encrypt(const std::vector<unsigned char>& str, const std::string& encryption_key) {
+	std::vector<unsigned char> the_vector = str;
+	Poco::SHA2Engine hash;
+	hash.update(encryption_key);
+	const unsigned char* key_hash = hash.digest().data();
+
+	unsigned char iv[16];
+	for (int i = 0; i < 16; ++i) {
+		iv[i] = key_hash[i * 2] ^ (4 * i + 1);
+	}
+
+	AES_ctx crypt;
+	AES_init_ctx_iv(&crypt, key_hash, iv);
+	vector_pad(the_vector);
+	AES_CBC_encrypt_buffer(&crypt, the_vector.data(), the_vector.size());
+
+	// Clear sensitive data
+	std::fill(std::begin(iv), std::end(iv), 0);
+	std::fill(reinterpret_cast<uint8_t*>(&crypt), reinterpret_cast<uint8_t*>(&crypt) + sizeof(AES_ctx), 0);
+
+	return the_vector;
+}
+
+std::vector<unsigned char> vector_decrypt(const std::vector<unsigned char>& str, const std::string& encryption_key) {
+	if (str.size() % 16 != 0) return {};
+
+	std::vector<unsigned char> the_vector = str;
+	Poco::SHA2Engine hash;
+	hash.update(encryption_key);
+	const unsigned char* key_hash = hash.digest().data();
+
+	unsigned char iv[16];
+	for (int i = 0; i < 16; ++i) {
+		iv[i] = key_hash[i * 2] ^ (4 * i + 1);
+	}
+
+	AES_ctx crypt;
+	AES_init_ctx_iv(&crypt, key_hash, iv);
+	AES_CBC_decrypt_buffer(&crypt, the_vector.data(), the_vector.size());
+
+	// Clear sensitive data
+	std::fill(std::begin(iv), std::end(iv), 0);
+	std::fill(reinterpret_cast<uint8_t*>(&crypt), reinterpret_cast<uint8_t*>(&crypt) + sizeof(AES_ctx), 0);
+
+	vector_unpad(the_vector);
+	return the_vector;
+}
+
 
 
 class CBytecodeStream : public asIBinaryStream
@@ -227,7 +301,17 @@ asIScriptModule* Compile(asIScriptEngine* engine, const char* inputFile)
 	asIScriptModule* module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
 	int result = builder.StartNewModule(engine, "ngtgame");
 	result = builder.AddSectionFromFile(inputFile);
+	if (defines.size() > 0) {
+		// Now, restart all, because we need to define all words before adding section
+		builder.ClearAll();
+		module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
+		result = builder.StartNewModule(engine, "ngtgame");
+		for (uint64_t i = 0; i < defines.size(); ++i) {
+			builder.DefineWord(defines[i].c_str());
+		}
+		result = builder.AddSectionFromFile(inputFile);
 
+	}
 	result = builder.BuildModule();
 
 	if (result < 0) {
@@ -421,6 +505,7 @@ auto main(int argc, char* argv[]) -> int {
 		long file_size = file.tellg();
 		file.write("\r\n.rdata", strlen("\r\n.rdata"));
 		crypt(buffer);
+		buffer = vector_encrypt(buffer, string_base64_encode(NGT_BYTECODE_ENCRYPTION_KEY));
 		file.write(reinterpret_cast<char*>(buffer.data()), buffer.size());
 		buffer_size = buffer.size();
 		file.write(reinterpret_cast<char*>(&buffer_size), sizeof(asUINT));
@@ -465,6 +550,8 @@ auto main(int argc, char* argv[]) -> int {
 				read_file.seekg(file_size - buffer_size - 4, std::ios::beg);
 				buffer.resize(buffer_size);
 				read_file.read(reinterpret_cast<char*>(buffer.data()), buffer_size);
+				buffer = vector_decrypt(buffer, string_base64_encode(NGT_BYTECODE_ENCRYPTION_KEY));
+
 				crypt(buffer);
 
 				read_file.close();

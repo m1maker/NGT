@@ -1,4 +1,3 @@
-#pragma
 long number=0;
 void main(){
 show_window("Test");

@@ -1,0 +1,10 @@
+#pragma define REVERB
+sound s;
+void main(){
+s.load("C:/windows/media/tada.wav");
+#if REVERB
+s.set_fx("reverb");
+#endif
+s.play_wait();
+s.close();
+}
