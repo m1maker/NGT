@@ -1,0 +1,11 @@
+const string SCRIPT_CODE="void invoke_main(){\nalert(\"App\", \"Hello, World!\");\n}";
+void main(){
+scripting::module module("NGTScript");
+module.add_script_section("Test.ngt", SCRIPT_CODE);
+module.build();
+scripting::function@ function=module.get_function_by_name("invoke_main");
+scripting::context ctx();
+ctx.prepare(function);
+ctx.execute();
+ctx.unprepare();
+}

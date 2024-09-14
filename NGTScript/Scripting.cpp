@@ -26,6 +26,69 @@ asIScriptFunction* GetFunctionByDecl(const std::string& sig) {
 	return engine->GetGlobalFunctionByDecl(sig.c_str());
 }
 
+
+class ScriptModuleBytecodeStream : public asIBinaryStream {
+	std::string data;
+	int cursor;
+public:
+	ScriptModuleBytecodeStream(const std::string& code = "") : data(code), cursor(0) {}
+	void set(const std::string& code) {
+		data = code;
+		cursor = 0;
+	}
+	std::string get() {
+		return data;
+	}
+	int Write(const void* ptr, asUINT size) {
+		data.append((char*)ptr, size);
+		return size;
+	}
+	int Read(void* ptr, asUINT size) {
+		if (cursor >= data.size()) return -1;
+		memcpy(ptr, &data[cursor], size);
+		cursor += size;
+		return size;
+	}
+};
+
+asIScriptModule* ModuleFactory(const std::string& section_name) {
+	asIScriptContext* ctx = asGetActiveContext();
+	asIScriptEngine* engine = ctx->GetEngine();
+	asIScriptModule* module = engine->GetModule(section_name.c_str(), asGM_ALWAYS_CREATE);
+	return module;
+}
+
+void ModuleAddScriptSection(asIScriptGeneric* gen) {
+	asIScriptModule* module = (asIScriptModule*)gen->GetObject();
+	std::string name = *reinterpret_cast<std::string*>(gen->GetArgAddress(0));
+	std::string code = *reinterpret_cast<std::string*>(gen->GetArgAddress(1));
+	gen->SetReturnDWord(module->AddScriptSection(name.c_str(), code.c_str()));
+}
+
+void ModuleGetByteCode(asIScriptGeneric* gen) {
+	asIScriptModule* module = (asIScriptModule*)gen->GetObject();
+	bool strip_debug = gen->GetArgDWord(0);
+	ScriptModuleBytecodeStream stream;
+	module->SaveByteCode(&stream, strip_debug);
+	std::string code = stream.get();
+	gen->SetReturnObject(&code);
+}
+
+void ModuleSetByteCode(asIScriptGeneric* gen) {
+	asIScriptModule* module = (asIScriptModule*)gen->GetObject();
+	std::string code = *reinterpret_cast<std::string*>(gen->GetArgAddress(0));
+	ScriptModuleBytecodeStream stream;
+	stream.set(code);
+	gen->SetReturnDWord(module->LoadByteCode(&stream));
+}
+
+void ModuleGetFunctionByIndex(asIScriptGeneric* gen) {
+	asIScriptModule* module = (asIScriptModule*)gen->GetObject();
+	int index = gen->GetArgDWord(0);
+	asIScriptFunction* function = module->GetFunctionByIndex(index);
+	gen->SetReturnObject(function);
+}
+
 void RegisterScripting(asIScriptEngine* engine) {
 	engine->RegisterEnum("typeid");
 	engine->RegisterEnumValue("typeid", "VOID", asTYPEID_VOID);
@@ -59,7 +122,7 @@ void RegisterScripting(asIScriptEngine* engine) {
 
 
 	engine->RegisterObjectType("function", sizeof(asIScriptFunction), asOBJ_REF);
-	engine->RegisterObjectBehaviour("function", asBEHAVE_FACTORY, "function@ f(int)", asFUNCTION(FunctionFactory), asCALL_CDECL);
+	engine->RegisterObjectBehaviour("function", asBEHAVE_FACTORY, "function@ f(int=0)", asFUNCTION(FunctionFactory), asCALL_CDECL);
 	engine->RegisterObjectBehaviour("function", asBEHAVE_ADDREF, "void f()", asMETHOD(asIScriptFunction, AddRef), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("function", asBEHAVE_RELEASE, "void f()", asMETHOD(asIScriptFunction, Release), asCALL_THISCALL);
 
@@ -107,6 +170,18 @@ void RegisterScripting(asIScriptEngine* engine) {
 	engine->RegisterObjectMethod("context", "double get_return_double()const", asMETHOD(asIScriptContext, GetReturnDouble), asCALL_THISCALL);
 	engine->RegisterObjectMethod("context", "uint64 get_return_address()const", asMETHOD(asIScriptContext, GetReturnAddress), asCALL_THISCALL);
 	engine->RegisterObjectMethod("context", "uint64 get_address_of_return_value()const", asMETHOD(asIScriptContext, GetAddressOfReturnValue), asCALL_THISCALL);
+
+
+	engine->RegisterObjectType("module", sizeof(asIScriptModule), asOBJ_REF | asOBJ_NOCOUNT);
+	engine->RegisterObjectBehaviour("module", asBEHAVE_FACTORY, "module@ m(const string &in)", asFUNCTION(ModuleFactory), asCALL_CDECL);
+	engine->RegisterObjectMethod("module", "int add_script_section(const string &in, const string &in)const", asFUNCTION(ModuleAddScriptSection), asCALL_GENERIC);
+	engine->RegisterObjectMethod("module", "int build()const", asMETHOD(asIScriptModule, Build), asCALL_THISCALL);
+	engine->RegisterObjectMethod("module", "int discard()const", asMETHOD(asIScriptModule, Discard), asCALL_THISCALL);
+	engine->RegisterObjectMethod("module", "string get_byte_code(bool=true)const", asFUNCTION(ModuleGetByteCode), asCALL_GENERIC);
+	engine->RegisterObjectMethod("module", "int set_byte_code(const string &in)const", asFUNCTION(ModuleSetByteCode), asCALL_GENERIC);
+	engine->RegisterObjectMethod("module", "function@ get_function_by_index(int)const", asMETHOD(asIScriptModule, GetFunctionByIndex), asCALL_THISCALL);
+	engine->RegisterObjectMethod("module", "function@ get_function_by_decl(const string &in)const", asMETHOD(asIScriptModule, GetFunctionByDecl), asCALL_THISCALL);
+	engine->RegisterObjectMethod("module", "function@ get_function_by_name(const string &in)const", asMETHOD(asIScriptModule, GetFunctionByName), asCALL_THISCALL);
 
 
 
