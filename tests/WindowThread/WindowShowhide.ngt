@@ -7,5 +7,5 @@ show_window("Last");
 wait(5000);
 hide_window();
 wait(500);
-speak("EEEEEEEEEEEEEEEEEEEExiting");
+screen_reader::speak("EEEEEEEEEEEEEEEEEEEExiting");
 }

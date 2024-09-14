@@ -7,15 +7,17 @@ void main() {
 	v.speak("Press any key. Press f 1 to switch interrupt. Press F2 / F3 to set speech rate.");
 	while(true) {
 		wait_event();
-		if (key_pressed(SDLK_F1)) {
+		// Hook the Shift and Ctrl keys to resolve the speech keyboard hooks
+		key_pressed(KEY_LSHIFT) || key_pressed(KEY_RSHIFT) || key_pressed(KEY_LCTRL) || key_pressed(KEY_RCTRL);
+		if (key_pressed(KEY_F1)) {
 			interrupt = interrupt ? false : true;
 			v.speak_interrupt("Interrupt : " + interrupt);
 		}
-		else if (key_pressed(SDLK_F2) && v.rate > -10) {
+		else if (key_pressed(KEY_F2) && v.rate > -10) {
 			v.rate = v.rate - 1;
 			v.speak_interrupt(v.rate);
 		}
-		else if (key_pressed(SDLK_F3) && v.rate < 10) {
+		else if (key_pressed(KEY_F3) && v.rate < 10) {
 			v.rate = v.rate + 1;
 			v.speak_interrupt(v.rate);
 		}

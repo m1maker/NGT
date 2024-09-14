@@ -2,8 +2,8 @@ void main(){
 show_window("Mouse test");
 while(true){
 wait(5);
-if(mouse_pressed(1))speak("Left pressed");
-if(mouse_released(3))speak("Right released");
-if(mouse_pressed(2))speak(MOUSE_X + ", "+MOUSE_Y + ", "+MOUSE_Z);
+if(mouse_pressed(1))screen_reader::speak("Left pressed");
+if(mouse_released(3))screen_reader::speak("Right released");
+if(mouse_pressed(2))screen_reader::speak(MOUSE_X + ", "+MOUSE_Y + ", "+MOUSE_Z);
 }
 }

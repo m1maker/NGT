@@ -1,24 +1,24 @@
 array<int> pressed;
 array<int> released;
 void main(){
-screen_reader_interrupt=true;
-speak("Opening window");
+screen_reader::interrupt=true;
+screen_reader::speak("Opening window");
 wait(500);
 show_window("Window test");
 while(get_window_handle()==0){}
 update_window_freq=0;
 wait(500);
-speak("Press and release any key", false);
+screen_reader::speak("Press and release any key", false);
 while(true){
 wait_event();
-if(key_pressed(SDLK_SPACE))speak("Test");
+if(key_pressed(KEY_SPACE))screen_reader::speak("Test");
 pressed=keys_pressed();
 for(uint i=0;i<pressed.length();i++){
-speak(key_to_string(pressed[i]));
+screen_reader::speak(key_to_string(pressed[i]));
 }
 released=keys_released();
 for(uint i=0;i<released.length();i++){
-speak(key_to_string(released[i]));
+screen_reader::speak(key_to_string(released[i]));
 }
 }
 }

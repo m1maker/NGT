@@ -43,8 +43,8 @@ uint64 window = get_window_handle();
 user32.call("int SetWindowTextW(long, char*);", window, name.c_str());
 while(true){
 wait_event();
-if(key_pressed(SDLK_ESCAPE))hide_window();
-if(key_repeat(SDLK_SPACE)){
+if(key_pressed(KEY_ESCAPE))hide_window();
+if(key_pressed(KEY_SPACE)){
 kernel32.call("int Beep(int, int);", random(100, 1000), 100);
 }
 bool is_window=bool(user32.call("long IsWindow(long);", window)[0]);

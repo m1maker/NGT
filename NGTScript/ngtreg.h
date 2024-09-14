@@ -12,6 +12,8 @@
 #include "angelscript.h"
 #define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
 #include "ngt.h"
+#define AS_BEGIN(x, y) x->SetDefaultNamespace(y);
+#define AS_END(x) x->SetDefaultNamespace("")
 using namespace std;
 void show_message();
 

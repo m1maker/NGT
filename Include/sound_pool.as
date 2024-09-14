@@ -1,6 +1,7 @@
 /*
 Sound Pool (An alternative way to manage sounds).
 */
+#include "smart_ptr"
 
 // Sound Pool handles registered in application
 array<sound_pool @> g_sound_pools(0);
@@ -38,7 +39,7 @@ void sound_pool_thread(){
 class sound_pool
 {
 	private array<sound @> sounds;
-	uint64 window_handle;
+	bool in_window;
 	long free_time;
 	timer free_timer;
 	vector @listener = null;
@@ -80,7 +81,7 @@ class sound_pool
 	}
 	void reset() {
 		last_error = SP_SUCCESS;
-		window_handle = 0;
+		in_window = false;
 		free_time = 3000;
 		free_timer.restart();
 		@listener = null;
@@ -173,6 +174,10 @@ class sound_pool
 	uint64 opImplConv()
 	{
 		return this.id;
+	}
+	sound @ const opIndex(int index)
+	{
+		return this.get_handle(index);
 	}
 	sound @ const get_handle(uint64 slot)
 	{

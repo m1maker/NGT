@@ -1,6 +1,6 @@
 sound s;
 void main(){
-screen_reader_interrupt = true;
+screen_reader::interrupt = true;
 show_window("Audio device test");
 s.load("C:/windows/media/ring01.wav");
 s.play_looped();
@@ -10,20 +10,20 @@ alert("Error", "Your system has not devices!", "Exit");
 exit(-1);
 }
 wait(500);
-speak("Select audio device by pressing arrow keys. To switch to the selected device, press Enter");
+screen_reader::speak("Select audio device by pressing arrow keys. To switch to the selected device, press Enter");
 int device_id=0;
 update_window_freq=0;
 while(true){
 wait_event();
-if(key_repeat(SDLK_DOWN) and device_id<devices.length()-1){
+if(key_repeat(KEY_DOWN) and device_id<devices.length()-1){
 device_id+=1;
-speak(devices[device_id]);
+screen_reader::speak(devices[device_id]);
 }
-if(key_repeat(SDLK_UP) and device_id>0){
+if(key_repeat(KEY_UP) and device_id>0){
 device_id-=1;
-speak(devices[device_id]);
+screen_reader::speak(devices[device_id]);
 }
-if(key_pressed(SDLK_RETURN)){
+if(key_pressed(KEY_RETURN)){
 set_output_audio_device(device_id);
 }
 }

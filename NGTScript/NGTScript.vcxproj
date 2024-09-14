@@ -180,6 +180,7 @@
     <ClInclude Include="ffi_common.h" />
     <ClInclude Include="fx\freeverb.h" />
     <ClInclude Include="fx\verblib.h" />
+    <ClInclude Include="Scripting.h" />
     <ClInclude Include="http.h" />
     <ClInclude Include="joystick.h" />
     <ClInclude Include="MemoryStream.h" />
@@ -318,6 +319,7 @@
     <ClCompile Include="scriptgrid\scriptgrid.cpp" />
     <ClCompile Include="scripthandle\scripthandle.cpp" />
     <ClCompile Include="scripthelper\scripthelper.cpp" />
+    <ClCompile Include="Scripting.cpp" />
     <ClCompile Include="scriptmath\scriptmath.cpp" />
     <ClCompile Include="scriptmath\scriptmathcomplex.cpp" />
     <ClCompile Include="scriptstdstring\scriptstdstring.cpp" />

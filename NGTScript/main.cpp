@@ -306,6 +306,7 @@ public:
 		if (scriptContext != nullptr) {
 			scriptContext->Release();
 		}
+		scriptEngine->ClearMessageCallback();
 		scriptEngine->ShutDownAndRelease();
 	}
 	void RegisterStd() {
@@ -342,7 +343,7 @@ public:
 			else if (result == asEXECUTION_FINISHED && func->GetReturnTypeId() != asTYPEID_VOID) {
 				return scriptContext->GetReturnDWord();
 			}
-			else {
+			else if (result != asEXECUTION_FINISHED) {
 				alert("NGTRuntimeError", GetExceptionInfo(scriptContext, true));
 				return -1;
 			}
@@ -438,7 +439,7 @@ auto main(int argc, char* argv[]) -> int {
 		// Execute the script
 		asIScriptFunction* func = module->GetFunctionByName("main");
 		if (func == 0) {
-			std::cout << "Failed to call invoke_main." << std::endl;
+			std::cout << "Failed to invoke main." << std::endl;
 			return 1;
 		}
 		init_engine();
@@ -481,7 +482,7 @@ auto main(int argc, char* argv[]) -> int {
 		}
 		asIScriptFunction* func = module->GetFunctionByName("main");
 		if (func == 0) {
-			std::cout << "Failed to call invoke_main." << std::endl;
+			std::cout << "Failed to invoke main." << std::endl;
 			return 1;
 		}
 		init_engine();

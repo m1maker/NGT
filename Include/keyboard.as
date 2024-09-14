@@ -2,13 +2,13 @@ class key_hold
 {
 	bool status;
 	short key_flag = 0;
-	keycode key_code;
+	int key_code;
 	uint64 repeat_time;
 	uint64 setting_1;
 	uint64 setting_2;
 	timer key_timer;
 	uint64 wait_time;
-	key_hold(const keycode&in _key_code, const uint64&in _setting_1, const uint64&in _setting_2)
+	key_hold(const int&in _key_code, const uint64&in _setting_1, const uint64&in _setting_2)
 	{
 		key_code = _key_code;
 		setting_1 = _setting_1;

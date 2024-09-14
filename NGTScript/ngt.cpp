@@ -1988,6 +1988,13 @@ void library::unload() {
 	SDL_UnloadObject(lib);
 	functions.clear();
 }
+void* library::get_function_pointer(const std::string& name) {
+	if (lib == nullptr)return nullptr;
+	return SDL_LoadFunction(lib, name.c_str());
+}
+void library::clear_functions() {
+	functions.clear();
+}
 script_thread::script_thread(asIScriptFunction* func) {
 	function = func;
 	asIScriptContext* current_context = asGetActiveContext();

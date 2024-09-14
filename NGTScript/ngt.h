@@ -279,6 +279,8 @@ public:
 	bool active()const;
 	bool load(const string&);
 	void unload();
+	void* get_function_pointer(const std::string& name);
+	void clear_functions();
 };
 void library_call(asIScriptGeneric* gen);
 class script_thread : public as_class {

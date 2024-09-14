@@ -10,7 +10,7 @@ void dlg(string&in message = "", uint64 time = 0, dlg_callback @cb = null, bool 
 	bool played = false;
 	timer t;
 	timer tiks;
-	speak(message);
+	screen_reader::speak(message);
 	while (true)
 	{
 		if (@cb != null)
@@ -35,13 +35,13 @@ void dlg(string&in message = "", uint64 time = 0, dlg_callback @cb = null, bool 
 					break;
 			}
 		}
-		if (key_pressed(SDLK_LEFT) || key_pressed(SDLK_RIGHT) || key_pressed(SDLK_UP) || key_pressed(SDLK_DOWN))
+		if (key_pressed(KEY_LEFT) || key_pressed(KEY_RIGHT) || key_pressed(KEY_UP) || key_pressed(KEY_DOWN))
 		{
 			if (message != "")
-				speak(message);
+				screen_reader::speak(message);
 			mixer_play_sound("dlg_item.ogg");
 		}
-		if (key_pressed(SDLK_RETURN) || key_pressed(SDLK_ESCAPE))
+		if (key_pressed(KEY_RETURN) || key_pressed(KEY_ESCAPE))
 		{
 			if (time == 0)
 				break;

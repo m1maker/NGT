@@ -1,6 +1,6 @@
 #include "../include/dlg.as"
 void main(){
-screen_reader_interrupt = true;
+screen_reader::interrupt = true;
 show_window("DLGTest");
 wait(500);
 dlg("This is just a dialog message. Press Enter or Escape to continue.");

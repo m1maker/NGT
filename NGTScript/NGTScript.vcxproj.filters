@@ -39,6 +39,7 @@
     <ClCompile Include="scriptstdstring\scriptstdwstring.cpp" />
     <ClCompile Include="AES\aes.c" />
     <ClCompile Include="..\GUI\gui.cpp" />
+    <ClCompile Include="Scripting.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="angelscript.h" />
@@ -178,5 +179,6 @@
     <ClInclude Include="AES\aes.h" />
     <ClInclude Include="AES\aes.hpp" />
     <ClInclude Include="..\GUI\gui.h" />
+    <ClInclude Include="Scripting.h" />
   </ItemGroup>
 </Project>
