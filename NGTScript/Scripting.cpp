@@ -15,6 +15,17 @@ asIScriptFunction* FunctionFactory(int id) {
 	asIScriptEngine* engine = ctx->GetEngine();
 	return engine->GetFunctionById(id);
 }
+asIScriptFunction* GetFunctionById(int id) {
+	asIScriptContext* ctx = asGetActiveContext();
+	asIScriptEngine* engine = ctx->GetEngine();
+	return engine->GetFunctionById(id);
+}
+asIScriptFunction* GetFunctionByDecl(const std::string& sig) {
+	asIScriptContext* ctx = asGetActiveContext();
+	asIScriptEngine* engine = ctx->GetEngine();
+	return engine->GetGlobalFunctionByDecl(sig.c_str());
+}
+
 void RegisterScripting(asIScriptEngine* engine) {
 	engine->RegisterEnum("typeid");
 	engine->RegisterEnumValue("typeid", "VOID", asTYPEID_VOID);
@@ -52,6 +63,19 @@ void RegisterScripting(asIScriptEngine* engine) {
 	engine->RegisterObjectBehaviour("function", asBEHAVE_ADDREF, "void f()", asMETHOD(asIScriptFunction, AddRef), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("function", asBEHAVE_RELEASE, "void f()", asMETHOD(asIScriptFunction, Release), asCALL_THISCALL);
 
+	engine->RegisterGlobalFunction("function@ get_function_by_id(int)", asFUNCTION(GetFunctionById), asCALL_CDECL);
+	engine->RegisterGlobalFunction("function@ get_function_by_decl(const string &in)", asFUNCTION(GetFunctionByDecl), asCALL_CDECL);
+
+	engine->RegisterEnum("ctxstate");
+	engine->RegisterEnumValue("ctxstate", "EXECUTION_FINISHED", asEXECUTION_FINISHED);
+	engine->RegisterEnumValue("ctxstate", "EXECUTION_SUSPENDED", asEXECUTION_SUSPENDED);
+	engine->RegisterEnumValue("ctxstate", "EXECUTION_ABORTED", asEXECUTION_ABORTED);
+	engine->RegisterEnumValue("ctxstate", "EXECUTION_EXCEPTION", asEXECUTION_EXCEPTION);
+	engine->RegisterEnumValue("ctxstate", "EXECUTION_PREPARED", asEXECUTION_PREPARED);
+	engine->RegisterEnumValue("ctxstate", "EXECUTION_UNINITIALIZED", asEXECUTION_UNINITIALIZED);
+	engine->RegisterEnumValue("ctxstate", "EXECUTION_ACTIVE", asEXECUTION_ACTIVE);
+	engine->RegisterEnumValue("ctxstate", "EXECUTION_ERROR", asEXECUTION_ERROR);
+
 
 	engine->RegisterObjectType("context", sizeof(asIScriptContext), asOBJ_REF);
 	engine->RegisterObjectBehaviour("context", asBEHAVE_FACTORY, "context@ c()", asFUNCTION(CtxFactory), asCALL_CDECL);
@@ -62,7 +86,7 @@ void RegisterScripting(asIScriptEngine* engine) {
 	engine->RegisterObjectMethod("context", "int execute()const", asMETHOD(asIScriptContext, Execute), asCALL_THISCALL);
 	engine->RegisterObjectMethod("context", "int abort()const", asMETHOD(asIScriptContext, Abort), asCALL_THISCALL);
 	engine->RegisterObjectMethod("context", "int suspend()const", asMETHOD(asIScriptContext, Suspend), asCALL_THISCALL);
-	engine->RegisterObjectMethod("context", "int get_state()const", asMETHOD(asIScriptContext, GetState), asCALL_THISCALL);
+	engine->RegisterObjectMethod("context", "ctxstate get_state()const", asMETHOD(asIScriptContext, GetState), asCALL_THISCALL);
 	engine->RegisterObjectMethod("context", "int push_state()const", asMETHOD(asIScriptContext, PushState), asCALL_THISCALL);
 	engine->RegisterObjectMethod("context", "int pop_state()const", asMETHOD(asIScriptContext, PopState), asCALL_THISCALL);
 	engine->RegisterObjectMethod("context", "int set_arg_byte(uint, char)const", asMETHOD(asIScriptContext, SetArgByte), asCALL_THISCALL);

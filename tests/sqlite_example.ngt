@@ -1,0 +1,64 @@
+const int SQLITE_ROW = 100;
+const int SQLITE_DONE = 101;
+void main() {
+    // Create an instance of sqlite3
+    sqlite3 db;
+
+    // Open a SQLite database (creates it if it doesn't exist)
+    if (db.open("example.db") != 0) {
+        printf("Failed to open database: %s\n", db.get_last_error_text());
+        return;
+    }
+
+    // Create a new table
+    string createTableSQL = "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT, age INTEGER);";
+    if (db.execute(createTableSQL) != 0) {
+        printf("Failed to create table: %s\n", db.get_last_error_text());
+        return;
+    }
+
+    // Prepare an insert statement
+    sqlite3statement@ insertStmt = db.prepare("INSERT INTO users (name, age) VALUES (?, ?)");
+    if (insertStmt is null) {
+        printf("Failed to prepare insert statement: %s\n", db.get_last_error_text());
+        return;
+    }
+
+    // Insert first record
+    insertStmt.bind_text(1, "Alice");
+    insertStmt.bind_int(2, 30);
+    
+    if (insertStmt.step() != SQLITE_DONE) { // Check for DONE
+        printf("Failed to execute insert statement: %s\n", db.get_last_error_text());
+        return;
+    }
+    
+    insertStmt.clear_bindings();
+
+    // Reset the statement for reuse
+    insertStmt.reset();
+
+    // Prepare a select statement
+    sqlite3statement@ selectStmt = db.prepare("SELECT * FROM users");
+    if (selectStmt is null) {
+        printf("Failed to prepare select statement: %s\n", db.get_last_error_text());
+        return;
+    }
+
+    // Execute the select statement
+    while (selectStmt.step() == SQLITE_ROW) { // Check for ROW instead of DONE
+        int id = selectStmt.column_int(0);
+        string name = selectStmt.column_text(1);
+        int age = selectStmt.column_int(2);
+        
+        printf("User ID: " + id + "\nUser name: " + name + "\nUser age: " + age + "\n");
+    }
+
+    // Clean up
+    selectStmt.reset();  // Finalize the statement
+    insertStmt.reset();  // Finalize the statement
+    
+    // Close the database connection
+    db.close();
+}
+
