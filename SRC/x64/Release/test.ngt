@@ -1,3 +1,0 @@
-void main(){
-alert("Test", "Test");
-}
