@@ -1,0 +1,8 @@
+const string SCRIPT_CODE="S";
+void main(){
+scripting::module module("NGTScriptingError");
+module.add_script_section("Test.ngt", SCRIPT_CODE);
+module.build();
+alert("Compilation info", scripting::get_messages());
+scripting::clear_messages();
+}

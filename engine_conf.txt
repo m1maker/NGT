@@ -1,0 +1,1054 @@
+// AngelScript 2.38.0 WIP
+// Lib options  AS_64BIT_PTR AS_WIN AS_X64_MSVC 
+// Engine properties
+const int EP_0 = 0;
+const int EP_1 = 0;
+const int EP_2 = 1;
+const int EP_3 = 1;
+const int EP_4 = 0;
+const int EP_5 = 0;
+const int EP_6 = 1;
+const int EP_7 = 0;
+const int EP_8 = 0;
+const int EP_9 = 1;
+const int EP_10 = 0;
+const int EP_11 = 1;
+const int EP_12 = 0;
+const int EP_13 = 0;
+const int EP_14 = 3;
+const int EP_15 = 0;
+const int EP_16 = 1;
+const int EP_17 = 0;
+const int EP_18 = 0;
+const int EP_19 = 1;
+const int EP_20 = 0;
+const int EP_21 = 0;
+const int EP_22 = 0;
+const int EP_23 = 0;
+const int EP_24 = 0;
+const int EP_25 = 0;
+const int EP_26 = 1;
+const int EP_27 = 100;
+const int EP_28 = 1;
+const int EP_29 = 4096;
+const int EP_30 = 10;
+const int EP_31 = 0;
+const int EP_32 = 0;
+const int EP_33 = 0;
+const int EP_34 = 0;
+const int EP_35 = 1;
+const int EP_36 = 0;
+const int EP_37 = 0;
+
+// Enums
+access ffffffff
+namespace "internet"
+enum smtp_login_method
+enumval smtp_login_method AUTH_NONE 0
+enumval smtp_login_method AUTH_CRAM_MD5 1
+enumval smtp_login_method AUTH_CRAM_SHA1 2
+enumval smtp_login_method AUTH_LOGIN 3
+enumval smtp_login_method AUTH_PLAIN 4
+enumval smtp_login_method AUTH_XOAUTH2 5
+enumval smtp_login_method AUTH_NTLM 6
+namespace ""
+enum keycode
+enumval keycode KEY_UNKNOWN 0
+enumval keycode KEY_A 4
+enumval keycode KEY_B 5
+enumval keycode KEY_C 6
+enumval keycode KEY_D 7
+enumval keycode KEY_E 8
+enumval keycode KEY_F 9
+enumval keycode KEY_G 10
+enumval keycode KEY_H 11
+enumval keycode KEY_I 12
+enumval keycode KEY_J 13
+enumval keycode KEY_K 14
+enumval keycode KEY_L 15
+enumval keycode KEY_M 16
+enumval keycode KEY_N 17
+enumval keycode KEY_O 18
+enumval keycode KEY_P 19
+enumval keycode KEY_Q 20
+enumval keycode KEY_R 21
+enumval keycode KEY_S 22
+enumval keycode KEY_T 23
+enumval keycode KEY_U 24
+enumval keycode KEY_V 25
+enumval keycode KEY_W 26
+enumval keycode KEY_X 27
+enumval keycode KEY_Y 28
+enumval keycode KEY_Z 29
+enumval keycode KEY_1 30
+enumval keycode KEY_2 31
+enumval keycode KEY_3 32
+enumval keycode KEY_4 33
+enumval keycode KEY_5 34
+enumval keycode KEY_6 35
+enumval keycode KEY_7 36
+enumval keycode KEY_8 37
+enumval keycode KEY_9 38
+enumval keycode KEY_0 39
+enumval keycode KEY_RETURN 40
+enumval keycode KEY_ESCAPE 41
+enumval keycode KEY_BACK 42
+enumval keycode KEY_TAB 43
+enumval keycode KEY_SPACE 44
+enumval keycode KEY_MINUS 45
+enumval keycode KEY_EQUALS 46
+enumval keycode KEY_LEFTBRACKET 47
+enumval keycode KEY_RIGHTBRACKET 48
+enumval keycode KEY_BACKSLASH 49
+enumval keycode KEY_NONUSHASH 50
+enumval keycode KEY_SEMICOLON 51
+enumval keycode KEY_APOSTROPHE 52
+enumval keycode KEY_GRAVE 53
+enumval keycode KEY_COMMA 54
+enumval keycode KEY_PERIOD 55
+enumval keycode KEY_SLASH 56
+enumval keycode KEY_CAPSLOCK 57
+enumval keycode KEY_F1 58
+enumval keycode KEY_F2 59
+enumval keycode KEY_F3 60
+enumval keycode KEY_F4 61
+enumval keycode KEY_F5 62
+enumval keycode KEY_F6 63
+enumval keycode KEY_F7 64
+enumval keycode KEY_F8 65
+enumval keycode KEY_F9 66
+enumval keycode KEY_F10 67
+enumval keycode KEY_F11 68
+enumval keycode KEY_F12 69
+enumval keycode KEY_PRINTSCREEN 70
+enumval keycode KEY_SCROLLLOCK 71
+enumval keycode KEY_PAUSE 72
+enumval keycode KEY_INSERT 73
+enumval keycode KEY_HOME 74
+enumval keycode KEY_PAGEUP 75
+enumval keycode KEY_DELETE 76
+enumval keycode KEY_END 77
+enumval keycode KEY_PAGEDOWN 78
+enumval keycode KEY_RIGHT 79
+enumval keycode KEY_LEFT 80
+enumval keycode KEY_DOWN 81
+enumval keycode KEY_UP 82
+enumval keycode KEY_NUMLOCKCLEAR 83
+enumval keycode KEY_NUMPAD_DIVIDE 84
+enumval keycode KEY_NUMPAD_MULTIPLY 85
+enumval keycode KEY_NUMPAD_MINUS 86
+enumval keycode KEY_NUMPAD_PLUS 87
+enumval keycode KEY_NUMPAD_ENTER 88
+enumval keycode KEY_NUMPAD_1 89
+enumval keycode KEY_NUMPAD_2 90
+enumval keycode KEY_NUMPAD_3 91
+enumval keycode KEY_NUMPAD_4 92
+enumval keycode KEY_NUMPAD_5 93
+enumval keycode KEY_NUMPAD_6 94
+enumval keycode KEY_NUMPAD_7 95
+enumval keycode KEY_NUMPAD_8 96
+enumval keycode KEY_NUMPAD_9 97
+enumval keycode KEY_NUMPAD_0 98
+enumval keycode KEY_NUMPAD_PERIOD 99
+enumval keycode KEY_NONUSBACKSLASH 100
+enumval keycode KEY_APPLICATION 101
+enumval keycode KEY_POWER 102
+enumval keycode KEY_NUMPAD_EQUALS 103
+enumval keycode KEY_F13 104
+enumval keycode KEY_F14 105
+enumval keycode KEY_F15 106
+enumval keycode KEY_F16 107
+enumval keycode KEY_F17 108
+enumval keycode KEY_F18 109
+enumval keycode KEY_F19 110
+enumval keycode KEY_F20 111
+enumval keycode KEY_F21 112
+enumval keycode KEY_F22 113
+enumval keycode KEY_F23 114
+enumval keycode KEY_F24 115
+enumval keycode KEY_EXECUTE 116
+enumval keycode KEY_HELP 117
+enumval keycode KEY_MENU 118
+enumval keycode KEY_SELECT 119
+enumval keycode KEY_STOP 120
+enumval keycode KEY_AGAIN 121
+enumval keycode KEY_UNDO 122
+enumval keycode KEY_CUT 123
+enumval keycode KEY_COPY 124
+enumval keycode KEY_PASTE 125
+enumval keycode KEY_FIND 126
+enumval keycode KEY_MUTE 127
+enumval keycode KEY_VOLUMEUP 128
+enumval keycode KEY_VOLUMEDOWN 129
+enumval keycode KEY_NUMPAD_COMMA 133
+enumval keycode KEY_NUMPAD_EQUALSAS400 134
+enumval keycode KEY_INTERNATIONAL1 135
+enumval keycode KEY_INTERNATIONAL2 136
+enumval keycode KEY_INTERNATIONAL3 137
+enumval keycode KEY_INTERNATIONAL4 138
+enumval keycode KEY_INTERNATIONAL5 139
+enumval keycode KEY_INTERNATIONAL6 140
+enumval keycode KEY_INTERNATIONAL7 141
+enumval keycode KEY_INTERNATIONAL8 142
+enumval keycode KEY_INTERNATIONAL9 143
+enumval keycode KEY_LANG1 144
+enumval keycode KEY_LANG2 145
+enumval keycode KEY_LANG3 146
+enumval keycode KEY_LANG4 147
+enumval keycode KEY_LANG5 148
+enumval keycode KEY_LANG6 149
+enumval keycode KEY_LANG7 150
+enumval keycode KEY_LANG8 151
+enumval keycode KEY_LANG9 152
+enumval keycode KEY_ALTERASE 153
+enumval keycode KEY_SYSREQ 154
+enumval keycode KEY_CANCEL 155
+enumval keycode KEY_CLEAR 156
+enumval keycode KEY_SDL_PRIOR 157
+enumval keycode KEY_RETURN2 158
+enumval keycode KEY_SEPARATOR 159
+enumval keycode KEY_OUT 160
+enumval keycode KEY_OPER 161
+enumval keycode KEY_CLEARAGAIN 162
+enumval keycode KEY_CRSEL 163
+enumval keycode KEY_EXSEL 164
+enumval keycode KEY_NUMPAD_00 176
+enumval keycode KEY_NUMPAD_000 177
+enumval keycode KEY_THOUSANDSSEPARATOR 178
+enumval keycode KEY_DECIMALSEPARATOR 179
+enumval keycode KEY_CURRENCYUNIT 180
+enumval keycode KEY_CURRENCYSUBUNIT 181
+enumval keycode KEY_NUMPAD_LEFTPAREN 182
+enumval keycode KEY_NUMPAD_RIGHTPAREN 183
+enumval keycode KEY_NUMPAD_LEFTBRACE 184
+enumval keycode KEY_NUMPAD_RIGHTBRACE 185
+enumval keycode KEY_NUMPAD_TAB 186
+enumval keycode KEY_NUMPAD_BACKSPACE 187
+enumval keycode KEY_NUMPAD_A 188
+enumval keycode KEY_NUMPAD_B 189
+enumval keycode KEY_NUMPAD_C 190
+enumval keycode KEY_NUMPAD_D 191
+enumval keycode KEY_NUMPAD_E 192
+enumval keycode KEY_NUMPAD_F 193
+enumval keycode KEY_NUMPAD_XOR 194
+enumval keycode KEY_NUMPAD_POWER 195
+enumval keycode KEY_NUMPAD_PERCENT 196
+enumval keycode KEY_NUMPAD_LESS 197
+enumval keycode KEY_NUMPAD_GREATER 198
+enumval keycode KEY_NUMPAD_AMPERSAND 199
+enumval keycode KEY_NUMPAD_DBLAMPERSAND 200
+enumval keycode KEY_NUMPAD_VERTICALBAR 201
+enumval keycode KEY_NUMPAD_DBLVERTICALBAR 202
+enumval keycode KEY_NUMPAD_COLON 203
+enumval keycode KEY_NUMPAD_HASH 204
+enumval keycode KEY_NUMPAD_SPACE 205
+enumval keycode KEY_NUMPAD_AT 206
+enumval keycode KEY_NUMPAD_EXCLAM 207
+enumval keycode KEY_NUMPAD_MEMSTORE 208
+enumval keycode KEY_NUMPAD_MEMRECALL 209
+enumval keycode KEY_NUMPAD_MEMCLEAR 210
+enumval keycode KEY_NUMPAD_MEMADD 211
+enumval keycode KEY_NUMPAD_MEMSUBTRACT 212
+enumval keycode KEY_NUMPAD_MEMMULTIPLY 213
+enumval keycode KEY_NUMPAD_MEMDIVIDE 214
+enumval keycode KEY_NUMPAD_PLUSMINUS 215
+enumval keycode KEY_NUMPAD_CLEAR 216
+enumval keycode KEY_NUMPAD_CLEARENTRY 217
+enumval keycode KEY_NUMPAD_BINARY 218
+enumval keycode KEY_NUMPAD_OCTAL 219
+enumval keycode KEY_NUMPAD_DECIMAL 220
+enumval keycode KEY_NUMPAD_HEXADECIMAL 221
+enumval keycode KEY_LCTRL 224
+enumval keycode KEY_LSHIFT 225
+enumval keycode KEY_LALT 226
+enumval keycode KEY_LGUI 227
+enumval keycode KEY_RCTRL 228
+enumval keycode KEY_RSHIFT 229
+enumval keycode KEY_RALT 230
+enumval keycode KEY_RGUI 231
+enumval keycode KEY_MODE 257
+enumval keycode KEY_MEDIA_NEXT_TRACK 267
+enumval keycode KEY_MEDIA_PREVIOUS_TRACK 268
+enumval keycode KEY_MEDIA_STOP 269
+enumval keycode KEY_MEDIA_PLAY 262
+enumval keycode KEY_MEDIA_SELECT 272
+enumval keycode KEY_AC_SEARCH 280
+enumval keycode KEY_AC_HOME 281
+enumval keycode KEY_AC_BACK 282
+enumval keycode KEY_AC_FORWARD 283
+enumval keycode KEY_AC_STOP 284
+enumval keycode KEY_AC_REFRESH 285
+enumval keycode KEY_AC_BOOKMARKS 286
+enumval keycode KEY_MEDIA_EJECT 270
+enumval keycode KEY_SLEEP 258
+enumval keycode KEY_MEDIA_REWIND 266
+enumval keycode KEY_MEDIA_FAST_FORWARD 265
+enumval keycode KEY_SOFTLEFT 287
+enumval keycode KEY_SOFTRIGHT 288
+enumval keycode KEY_CALL 289
+enumval keycode KEY_ENDCALL 290
+enum seek_origin
+enumval seek_origin SEEK_ORIGIN_START 0
+enumval seek_origin SEEK_ORIGIN_CURRENT 1
+enumval seek_origin SEEK_ORIGIN_END 2
+namespace "scripting"
+enum typeid
+enumval typeid VOID 0
+enumval typeid BOOL 1
+enumval typeid INT8 2
+enumval typeid INT16 3
+enumval typeid INT32 4
+enumval typeid INT64 5
+enumval typeid UINT8 6
+enumval typeid UINT16 7
+enumval typeid UINT32 8
+enumval typeid UINT64 9
+enumval typeid FLOAT 10
+enumval typeid DOUBLE 11
+enumval typeid OBJHANDLE 1073741824
+enumval typeid HANDLETOCONST 536870912
+enumval typeid MASK_OBJECT 469762048
+enumval typeid APPOBJECT 67108864
+enumval typeid SCRIPTOBJECT 134217728
+enumval typeid TEMPLATE 268435456
+enumval typeid MASK_SEQNBR 67108863
+enum callconv
+enumval callconv CDECL 0
+enumval callconv STDCALL 1
+enum ctxstate
+enumval ctxstate EXECUTION_FINISHED 0
+enumval ctxstate EXECUTION_SUSPENDED 1
+enumval ctxstate EXECUTION_ABORTED 2
+enumval ctxstate EXECUTION_EXCEPTION 3
+enumval ctxstate EXECUTION_PREPARED 4
+enumval ctxstate EXECUTION_UNINITIALIZED 5
+enumval ctxstate EXECUTION_ACTIVE 6
+enumval ctxstate EXECUTION_ERROR 7
+
+// Types
+namespace ""
+class string;    // 7938
+class wstring;    // 7938
+class array<T>;    // 69
+class dictionaryValue;    // 6022
+class dictionary;    // 5
+class datetime;    // 6922
+class file;    // 1
+class filesystem;    // 1
+class ref;    // 8070
+class any;    // 5
+class rect;    // 262145
+class vector;    // 1
+class pack;    // 1
+class mixer;    // 262145
+class sound;    // 1
+class audio_recorder;    // 262145
+class audio_encoder;    // 262145
+class memory_stream;    // 1
+namespace "scripting"
+class function;    // 1
+class context;    // 1
+class module;    // 262145
+namespace ""
+class tts_voice;    // 1
+class user_idle;    // 1
+class timer;    // 1
+class library;    // 1
+class thread;    // 1
+class instance;    // 1
+class network_event;    // 1
+class network;    // 1
+class sqlite3statement;    // 1
+class sqlite3;    // 1
+typedef long int64;
+typedef ulong uint64;
+typedef char int8;
+typedef uchar uint8;
+typedef short int16;
+typedef ushort uint16;
+typedef size_t uint64;
+typedef surface int64;
+funcdef bool array<T>::less(const T&in, const T&in);
+funcdef int exit_callback();
+funcdef void sound_end_callback(const ?&in = null);
+funcdef void thread_func();
+funcdef int sqlite3authorizer(string, int, string, string, string, string);
+
+// Template type members
+obj_beh array<T> 3 array<T>@ array(int&in);
+obj_beh array<T> 3 array<T>@ array(int&in, uint);
+obj_beh array<T> 3 array<T>@ array(int&in, uint, const T&in);
+objbeh "array<T>" 5 "void $beh5()"
+objbeh "array<T>" 6 "void $beh6()"
+objbeh "array<T>" 9 "int $beh9()"
+objbeh "array<T>" 10 "void $beh10()"
+objbeh "array<T>" 11 "bool $beh11()"
+objbeh "array<T>" 12 "void $beh12(int&in)"
+objbeh "array<T>" 13 "void $beh13(int&in)"
+objbeh "array<T>" 8 "bool $beh8(int&in, bool&out)"
+objbeh "array<T>" 4 "array<T>@ $list(int&in, int&in) { repeat T }"
+objmthd "array<T>" "T& opIndex(uint)"
+objmthd "array<T>" "const T& opIndex(uint) const"
+objmthd "array<T>" "array<T>& opAssign(const array<T>&in)"
+objmthd "array<T>" "void insert_at(uint, const T&in)"
+objmthd "array<T>" "void insert_at(uint, const array<T>&inout)"
+objmthd "array<T>" "void insert_last(const T&in)"
+objmthd "array<T>" "void remove_at(uint)"
+objmthd "array<T>" "void remove_last()"
+objmthd "array<T>" "void remove_range(uint, uint)"
+objmthd "array<T>" "uint length() const"
+objmthd "array<T>" "void reserve(uint)"
+objmthd "array<T>" "void resize(uint)"
+objmthd "array<T>" "void sort_asc()"
+objmthd "array<T>" "void sort_asc(uint, uint)"
+objmthd "array<T>" "void sort_desc()"
+objmthd "array<T>" "void sort_desc(uint, uint)"
+objmthd "array<T>" "void reverse()"
+objmthd "array<T>" "int find(const T&in) const"
+objmthd "array<T>" "int find(uint, const T&in) const"
+objmthd "array<T>" "int find_by_ref(const T&in) const"
+objmthd "array<T>" "int find_by_ref(uint, const T&in) const"
+objmthd "array<T>" "bool op_equals(const array<T>&in) const"
+objmthd "array<T>" "bool is_empty() const"
+objmthd "array<T>" "void sort(array<T>::less&in, uint = 0, uint = uint ( - 1 ))"
+
+// Type members
+objbeh "string" 2 "void string()"
+obj_beh "string" 0 "void string()"
+obj_beh "string" 0 "void string(const string&in)"
+obj_beh "string" 0 "void string(uint64)"
+obj_beh "string" 0 "void string(int64)"
+obj_beh "string" 0 "void string(uint)"
+obj_beh "string" 0 "void string(int)"
+obj_beh "string" 0 "void string(double)"
+obj_beh "string" 0 "void string(float)"
+obj_beh "string" 0 "void string(bool)"
+objmthd "string" "string& opAssign(const string&in)"
+objmthd "string" "string& opAddAssign(const string&in)"
+objmthd "string" "bool opEquals(const string&in) const"
+objmthd "string" "int opCmp(const string&in) const"
+objmthd "string" "string opAdd(const string&in) const"
+objmthd "string" "uint length() const"
+objmthd "string" "void resize(uint)"
+objmthd "string" "bool is_empty() const"
+objmthd "string" "string opIndex(uint)"
+objmthd "string" "const string opIndex(uint) const"
+objmthd "string" "string& opAssign(double)"
+objmthd "string" "string& opAddAssign(double)"
+objmthd "string" "string opAdd(double) const"
+objmthd "string" "string opAdd_r(double) const"
+objmthd "string" "string& opAssign(float)"
+objmthd "string" "string& opAddAssign(float)"
+objmthd "string" "string opAdd(float) const"
+objmthd "string" "string opAdd_r(float) const"
+objmthd "string" "string& opAssign(int64)"
+objmthd "string" "string& opAddAssign(int64)"
+objmthd "string" "string opAdd(int64) const"
+objmthd "string" "string opAdd_r(int64) const"
+objmthd "string" "string& opAssign(uint64)"
+objmthd "string" "string& opAddAssign(uint64)"
+objmthd "string" "string opAdd(uint64) const"
+objmthd "string" "string opAdd_r(uint64) const"
+objmthd "string" "string& opAssign(bool)"
+objmthd "string" "string& opAddAssign(bool)"
+objmthd "string" "string opAdd(bool) const"
+objmthd "string" "string opAdd_r(bool) const"
+objmthd "string" "string substr(uint = 0, int = - 1) const"
+objmthd "string" "int find_first(const string&in, uint = 0) const"
+objmthd "string" "int find_first_of(const string&in, uint = 0) const"
+objmthd "string" "int find_first_not_of(const string&in, uint = 0) const"
+objmthd "string" "int find_last(const string&in, int = - 1) const"
+objmthd "string" "int find_last_of(const string&in, int = - 1) const"
+objmthd "string" "int find_last_not_of(const string&in, int = - 1) const"
+objmthd "string" "void insert(uint, const string&in)"
+objmthd "string" "void erase(uint, int = - 1)"
+objmthd "string" "array<string>@ split(const string&in) const"
+objmthd "string" "string replace(const string&in, const string&in) const"
+objmthd "string" "string capitalize() const"
+objmthd "string" "string upper() const"
+objmthd "string" "string lower() const"
+objmthd "string" "array<string>@ split_lines() const"
+objmthd "string" "bool ends_with(const string&in) const"
+objmthd "string" "bool starts_with(const string&in) const"
+objmthd "string" "bool contains(const string&in) const"
+objmthd "string" "bool is_upper() const"
+objmthd "string" "bool is_lower() const"
+objmthd "string" "uint64 c_str()"
+objbeh "wstring" 2 "void wstring()"
+obj_beh "wstring" 0 "void wstring()"
+obj_beh "wstring" 0 "void wstring(const wstring&in)"
+objmthd "wstring" "wstring& opAssign(const wstring&in)"
+objmthd "wstring" "wstring& opAddAssign(const wstring&in)"
+objmthd "wstring" "void clear()"
+objmthd "wstring" "uint64 c_str()"
+objbeh "dictionaryValue" 2 "void dictionaryValue()"
+objbeh "dictionaryValue" 12 "void $beh12(int&in)"
+objbeh "dictionaryValue" 13 "void $beh13(int&in)"
+obj_beh "dictionaryValue" 0 "void dictionaryValue()"
+objmthd "dictionaryValue" "dictionaryValue& opAssign(const dictionaryValue&in)"
+objmthd "dictionaryValue" "dictionaryValue& opHndlAssign(const ?&in)"
+objmthd "dictionaryValue" "dictionaryValue& opHndlAssign(const dictionaryValue&in)"
+objmthd "dictionaryValue" "dictionaryValue& opAssign(const ?&in)"
+objmthd "dictionaryValue" "dictionaryValue& opAssign(double)"
+objmthd "dictionaryValue" "dictionaryValue& opAssign(int64)"
+objmthd "dictionaryValue" "void opCast(?&out)"
+objmthd "dictionaryValue" "void opConv(?&out)"
+objmthd "dictionaryValue" "int64 opConv()"
+objmthd "dictionaryValue" "double opConv()"
+obj_beh dictionary 3 dictionary@ dictionary();
+objbeh "dictionary" 5 "void $beh5()"
+objbeh "dictionary" 6 "void $beh6()"
+objbeh "dictionary" 9 "int $beh9()"
+objbeh "dictionary" 10 "void $beh10()"
+objbeh "dictionary" 11 "bool $beh11()"
+objbeh "dictionary" 12 "void $beh12(int&in)"
+objbeh "dictionary" 13 "void $beh13(int&in)"
+objbeh "dictionary" 4 "dictionary@ $list(int&in) { repeat { string, ? } }"
+objmthd "dictionary" "dictionary& opAssign(const dictionary&in)"
+objmthd "dictionary" "void set(const string&in, const ?&in)"
+objmthd "dictionary" "bool get(const string&in, ?&out) const"
+objmthd "dictionary" "void set(const string&in, const int64&in)"
+objmthd "dictionary" "bool get(const string&in, int64&out) const"
+objmthd "dictionary" "void set(const string&in, const double&in)"
+objmthd "dictionary" "bool get(const string&in, double&out) const"
+objmthd "dictionary" "bool exists(const string&in) const"
+objmthd "dictionary" "bool is_empty() const"
+objmthd "dictionary" "uint get_size() const"
+objmthd "dictionary" "bool delete(const string&in)"
+objmthd "dictionary" "void delete_all()"
+objmthd "dictionary" "array<string>@ get_keys() const"
+objmthd "dictionary" "dictionaryValue& opIndex(const string&in)"
+objmthd "dictionary" "const dictionaryValue& opIndex(const string&in) const"
+obj_beh "datetime" 0 "void datetime()"
+obj_beh "datetime" 0 "void datetime(const datetime&in)"
+obj_beh "datetime" 0 "void datetime(uint, uint, uint, uint = 0, uint = 0, uint = 0)"
+objmthd "datetime" "datetime& opAssign(const datetime&in)"
+objmthd "datetime" "uint get_year() const property"
+objmthd "datetime" "uint get_month() const property"
+objmthd "datetime" "uint get_day() const property"
+objmthd "datetime" "uint get_hour() const property"
+objmthd "datetime" "uint get_minute() const property"
+objmthd "datetime" "uint get_second() const property"
+objmthd "datetime" "bool setDate(uint, uint, uint)"
+objmthd "datetime" "bool setTime(uint, uint, uint)"
+objmthd "datetime" "int64 opSub(const datetime&in) const"
+objmthd "datetime" "datetime opAdd(int64) const"
+objmthd "datetime" "datetime opAdd_r(int64) const"
+objmthd "datetime" "datetime& opAddAssign(int64)"
+objmthd "datetime" "datetime opSub(int64) const"
+objmthd "datetime" "datetime opSub_r(int64) const"
+objmthd "datetime" "datetime& opSubAssign(int64)"
+objmthd "datetime" "bool opEquals(const datetime&in) const"
+objmthd "datetime" "int opCmp(const datetime&in) const"
+obj_beh file 3 file@ file();
+objbeh "file" 5 "void $beh5()"
+objbeh "file" 6 "void $beh6()"
+objmthd "file" "int open(const string&in, const string&in)"
+objmthd "file" "int close()"
+objmthd "file" "int get_size() const property"
+objmthd "file" "bool is_end_of_file() const"
+objmthd "file" "string read(uint = 0)"
+objmthd "file" "string read_line()"
+objmthd "file" "int write(const string&in)"
+objmthd "file" "int get_pos() const property"
+objmthd "file" "int set_pos(int)"
+objmthd "file" "int move_pos(int)"
+objprop "file" "bool most_significant_byte_first" 0 0
+obj_beh filesystem 3 filesystem@ filesystem();
+objbeh "filesystem" 5 "void $beh5()"
+objbeh "filesystem" 6 "void $beh6()"
+objmthd "filesystem" "bool file_exists(const string&in)"
+objmthd "filesystem" "bool dir_exists(const string&in)"
+objmthd "filesystem" "bool change_current_path(const string&in)"
+objmthd "filesystem" "string get_current_path() const property"
+objmthd "filesystem" "array<string>@ get_dirs() const property"
+objmthd "filesystem" "array<string>@ get_files(string = \"*\") const"
+objmthd "filesystem" "bool is_dir(const string&in) const"
+objmthd "filesystem" "bool is_link(const string&in) const"
+objmthd "filesystem" "int64 get_size(const string&in) const"
+objmthd "filesystem" "int make_dir(const string&in)"
+objmthd "filesystem" "int remove_dir(const string&in)"
+objmthd "filesystem" "int delete_file(const string&in)"
+objmthd "filesystem" "int copy_file(const string&in, const string&in)"
+objmthd "filesystem" "int move(const string&in, const string&in)"
+objmthd "filesystem" "datetime get_create_date_time(const string&in) const"
+objmthd "filesystem" "datetime get_modify_date_time(const string&in) const"
+objbeh "ref" 2 "void ref()"
+objbeh "ref" 12 "void $beh12(int&in)"
+objbeh "ref" 13 "void $beh13(int&in)"
+obj_beh "ref" 0 "void ref()"
+obj_beh "ref" 0 "void ref(const ref&in)"
+obj_beh "ref" 0 "void ref(const ?&in)"
+objmthd "ref" "void opCast(?&out)"
+objmthd "ref" "ref& opHndlAssign(const ref&in)"
+objmthd "ref" "ref& opHndlAssign(const ?&in)"
+objmthd "ref" "bool opEquals(const ref&in) const"
+objmthd "ref" "bool opEquals(const ?&in) const"
+obj_beh any 3 any@ any();
+obj_beh any 3 any@ any(?&in);
+obj_beh any 3 any@ any(const int64&in);
+obj_beh any 3 any@ any(const double&in);
+objbeh "any" 5 "void $beh5()"
+objbeh "any" 6 "void $beh6()"
+objbeh "any" 9 "int $beh9()"
+objbeh "any" 10 "void $beh10()"
+objbeh "any" 11 "bool $beh11()"
+objbeh "any" 12 "void $beh12(int&in)"
+objbeh "any" 13 "void $beh13(int&in)"
+objmthd "any" "any& opAssign(any&in)"
+objmthd "any" "void store(?&in)"
+objmthd "any" "void store(const int64&in)"
+objmthd "any" "void store(const double&in)"
+objmthd "any" "bool retrieve(?&out)"
+objmthd "any" "bool retrieve(int64&out)"
+objmthd "any" "bool retrieve(double&out)"
+obj_beh rect 3 rect@ rect();
+objprop "rect" "int x" 0 0
+objprop "rect" "int y" 0 0
+objprop "rect" "int h" 0 0
+objprop "rect" "int w" 0 0
+obj_beh vector 3 vector@ vector();
+objbeh "vector" 5 "void $beh5()"
+objbeh "vector" 6 "void $beh6()"
+objmthd "vector" "float get_length() const property"
+objmthd "vector" "vector& opAssign(const vector&in)"
+objmthd "vector" "void reset() const"
+objprop "vector" "float x" 0 0
+objprop "vector" "float y" 0 0
+objprop "vector" "float z" 0 0
+obj_beh pack 3 pack@ pack();
+objbeh "pack" 5 "void $beh5()"
+objbeh "pack" 6 "void $beh6()"
+objmthd "pack" "bool open(const string&in, const string&in) const"
+objmthd "pack" "void close() const"
+objmthd "pack" "bool file_exists(const string&in) const"
+objmthd "pack" "void extract_file(const string&in, const string&in) const"
+objmthd "pack" "array<string>@ list_files() const"
+objmthd "pack" "void add_file(const string&in, const string&in) const"
+objmthd "pack" "string get_file(const string&in) const"
+objmthd "pack" "uint64 get_file_size(const string&in) const"
+objmthd "pack" "int get_file_count() const property"
+obj_beh mixer 3 mixer@ mixer();
+obj_beh sound 3 sound@ sound(const string&in = \"\", bool = false);
+objbeh "sound" 5 "void $beh5()"
+objbeh "sound" 6 "void $beh6()"
+objmthd "sound" "bool load(const string&in, bool = false, sound_end_callback@ = null) const"
+objmthd "sound" "bool load_from_memory(string, uint64 = 0, bool = false) const"
+objmthd "sound" "bool stream(const string&in, bool = false) const"
+objmthd "sound" "bool load_url(const string&in, bool = false) const"
+objmthd "sound" "uint64 push_memory() const"
+objmthd "sound" "string get_file_path() const property"
+objmthd "sound" "void set_faid_time(float, float, float) const"
+objmthd "sound" "bool play() const"
+objmthd "sound" "bool play_looped() const"
+objmthd "sound" "bool pause() const"
+objmthd "sound" "bool play_wait() const"
+objmthd "sound" "bool stop() const"
+objmthd "sound" "bool close() const"
+objmthd "sound" "void set_fx(const string&in, int = 0) const"
+objmthd "sound" "void delete_fx(const string&in, int = 0) const"
+objmthd "sound" "void set_reverb_parameters(float, float, float, float, float) const"
+objmthd "sound" "void set_delay_parameters(float, float, float) const"
+objmthd "sound" "void set_position(float, float, float, float, float, float, double = 0.0, float = 5, float = 0.6, float = 0, float = 0, float = 0, float = 0) const"
+objmthd "sound" "void set_position(const vector@ = null, const vector@ = null, double = 0.0, float = 5, float = 0.6, float = 0, float = 0, float = 0, float = 0) const"
+objmthd "sound" "void set_hrtf(bool = true) const property"
+objmthd "sound" "bool get_hrtf() const property"
+objmthd "sound" "vector@ get_listener_position() const property"
+objmthd "sound" "vector@ get_source_position() const property"
+objmthd "sound" "void set_volume_step(float) const property"
+objmthd "sound" "void set_pan_step(float) const property"
+objmthd "sound" "void set_pitch_step(float) const property"
+objmthd "sound" "bool seek(float) const"
+objmthd "sound" "bool get_looping() const property"
+objmthd "sound" "void set_looping(bool) const property"
+objmthd "sound" "float get_pan() const property"
+objmthd "sound" "void set_pan(float) const property"
+objmthd "sound" "float get_volume() const property"
+objmthd "sound" "void set_volume(float) const property"
+objmthd "sound" "float get_pitch() const property"
+objmthd "sound" "void set_pitch(float) const property"
+objmthd "sound" "float get_speed() const property"
+objmthd "sound" "void set_speed(float) const property"
+objmthd "sound" "bool get_active() const property"
+objmthd "sound" "bool get_playing() const property"
+objmthd "sound" "bool get_paused() const property"
+objmthd "sound" "float get_position() const property"
+objmthd "sound" "float get_length() const property"
+objmthd "sound" "void set_length(float = 0.0) const property"
+objmthd "sound" "float get_sample_rate() const property"
+obj_beh audio_recorder 3 audio_recorder@ audio_recorder();
+objmthd "audio_recorder" "void start() const"
+objmthd "audio_recorder" "void stop() const"
+objmthd "audio_recorder" "string get_data() const property"
+obj_beh audio_encoder 3 audio_encoder@ audio_encoder();
+objmthd "audio_encoder" "void encode(const string&in) const"
+objmthd "audio_encoder" "string get_data() const property"
+obj_beh memory_stream 3 memory_stream@ memory_stream(uint64 = 0);
+objbeh "memory_stream" 5 "void $beh5()"
+objbeh "memory_stream" 6 "void $beh6()"
+objmthd "memory_stream" "void write(const string&in)"
+objmthd "memory_stream" "void read(string&out, uint64)"
+objmthd "memory_stream" "void write(uint64, uint64)"
+objmthd "memory_stream" "void read(uint64&out, uint64)"
+objmthd "memory_stream" "void seek(int)"
+objmthd "memory_stream" "void seek(seek_origin, int)"
+objmthd "memory_stream" "uint64 tell() const"
+objmthd "memory_stream" "uint64 get_size() const property"
+objmthd "memory_stream" "void clear() const"
+namespace "scripting"
+obj_beh function 3 scripting::function@ function(int = 0);
+objbeh "function" 5 "void $beh5()"
+objbeh "function" 6 "void $beh6()"
+obj_beh context 3 scripting::context@ context();
+objbeh "context" 5 "void $beh5()"
+objbeh "context" 6 "void $beh6()"
+objmthd "context" "int prepare(scripting::function@) const"
+objmthd "context" "int unprepare() const"
+objmthd "context" "int execute() const"
+objmthd "context" "int abort() const"
+objmthd "context" "int suspend() const"
+objmthd "context" "scripting::ctxstate get_state() const"
+objmthd "context" "int push_state() const"
+objmthd "context" "int pop_state() const"
+objmthd "context" "int set_arg_byte(uint, int8) const"
+objmthd "context" "int set_arg_word(uint, int16) const"
+objmthd "context" "int set_arg_dword(uint, int) const"
+objmthd "context" "int set_arg_qword(uint, int64) const"
+objmthd "context" "int set_arg_float(uint, float) const"
+objmthd "context" "int set_arg_double(uint, double) const"
+objmthd "context" "int set_arg_address(uint, uint64) const"
+objmthd "context" "int set_arg_var_type(uint, uint64, scripting::typeid) const"
+objmthd "context" "uint64 get_address_of_arg(uint) const"
+objmthd "context" "int8 get_return_byte() const"
+objmthd "context" "int16 get_return_word() const"
+objmthd "context" "int get_return_dword() const"
+objmthd "context" "int64 get_return_qword() const"
+objmthd "context" "float get_return_float() const"
+objmthd "context" "double get_return_double() const"
+objmthd "context" "uint64 get_return_address() const"
+objmthd "context" "uint64 get_address_of_return_value() const"
+objmthd "context" "string get_exception_info(bool = true) const"
+obj_beh module 3 scripting::module@ module(const string&in);
+objmthd "module" "int add_script_section(const string&in, const string&in) const"
+objmthd "module" "int build() const"
+objmthd "module" "int discard() const"
+objmthd "module" "string get_byte_code(bool = true) const"
+objmthd "module" "int set_byte_code(const string&in) const"
+objmthd "module" "scripting::function@ get_function_by_index(int) const"
+objmthd "module" "scripting::function@ get_function_by_decl(const string&in) const"
+objmthd "module" "scripting::function@ get_function_by_name(const string&in) const"
+objmthd "module" "int bind_all_imported_functions() const"
+objmthd "module" "int unbind_all_imported_functions() const"
+objmthd "module" "int bind_imported_function(uint, scripting::function@) const"
+objmthd "module" "int unbind_imported_function(uint) const"
+namespace ""
+obj_beh tts_voice 3 tts_voice@ tts_voice();
+objbeh "tts_voice" 5 "void $beh5()"
+objbeh "tts_voice" 6 "void $beh6()"
+objmthd "tts_voice" "void speak(const string&in) const"
+objmthd "tts_voice" "void speak_wait(const string&in) const"
+objmthd "tts_voice" "void speak_interrupt(const string&in) const"
+objmthd "tts_voice" "void speak_interrupt_wait(const string&in) const"
+objmthd "tts_voice" "int get_rate() const property"
+objmthd "tts_voice" "void set_rate(int) property"
+objmthd "tts_voice" "int get_volume() const property"
+objmthd "tts_voice" "void set_volume(int) property"
+objmthd "tts_voice" "void set_voice(uint64) property"
+objmthd "tts_voice" "array<string>@ get_voice_names() const property"
+obj_beh user_idle 3 user_idle@ user_idle();
+objbeh "user_idle" 5 "void $beh5()"
+objbeh "user_idle" 6 "void $beh6()"
+objmthd "user_idle" "uint64 get_elapsed_millis() const property"
+objmthd "user_idle" "uint64 get_elapsed_seconds() const property"
+objmthd "user_idle" "uint64 get_elapsed_minutes() const property"
+objmthd "user_idle" "uint64 get_elapsed_hours() const property"
+objmthd "user_idle" "uint64 get_elapsed_days() const property"
+objmthd "user_idle" "uint64 get_elapsed_weeks() const property"
+obj_beh timer 3 timer@ timer();
+objbeh "timer" 5 "void $beh5()"
+objbeh "timer" 6 "void $beh6()"
+objmthd "timer" "uint64 get_elapsed_seconds() const property"
+objmthd "timer" "uint64 get_elapsed_minutes() const property"
+objmthd "timer" "uint64 get_elapsed_hours() const property"
+objmthd "timer" "uint64 get_elapsed_millis() const property"
+objmthd "timer" "uint64 get_elapsed_micros() const property"
+objmthd "timer" "uint64 get_elapsed_nanos() const property"
+objmthd "timer" "void force_seconds(uint64) const"
+objmthd "timer" "void force_minutes(uint64) const"
+objmthd "timer" "void force_hours(uint64) const"
+objmthd "timer" "void force_millis(uint64) const"
+objmthd "timer" "void force_micros(uint64) const"
+objmthd "timer" "void force_nanos(uint64) const"
+objmthd "timer" "void restart() const"
+objmthd "timer" "void pause() const"
+objmthd "timer" "void resume() const"
+objmthd "timer" "bool get_running() const property"
+obj_beh library 3 library@ library();
+objbeh "library" 5 "void $beh5()"
+objbeh "library" 6 "void $beh6()"
+objmthd "library" "bool load(const string&in) const"
+objmthd "library" "bool get_active() const property"
+objmthd "library" "dictionary@ call(const string&in, ?&in = null, ?&in = null, ?&in = null, ?&in = null, ?&in = null, ?&in = null, ?&in = null, ?&in = null, ?&in = null, ?&in = null, ?&in = null, ?&in = null, ?&in = null, ?&in = null, ?&in = null, ?&in = null, ?&in = null, ?&in = null, ?&in = null, ?&in = null) const"
+objmthd "library" "void unload() const"
+objmthd "library" "uint64 get_function_pointer(const string&in) const"
+objmthd "library" "void clear_functions() const"
+obj_beh thread 3 thread@ thread(thread_func@);
+objbeh "thread" 5 "void $beh5()"
+objbeh "thread" 6 "void $beh6()"
+objmthd "thread" "void detach() const"
+objmthd "thread" "void join() const"
+objmthd "thread" "void destroy() const"
+obj_beh instance 3 instance@ instance(const string&in);
+objbeh "instance" 5 "void $beh5()"
+objbeh "instance" 6 "void $beh6()"
+objmthd "instance" "bool is_running()"
+obj_beh network_event 3 network_event@ network_event();
+objbeh "network_event" 5 "void $beh5()"
+objbeh "network_event" 6 "void $beh6()"
+objmthd "network_event" "network_event& opAssign(const network_event&in)"
+objprop "network_event" "const int type" 0 0
+objprop "network_event" "const uint peer_id" 0 0
+objprop "network_event" "const int channel" 0 0
+objprop "network_event" "const string message" 0 0
+obj_beh network 3 network@ network();
+objbeh "network" 5 "void $beh5()"
+objbeh "network" 6 "void $beh6()"
+objmthd "network" "uint connect(string&in, int)"
+objmthd "network" "bool destroy()"
+objmthd "network" "bool disconnect_peer(uint)"
+objmthd "network" "bool disconnect_peer_forcefully(uint)"
+objmthd "network" "string get_peer_address(uint) const property"
+objmthd "network" "double get_peer_average_round_trip_time(uint) const property"
+objmthd "network" "array<uint>@ get_peer_list()"
+objmthd "network" "network_event@ request(int = 0)"
+objmthd "network" "bool send_reliable(uint, string&in, int)"
+objmthd "network" "bool send_unreliable(uint, string&in, int)"
+objmthd "network" "bool set_bandwidth_limits(double, double)"
+objmthd "network" "bool setup_client(int, int)"
+objmthd "network" "bool setup_server(int, int, int)"
+objmthd "network" "void flush() const"
+objmthd "network" "int get_connected_peers() const property"
+objmthd "network" "double get_bytes_sent() const property"
+objmthd "network" "double get_bytes_received() const property"
+obj_beh sqlite3statement 3 sqlite3statement@ sqlite3statement();
+objbeh "sqlite3statement" 5 "void $beh5()"
+objbeh "sqlite3statement" 6 "void $beh6()"
+objmthd "sqlite3statement" "int step()"
+objmthd "sqlite3statement" "int reset()"
+objmthd "sqlite3statement" "string get_expanded_sql_statement() property"
+objmthd "sqlite3statement" "string get_sql_statement() property"
+objmthd "sqlite3statement" "int get_bind_param_count() property"
+objmthd "sqlite3statement" "int get_column_count() property"
+objmthd "sqlite3statement" "int bind_blob(int, const string&in, bool = true)"
+objmthd "sqlite3statement" "int bind_double(int, double)"
+objmthd "sqlite3statement" "int bind_int(int, int)"
+objmthd "sqlite3statement" "int bind_int64(int, int64)"
+objmthd "sqlite3statement" "int bind_null(int)"
+objmthd "sqlite3statement" "int bind_param_index(const string&in)"
+objmthd "sqlite3statement" "string bind_param_name(int)"
+objmthd "sqlite3statement" "int bind_text(int, const string&in, bool = true)"
+objmthd "sqlite3statement" "int clear_bindings()"
+objmthd "sqlite3statement" "string column_blob(int)"
+objmthd "sqlite3statement" "int column_bytes(int)"
+objmthd "sqlite3statement" "string column_decltype(int)"
+objmthd "sqlite3statement" "double column_double(int)"
+objmthd "sqlite3statement" "int column_int(int)"
+objmthd "sqlite3statement" "int64 column_int64(int)"
+objmthd "sqlite3statement" "string column_name(int)"
+objmthd "sqlite3statement" "int column_type(int)"
+objmthd "sqlite3statement" "string column_text(int)"
+obj_beh sqlite3 3 sqlite3@ sqlite3();
+objbeh "sqlite3" 5 "void $beh5()"
+objbeh "sqlite3" 6 "void $beh6()"
+objmthd "sqlite3" "int close()"
+objmthd "sqlite3" "int open(const string&in, int = 6)"
+objmthd "sqlite3" "sqlite3statement@ prepare(const string&in, int&out = void)"
+objmthd "sqlite3" "int execute(const string&in)"
+objmthd "sqlite3" "int64 get_rows_changed() property"
+objmthd "sqlite3" "int64 get_total_rows_changed() property"
+objmthd "sqlite3" "int limit(int, int)"
+objmthd "sqlite3" "int set_authorizer(sqlite3authorizer@, const string&in = \"\")"
+objmthd "sqlite3" "int64 get_last_insert_rowid() property"
+objmthd "sqlite3" "void set_last_insert_rowid(int64) property"
+objmthd "sqlite3" "int get_last_error()"
+objmthd "sqlite3" "string get_last_error_text()"
+objmthd "sqlite3" "bool get_active() property"
+
+// Functions
+func "string formatInt(int64, const string&in = \"\", uint = 0)"
+func "string formatUInt(uint64, const string&in = \"\", uint = 0)"
+func "string formatFloat(double, const string&in = \"\", uint = 0, uint = 0)"
+func "double string_to_number(const string&in, uint&out = 0)"
+func "string join(const array<string>&in, const string&in)"
+func "void throw(const string&in)"
+func "string get_exception_info()"
+func "float fpFromIEEE(uint)"
+func "uint fpToIEEE(float)"
+func "double fpFromIEEE(uint64)"
+func "uint64 fpToIEEE(double)"
+func "bool closeTo(float, float, float = 0.00001f)"
+func "bool closeTo(double, double, double = 0.0000000001)"
+func "float cos(float)"
+func "float sin(float)"
+func "float tan(float)"
+func "float acos(float)"
+func "float asin(float)"
+func "float atan(float)"
+func "float atan2(float, float)"
+func "float cosh(float)"
+func "float sinh(float)"
+func "float tanh(float)"
+func "float log(float)"
+func "float log10(float)"
+func "float pow(float, float)"
+func "float sqrt(float)"
+func "float ceil(float)"
+func "float abs(float)"
+func "float floor(float)"
+func "float fraction(float)"
+func "double round(double, int)"
+namespace "os"
+func "int get_cpu_count() property"
+func "int get_system_ram() property"
+func "string get_platform() property"
+namespace ""
+func "uint64 get_time_stamp_millis() property"
+func "uint64 get_time_stamp_seconds() property"
+func "void set_library_path(const string&in)"
+func "int64 random(int64, int64)"
+func "double random(double, double)"
+func "bool random_bool()"
+func "void printf(string&in, ?&in = 0, ?&in = 0, ?&in = 0, ?&in = 0, ?&in = 0, ?&in = 0, ?&in = 0, ?&in = 0, ?&in = 0, ?&in = 0, ?&in = 0, ?&in = 0, ?&in = 0, ?&in = 0, ?&in = 0)"
+func "int get_last_error() property"
+namespace "screen_reader"
+func "void set_interrupt(bool) property"
+func "bool get_interrupt() property"
+func "void speak(const string&in, bool = interrupt)"
+func "void speak_wait(const string&in, bool = screen_reader_interrupt)"
+func "void stop_speech()"
+func "string detect()"
+namespace ""
+func "void set_exit_callback(exit_callback@ = null)"
+func "void show_console()"
+func "void hide_console()"
+func "bool show_window(const string&in, int = 640, int = 480, bool = true)"
+func "uint64 get_window_handle()"
+func "void hide_window()"
+func "void set_update_window_freq(int64) property"
+func "int64 get_update_window_freq() property"
+func "void set_window_title(const string&in) property"
+func "void set_window_closable(bool) property"
+func "void garbage_collect()"
+func "int64 get_window_surface() property"
+func "void free_surface(int64)"
+func "int64 load_bmp(const string&in)"
+func "int fill_rect(int64, rect@, uint)"
+func "int blit_surface(int64, rect@, int64, rect@)"
+func "bool get_window_active() property"
+func "void set_window_fullscreen(bool) property"
+func "bool mouse_pressed(uint8)"
+func "bool mouse_released(uint8)"
+func "bool mouse_down(uint8)"
+func "int get_MOUSE_X() property"
+func "int get_MOUSE_Y() property"
+func "int get_MOUSE_Z() property"
+namespace "internet"
+func "void ftp_download(const string&in, const string&in)"
+func "void mail_send(smtp_login_method, uint, const string&in, const string&in, const string&in, const string&in, const string&in, const string&in, const string&in, const string&in = \"\")"
+namespace ""
+func "void exit(int = 0)"
+func "string number_to_words(uint64, bool)"
+func "bool clipboard_copy_text(const string&in)"
+func "string clipboard_read_text()"
+func "string get_input()"
+func "string input_box(const string&in, const string&in, const string&in = \"\", bool = false, bool = false)"
+func "bool key_pressed(keycode)"
+func "bool key_released(keycode)"
+func "bool key_down(keycode)"
+func "bool key_repeat(keycode)"
+func "array<int>@ keys_pressed()"
+func "array<int>@ keys_released()"
+func "array<int>@ keys_down()"
+func "array<int>@ keys_repeat()"
+func "string key_to_string(int)"
+func "int string_to_key(const string&in)"
+func "bool force_key_down(keycode)"
+func "bool force_key_up(keycode)"
+func "void reset_all_forced_keys()"
+func "string string_encrypt(const string&in, string&in)"
+func "string string_decrypt(const string&in, string&in)"
+namespace "internet"
+func "string url_decode(const string&in)"
+func "string url_encode(const string&in)"
+func "string url_get(const string&in)"
+func "string url_post(const string&in, const string&in)"
+namespace ""
+func "string ascii_to_character(int)"
+func "int character_to_ascii(const string&in)"
+func "string hex_to_string(const string&in)"
+func "string number_to_hex_string(double)"
+func "string string_base64_decode(const string&in)"
+func "string string_base64_encode(const string&in)"
+func "string string_base32_decode(const string&in)"
+func "string string_base32_encode(const string&in)"
+func "string string_to_hex(const string&in)"
+func "bool alert(const string&in, const string&in, const string&in = \"OK\")"
+func "int question(const string&in, const string&in)"
+func "void wait(uint64)"
+func "void wait_event()"
+func "string read_environment_variable(const string&in)"
+func "bool write_environment_variable(const string&in, const string&in)"
+func "string serialize(dictionary@ = null)"
+func "dictionary@ deserialize(const string&in)"
+func "bool urlopen(const string&in)"
+func "uint64 malloc(uint64)"
+func "uint64 calloc(uint64, uint64)"
+func "uint64 realloc(uint64, uint64)"
+func "void free(uint64)"
+func "uint64 memcpy(uint64, uint64, uint64)"
+func "string c_str_to_string(uint64, uint64 = 0)"
+func "wstring wc_str_to_wstring(uint64, uint64 = 0)"
+func "uint64 c_str_len(uint64)"
+func "uint64 wc_str_len(uint64)"
+func "void unicode_convert(const string&in, wstring&out)"
+func "void unicode_convert(const wstring&in, string&out)"
+func "void set_audio_period_size(uint) property"
+func "void set_sound_storage(const string&in) property"
+func "string get_sound_storage() property"
+func "void set_sound_pack(pack@) property"
+func "pack@ get_sound_pack() property"
+func "void set_master_volume(float) property"
+func "float get_master_volume() property"
+func "void mixer_start()"
+func "void mixer_stop()"
+func "bool mixer_play_sound(const string&in)"
+func "void mixer_reinit()"
+func "array<string>@ get_output_audio_devices()"
+func "bool set_output_audio_device(uint)"
+func "void set_sound_global_hrtf(bool) property"
+func "bool get_sound_global_hrtf() property"
+namespace "scripting"
+func "int register_function(const string&in, uint64, callconv)"
+func "string get_messages(bool = true, bool = true, bool = false)"
+func "void clear_messages()"
+func "function@ get_function_by_id(int)"
+func "function@ get_function_by_decl(const string&in)"
+namespace ""
+func "uint64 sizeof(const ?&in = null)"
+func "array<string>@ get_char_argv()"
+func "int exec(const string&in)"
+func "int exec(const string&in, string&out)"
+
+// Properties
+prop "mixer sound_default_mixer"
+prop "const int EVENT_NONE"
+prop "const int EVENT_CONNECT"
+prop "const int EVENT_RECEIVE"
+prop "const int EVENT_DISCONNECT"
+prop "const bool SCRIPT_COMPILED"
+
+// String factory
+strfactory "string"
+
+// Default array type
+defarray "array<T>"

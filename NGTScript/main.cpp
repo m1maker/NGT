@@ -577,19 +577,7 @@ auto main(int argc, char* argv[]) -> int {
 		return result;
 	}
 	else if (flag == "-i") {
-		ScriptDocumentationOptions sd;
-		sd.addTimestamp = true;
-		sd.documentationName = "NGT engine documentation";
-		sd.htmlSafe = true;
-		sd.includeArrayInterface = true;
-		sd.includeRefInterface = true;
-		sd.includeStringInterface = true;
-		sd.includeWeakRefInterface = true;
-		sd.projectName = "NGT";
-		sd.outputFile = filename.c_str();
-		DocumentationGenerator dg(engine, sd);
-		dg.Generate();
-
+		WriteConfigToFile(engine, filename.c_str());
 	}
 	exit_engine();
 	return EXIT_SUCCESS;
@@ -728,5 +716,5 @@ CScriptArray* GetCommandLineArgs()
 	// Return the array by handle
 	g_commandLineArgs->AddRef();
 	return g_commandLineArgs;
-}
+	}
 
