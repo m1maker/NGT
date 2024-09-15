@@ -11,6 +11,7 @@
 #include "angelscript.h"
 #include "contextmgr/contextmgr.h"
 #include "Poco/SHA2Engine.h"
+#include "debugger/debugger.h"
 #include "aes/aes.hpp"
 #include "datetime/datetime.h"
 #include "docgen.h"
@@ -42,31 +43,37 @@ int IncludeCallback(const char* include, const char* from, CScriptBuilder* build
 	std::string absoluteIncludePath = Poco::Path(from).append("../" + std::string(include)).toString(); // Construct an absolute path
 	// 2. Try to find the file directly
 	if (builder->AddSectionFromFile(absoluteIncludePath.c_str()) > -1) {
+		g_ScriptMessagesError = "";
 		return 0;
 	}
 
 	// 3. Try the 'include' directory
 	std::string includeDirectoryPath = Poco::Path("include", include).toString();
 	if (builder->AddSectionFromFile(includeDirectoryPath.c_str()) > -1) {
+		g_ScriptMessagesError = "";
 		return 0;
 	}
 
 	// 4. Check for .as and .ngt extensions in both paths
 	std::string currentAsPath = absoluteIncludePath + ".as";
 	if (builder->AddSectionFromFile(currentAsPath.c_str()) > -1) {
+		g_ScriptMessagesError = "";
 		return 0;
 	}
 	std::string currentNgtPath = absoluteIncludePath + ".ngt";
 	if (builder->AddSectionFromFile(currentNgtPath.c_str()) > -1) {
+		g_ScriptMessagesError = "";
 		return 0;
 	}
 
 	std::string includeAsPath = includeDirectoryPath + ".as";
 	if (builder->AddSectionFromFile(includeAsPath.c_str()) > -1) {
+		g_ScriptMessagesError = "";
 		return 0;
 	}
 	std::string includeNgtPath = includeDirectoryPath + ".ngt";
 	if (builder->AddSectionFromFile(includeNgtPath.c_str()) > -1) {
+		g_ScriptMessagesError = "";
 		return 0;
 	}
 
@@ -80,10 +87,11 @@ int IncludeCallback(const char* include, const char* from, CScriptBuilder* build
 	for (const auto& match : matches) {
 		builder->AddSectionFromFile(match.c_str());
 	}
-
+	g_ScriptMessagesError = "";
 	return 0;
 }
 CScriptBuilder builder;
+CDebugger debugger;
 static void crypt(std::vector<asBYTE>& bytes) {
 	for (size_t i = 0; i < bytes.size(); ++i) {
 		bytes[i] ^= bytes.size();
@@ -528,7 +536,19 @@ auto main(int argc, char* argv[]) -> int {
 			return 1;
 		}
 		init_engine();
+		debugger.SetEngine(engine);
+		bool debug_thread = false;
+		thread t([&]() {
+			debugger.PrintHelp();
+			while (debug_thread) {
+				debugger.TakeCommands(app.scriptContext);
+			}
+			});
+		t.detach();
+		debug_thread = true;
 		int result = app.Exec(func);
+		debug_thread = false;
+		debugger.TakeCommands(app.scriptContext);
 		return result;
 	}
 	else if (flag == "-b") {
@@ -716,5 +736,5 @@ CScriptArray* GetCommandLineArgs()
 	// Return the array by handle
 	g_commandLineArgs->AddRef();
 	return g_commandLineArgs;
-	}
+}
 
