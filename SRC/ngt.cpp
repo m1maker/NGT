@@ -1,20 +1,20 @@
 ﻿#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS 
 #include "cmp.h"
 #include "ngtreg.h"
-#include "Poco/BinaryReader.h"
-#include "Poco/Event.h"
-#include "Poco/Mutex.h"
-#include "Poco/Runnable.h"
-#include "Poco/SHA2Engine.h"
-#include "Poco/TextConverter.h"
-#include "Poco/Thread.h"
-#include "Poco/Unicode.h"
-#include "Poco/UnicodeConverter.h"
-#include"sdl3/SDL.h"
 #include "sound.h"
+#include <Poco/BinaryReader.h>
+#include <Poco/Event.h>
+#include <Poco/Mutex.h>
+#include <Poco/Runnable.h>
+#include <Poco/SHA2Engine.h>
+#include <Poco/TextConverter.h>
+#include <Poco/Thread.h>
+#include <Poco/Unicode.h>
+#include <Poco/UnicodeConverter.h>
+#include<sdl3/SDL.h>
 extern "C" {
 #define SRAL_STATIC
-#include "../SRAL/Include/SRAL.h"
+#include <SRAL.h>
 }
 #include <chrono>
 #include<condition_variable>

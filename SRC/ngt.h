@@ -7,36 +7,37 @@
 #define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
 #include "../GUI/GUI.h"
 #include <Windows.h>
-#include"tts_voice.h"
 #endif
 #define FFI_BUILDING
 #include "ffi.h"
 #include "ffi_cfi.h"
 #include "ffi_common.h"
-#include "Poco/Base32Decoder.h"
-#include "Poco/Base32Encoder.h"
-#include "Poco/Base64Decoder.h"
-#include "Poco/Base64Encoder.h"
-#include "Poco/Exception.h"
-#include "Poco/HexBinaryDecoder.h"
-#include "Poco/HexBinaryEncoder.h"
-#include "Poco/Net/FTPStreamFactory.h"
-#include "Poco/Net/HTTPClientSession.h"
-#include "Poco/Net/HTTPRequest.h"
-#include "Poco/Net/HTTPResponse.h"
-#include "Poco/Net/HTTPStreamFactory.h"
-#include "Poco/Net/MailMessage.h"
-#include "Poco/Net/MailRecipient.h"
-#include "Poco/Net/SMTPClientSession.h"
-#include "Poco/Net/StringPartSource.h"
-#include "Poco/NumberFormatter.h"
-#include "Poco/Path.h"
-#include "Poco/StreamCopier.h"
-#include "Poco/String.h"
-#include "Poco/URI.h"
-#include "Poco/URIStreamOpener.h"
-#include "poco/mutex.h"
-#include"poco/NamedMutex.h"
+#include"tts_voice.h"
+
+#include <Poco/Base32Decoder.h>
+#include <Poco/Base32Encoder.h>
+#include <Poco/Base64Decoder.h>
+#include <Poco/Base64Encoder.h>
+#include <Poco/Exception.h>
+#include <Poco/HexBinaryDecoder.h>
+#include <Poco/HexBinaryEncoder.h>
+#include <Poco/Net/FTPStreamFactory.h>
+#include <Poco/Net/HTTPClientSession.h>
+#include <Poco/Net/HTTPRequest.h>
+#include <Poco/Net/HTTPResponse.h>
+#include <Poco/Net/HTTPStreamFactory.h>
+#include <Poco/Net/MailMessage.h>
+#include <Poco/Net/MailRecipient.h>
+#include <Poco/Net/SMTPClientSession.h>
+#include <Poco/Net/StringPartSource.h>
+#include <Poco/NumberFormatter.h>
+#include <Poco/Path.h>
+#include <Poco/StreamCopier.h>
+#include <Poco/String.h>
+#include <Poco/URI.h>
+#include <Poco/URIStreamOpener.h>
+#include <Poco/Mutex.h>
+#include<Poco/NamedMutex.h>
 #include <memory>
 using namespace Poco;
 using namespace Poco::Net;
@@ -52,7 +53,7 @@ using Poco::Net::MailRecipient;
 using Poco::Net::SMTPClientSession;
 using Poco::Net::StringPartSource;
 
-#include "enet/enet.h"
+#include <enet/enet.h>
 #include <fcntl.h>
 #include <io.h>
 #include "sqlite3.h"
@@ -62,7 +63,7 @@ using Poco::Net::StringPartSource;
 #include<chrono>
 #include <string>
 //#define SDL_MAIN_HANDLED
-#include"sdl3/SDL.h"
+#include<SDL3/SDL.h>
 #include <iostream>
 #include<thread>
 #include <vector>

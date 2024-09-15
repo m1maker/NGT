@@ -20,13 +20,13 @@ FetchContent_Declare(
   angelscript
   GIT_REPOSITORY "https://github.com/codecat/angelscript-mirror"
   GIT_TAG origin/master
-  SOURCE_SUBDIR sdk/angelscript/projects/cmake
+  SOURCE_SUBDIR sdk/angelscript/projects/cmake SYSTEM
 )
 FetchContent_MakeAvailable(angelscript)
 FetchContent_Declare(
   SDL3
   GIT_REPOSITORY "https://github.com/libsdl-org/SDL"
-  GIT_TAG origin/main
+  GIT_TAG origin/main SYSTEM
 )
 FetchContent_MakeAvailable(SDL3)
 
@@ -34,19 +34,43 @@ FetchContent_MakeAvailable(SDL3)
 
 FetchContent_Declare(SRAL
   GIT_REPOSITORY "https://github.com/m1maker/SRAL"
-  GIT_TAG origin/main)
+  GIT_TAG origin/main SYSTEM)
 FetchContent_MakeAvailable(SRAL)
 FetchContent_Declare(Poco
   GIT_REPOSITORY "https://github.com/pocoproject/poco"
-  GIT_TAG origin/main)
+  GIT_TAG origin/main SYSTEM)
 FetchContent_MakeAvailable(Poco)
+
+FetchContent_Declare(enet
+  GIT_REPOSITORY "https://github.com/lsalzman/enet"
+  GIT_TAG origin/master SYSTEM)
+FetchContent_MakeAvailable(enet)
+
+include_directories(
+  ${angelscript_SOURCE_DIR}/sdk/angelscript/include
+  ${Poco_SOURCE_DIR}/Net/include
+  ${Poco_SOURCE_DIR}/Foundation/include
+
+  ${SDL3_SOURCE_DIR}/include
+  ${enet_SOURCE_DIR}/include
+  ${SRAL_SOURCE_DIR}/Include
+
+)
+
 
 
 add_executable(${PROJECT_NAME} 
   "SRC/ngt.cpp" 
   "SRC/ngt.h" 
-  "SRC/main.cpp")
+  "SRC/main.cpp"
+  "SRC/ngtreg.h"
+  "SRC/ngtreg.cpp"
+  "SRC/sound.h"
+  "SRC/sound.cpp"
+)
 target_link_libraries(${PROJECT_NAME} SRAL_static)
 target_link_libraries(${PROJECT_NAME} angelscript)
 target_link_libraries(${PROJECT_NAME} SDL_STATIC)
 target_link_libraries(${PROJECT_NAME} PocoFoundation)
+target_link_libraries(${PROJECT_NAME} PocoNet)
+target_link_libraries(${PROJECT_NAME} enet)

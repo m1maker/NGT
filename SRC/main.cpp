@@ -10,7 +10,7 @@
 #include <filesystem>
 #include <angelscript.h>
 #include "contextmgr/contextmgr.h"
-#include "Poco/SHA2Engine.h"
+#include <Poco/SHA2Engine.h>
 #include "debugger/debugger.h"
 #include "aes/aes.hpp"
 #include "datetime/datetime.h"
@@ -28,14 +28,14 @@
 #include "scriptmath/scriptmath.h"
 #include "scriptstdstring/scriptstdstring.h"
 #include "scriptstdstring/scriptstdwstring.h"
-#include "sdl3/sdl_main.h"
+#include <sdl3/sdl_main.h>
 #include <assert.h>  // assert()
 #include <cstdlib>
 #include <fstream>
 #include <thread>
-#include "Poco/Glob.h"
-#include "Poco/Path.h"
-#include "Poco/Exception.h"
+#include <Poco/Glob.h>
+#include <Poco/Path.h>
+#include <Poco/Exception.h>
 
 
 int IncludeCallback(const char* include, const char* from, CScriptBuilder* builder, void* userParam) {
