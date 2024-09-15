@@ -8,7 +8,7 @@
 #include <unistd.h>
 #endif
 #include <filesystem>
-#include "angelscript.h"
+#include <angelscript.h>
 #include "contextmgr/contextmgr.h"
 #include "Poco/SHA2Engine.h"
 #include "debugger/debugger.h"

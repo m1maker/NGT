@@ -1,7 +1,4 @@
-NGTScript/.vs
-NGTScript/x64
-NGTScript/release
-NGTScript/NGTScript
+.vs/
 *.lib
 *.dll
 *.exe
@@ -11,3 +8,4 @@ NGTScript/NGTScript
 *.reapeaks
 ngt-docs/
 GUI/
+out/

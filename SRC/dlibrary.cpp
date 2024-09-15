@@ -1,6 +1,6 @@
 #include "dlibrary.h"
 #include"ngt.h"
-#include "sdl3/sdl.h"
+#include <sdl3/sdl.h>
 #include<filesystem>
 bool dlibrary::load(const std::string& name) {
 	lib = SDL_LoadObject(name.c_str());
