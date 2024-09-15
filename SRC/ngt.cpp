@@ -30,7 +30,7 @@ extern "C"
 #include"bl_number_to_words.h"
 }
 #include<map>
-#include "../uni_algo.h"
+#include "uni_algo.h"
 #include<algorithm>
 #include <stdio.h>
 #include "NGT.H"
@@ -199,7 +199,7 @@ void as_printf(asIScriptGeneric* gen)
 	return;
 }
 int get_cpu_count() {
-	return SDL_GetCPUCount();
+	return SDL_GetNumLogicalCPUCores();
 }
 int get_system_ram() {
 	return SDL_GetSystemRAM();

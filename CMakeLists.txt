@@ -1,11 +1,11 @@
 # CMakeList.txt : CMake project for NGT
 # project specific logic here.
 #
-cmake_minimum_required (VERSION 3.25)
+cmake_minimum_required (VERSION 3.29.5)
 set(CMAKE_CXX_STANDARD 20)
 
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-set_property(GLOBAL PROPERTY ALLOW_DUPLICATE_CUSTOM_TARGETS ON)
+cmake_policy(SET CMP0002 NEW)
 
 
 # Enable Hot Reload for MSVC compilers if supported.
@@ -15,6 +15,7 @@ if (POLICY CMP0141)
 endif()
 
 project ("NGT")
+add_compile_definitions("NGT" UNICODE)
 include(FetchContent)
 FetchContent_Declare(
   angelscript
@@ -23,13 +24,12 @@ FetchContent_Declare(
   SOURCE_SUBDIR sdk/angelscript/projects/cmake SYSTEM
 )
 FetchContent_MakeAvailable(angelscript)
-FetchContent_Declare(
-  SDL3
-  GIT_REPOSITORY "https://github.com/libsdl-org/SDL"
-  GIT_TAG origin/main SYSTEM
-)
-FetchContent_MakeAvailable(SDL3)
 
+include(ExternalProject)
+ExternalProject_Add(SDL3
+  GIT_REPOSITORY    "https://github.com/libsdl-org/SDL"
+  GIT_TAG           origin/main
+)
 
 
 FetchContent_Declare(SRAL

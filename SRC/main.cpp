@@ -36,7 +36,7 @@
 #include <Poco/Glob.h>
 #include <Poco/Path.h>
 #include <Poco/Exception.h>
-
+#define NGT_BYTECODE_ENCRYPTION_KEY "0"
 
 int IncludeCallback(const char* include, const char* from, CScriptBuilder* builder, void* userParam) {
 	// 1. Resolve the relative path
