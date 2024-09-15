@@ -1,9 +1,0 @@
-sound s;
-void main(){
-s.load("C:/windows/media/tada.wav");
-s.play_wait();
-s.close();
-s.load("C:/windows/media/ding.wav");
-s.play_wait();
-s.close();
-}
