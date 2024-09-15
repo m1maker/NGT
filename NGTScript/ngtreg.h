@@ -16,6 +16,11 @@
 #define AS_END(x) x->SetDefaultNamespace("")
 using namespace std;
 void show_message();
+extern std::string g_ScriptMessagesInfo;
+extern std::string g_ScriptMessagesWarning;
+extern std::string g_ScriptMessagesError;
+
+
 
 void MessageCallback(const asSMessageInfo* msg, void* param);
 void RegisterFunctions(asIScriptEngine* engine);

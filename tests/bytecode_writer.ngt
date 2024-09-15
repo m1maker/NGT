@@ -1,8 +1,10 @@
 const string SCRIPT_CODE="""sound s;
+import void do_test() from "ngtgame";
 void play_sound(){
 s.load("C:/windows/media/tada.wav");
 s.play_wait();
 s.close();
+do_test();
 }
 """;
 void main(){

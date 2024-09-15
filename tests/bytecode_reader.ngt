@@ -1,0 +1,21 @@
+void main(){
+file f;
+int result=f.open("bytecode.raw", "r");
+if(result !=0){
+alert("Bytecode reader", "Failed to read the bytecode");
+exit(-1);
+}
+scripting::module module("NGTBytecodeRead");
+module.set_byte_code(f.read(f.get_size()));
+module.bind_all_imported_functions();
+scripting::context ctx;
+ctx.prepare(module.get_function_by_name("play_sound"));
+result=ctx.execute();
+if(result==scripting::EXECUTION_EXCEPTION){
+alert("NGTSubRuntimeError", ctx.get_exception_info());
+}
+ctx.unprepare();
+}
+void do_test(){
+alert("Test", "Finish!");
+}

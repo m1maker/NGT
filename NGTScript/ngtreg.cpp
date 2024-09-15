@@ -49,7 +49,6 @@ LRESULT CALLBACK EditSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 	}
 	return CallWindowProc(originalEditProc, hWnd, uMsg, wParam, lParam);
 }
-std::wstring ouou;
 int currentLine;
 int currentLineUp;
 std::wstring result_message;
@@ -60,6 +59,7 @@ HWND g_CurrentFocus;
 #endif
 void show_message()
 {
+	cout << "Compilation error\n" + g_ScriptMessagesError + g_ScriptMessagesWarning;
 #ifdef _WIN32
 	const wchar_t CLASS_NAME[] = L"NGTTextbox";
 
@@ -104,7 +104,6 @@ void show_message()
 	originalEditProc = (WNDPROC)SetWindowLongPtr(g_hwndEdit, GWLP_WNDPROC, (LONG_PTR)EditSubclassProc);
 
 	MSG messagege;
-	std::wstring oo;
 	while (GetMessage(&messagege, NULL, 0, 0))
 	{
 		if (!IsDialogMessage(hwnd, &messagege))
@@ -119,6 +118,9 @@ void show_message()
 #else 
 	return;// Shutting down
 #endif
+	g_ScriptMessagesError = "";
+	g_ScriptMessagesWarning = "";
+	g_ScriptMessagesInfo = "";
 }
 #ifdef _WIN32
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -142,6 +144,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			hInstance,
 			NULL
 		);
+		result_message = wstr(g_ScriptMessagesError + g_ScriptMessagesWarning);
 		SendMessage(g_hwndEdit, WM_SETTEXT, false, (LPARAM)result_message.c_str());
 
 		break;
@@ -179,23 +182,38 @@ ngtvector* fngtvector() { return new ngtvector; }
 sqlite3statement* fsqlite3statement() { return new sqlite3statement; }
 ngtsqlite3* fngtsqlite3() { return new ngtsqlite3; }
 network* fnetwork() { return new network; }
+
+
+std::string g_ScriptMessagesInfo;
+std::string g_ScriptMessagesWarning;
+std::string g_ScriptMessagesError;
+
+
 void MessageCallback(const asSMessageInfo* msg, void* param)
 {
-	const char* type = "ERR ";
-	if (msg->type == asMSGTYPE_WARNING || msg->type == asMSGTYPE_INFORMATION)
-		return;
-	char rowStr[10], colStr[10];
-	_itoa_s(msg->row, rowStr, 10);
-	_itoa_s(msg->col, colStr, 10);
-	std::string messageStr(msg->message);
-	std::string output = "File: " + std::string(msg->section) + "\r\nLine (" + rowStr + ", " + colStr + ") : \r\n" + type + " : " + messageStr;
-#ifdef _WIN32
-	ouou = wstr(output);
-	result_message += ouou + L"\r\n";
-#endif
-	cout << output << endl;
-}
+	std::string messageTemplate = "File: %f\r\nLine: %l, Col: %c\r\n%t: %m\r\n\r\n";
 
+	std::string formattedMessage = messageTemplate;
+	formattedMessage.replace(formattedMessage.find("%f"), 2, msg->section);
+	formattedMessage.replace(formattedMessage.find("%l"), 2, std::to_string(msg->row));
+	formattedMessage.replace(formattedMessage.find("%c"), 2, std::to_string(msg->col));
+	formattedMessage.replace(formattedMessage.find("%t"), 2,
+		(msg->type == asMSGTYPE_WARNING ? "WARNING" :
+			(msg->type == asMSGTYPE_INFORMATION ? "INFO" : "ERR")));
+
+
+	formattedMessage.replace(formattedMessage.find("%m"), 2, msg->message);
+
+	if (msg->type == asMSGTYPE_WARNING) {
+		g_ScriptMessagesWarning += formattedMessage;
+	}
+	else if (msg->type == asMSGTYPE_INFORMATION) {
+		g_ScriptMessagesInfo += formattedMessage;
+	}
+	else {
+		g_ScriptMessagesError += formattedMessage;
+	}
+}
 
 void Print(const char* format, ...)
 {

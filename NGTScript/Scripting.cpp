@@ -1,10 +1,34 @@
+#include "ngtreg.h"
+#include "scripthelper/scripthelper.h"
 #include "Scripting.h"
 #include<string>
+#undef GetObject
 int RegisterFunction(const std::string& signature, void* function_handle, int callconv) {
 	asIScriptContext* ctx = asGetActiveContext();
 	asIScriptEngine* engine = ctx->GetEngine();
 	return engine->RegisterGlobalFunction(signature.c_str(), asFUNCTION(function_handle), callconv);
 }
+
+std::string GetMessages(bool include_error = true, bool include_warning = true, bool include_info = false) {
+	std::string messages;
+
+	if (include_error) {
+		messages += g_ScriptMessagesError; // Assuming g_ScriptMessagesError is defined elsewhere
+	}
+	if (include_warning) {
+		messages += g_ScriptMessagesWarning; // Assuming g_ScriptMessagesWarning is defined elsewhere
+	}
+	if (include_info) {
+		messages += g_ScriptMessagesInfo; // Assuming g_ScriptMessagesInfo is defined elsewhere
+	}
+	return messages;
+}
+void ClearMessages() {
+	g_ScriptMessagesError = "";
+	g_ScriptMessagesWarning = "";
+	g_ScriptMessagesInfo = "";
+}
+
 asIScriptContext* CtxFactory() {
 	asIScriptContext* ctx = asGetActiveContext();
 	asIScriptEngine* engine = ctx->GetEngine();
@@ -89,6 +113,14 @@ void ModuleGetFunctionByIndex(asIScriptGeneric* gen) {
 	gen->SetReturnObject(function);
 }
 
+
+void ContextGetExceptionInfo(asIScriptGeneric* gen) {
+	asIScriptContext* ctx = (asIScriptContext*)gen->GetObject();
+	bool call_stac = gen->GetArgDWord(0);
+	std::string exception = GetExceptionInfo(ctx, call_stac);
+	gen->SetReturnObject(&exception);
+}
+
 void RegisterScripting(asIScriptEngine* engine) {
 	engine->RegisterEnum("typeid");
 	engine->RegisterEnumValue("typeid", "VOID", asTYPEID_VOID);
@@ -119,7 +151,8 @@ void RegisterScripting(asIScriptEngine* engine) {
 	engine->RegisterEnumValue("callconv", "STDCALL", asCALL_STDCALL);
 
 	engine->RegisterGlobalFunction("int register_function(const string &in, uint64, callconv)", asFUNCTION(RegisterFunction), asCALL_CDECL);
-
+	engine->RegisterGlobalFunction("string get_messages(bool=true, bool=true, bool=false)", asFUNCTION(GetMessages), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void clear_messages()", asFUNCTION(ClearMessages), asCALL_CDECL);
 
 	engine->RegisterObjectType("function", sizeof(asIScriptFunction), asOBJ_REF);
 	engine->RegisterObjectBehaviour("function", asBEHAVE_FACTORY, "function@ f(int=0)", asFUNCTION(FunctionFactory), asCALL_CDECL);
@@ -170,6 +203,7 @@ void RegisterScripting(asIScriptEngine* engine) {
 	engine->RegisterObjectMethod("context", "double get_return_double()const", asMETHOD(asIScriptContext, GetReturnDouble), asCALL_THISCALL);
 	engine->RegisterObjectMethod("context", "uint64 get_return_address()const", asMETHOD(asIScriptContext, GetReturnAddress), asCALL_THISCALL);
 	engine->RegisterObjectMethod("context", "uint64 get_address_of_return_value()const", asMETHOD(asIScriptContext, GetAddressOfReturnValue), asCALL_THISCALL);
+	engine->RegisterObjectMethod("context", "string get_exception_info(bool=true)const", asFUNCTION(ContextGetExceptionInfo), asCALL_GENERIC);
 
 
 	engine->RegisterObjectType("module", sizeof(asIScriptModule), asOBJ_REF | asOBJ_NOCOUNT);
@@ -182,6 +216,10 @@ void RegisterScripting(asIScriptEngine* engine) {
 	engine->RegisterObjectMethod("module", "function@ get_function_by_index(int)const", asMETHOD(asIScriptModule, GetFunctionByIndex), asCALL_THISCALL);
 	engine->RegisterObjectMethod("module", "function@ get_function_by_decl(const string &in)const", asMETHOD(asIScriptModule, GetFunctionByDecl), asCALL_THISCALL);
 	engine->RegisterObjectMethod("module", "function@ get_function_by_name(const string &in)const", asMETHOD(asIScriptModule, GetFunctionByName), asCALL_THISCALL);
+	engine->RegisterObjectMethod("module", "int bind_all_imported_functions()const", asMETHOD(asIScriptModule, BindAllImportedFunctions), asCALL_THISCALL);
+	engine->RegisterObjectMethod("module", "int unbind_all_imported_functions()const", asMETHOD(asIScriptModule, UnbindAllImportedFunctions), asCALL_THISCALL);
+	engine->RegisterObjectMethod("module", "int bind_imported_function(uint, function@)const", asMETHOD(asIScriptModule, BindImportedFunction), asCALL_THISCALL);
+	engine->RegisterObjectMethod("module", "int unbind_imported_function(uint)const", asMETHOD(asIScriptModule, UnbindImportedFunction), asCALL_THISCALL);
 
 
 
