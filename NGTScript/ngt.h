@@ -2,6 +2,7 @@
 #define NGT_H
 #pragma once
 #include"as_class.h"
+#include "contextmgr/contextmgr.h"
 #ifdef _WIN32
 #define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
 #include "../GUI/GUI.h"
@@ -383,6 +384,8 @@ public:
 private:
 	sqlite3* db;
 };
+
+CContextMgr* get_context_manager();
 
 struct DeviceButton
 {

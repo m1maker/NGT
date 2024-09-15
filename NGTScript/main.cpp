@@ -91,7 +91,6 @@ int IncludeCallback(const char* include, const char* from, CScriptBuilder* build
 	return 0;
 }
 CScriptBuilder builder;
-CDebugger debugger;
 static void crypt(std::vector<asBYTE>& bytes) {
 	for (size_t i = 0; i < bytes.size(); ++i) {
 		bytes[i] ^= bytes.size();
@@ -382,10 +381,112 @@ static int Load(asIScriptEngine* engine, std::vector<asBYTE> code)
 
 	return 0;
 }
+
+
+
+std::string StringToString(void* obj, int /* expandMembers */, CDebugger* /* dbg */)
+{
+	// We know the received object is a string
+	std::string* val = reinterpret_cast<std::string*>(obj);
+
+	// Format the output string
+	// TODO: Should convert non-readable characters to escape sequences
+	std::stringstream s;
+	s << "(len=" << val->length() << ") \"";
+	if (val->length() < 20)
+		s << *val << "\"";
+	else
+		s << val->substr(0, 20) << "...";
+
+	return s.str();
+}
+
+// This is the to-string callback for the array type
+// This is generic and will take care of all template instances based on the array template
+std::string ArrayToString(void* obj, int expandMembers, CDebugger* dbg)
+{
+	CScriptArray* arr = reinterpret_cast<CScriptArray*>(obj);
+
+	std::stringstream s;
+	s << "(len=" << arr->GetSize() << ")";
+
+	if (expandMembers > 0)
+	{
+		s << " [";
+		for (asUINT n = 0; n < arr->GetSize(); n++)
+		{
+			s << dbg->ToString(arr->At(n), arr->GetElementTypeId(), expandMembers - 1, arr->GetArrayObjectType()->GetEngine());
+			if (n < arr->GetSize() - 1)
+				s << ", ";
+		}
+		s << "]";
+	}
+
+	return s.str();
+}
+
+// This is the to-string callback for the dictionary type
+std::string DictionaryToString(void* obj, int expandMembers, CDebugger* dbg)
+{
+	CScriptDictionary* dic = reinterpret_cast<CScriptDictionary*>(obj);
+
+	std::stringstream s;
+	s << "(len=" << dic->GetSize() << ")";
+
+	if (expandMembers > 0)
+	{
+		s << " [";
+		asUINT n = 0;
+		for (CScriptDictionary::CIterator it = dic->begin(); it != dic->end(); it++, n++)
+		{
+			s << "[" << it.GetKey() << "] = ";
+
+			// Get the type and address of the value
+			const void* val = it.GetAddressOfValue();
+			int typeId = it.GetTypeId();
+
+			// Use the engine from the currently active context (if none is active, the debugger
+			// will use the engine held inside it by default, but in an environment where there
+			// multiple engines this might not be the correct instance).
+			asIScriptContext* ctx = asGetActiveContext();
+
+			s << dbg->ToString(const_cast<void*>(val), typeId, expandMembers - 1, ctx ? ctx->GetEngine() : 0);
+
+			if (n < dic->GetSize() - 1)
+				s << ", ";
+		}
+		s << "]";
+	}
+
+	return s.str();
+}
+
+// This is the to-string callback for the dictionary type
+std::string DateTimeToString(void* obj, int expandMembers, CDebugger* dbg)
+{
+	CDateTime* dt = reinterpret_cast<CDateTime*>(obj);
+
+	std::stringstream s;
+	s << "{" << dt->getYear() << "-" << dt->getMonth() << "-" << dt->getDay() << " ";
+	s << dt->getHour() << ":" << dt->getMinute() << ":" << dt->getSecond() << "}";
+
+	return s.str();
+}
+
+
+
+asIScriptContext* RequestContextCallback(asIScriptEngine* engine, void* param);
+void              ReturnContextCallback(asIScriptEngine* engine, asIScriptContext* ctx, void* param);
+
+
+
 class NGTScripting {
 public:
 	asIScriptEngine* scriptEngine;
 	asIScriptContext* scriptContext;
+	CContextMgr* m_ctxMgr = 0;
+	std::vector<asIScriptContext*> m_ctxPool;
+	CDebugger* m_dbg = 0;
 	NGTScripting() {
 		scriptEngine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		if (scriptEngine == nullptr) {
@@ -395,12 +496,45 @@ public:
 		scriptEngine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
 	}
 	~NGTScripting() {
-		if (scriptContext != nullptr) {
-			scriptContext->Release();
+		if (m_ctxMgr != 0) {
+			delete m_ctxMgr;
+			m_ctxMgr = nullptr;
 		}
+		if (m_dbg)
+		{
+			delete m_dbg;
+			m_dbg = 0;
+		}
+
+		for (auto ctx : m_ctxPool)
+			ctx->Release();
+		m_ctxPool.clear();
+
 		scriptEngine->ClearMessageCallback();
 		scriptEngine->ShutDownAndRelease();
 	}
+
+	void InitializeDebugger()
+	{
+		// Create the debugger instance and store it so the context callback can attach
+		// it to the scripts contexts that will be used to execute the scripts
+		m_dbg = new CDebugger();
+
+		// Let the debugger hold an engine pointer that can be used by the callbacks
+		m_dbg->SetEngine(scriptEngine);
+
+		// Register the to-string callbacks so the user can see the contents of strings
+		m_dbg->RegisterToStringCallback(scriptEngine->GetTypeInfoByName("string"), StringToString);
+		m_dbg->RegisterToStringCallback(scriptEngine->GetTypeInfoByName("array"), ArrayToString);
+		m_dbg->RegisterToStringCallback(scriptEngine->GetTypeInfoByName("dictionary"), DictionaryToString);
+		m_dbg->RegisterToStringCallback(scriptEngine->GetTypeInfoByName("datetime"), DateTimeToString);
+
+		// Allow the user to initialize the debugging before moving on
+		cout << "Debugging, waiting for commands. Type 'h' for help." << endl;
+		m_dbg->TakeCommands(0);
+	}
+
+
 	void RegisterStd() {
 		RegisterStdString(scriptEngine);
 		RegisterStdWstring(scriptEngine);
@@ -419,26 +553,57 @@ public:
 		scriptEngine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
 		scriptEngine->RegisterGlobalFunction("int exec(const string &in, string &out)", asFUNCTIONPR(ExecSystemCmd, (const string&, string&), int), asCALL_CDECL);
 		scriptEngine->RegisterGlobalProperty("const bool SCRIPT_COMPILED", (void*)&SCRIPT_COMPILED);
+		m_ctxMgr = new CContextMgr();
+		m_ctxMgr->RegisterCoRoutineSupport(scriptEngine);
+
+		// Tell the engine to use our context pool. This will also 
+		// allow us to debug internal script calls made by the engine
+		scriptEngine->SetContextCallbacks(RequestContextCallback, ReturnContextCallback, this);
+
 	}
 	int Exec(asIScriptFunction* func) {
 		if (func == nullptr)return -1;
+		int r;
 		try {
-			scriptContext = scriptEngine->RequestContext();
-			if (scriptContext == nullptr) {
-				return -2;
+			scriptContext = m_ctxMgr->AddContext(scriptEngine, func, true);
+
+			// Execute the script until completion
+			// The script may create co-routines. These will automatically
+			// be managed by the context manager
+			while (m_ctxMgr->ExecuteScripts());
+
+			// Check if the main script finished normally
+			r = scriptContext->GetState();
+			if (r != asEXECUTION_FINISHED)
+			{
+				if (r == asEXECUTION_EXCEPTION)
+				{
+					alert("NGTRuntimeError", GetExceptionInfo(scriptContext, true));
+					r = -1;
+				}
+				else if (r == asEXECUTION_ABORTED)
+				{
+					r = 0;
+				}
+				else
+				{
+					r = -1;
+				}
 			}
-			scriptContext->Prepare(func);
-			int result = scriptContext->Execute();
-			if (result == asEXECUTION_ABORTED) {
-				return 0;
+			else
+			{
+				// Get the return value from the script
+				if (func->GetReturnTypeId() == asTYPEID_INT32)
+				{
+					r = *(int*)scriptContext->GetAddressOfReturnValue();
+				}
+				else
+					r = 0;
 			}
-			else if (result == asEXECUTION_FINISHED && func->GetReturnTypeId() != asTYPEID_VOID) {
-				return scriptContext->GetReturnDWord();
-			}
-			else if (result != asEXECUTION_FINISHED) {
-				alert("NGTRuntimeError", GetExceptionInfo(scriptContext, true));
-				return -1;
-			}
+
+			// Return the context after retrieving the return value
+			m_ctxMgr->DoneWithContext(scriptContext);
+			return r;
 		}
 		catch (const std::exception& e) {
 			alert("NGTRuntimeError", e.what());
@@ -456,11 +621,62 @@ public:
 	};
 };
 
+asIScriptContext* RequestContextCallback(asIScriptEngine* engine, void* param)
+{
+	NGTScripting* instance = (NGTScripting*)param;
+	asIScriptContext* ctx = 0;
+
+	// Check if there is a free context available in the pool
+	if (instance->m_ctxPool.size())
+	{
+		ctx = instance->m_ctxPool.back();
+		instance->m_ctxPool.pop_back();
+	}
+	else
+	{
+		// No free context was available so we'll have to create a new one
+		ctx = engine->CreateContext();
+	}
+
+	// Attach the debugger if needed
+	if (ctx && instance->m_dbg)
+	{
+		// Set the line callback for the debugging
+		ctx->SetLineCallback(asMETHOD(CDebugger, LineCallback), instance->m_dbg, asCALL_THISCALL);
+	}
+
+	return ctx;
+}
+
+// This function is called by the engine when the context is no longer in use
+void ReturnContextCallback(asIScriptEngine* engine, asIScriptContext* ctx, void* param)
+{
+	NGTScripting* instance = (NGTScripting*)param;
+	// We can also check for possible script exceptions here if so desired
+
+	// Unprepare the context to free any objects it may still hold (e.g. return value)
+	// This must be done before making the context available for re-use, as the clean
+	// up may trigger other script executions, e.g. if a destructor needs to call a function.
+	ctx->Unprepare();
+
+	// Place the context into the pool for when it will be needed again
+	instance->m_ctxPool.push_back(ctx);
+}
+
+
+
+
+
+
+
 std::string filename;
 std::string flag;
 int scriptArg = 0;
 std::string this_exe;
 NGTScripting app;
+CContextMgr* get_context_manager() {
+	return app.m_ctxMgr;
+}
 auto main(int argc, char* argv[]) -> int {
 	asIScriptEngine* engine = app.scriptEngine;
 	app.RegisterStd();
@@ -522,6 +738,23 @@ auto main(int argc, char* argv[]) -> int {
 	}
 
 
+	else if (flag == "-r") {
+		// Compile the script
+		module = Compile(engine, argv[1]);
+		if (module == nullptr) {
+			std::cout << "Failed to compile script." << std::endl;
+			return -1;
+		}
+		// Execute the script
+		asIScriptFunction* func = module->GetFunctionByName("main");
+		if (func == 0) {
+			std::cout << "Failed to invoke main." << std::endl;
+			return 1;
+		}
+		init_engine();
+		int result = app.Exec(func);
+		return result;
+	}
 	else if (flag == "-d") {
 		// Compile the script
 		module = Compile(engine, argv[1]);
@@ -536,21 +769,11 @@ auto main(int argc, char* argv[]) -> int {
 			return 1;
 		}
 		init_engine();
-		debugger.SetEngine(engine);
-		bool debug_thread = false;
-		thread t([&]() {
-			debugger.PrintHelp();
-			while (debug_thread) {
-				debugger.TakeCommands(app.scriptContext);
-			}
-			});
-		t.detach();
-		debug_thread = true;
+		app.InitializeDebugger();
 		int result = app.Exec(func);
-		debug_thread = false;
-		debugger.TakeCommands(app.scriptContext);
 		return result;
 	}
+
 	else if (flag == "-b") {
 		SCRIPT_COMPILED = true;
 		// Execute the script

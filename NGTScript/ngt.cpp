@@ -635,7 +635,7 @@ void exit_engine(int return_number)
 	asIScriptContext* ctx = asGetActiveContext();
 	if (exit_callback != nullptr) {
 		asIScriptEngine* engine = ctx->GetEngine();
-		asIScriptContext* e_ctx = engine->CreateContext();
+		asIScriptContext* e_ctx = engine->RequestContext();
 		e_ctx->Prepare(exit_callback);
 		e_ctx->Execute();
 		int result = e_ctx->GetReturnDWord();
@@ -652,7 +652,10 @@ void exit_engine(int return_number)
 	SRAL_UnregisterKeyboardHooks();
 	SRAL_Uninitialize();
 	SDL_Quit();
-	if (ctx != nullptr)ctx->Abort();
+	CContextMgr* ctxmgr = get_context_manager();
+	if (ctxmgr) {
+		ctxmgr->AbortAll();
+	}
 	std::exit(return_number);
 }
 CScriptArray* keys_pressed() {
@@ -2002,7 +2005,7 @@ script_thread::script_thread(asIScriptFunction* func) {
 		current_context->SetException("Function is null");
 	}
 	asIScriptEngine* current_engine = current_context->GetEngine();
-	context = current_engine->CreateContext();
+	context = current_engine->RequestContext();
 	context->Prepare(function);
 }
 void script_thread::detach() {
