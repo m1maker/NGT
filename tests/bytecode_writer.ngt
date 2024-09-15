@@ -1,0 +1,18 @@
+const string SCRIPT_CODE="""sound s;
+void play_sound(){
+s.load("C:/windows/media/tada.wav");
+s.play_wait();
+s.close();
+}
+""";
+void main(){
+scripting::module module("NGTBytecodeWrite");
+module.add_script_section("Code.ngt", SCRIPT_CODE);
+module.build();
+string code=module.get_byte_code(false);
+file f;
+f.open("bytecode.raw", "w");
+f.write(code);
+f.close();
+alert("Bytecode writer", "Finish");
+}
