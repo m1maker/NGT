@@ -20,7 +20,7 @@ include(FetchContent)
 FetchContent_Declare(
   angelscript
   GIT_REPOSITORY "https://github.com/codecat/angelscript-mirror"
-  GIT_TAG origin/master
+  GIT_TAG "f2034769ce887367e97a5fbaced5b14aa8039fd3"
   SOURCE_SUBDIR sdk/angelscript/projects/cmake SYSTEM
 )
 FetchContent_MakeAvailable(angelscript)
@@ -28,7 +28,8 @@ FetchContent_MakeAvailable(angelscript)
 include(ExternalProject)
 ExternalProject_Add(SDL3
   GIT_REPOSITORY    "https://github.com/libsdl-org/SDL"
-  GIT_TAG           origin/main
+  GIT_TAG           "6771a6020da5052e22930c36cb1070a4c048ba3c"
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
 )
 
 
@@ -38,7 +39,7 @@ FetchContent_Declare(SRAL
 FetchContent_MakeAvailable(SRAL)
 FetchContent_Declare(Poco
   GIT_REPOSITORY "https://github.com/pocoproject/poco"
-  GIT_TAG origin/main SYSTEM)
+  GIT_TAG "cd06553d89aee4bf7b5c820199121cd25d5bce94" SYSTEM)
 FetchContent_MakeAvailable(Poco)
 
 FetchContent_Declare(enet

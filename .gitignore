@@ -8,4 +8,4 @@
 *.reapeaks
 ngt-docs/
 GUI/
-out/
+build/
