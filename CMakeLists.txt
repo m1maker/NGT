@@ -35,6 +35,17 @@ ExternalProject_Add(SDL3
 set_target_properties(SDL3 PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
 
+ExternalProject_Add(
+    phonon
+    URL https://github.com/ValveSoftware/steam-audio/releases/download/v4.5.3/steamaudio_4.5.3.zip
+    SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/phonon-src
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+    BUILD_IN_SOURCE 1
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ""
+)
+
 
 
 
@@ -61,6 +72,9 @@ include_directories(
   ${enet_SOURCE_DIR}/include
   ${SRAL_SOURCE_DIR}/Include
   ${CMAKE_BINARY_DIR}/external/installed/include
+  ${CMAKE_BINARY_DIR}/phonon-src/steamaudio/include
+
+
 
 )
 
@@ -78,6 +92,23 @@ add_executable(${PROJECT_NAME}
 
 
 add_dependencies(${PROJECT_NAME} SDL3)
+add_dependencies(${PROJECT_NAME} phonon)
+
+if(WIN32)
+    set(PHONON_LIBRARIES
+        ${CMAKE_BINARY_DIR}/phonon-src/steamaudio/lib/windows-x64/phonon.dll
+        ${CMAKE_BINARY_DIR}/phonon-src/steamaudio/lib/windows-x64/phonon.lib
+        ${CMAKE_BINARY_DIR}/phonon-src/steamaudio/lib/windows-x86/phonon.dll
+        ${CMAKE_BINARY_DIR}/phonon-src/steamaudio/lib/windows-x86/phonon.lib
+    )
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /DELAYLOAD:phonon.dll")
+else()
+    set(PHONON_LIBRARIES
+        ${CMAKE_BINARY_DIR}/phonon-src/steamaudio/lib/linux-x64/libphonon.so
+        ${CMAKE_BINARY_DIR}/phonon-src/steamaudio/lib/linux-x86/libphonon.so
+    )
+endif()
+
 
 
 target_link_libraries(${PROJECT_NAME} SRAL_static)
@@ -86,3 +117,4 @@ target_link_libraries(${PROJECT_NAME} SDL_STATIC)
 target_link_libraries(${PROJECT_NAME} PocoFoundation)
 target_link_libraries(${PROJECT_NAME} PocoNet)
 target_link_libraries(${PROJECT_NAME} enet)
+target_link_libraries(${PROJECT_NAME} ${PHONON_LIBRARIES})
