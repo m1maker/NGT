@@ -27,10 +27,15 @@ FetchContent_MakeAvailable(angelscript)
 
 include(ExternalProject)
 ExternalProject_Add(SDL3
-  GIT_REPOSITORY    "https://github.com/libsdl-org/SDL"
-  GIT_TAG           "6771a6020da5052e22930c36cb1070a4c048ba3c"
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
-)
+    PREFIX "${CMAKE_BINARY_DIR}/external"
+    GIT_REPOSITORY    "https://github.com/libsdl-org/SDL"
+    GIT_TAG           "6771a6020da5052e22930c36cb1070a4c048ba3c"
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/external/installed
+    )
+set_target_properties(SDL3 PROPERTIES EXCLUDE_FROM_ALL TRUE)
+
+
+
 
 
 FetchContent_Declare(SRAL
@@ -47,14 +52,15 @@ FetchContent_Declare(enet
   GIT_TAG origin/master SYSTEM)
 FetchContent_MakeAvailable(enet)
 
+
 include_directories(
   ${angelscript_SOURCE_DIR}/sdk/angelscript/include
   ${Poco_SOURCE_DIR}/Net/include
   ${Poco_SOURCE_DIR}/Foundation/include
 
-  ${SDL3_SOURCE_DIR}/include
   ${enet_SOURCE_DIR}/include
   ${SRAL_SOURCE_DIR}/Include
+  ${CMAKE_BINARY_DIR}/external/installed/include
 
 )
 
@@ -69,6 +75,11 @@ add_executable(${PROJECT_NAME}
   "SRC/sound.h"
   "SRC/sound.cpp"
 )
+
+
+add_dependencies(${PROJECT_NAME} SDL3)
+
+
 target_link_libraries(${PROJECT_NAME} SRAL_static)
 target_link_libraries(${PROJECT_NAME} angelscript)
 target_link_libraries(${PROJECT_NAME} SDL_STATIC)
