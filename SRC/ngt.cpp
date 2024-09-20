@@ -287,8 +287,8 @@ public:
 				SDL_SetWindowFullscreen(win, window_fullscreen);
 			}
 			if (win != nullptr) {
-				SDL_bool result = SDL_PollEvent(&e);
-				if (result == SDL_TRUE)g_windowEvent.set();
+				bool result = SDL_PollEvent(&e);
+				if (result == true)g_windowEvent.set();
 				if (window_event_push) {
 					window_event_push = false;
 					SDL_PushEvent(&e);
@@ -714,12 +714,14 @@ string number_to_words(uint64_t num, bool include_and)
 	return string(buf.data());
 }
 string read_environment_variable(const string& path) {
+	SDL_Environment* env = SDL_GetEnvironment();
 	const char* value;
-	value = SDL_getenv(path.c_str());
+	value = SDL_GetEnvironmentVariable(env, path.c_str());
 	return string(value);
 }
 bool write_environment_variable(const string& path, const string& value) {
-	int result = SDL_setenv(path.c_str(), value.c_str(), 1);
+	SDL_Environment* env = SDL_GetEnvironment();
+	int result = SDL_SetEnvironmentVariable(env, path.c_str(), value.c_str(), 1);
 	return result == 0;
 }
 bool clipboard_copy_text(const string& text) {
@@ -808,7 +810,7 @@ bool key_down(int key_code)
 }
 bool key_repeat(int key_code)
 {
-	if (e.key.state == SDL_PRESSED)
+	if (e.key.type == SDL_EVENT_KEY_DOWN)
 	{
 		if (key_pressed(key_code) or e.key.scancode == key_code and e.key.repeat > 0) {
 			return true;
