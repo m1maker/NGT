@@ -25,7 +25,8 @@ FetchContent_Declare(
   SOURCE_SUBDIR sdk/angelscript/projects/cmake SYSTEM
 )
 FetchContent_MakeAvailable(angelscript)
-
+set(SDL_SHARED_DEFAULT OFF)
+set(SDL_STATIC_DEFAULT ON)
 include(ExternalProject)
 ExternalProject_Add(SDL3
     PREFIX "${CMAKE_BINARY_DIR}/external"
@@ -169,3 +170,6 @@ target_link_libraries(${PROJECT_NAME} Poco::Foundation)
 target_link_libraries(${PROJECT_NAME} Poco::Net)
 target_link_libraries(${PROJECT_NAME} enet)
 target_link_libraries(${PROJECT_NAME} ${PHONON_LIBRARIES})
+if(MSVC)
+  target_link_libraries(${PROJECT_NAME} delayimp.lib)
+endif()
