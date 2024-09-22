@@ -1792,6 +1792,7 @@ bool library::active()const {
 }
 void library_call(asIScriptGeneric* gen) {
 #undef GetObject
+/*
 	asIScriptContext* ctx = asGetActiveContext();
 	library* lib_obj = (library*)gen->GetObject();
 	void* address = nullptr;
@@ -1988,6 +1989,7 @@ void library_call(asIScriptGeneric* gen) {
 	args.clear();
 	return_type = nullptr;
 	gen->SetReturnObject(dict);
+*/
 }
 void library::unload() {
 	SDL_UnloadObject(lib);

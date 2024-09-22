@@ -1,7 +1,7 @@
-#include "angelscript.h"
+#include <angelscript.h>
 #include"ngt.h"
 #define SRAL_STATIC
-#include "../SRAL/Include/SRAL.h"
+#include <SRAL.h>
 #include "tts_voice.h"
 void TTSVoice::add_ref() {
 	asAtomicInc(ref);

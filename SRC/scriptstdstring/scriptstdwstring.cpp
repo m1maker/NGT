@@ -1,4 +1,4 @@
-#include "ngt.h"
+#include "../ngt.h"
 #include "scriptstdwstring.h"
 #include <assert.h> // assert()
 #include <sstream>  // std::wstringstream

@@ -138,6 +138,7 @@ add_executable(${PROJECT_NAME}
   "SRC/scriptstdstring/scriptstdstring.cpp"
   "SRC/scriptstdstring/scriptstdstring_utils.cpp"
   "SRC/scriptstdstring/scriptstdwstring.cpp"
+  "GUI/GUI.cpp"
 )
 
 
