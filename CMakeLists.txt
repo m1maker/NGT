@@ -16,6 +16,7 @@ endif()
 
 project ("NGT")
 add_compile_definitions("NGT" UNICODE)
+add_definitions(-DPOCO_STATIC)
 include(FetchContent)
 FetchContent_Declare(
   angelscript
@@ -53,10 +54,28 @@ FetchContent_Declare(SRAL
   GIT_REPOSITORY "https://github.com/m1maker/SRAL"
   GIT_TAG origin/main SYSTEM)
 FetchContent_MakeAvailable(SRAL)
+
+set(POCO_MT ON)
+set(BUILD_SHARED_LIBS OFF)
+set(ENABLE_CRYPTO OFF)
+set(ENABLE_JWT OFF)
+set(ENABLE_APACHECONNECTOR OFF)
+set(ENABLE_DATA_MYSQL OFF)
+set(ENABLE_DATA OFF)
+set(ENABLE_FOUNDATION ON)
+set(ENABLE_ENCODINGS OFF)
+set(ENABLE_ENCODINGS_COMPILER OFF)
+set(ENABLE_XML OFF)
+set(ENABLE_JSON OFF)
+set(ENABLE_MONGODB OFF)
+set(ENABLE_PROMETHEUS OFF)
+
 FetchContent_Declare(Poco
   GIT_REPOSITORY "https://github.com/pocoproject/poco"
   GIT_TAG "cd06553d89aee4bf7b5c820199121cd25d5bce94" SYSTEM)
 FetchContent_MakeAvailable(Poco)
+set(POCO_STATIC ON)
+
 
 FetchContent_Declare(enet
   GIT_REPOSITORY "https://github.com/lsalzman/enet"
@@ -98,18 +117,14 @@ set(SDL_STATIC_DEFAULT ON)
 set(SDL_STATIC_AVAILABLE ON)
 
 
+
 if(WIN32)
     set(PHONON_LIBRARIES
-        ${CMAKE_BINARY_DIR}/phonon-src/lib/windows-x64/phonon.dll
         ${CMAKE_BINARY_DIR}/phonon-src/lib/windows-x64/phonon.lib
-        ${CMAKE_BINARY_DIR}/phonon-src/lib/windows-x86/phonon.dll
-        ${CMAKE_BINARY_DIR}/phonon-src/lib/windows-x86/phonon.lib
     )
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /DELAYLOAD:phonon.dll")
 else()
     set(PHONON_LIBRARIES
-        ${CMAKE_BINARY_DIR}/phonon-src/lib/linux-x64/libphonon.so
-        ${CMAKE_BINARY_DIR}/phonon-src/lib/linux-x86/libphonon.so
     )
 endif()
 
@@ -118,7 +133,7 @@ endif()
 target_link_libraries(${PROJECT_NAME} SRAL_static)
 target_link_libraries(${PROJECT_NAME} angelscript)
 target_link_libraries(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/external/installed/lib/SDL3.lib)
-target_link_libraries(${PROJECT_NAME} PocoFoundation)
-target_link_libraries(${PROJECT_NAME} PocoNet)
+target_link_libraries(${PROJECT_NAME} Poco::Foundation)
+target_link_libraries(${PROJECT_NAME} Poco::Net)
 target_link_libraries(${PROJECT_NAME} enet)
 target_link_libraries(${PROJECT_NAME} ${PHONON_LIBRARIES})
