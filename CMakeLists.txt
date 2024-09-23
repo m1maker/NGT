@@ -16,6 +16,8 @@ endif()
 
 project ("NGT")
 add_compile_definitions("NGT" UNICODE)
+add_compile_definitions("NGTW" UNICODE)
+
 add_definitions(-DPOCO_STATIC)
 include(FetchContent)
 FetchContent_Declare(
@@ -58,18 +60,18 @@ FetchContent_MakeAvailable(SRAL)
 
 set(POCO_MT ON)
 set(BUILD_SHARED_LIBS OFF)
-set(ENABLE_CRYPTO OFF)
-set(ENABLE_JWT OFF)
-set(ENABLE_APACHECONNECTOR OFF)
-set(ENABLE_DATA_MYSQL OFF)
-set(ENABLE_DATA OFF)
-set(ENABLE_FOUNDATION ON)
-set(ENABLE_ENCODINGS OFF)
-set(ENABLE_ENCODINGS_COMPILER OFF)
-set(ENABLE_XML OFF)
-set(ENABLE_JSON OFF)
-set(ENABLE_MONGODB OFF)
-set(ENABLE_PROMETHEUS OFF)
+set(Poco::ENABLE_CRYPTO OFF)
+set(Poco::ENABLE_JWT OFF)
+set(Poco::ENABLE_APACHECONNECTOR OFF)
+set(Poco::ENABLE_DATA_MYSQL OFF)
+set(Poco::ENABLE_DATA OFF)
+set(Poco::ENABLE_FOUNDATION ON)
+set(Poco::ENABLE_ENCODINGS OFF)
+set(Poco::ENABLE_ENCODINGS_COMPILER OFF)
+set(Poco::ENABLE_XML OFF)
+set(Poco::ENABLE_JSON OFF)
+set(Poco::ENABLE_MONGODB OFF)
+set(Poco::ENABLE_PROMETHEUS OFF)
 
 FetchContent_Declare(Poco
   GIT_REPOSITORY "https://github.com/pocoproject/poco"
@@ -99,8 +101,7 @@ include_directories(
 )
 
 
-
-add_executable(${PROJECT_NAME} 
+set(NGT_SOURCES
   "SRC/ngt.cpp" 
   "SRC/main.cpp"
   "SRC/ngtreg.cpp"
@@ -141,6 +142,13 @@ add_executable(${PROJECT_NAME}
   "SRC/scriptstdstring/scriptstdwstring.cpp"
   "GUI/GUI.cpp"
 )
+add_executable(${PROJECT_NAME} ${NGT_SOURCES})
+if(WIN32)
+  add_executable(${PROJECT_NAME}W ${NGT_SOURCES})
+
+  set_target_properties(${PROJECT_NAME}W PROPERTIES 
+    WIN32_EXECUTABLE TRUE)  # This sets the subsystem to WINDOWS
+endif()
 
 
 add_dependencies(${PROJECT_NAME} SDL3)
@@ -170,6 +178,17 @@ target_link_libraries(${PROJECT_NAME} Poco::Foundation)
 target_link_libraries(${PROJECT_NAME} Poco::Net)
 target_link_libraries(${PROJECT_NAME} enet)
 target_link_libraries(${PROJECT_NAME} ${PHONON_LIBRARIES})
+if(WIN32)
+  target_link_libraries(${PROJECT_NAME}W SRAL_static)
+  target_link_libraries(${PROJECT_NAME}W angelscript)
+  target_link_libraries(${PROJECT_NAME}W ${CMAKE_BINARY_DIR}/external/installed/lib/SDL3.lib)
+  target_link_libraries(${PROJECT_NAME}W Poco::Foundation)
+  target_link_libraries(${PROJECT_NAME}W Poco::Net)
+  target_link_libraries(${PROJECT_NAME}W enet)
+  target_link_libraries(${PROJECT_NAME}W ${PHONON_LIBRARIES})
+endif()
 if(MSVC)
   target_link_libraries(${PROJECT_NAME} delayimp.lib)
+  target_link_libraries(${PROJECT_NAME}W delayimp.lib)
+
 endif()
