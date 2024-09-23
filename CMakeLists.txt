@@ -18,6 +18,8 @@ project ("NGT")
 add_compile_definitions("NGT" UNICODE)
 add_compile_definitions("NGTW" UNICODE)
 
+string(TIMESTAMP BUILD_TIMESTAMP "%Y-%m-%d %H:%M:%S")
+
 add_definitions(-DPOCO_STATIC)
 include(FetchContent)
 FetchContent_Declare(
@@ -145,7 +147,7 @@ set(NGT_SOURCES
 add_executable(${PROJECT_NAME} ${NGT_SOURCES})
 if(WIN32)
   add_executable(${PROJECT_NAME}W ${NGT_SOURCES})
-
+  add_compile_definitions(${PROJECT_NAME}W NGTW)
   set_target_properties(${PROJECT_NAME}W PROPERTIES 
     WIN32_EXECUTABLE TRUE)  # This sets the subsystem to WINDOWS
 endif()

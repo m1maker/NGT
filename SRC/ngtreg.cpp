@@ -60,7 +60,8 @@ HWND g_CurrentFocus;
 void show_message()
 {
 	cout << "Compilation error\n" + g_ScriptMessagesError + g_ScriptMessagesWarning;
-#ifdef _WIN32
+	if (GetConsoleWindow() != 0)return;
+#if defined(_WIN32)
 	const wchar_t CLASS_NAME[] = L"NGTTextbox";
 
 	WNDCLASS wc = {};

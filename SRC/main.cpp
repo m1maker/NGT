@@ -36,8 +36,7 @@
 #include <Poco/Glob.h>
 #include <Poco/Path.h>
 #include <Poco/Exception.h>
-#define NGT_BYTECODE_ENCRYPTION_KEY "0"
-
+#define NGT_BYTECODE_ENCRYPTION_KEY "0Z1Eif2JShwWsaAfgw1EfiOwudDAnNg6"
 int IncludeCallback(const char* include, const char* from, CScriptBuilder* builder, void* userParam) {
 	// 1. Resolve the relative path
 	std::string absoluteIncludePath = Poco::Path(from).append("../" + std::string(include)).toString(); // Construct an absolute path
@@ -322,9 +321,7 @@ asIScriptModule* Compile(asIScriptEngine* engine, const char* inputFile)
 	result = builder.BuildModule();
 
 	if (result < 0) {
-		std::thread t(show_message);
-		t.join();
-
+		show_message();
 		return nullptr;
 	}
 	CBytecodeStream stream;
@@ -332,8 +329,7 @@ asIScriptModule* Compile(asIScriptEngine* engine, const char* inputFile)
 	{
 		engine->WriteMessage(inputFile, 0, 0, asMSGTYPE_ERROR, "Failed to retrieve the compiled bytecode");
 
-		std::thread t(show_message);
-		t.join();
+		show_message();
 
 		return nullptr;
 	}
@@ -343,8 +339,7 @@ asIScriptModule* Compile(asIScriptEngine* engine, const char* inputFile)
 	{
 		engine->WriteMessage(inputFile, 0, 0, asMSGTYPE_ERROR, "Failed to write the bytecode");
 
-		std::thread t(show_message);
-		t.join();
+		show_message();
 
 		return nullptr;
 	}
@@ -362,8 +357,7 @@ static int Load(asIScriptEngine* engine, std::vector<asBYTE> code)
 	{
 		engine->WriteMessage("Product.ngt", 0, 0, asMSGTYPE_ERROR, "Failed to retrieve the compiled bytecode");
 
-		std::thread t(show_message);
-		t.join();
+		show_message();
 
 		return -1;
 	}
@@ -373,8 +367,7 @@ static int Load(asIScriptEngine* engine, std::vector<asBYTE> code)
 	{
 		engine->WriteMessage("Product.ngt", 0, 0, asMSGTYPE_ERROR, "Failed to read the bytecode");
 
-		std::thread t(show_message);
-		t.join();
+		show_message();
 
 		return -1;
 	}
@@ -696,6 +689,7 @@ auto main(int argc, char* argv[]) -> int {
 	else {
 		if (argc < 2) {
 			engine->WriteMessage(get_exe().c_str(), 0, 0, asMSGTYPE_INFORMATION, "Something went wrong when starting the engine.\r\nNothing to debug, nothing to compile.\r\nArguments and flags that can be used:\r\n\"NGTScript.exe <filename> -d\" - Debug a script.\r\n\"NGTScript.exe <filename> -c\" - Compile a script to executable file.\r\n\"NGTScript.exe <output file> -i\" - Write engine config to a file.");
+			show_message();
 			return -1;
 		}
 
@@ -709,6 +703,7 @@ auto main(int argc, char* argv[]) -> int {
 		// Compile the script
 		module = Compile(engine, argv[1]);
 		if (module == nullptr) {
+
 			std::cout << "Failed to compile script." << std::endl;
 			return -1;
 		}
@@ -720,8 +715,7 @@ auto main(int argc, char* argv[]) -> int {
 		if (!file.is_open()) {
 			engine->WriteMessage(this_exe.c_str(), 0, 0, asMSGTYPE_ERROR, "Failed to open output file for writing");
 
-			std::thread t(show_message);
-			t.join();
+			show_message();
 			return -1;
 		}
 
@@ -742,7 +736,6 @@ auto main(int argc, char* argv[]) -> int {
 		// Compile the script
 		module = Compile(engine, argv[1]);
 		if (module == nullptr) {
-			std::cout << "Failed to compile script." << std::endl;
 			return -1;
 		}
 		// Execute the script
@@ -759,7 +752,6 @@ auto main(int argc, char* argv[]) -> int {
 		// Compile the script
 		module = Compile(engine, argv[1]);
 		if (module == nullptr) {
-			std::cout << "Failed to compile script." << std::endl;
 			return -1;
 		}
 		// Execute the script
@@ -802,8 +794,7 @@ auto main(int argc, char* argv[]) -> int {
 			else {
 				engine->WriteMessage(this_exe.c_str(), 0, 0, asMSGTYPE_ERROR, "Failed to open output file for reading");
 
-				std::thread t(show_message);
-				t.join();
+				show_message();
 				return -1;
 			}
 
