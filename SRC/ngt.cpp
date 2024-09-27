@@ -359,7 +359,7 @@ long get_update_window_freq() {
 	return update_window_freq;
 }
 void init_engine() {
-	if (SDL_Init(SDL_INIT_VIDEO) != 0)exit_engine((int)SDL_GetError());
+	SDL_Init(SDL_INIT_VIDEO);
 	SRAL_Initialize(0);
 	SRAL_RegisterKeyboardHooks();
 	enet_initialize();
