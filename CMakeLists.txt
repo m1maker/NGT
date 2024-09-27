@@ -21,6 +21,20 @@ add_compile_definitions("NGTW" UNICODE)
 string(TIMESTAMP BUILD_TIMESTAMP "%Y-%m-%d %H:%M:%S")
 
 add_definitions(-DPOCO_STATIC)
+add_definitions(-DENABLE_CRYPTO=OFF)
+add_definitions(-DENABLE_JWT=OFF)
+add_definitions(-DENABLE_APACHECONNECTOR=OFF)
+add_definitions(-DENABLE_DATA_MYSQL=OFF)
+add_definitions(-DENABLE_DATA=OFF)
+add_definitions(-DENABLE_FOUNDATION=ON)
+add_definitions(-DENABLE_ENCODINGS=OFF)
+add_definitions(-DENABLE_ENCODINGS_COMPILER=OFF)
+add_definitions(-DENABLE_XML=OFF)
+add_definitions(-DENABLE_JSON=OFF)
+add_definitions(-DENABLE_MONGODB=OFF)
+add_definitions(-DENABLE_PROMETHEUS=OFF)
+
+
 include(FetchContent)
 FetchContent_Declare(
   angelscript
@@ -29,16 +43,21 @@ FetchContent_Declare(
   SOURCE_SUBDIR sdk/angelscript/projects/cmake SYSTEM
 )
 FetchContent_MakeAvailable(angelscript)
-set(SDL_SHARED_DEFAULT OFF)
+
+
 set(SDL_STATIC_DEFAULT ON)
+set(SDL_SHARED_DEFAULT OFF)
+
+
+
 include(ExternalProject)
+
 ExternalProject_Add(SDL3
     PREFIX "${CMAKE_BINARY_DIR}/external"
     GIT_REPOSITORY    "https://github.com/libsdl-org/SDL"
     GIT_TAG           "6771a6020da5052e22930c36cb1070a4c048ba3c"
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/external/installed
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/external/installed -DSDL_STATIC=ON -DMSVC_RUNTIME_LIBRARY=MultiThreaded -DFORCE_STATIC_VCRT=ON
     )
-set_target_properties(SDL3 PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
 
 ExternalProject_Add(
@@ -62,18 +81,6 @@ FetchContent_MakeAvailable(SRAL)
 
 set(POCO_MT ON)
 set(BUILD_SHARED_LIBS OFF)
-set(Poco::ENABLE_CRYPTO OFF)
-set(Poco::ENABLE_JWT OFF)
-set(Poco::ENABLE_APACHECONNECTOR OFF)
-set(Poco::ENABLE_DATA_MYSQL OFF)
-set(Poco::ENABLE_DATA OFF)
-set(Poco::ENABLE_FOUNDATION ON)
-set(Poco::ENABLE_ENCODINGS OFF)
-set(Poco::ENABLE_ENCODINGS_COMPILER OFF)
-set(Poco::ENABLE_XML OFF)
-set(Poco::ENABLE_JSON OFF)
-set(Poco::ENABLE_MONGODB OFF)
-set(Poco::ENABLE_PROMETHEUS OFF)
 
 FetchContent_Declare(Poco
   GIT_REPOSITORY "https://github.com/pocoproject/poco"
@@ -175,7 +182,7 @@ endif()
 
 target_link_libraries(${PROJECT_NAME} SRAL_static)
 target_link_libraries(${PROJECT_NAME} angelscript)
-target_link_libraries(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/external/installed/lib/SDL3.lib)
+target_link_libraries(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/external/installed/lib/SDL3-static.lib)
 target_link_libraries(${PROJECT_NAME} Poco::Foundation)
 target_link_libraries(${PROJECT_NAME} Poco::Net)
 target_link_libraries(${PROJECT_NAME} enet)
@@ -183,12 +190,34 @@ target_link_libraries(${PROJECT_NAME} ${PHONON_LIBRARIES})
 if(WIN32)
   target_link_libraries(${PROJECT_NAME}W SRAL_static)
   target_link_libraries(${PROJECT_NAME}W angelscript)
-  target_link_libraries(${PROJECT_NAME}W ${CMAKE_BINARY_DIR}/external/installed/lib/SDL3.lib)
+  target_link_libraries(${PROJECT_NAME}W ${CMAKE_BINARY_DIR}/external/installed/lib/SDL3-static.lib)
   target_link_libraries(${PROJECT_NAME}W Poco::Foundation)
   target_link_libraries(${PROJECT_NAME}W Poco::Net)
   target_link_libraries(${PROJECT_NAME}W enet)
   target_link_libraries(${PROJECT_NAME}W ${PHONON_LIBRARIES})
-endif()
+  target_link_libraries(${PROJECT_NAME} winmm.lib)
+  target_link_libraries(${PROJECT_NAME} imm32.lib)
+  target_link_libraries(${PROJECT_NAME}W winmm.lib)
+  target_link_libraries(${PROJECT_NAME}W imm32.lib)
+
+  target_link_libraries(${PROJECT_NAME} msvcrt.lib)
+  target_link_libraries(${PROJECT_NAME}W msvcrt.lib)
+
+  target_link_libraries(${PROJECT_NAME}
+        version.lib
+        setupapi.lib
+        libcmt.lib
+        ws2_32.lib
+        iphlpapi.lib
+)
+target_link_libraries(${PROJECT_NAME}W
+        version.lib
+        setupapi.lib
+        libcmt.lib
+        ws2_32.lib
+        iphlpapi.lib
+)
+  endif()
 if(MSVC)
   target_link_libraries(${PROJECT_NAME} delayimp.lib)
   target_link_libraries(${PROJECT_NAME}W delayimp.lib)
