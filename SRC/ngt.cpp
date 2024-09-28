@@ -657,7 +657,6 @@ void exit_engine(int return_number)
 	if (ctxmgr) {
 		ctxmgr->AbortAll();
 	}
-	std::exit(return_number);
 }
 CScriptArray* keys_pressed() {
 	asIScriptContext* ctx = asGetActiveContext();

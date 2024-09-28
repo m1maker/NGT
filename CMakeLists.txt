@@ -17,6 +17,8 @@ endif()
 project ("NGT")
 add_compile_definitions("NGT" UNICODE)
 add_compile_definitions("NGTW" UNICODE)
+add_compile_definitions("NGTW" NGTW)
+
 
 string(TIMESTAMP BUILD_TIMESTAMP "%Y-%m-%d %H:%M:%S")
 
@@ -150,6 +152,7 @@ set(NGT_SOURCES
   "SRC/scriptstdstring/scriptstdstring_utils.cpp"
   "SRC/scriptstdstring/scriptstdwstring.cpp"
   "GUI/GUI.cpp"
+  "SRC/obfuscate.h"
 )
 add_executable(${PROJECT_NAME} ${NGT_SOURCES})
 if(WIN32)
@@ -185,6 +188,8 @@ target_link_libraries(${PROJECT_NAME} angelscript)
 target_link_libraries(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/external/installed/lib/SDL3-static.lib)
 target_link_libraries(${PROJECT_NAME} Poco::Foundation)
 target_link_libraries(${PROJECT_NAME} Poco::Net)
+target_link_libraries(${PROJECT_NAME} Poco::Util)
+
 target_link_libraries(${PROJECT_NAME} enet)
 target_link_libraries(${PROJECT_NAME} ${PHONON_LIBRARIES})
 if(WIN32)
@@ -193,6 +198,7 @@ if(WIN32)
   target_link_libraries(${PROJECT_NAME}W ${CMAKE_BINARY_DIR}/external/installed/lib/SDL3-static.lib)
   target_link_libraries(${PROJECT_NAME}W Poco::Foundation)
   target_link_libraries(${PROJECT_NAME}W Poco::Net)
+  target_link_libraries(${PROJECT_NAME}W Poco::Util)
   target_link_libraries(${PROJECT_NAME}W enet)
   target_link_libraries(${PROJECT_NAME}W ${PHONON_LIBRARIES})
   target_link_libraries(${PROJECT_NAME} winmm.lib)

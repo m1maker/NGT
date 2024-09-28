@@ -2,6 +2,7 @@
 #define NOMINMAX
 #include "MemoryStream.h"
 #include "ngt.h"
+#include "obfuscate.h"
 #include "Poco/Exception.h"
 #include "Poco/Net/HTTPClientSession.h"
 #include "Poco/Net/HTTPResponse.h"
@@ -2113,58 +2114,58 @@ void register_sound(asIScriptEngine* engine) {
 	engine->RegisterObjectBehaviour("sound", asBEHAVE_FACTORY, "sound@ s(const string &in=\"\", bool=false)", asFUNCTION(fsound), asCALL_CDECL);
 	engine->RegisterObjectBehaviour("sound", asBEHAVE_ADDREF, "void f()", asMETHOD(sound, add), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("sound", asBEHAVE_RELEASE, "void f()", asMETHOD(sound, release), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "bool load(const string &in, bool=false, sound_end_callback@=null)const", asMETHOD(sound, load), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "bool load_from_memory(string, size_t=0, bool=false)const", asMETHOD(sound, load_from_memory), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "bool stream(const string &in, bool=false)const", asMETHOD(sound, stream), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "bool load_url(const string &in, bool=false)const", asMETHOD(sound, load_url), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "bool load(const string &in, bool=false, sound_end_callback@=null)const", asMETHOD(sound, load), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "bool load_from_memory(string, size_t=0, bool=false)const", asMETHOD(sound, load_from_memory), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "bool stream(const string &in, bool=false)const", asMETHOD(sound, stream), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "bool load_url(const string &in, bool=false)const", asMETHOD(sound, load_url), asCALL_THISCALL);
 
-	engine->RegisterObjectMethod("sound", "uint64 push_memory()const", asMETHOD(sound, push_memory), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "string get_file_path()const property", asMETHOD(sound, get_file_path), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "void set_faid_time(float, float, float)const", asMETHOD(sound, set_faid_time), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "uint64 push_memory()const", asMETHOD(sound, push_memory), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "string get_file_path()const property", asMETHOD(sound, get_file_path), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "void set_faid_time(float, float, float)const", asMETHOD(sound, set_faid_time), asCALL_THISCALL);
 
-	engine->RegisterObjectMethod("sound", "bool play()const", asMETHOD(sound, play), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "bool play_looped()const", asMETHOD(sound, play_looped), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "bool pause()const", asMETHOD(sound, pause), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "bool play_wait()const", asMETHOD(sound, play_wait), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "bool stop()const", asMETHOD(sound, stop), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "bool close()const", asMETHOD(sound, close), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "void set_fx(const string &in, int=0)const", asMETHOD(sound, set_fx), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "void delete_fx(const string &in, int=0)const", asMETHOD(sound, delete_fx), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "bool play()const", asMETHOD(sound, play), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "bool play_looped()const", asMETHOD(sound, play_looped), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "bool pause()const", asMETHOD(sound, pause), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "bool play_wait()const", asMETHOD(sound, play_wait), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "bool stop()const", asMETHOD(sound, stop), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "bool close()const", asMETHOD(sound, close), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "void set_fx(const string &in, int=0)const", asMETHOD(sound, set_fx), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "void delete_fx(const string &in, int=0)const", asMETHOD(sound, delete_fx), asCALL_THISCALL);
 
-	engine->RegisterObjectMethod("sound", "void set_reverb_parameters(float, float, float, float, float)const", asMETHOD(sound, set_reverb_parameters), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "void set_delay_parameters(float, float, float)const", asMETHOD(sound, set_delay_parameters), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "void set_reverb_parameters(float, float, float, float, float)const", asMETHOD(sound, set_reverb_parameters), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "void set_delay_parameters(float, float, float)const", asMETHOD(sound, set_delay_parameters), asCALL_THISCALL);
 
-	engine->RegisterObjectMethod("sound", "void set_position(float, float, float, float, float, float, double=0.0, float=5, float=0.6, float=0, float=0, float=0, float=0)const", asMETHODPR(sound, set_position, (float listener_x, float listener_y, float listener_z, float source_x, float source_y, float source_z, double theta, float pan_step, float volume_step, float behind_pitch_decrease, float start_pan, float start_volume, float start_pitch), void), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "void set_position(const vector@=null, const vector@=null, double=0.0, float=5, float=0.6, float=0, float=0, float=0, float=0)const", asMETHODPR(sound, set_position, (const ngtvector*, const ngtvector*, double theta, float pan_step, float volume_step, float behind_pitch_decrease, float start_pan, float start_volume, float start_pitch), void), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "void set_position(float, float, float, float, float, float, double=0.0, float=5, float=0.6, float=0, float=0, float=0, float=0)const", asMETHODPR(sound, set_position, (float listener_x, float listener_y, float listener_z, float source_x, float source_y, float source_z, double theta, float pan_step, float volume_step, float behind_pitch_decrease, float start_pan, float start_volume, float start_pitch), void), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "void set_position(const vector@=null, const vector@=null, double=0.0, float=5, float=0.6, float=0, float=0, float=0, float=0)const", asMETHODPR(sound, set_position, (const ngtvector*, const ngtvector*, double theta, float pan_step, float volume_step, float behind_pitch_decrease, float start_pan, float start_volume, float start_pitch), void), asCALL_THISCALL);
 
-	engine->RegisterObjectMethod("sound", "void set_hrtf(bool=true)const property", asMETHOD(sound, set_hrtf), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "bool get_hrtf()const property", asMETHOD(sound, get_hrtf), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "vector@ get_listener_position()const property", asMETHOD(sound, get_listener_position), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "vector@ get_source_position()const property", asMETHOD(sound, get_source_position), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "void set_volume_step(float)const property", asMETHOD(sound, set_volume_step), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "void set_pan_step(float)const property", asMETHOD(sound, set_pan_step), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "void set_pitch_step(float)const property", asMETHOD(sound, set_pitch_step), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "bool seek(float)const", asMETHOD(sound, seek), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "bool get_looping() const property", asMETHOD(sound, get_looping), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "void set_looping(bool)const property", asMETHOD(sound, set_looping), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "void set_hrtf(bool=true)const property", asMETHOD(sound, set_hrtf), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "bool get_hrtf()const property", asMETHOD(sound, get_hrtf), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "vector@ get_listener_position()const property", asMETHOD(sound, get_listener_position), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "vector@ get_source_position()const property", asMETHOD(sound, get_source_position), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "void set_volume_step(float)const property", asMETHOD(sound, set_volume_step), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "void set_pan_step(float)const property", asMETHOD(sound, set_pan_step), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "void set_pitch_step(float)const property", asMETHOD(sound, set_pitch_step), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "bool seek(float)const", asMETHOD(sound, seek), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "bool get_looping() const property", asMETHOD(sound, get_looping), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "void set_looping(bool)const property", asMETHOD(sound, set_looping), asCALL_THISCALL);
 
-	engine->RegisterObjectMethod("sound", "float get_pan() const property", asMETHOD(sound, get_pan), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "void set_pan(float)const property", asMETHOD(sound, set_pan), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "float get_volume() const property", asMETHOD(sound, get_volume), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "void set_volume(float)const property", asMETHOD(sound, set_volume), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "float get_pitch() const property", asMETHOD(sound, get_pitch), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "void set_pitch(float)const property", asMETHOD(sound, set_pitch), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "float get_speed() const property", asMETHOD(sound, get_speed), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "void set_speed(float)const property", asMETHOD(sound, set_speed), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "float get_pan() const property", asMETHOD(sound, get_pan), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "void set_pan(float)const property", asMETHOD(sound, set_pan), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "float get_volume() const property", asMETHOD(sound, get_volume), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "void set_volume(float)const property", asMETHOD(sound, set_volume), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "float get_pitch() const property", asMETHOD(sound, get_pitch), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "void set_pitch(float)const property", asMETHOD(sound, set_pitch), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "float get_speed() const property", asMETHOD(sound, get_speed), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "void set_speed(float)const property", asMETHOD(sound, set_speed), asCALL_THISCALL);
 
-	engine->RegisterObjectMethod("sound", "bool get_active() const property", asMETHOD(sound, is_active), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "bool get_playing() const property", asMETHOD(sound, is_playing), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "bool get_paused() const property", asMETHOD(sound, is_paused), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "float get_position() const property", asMETHOD(sound, get_position), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "float get_length() const property", asMETHOD(sound, get_length), asCALL_THISCALL);
-	engine->RegisterObjectMethod("sound", "void set_length(float=0.0) const property", asMETHOD(sound, set_length), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "bool get_active() const property", asMETHOD(sound, is_active), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "bool get_playing() const property", asMETHOD(sound, is_playing), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "bool get_paused() const property", asMETHOD(sound, is_paused), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "float get_position() const property", asMETHOD(sound, get_position), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "float get_length() const property", asMETHOD(sound, get_length), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "void set_length(float=0.0) const property", asMETHOD(sound, set_length), asCALL_THISCALL);
 
-	engine->RegisterObjectMethod("sound", "float get_sample_rate() const property", asMETHOD(sound, get_sample_rate), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "float get_sample_rate() const property", asMETHOD(sound, get_sample_rate), asCALL_THISCALL);
 	engine->RegisterGlobalFunction("void set_sound_global_hrtf(bool)property", asFUNCTION(set_sound_global_hrtf), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool get_sound_global_hrtf()property", asFUNCTION(get_sound_global_hrtf), asCALL_CDECL);
 	engine->RegisterGlobalProperty("mixer sound_default_mixer", (void*)&sound_default_mixer);

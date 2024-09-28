@@ -2,15 +2,21 @@
 #define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
 #include <Windows.h>
 #pragma section(".NGT")
-#elif defined(__APPLE__)
-#include <libproc.h>
 #else
 #include <unistd.h>
 #endif
+#include "obfuscate.h"
 #include <filesystem>
 #include <angelscript.h>
 #include "contextmgr/contextmgr.h"
 #include <Poco/SHA2Engine.h>
+#include <Poco/Util/Application.h>
+#include <Poco/Util/Option.h>
+#include <Poco/Util/OptionSet.h>
+#include <Poco/Util/HelpFormatter.h>
+#include <Poco/Util/AbstractConfiguration.h>
+#include <Poco/AutoPtr.h>
+
 #include "debugger/debugger.h"
 #include "aes/aes.hpp"
 #include "datetime/datetime.h"
@@ -28,7 +34,6 @@
 #include "scriptmath/scriptmath.h"
 #include "scriptstdstring/scriptstdstring.h"
 #include "scriptstdstring/scriptstdwstring.h"
-#include <sdl3/sdl_main.h>
 #include <assert.h>  // assert()
 #include <cstdlib>
 #include <fstream>
@@ -36,7 +41,19 @@
 #include <Poco/Glob.h>
 #include <Poco/Path.h>
 #include <Poco/Exception.h>
+#define SDL_MAIN_HANDLED
+
 #define NGT_BYTECODE_ENCRYPTION_KEY "0Z1Eif2JShwWsaAfgw1EfiOwudDAnNg6"
+
+using Poco::Util::Application;
+using Poco::Util::Option;
+using Poco::Util::OptionSet;
+using Poco::Util::HelpFormatter;
+using Poco::Util::AbstractConfiguration;
+using Poco::Util::OptionCallback;
+using Poco::AutoPtr;
+
+
 int IncludeCallback(const char* include, const char* from, CScriptBuilder* builder, void* userParam) {
 	// 1. Resolve the relative path
 	std::string absoluteIncludePath = Poco::Path(from).append("../" + std::string(include)).toString(); // Construct an absolute path
@@ -99,33 +116,7 @@ static void crypt(std::vector<asBYTE>& bytes) {
 
 
 static std::string get_exe() {
-#ifdef _WIN32
-	std::vector<wchar_t> pathBuf;
-	DWORD copied = 0;
-	do {
-		pathBuf.resize(pathBuf.size() + MAX_PATH);
-		copied = GetModuleFileNameW(0, &pathBuf.at(0), pathBuf.size());
-	} while (copied >= pathBuf.size());
-	pathBuf.resize(copied);
-#elif defined(__APPLE__)
-	std::vector<char> pathBuf;
-	pid_t pid = getpid();
-	int ret = proc_pidpath(pid, &pathBuf.at(0), pathBuf.size());
-	if (ret <= 0) {
-		return "";
-	}
-	pathBuf.resize(ret);
-#else
-	std::vector<char> pathBuf;
-	ssize_t copied = 0;
-	do {
-		pathBuf.resize(pathBuf.size() + PATH_MAX);
-		copied = readlink("/proc/self/exe", &pathBuf.at(0), pathBuf.size());
-	} while (copied == static_cast<ssize_t>(pathBuf.size()));
-	pathBuf.resize(copied);
-	return std::string(pathBuf.begin(), pathBuf.end());
-#endif
-	return std::string(pathBuf.begin(), pathBuf.end());
+	return Poco::Util::Application::instance().config().getString("application.path");
 }
 static std::vector<std::string> string_split(const std::string& delim, const std::string& str)
 {
@@ -484,7 +475,6 @@ public:
 		scriptEngine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
 		if (scriptEngine == nullptr) {
 			std::cout << "Failed to create the script engine." << std::endl;
-			std::exit(-1);
 		}
 		scriptEngine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
 	}
@@ -666,46 +656,159 @@ std::string filename;
 std::string flag;
 int scriptArg = 0;
 std::string this_exe;
-NGTScripting app;
+NGTScripting* app = nullptr;
 CContextMgr* get_context_manager() {
-	return app.m_ctxMgr;
+	return app->m_ctxMgr;
 }
-auto main(int argc, char* argv[]) -> int {
-	asIScriptEngine* engine = app.scriptEngine;
-	app.RegisterStd();
-	asIScriptModule* module = nullptr;
-	this_exe = get_exe();
-	std::fstream read_file(this_exe.c_str(), std::ios::binary | std::ios::in);
-	read_file.seekg(0, std::ios::end);
-	long file_size = read_file.tellg();
-
-	read_file.seekg(file_size - sizeof(asUINT));
-
-	read_file.read(reinterpret_cast<char*>(&buffer_size), sizeof(asUINT));
-	if (buffer_size != NULL) {
-		filename = "";
-		flag = "-b";
+class NGTEntry : public Application {
+private:
+	bool _helpRequested;
+	bool bytecodeExecute;
+	asIScriptModule* module;
+public:
+	int m_retcode;
+	NGTEntry() : _helpRequested(false)
+	{
+		setUnixOptions(true);
+		app = new NGTScripting;
+		app->RegisterStd();
 	}
-	else {
-		if (argc < 2) {
-			engine->WriteMessage(get_exe().c_str(), 0, 0, asMSGTYPE_INFORMATION, "Something went wrong when starting the engine.\r\nNothing to debug, nothing to compile.\r\nArguments and flags that can be used:\r\n\"NGTScript.exe <filename> -d\" - Debug a script.\r\n\"NGTScript.exe <filename> -c\" - Compile a script to executable file.\r\n\"NGTScript.exe <output file> -i\" - Write engine config to a file.");
-			show_message();
-			return -1;
+	~NGTEntry() {
+		delete app;
+		app = nullptr;
+	}
+protected:
+	void initialize(Application& self)
+	{
+#ifdef _WIN32
+		timeBeginPeriod(1);
+#endif
+		Application::initialize(self);
+		this_exe = get_exe();
+		std::fstream read_file(this_exe.c_str(), std::ios::binary | std::ios::in);
+		read_file.seekg(0, std::ios::end);
+		long file_size = read_file.tellg();
+
+		read_file.seekg(file_size - sizeof(asUINT));
+
+		read_file.read(reinterpret_cast<char*>(&buffer_size), sizeof(asUINT));
+		if (buffer_size != NULL) {
+			bytecodeExecute = true;
+			stopOptionsProcessing();
+
 		}
 
-		filename = argv[1];
-		flag = argv[2];
+		init_engine();
 	}
-	g_argc = argc - (scriptArg + 1);
-	g_argv = argv + (scriptArg + 1);
 
-	if (flag == "-c") {
+	void uninitialize()
+	{
+		exit_engine(0);
+		Application::uninitialize();
+#ifdef _WIN32
+		timeEndPeriod(1);
+#endif
+
+	}
+
+	void reinitialize(Application& self)
+	{
+		Application::reinitialize(self);
+	}
+	void defineOptions(OptionSet& options)override
+	{
+		Application::defineOptions(options);
+		options.addOption(
+			Option("Help", "h", "Display help information on command line arguments")
+			.required(false)
+			.repeatable(false)
+		);
+		options.addOption(
+			Option("Debug", "d", "Debug a script")
+			.required(false)
+			.argument("Script path to execute")
+		);
+		options.addOption(
+			Option("Run", "r", "Run a script")
+			.required(false)
+			.argument("Script path to execute")
+		);
+		options.addOption(
+			Option("Compile", "c", "Compile a script to an executable file")
+			.required(false)
+			.argument("Script path to compile")
+		);
+	}
+	void handleOption(const std::string& name, const std::string& value)override
+	{
+		if (name == "Help") {
+			_helpRequested = true;
+			displayHelp();
+		}
+		else if (name == "Debug") {
+			debugScript(name, value);
+		}
+		else if (name == "Run") {
+			runScript(name, value);
+		}
+		else if (name == "Compile") {
+			compileScript(name, value);
+		}
+
+		stopOptionsProcessing();
+	}
+	void displayHelp()
+	{
+		HelpFormatter helpFormatter(options());
+		helpFormatter.setCommand(commandName());
+		helpFormatter.setUsage("OPTIONS");
+		helpFormatter.setHeader("NGT (New Game Toolkit)");
+		helpFormatter.format(std::cout);
+	}
+
+	void debugScript(const std::string& name, const std::string& value) {
 		// Compile the script
-		module = Compile(engine, argv[1]);
+		module = Compile(app->scriptEngine, value.c_str());
 		if (module == nullptr) {
+			m_retcode = -1;
+			return;
+		}
+		// Execute the script
+		asIScriptFunction* func = module->GetFunctionByName("main");
+		if (func == 0) {
+			std::cout << "Failed to invoke main." << std::endl;
+			m_retcode = 1;
+			return;
+		}
+		app->InitializeDebugger();
+		int result = app->Exec(func);
+		m_retcode = result;
+	}
 
-			std::cout << "Failed to compile script." << std::endl;
-			return -1;
+	void runScript(const std::string& name, const std::string& value) {
+		// Compile the script
+
+		module = Compile(app->scriptEngine, value.c_str());
+		if (module == nullptr) {
+			m_retcode = -1;
+			return;
+		}
+		// Execute the script
+		asIScriptFunction* func = module->GetFunctionByName("main");
+		if (func == 0) {
+			std::cout << "Failed to invoke main." << std::endl;
+			m_retcode = 1;
+			return;
+		}
+		int result = app->Exec(func);
+		m_retcode = result;
+	}
+	void compileScript(const std::string& name, const std::string& value) {
+		// Compile the script
+		module = Compile(app->scriptEngine, value.c_str());
+		if (module == nullptr) {
+			m_retcode = -1;
+			return;
 		}
 		// Call compiler to create executable file
 		std::string main_exe = get_exe();
@@ -713,10 +816,11 @@ auto main(int argc, char* argv[]) -> int {
 		std::filesystem::copy_file(main_exe.c_str(), name_split[0] + ".exe");
 		std::fstream file(name_split[0] + ".exe", std::ios::app | std::ios::binary);
 		if (!file.is_open()) {
-			engine->WriteMessage(this_exe.c_str(), 0, 0, asMSGTYPE_ERROR, "Failed to open output file for writing");
+			app->scriptEngine->WriteMessage(this_exe.c_str(), 0, 0, asMSGTYPE_ERROR, "Failed to open output file for writing");
 
 			show_message();
-			return -1;
+			m_retcode = -1;
+			return;
 		}
 
 		file.seekg(0, std::ios::end);
@@ -730,48 +834,12 @@ auto main(int argc, char* argv[]) -> int {
 		file.close();
 
 	}
-
-
-	else if (flag == "-r") {
-		// Compile the script
-		module = Compile(engine, argv[1]);
-		if (module == nullptr) {
-			return -1;
-		}
-		// Execute the script
-		asIScriptFunction* func = module->GetFunctionByName("main");
-		if (func == 0) {
-			std::cout << "Failed to invoke main." << std::endl;
-			return 1;
-		}
-		init_engine();
-		int result = app.Exec(func);
-		return result;
-	}
-	else if (flag == "-d") {
-		// Compile the script
-		module = Compile(engine, argv[1]);
-		if (module == nullptr) {
-			return -1;
-		}
-		// Execute the script
-		asIScriptFunction* func = module->GetFunctionByName("main");
-		if (func == 0) {
-			std::cout << "Failed to invoke main." << std::endl;
-			return 1;
-		}
-		init_engine();
-		app.InitializeDebugger();
-		int result = app.Exec(func);
-		return result;
-	}
-
-	else if (flag == "-b") {
+	void executeBytecode() {
 		SCRIPT_COMPILED = true;
 		// Execute the script
-		asIScriptModule* module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
+		module = app->scriptEngine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
 		int result;
-		module = engine->GetModule("ngtgame");
+		module = app->scriptEngine->GetModule("ngtgame");
 		if (module)
 		{
 			std::fstream read_file(this_exe.c_str(), std::ios::binary | std::ios::in);
@@ -792,29 +860,52 @@ auto main(int argc, char* argv[]) -> int {
 				read_file.close();
 			}
 			else {
-				engine->WriteMessage(this_exe.c_str(), 0, 0, asMSGTYPE_ERROR, "Failed to open output file for reading");
+				app->scriptEngine->WriteMessage(this_exe.c_str(), 0, 0, asMSGTYPE_ERROR, "Failed to open output file for reading");
 
 				show_message();
-				return -1;
+				m_retcode = -1;
+				return;
 			}
 
 
-			Load(engine, buffer);
+			Load(app->scriptEngine, buffer);
 		}
 		asIScriptFunction* func = module->GetFunctionByName("main");
 		if (func == 0) {
 			std::cout << "Failed to invoke main." << std::endl;
-			return 1;
+			m_retcode = 1;
+			return;
 		}
-		init_engine();
-		result = app.Exec(func);
-		return result;
+		result = app->Exec(func);
+		m_retcode = result;
 	}
-	else if (flag == "-i") {
-		WriteConfigToFile(engine, filename.c_str());
+
+	int main(const ArgVec& args)override
+	{
+		if (bytecodeExecute) {
+			executeBytecode();
+			return m_retcode;
+		}
+		return m_retcode;
 	}
-	exit_engine();
-	return EXIT_SUCCESS;
+
+};
+#undef SDL_MAIN_HANDLED
+#undef SDL_main_h_
+#include <SDL3/SDL_main.h>
+
+
+int main(int argc, char** argv) {
+	AutoPtr<Application> a = new NGTEntry();
+	try {
+
+		a->init(argc, argv);
+	}
+	catch (Poco::Exception& e) {
+		a->logger().fatal(e.displayText());
+		return Application::EXIT_CONFIG;
+	}
+	return a->run();
 }
 int ExecSystemCmd(const string& str, string& out)
 {
