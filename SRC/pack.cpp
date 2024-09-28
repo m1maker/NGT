@@ -1,4 +1,5 @@
 //NGTPACK
+#include "obfuscate.h"
 #include "pack.h"
 using namespace std;
 static bool read_bytes(void* data, size_t sz, FILE* fh) {
@@ -163,6 +164,7 @@ bool pack::extract_file(const string& internal_name, const string& file_on_disk)
 	auto data = get_file(internal_name);
 	fwrite(data.c_str(), 1, get_file_size(internal_name), temp);
 	fclose(temp);
+	return true;
 }
 bool pack::active() const {
 	return file != nullptr;
@@ -186,15 +188,15 @@ void register_pack(asIScriptEngine* engine) {
 	engine->RegisterObjectBehaviour("pack", asBEHAVE_FACTORY, "pack@ p()", asFUNCTION(fpack), asCALL_CDECL);
 	engine->RegisterObjectBehaviour("pack", asBEHAVE_ADDREF, "void f()", asMETHOD(pack, add_ref), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("pack", asBEHAVE_RELEASE, "void f()", asMETHOD(pack, release), asCALL_THISCALL);
-	engine->RegisterObjectMethod("pack", "bool open(const string &in, const string &in)const", asMETHOD(pack, open), asCALL_THISCALL);
-	engine->RegisterObjectMethod("pack", "void close()const", asMETHOD(pack, close), asCALL_THISCALL);
-	engine->RegisterObjectMethod("pack", "bool file_exists(const string &in)const", asMETHOD(pack, file_exists), asCALL_THISCALL);
-	engine->RegisterObjectMethod("pack", "void extract_file(const string &in, const string &in)const", asMETHOD(pack, extract_file), asCALL_THISCALL);
-	engine->RegisterObjectMethod("pack", "array<string>@ list_files()const", asMETHOD(pack, list_files), asCALL_THISCALL);
-	engine->RegisterObjectMethod("pack", "void add_file(const string &in, const string &in)const", asMETHOD(pack, add_file), asCALL_THISCALL);
-	engine->RegisterObjectMethod("pack", "string get_file(const string &in)const", asMETHOD(pack, get_file), asCALL_THISCALL);
-	engine->RegisterObjectMethod("pack", "size_t get_file_size(const string &in)const", asMETHOD(pack, get_file_size), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("pack"), "bool open(const string &in, const string &in)const", asMETHOD(pack, open), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("pack"), "void close()const", asMETHOD(pack, close), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("pack"), "bool file_exists(const string &in)const", asMETHOD(pack, file_exists), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("pack"), "void extract_file(const string &in, const string &in)const", asMETHOD(pack, extract_file), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("pack"), "array<string>@ list_files()const", asMETHOD(pack, list_files), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("pack"), "void add_file(const string &in, const string &in)const", asMETHOD(pack, add_file), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("pack"), "string get_file(const string &in)const", asMETHOD(pack, get_file), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("pack"), "size_t get_file_size(const string &in)const", asMETHOD(pack, get_file_size), asCALL_THISCALL);
 
-	engine->RegisterObjectMethod("pack", "int get_file_count()const property", asMETHOD(pack, file_count), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("pack"), "int get_file_count()const property", asMETHOD(pack, file_count), asCALL_THISCALL);
 
 }

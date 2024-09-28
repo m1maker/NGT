@@ -1,0 +1,5 @@
+tts_voice v;
+void main(){
+v.speak_interrupt(screen_reader::detect());
+wait(1000);
+}

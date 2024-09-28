@@ -15,7 +15,7 @@
 #define AS_BEGIN(x, y) x->SetDefaultNamespace(y);
 #define AS_END(x) x->SetDefaultNamespace("")
 using namespace std;
-void show_message();
+void show_message(bool include_info = false, bool include_warning = true, bool include_error = true);
 extern std::string g_ScriptMessagesInfo;
 extern std::string g_ScriptMessagesWarning;
 extern std::string g_ScriptMessagesError;

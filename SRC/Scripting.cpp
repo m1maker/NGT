@@ -28,6 +28,18 @@ void ClearMessages() {
 	g_ScriptMessagesWarning = "";
 	g_ScriptMessagesInfo = "";
 }
+void GetArgAddress(asIScriptGeneric* gen) {
+	gen->SetReturnQWord((asINT64)gen->GetArgAddress(0));
+}
+
+void GetAddressOfArg(asIScriptGeneric* gen) {
+	gen->SetReturnQWord((asINT64)gen->GetAddressOfArg(0));
+}
+
+void GetArgTypeId(asIScriptGeneric* gen) {
+	gen->SetReturnDWord(gen->GetArgTypeId(0));
+}
+
 
 asIScriptContext* CtxFactory() {
 	asIScriptContext* ctx = asGetActiveContext();
@@ -153,6 +165,10 @@ void RegisterScripting(asIScriptEngine* engine) {
 	engine->RegisterGlobalFunction("int register_function(const string &in, uint64, callconv)", asFUNCTION(RegisterFunction), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string get_messages(bool=true, bool=true, bool=false)", asFUNCTION(GetMessages), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void clear_messages()", asFUNCTION(ClearMessages), asCALL_CDECL);
+	engine->RegisterGlobalFunction("uint64 get_arg_address(?&in)", asFUNCTION(GetArgAddress), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("uint64 get_address_of_arg(?&in)", asFUNCTION(GetAddressOfArg), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("int get_arg_type_id(?&in)", asFUNCTION(GetArgTypeId), asCALL_GENERIC);
+
 
 	engine->RegisterObjectType("function", sizeof(asIScriptFunction), asOBJ_REF);
 	engine->RegisterObjectBehaviour("function", asBEHAVE_FACTORY, "function@ f(int=0)", asFUNCTION(FunctionFactory), asCALL_CDECL);

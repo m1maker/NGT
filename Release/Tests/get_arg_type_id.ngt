@@ -1,0 +1,22 @@
+void main(){
+int8 test8=44;
+int16 test16=233;
+int32 test32=21421;
+int64 test64=124433215;
+string test_str="Hello, world!";
+test@ test_type=test();
+alert("Char", scripting::get_arg_type_id(test8));
+alert("Short", scripting::get_arg_type_id(test16));
+alert("Int", scripting::get_arg_type_id(test32));
+alert("Long", scripting::get_arg_type_id(test64));
+alert("Void function", scripting::get_arg_type_id(f));
+alert("Test as class", scripting::get_arg_type_id(test_type));
+alert("String", scripting::get_arg_type_id(test_str));
+
+}
+void f(){
+throw("");
+}
+class test{
+test(){}
+}

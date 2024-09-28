@@ -2,6 +2,7 @@
 #include "ngtreg.h"
 #include "obfuscate.h"
 #include "Poco/UnicodeConverter.h"
+#include "print_func/print_func.h"
 #include "scriptbuilder/scriptbuilder.h"
 #include "Scripting.h"
 #include "scriptstdstring/scriptstdstring.h"
@@ -31,6 +32,21 @@ const int as_CDECL = 0;
 const int AS_STD_CALL = 1;
 using namespace std;
 #ifdef _WIN32
+std::string convertNewlines(const std::string& input) {
+	std::string output;
+	for (char c : input) {
+		if (c == '\n') {
+			output += "\r\n"; // Add \r\n for each \n found
+		}
+		else {
+			output += c; // Add the current character
+		}
+	}
+	return output;
+}
+
+
+
 LRESULT CALLBACK EditSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
 	switch (uMsg) {
@@ -58,11 +74,37 @@ HINSTANCE hInstance;
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 HWND g_CurrentFocus;
 #endif
-void show_message()
+void show_message(bool include_info, bool include_warning, bool include_error)
 {
-	cout << "Compilation error\n" + g_ScriptMessagesError + g_ScriptMessagesWarning;
+	std::string title;
+	std::string messages;
+	if (!include_error && !include_warning) {
+		title = "Message";
+	}
+	else if (include_warning && !include_error) {
+		title = "Warning";
+	}
+	else {
+		title = "Error";
+	}
+
+	if (include_info) {
+		messages += g_ScriptMessagesInfo;
+	}
+	if (include_error) {
+		messages += g_ScriptMessagesError;
+	}
+
+	if (include_warning) {
+		messages += g_ScriptMessagesWarning;
+	}
+	cout << title << endl << messages;
 	if (GetConsoleWindow() != 0)return;
 #if defined(_WIN32)
+	wstring title_u;
+	title_u = wstr(title);
+	result_message = wstr(convertNewlines(messages));
+
 	const wchar_t CLASS_NAME[] = L"NGTTextbox";
 
 	WNDCLASS wc = {};
@@ -76,7 +118,7 @@ void show_message()
 	hwnd = CreateWindowEx(
 		0,
 		CLASS_NAME,
-		L"Compilation error",
+		title_u.c_str(),
 		WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 		NULL,
@@ -100,6 +142,7 @@ void show_message()
 		hInstance,
 		NULL
 	);
+
 	ShowWindow(hwnd, SW_SHOW);
 	UpdateWindow(hwnd);
 	SetFocus(g_hwndEdit);
@@ -123,7 +166,7 @@ void show_message()
 	g_ScriptMessagesError = "";
 	g_ScriptMessagesWarning = "";
 	g_ScriptMessagesInfo = "";
-}
+	}
 #ifdef _WIN32
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -146,7 +189,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			hInstance,
 			NULL
 		);
-		result_message = wstr(g_ScriptMessagesError + g_ScriptMessagesWarning);
 		SendMessage(g_hwndEdit, WM_SETTEXT, false, (LPARAM)result_message.c_str());
 
 		break;
@@ -166,6 +208,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	default:
 		return DefWindowProc(hwnd, msg, wParam, lParam);
 	}
+	return DefWindowProc(hwnd, msg, wParam, lParam);
 
 }
 #endif
@@ -216,14 +259,6 @@ void MessageCallback(const asSMessageInfo* msg, void* param)
 	}
 }
 
-void Print(const char* format, ...)
-{
-
-	va_list args;
-	va_start(args, format);
-	vprintf(format, args);
-	va_end(args);
-}
 SDL_Rect* frect() { return new SDL_Rect; }
 // One line sizeof
 void as_sizeof(asIScriptGeneric* gen) {
@@ -258,6 +293,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterObjectMethod(_O("vector"), "float get_length()const property", asMETHOD(ngtvector, get_length), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("vector"), "vector &opAssign(const vector&in)", asMETHOD(ngtvector, operator=), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("vector"), "void reset()const", asMETHOD(ngtvector, reset), asCALL_THISCALL);
+	Print::asRegister(engine, true);
 	AS_BEGIN(engine, "os");
 	engine->RegisterGlobalFunction("int get_cpu_count()property", asFUNCTION(get_cpu_count), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int get_system_ram()property", asFUNCTION(get_system_ram), asCALL_CDECL);
@@ -270,23 +306,20 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("long random(long, long)", asFUNCTIONPR(random, (long, long), long), asCALL_CDECL);
 	engine->RegisterGlobalFunction("double random(double, double)", asFUNCTIONPR(randomDouble, (double, double), double), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool random_bool()", asFUNCTION(random_bool), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void printf(string &in, ?&in var = 0, ?&in var2 = 0, ?&in var3 = 0, ?&in var4 = 0, ?&in var5 = 0, ?&in var6 = 0, ?&in var7 = 0, ?&in var8 = 0, ?&in var9 = 0, ?&in var10 = 0, ?&in var11 = 0, ?&in var12 = 0, ?&in var13 = 0, ?&in var14 = 0, ?&in var15 = 0)", asFUNCTION(as_printf), asCALL_GENERIC);
 
 	engine->RegisterGlobalFunction("int get_last_error()property", asFUNCTION(get_last_error), asCALL_CDECL);
 	AS_BEGIN(engine, "screen_reader");
 	engine->RegisterGlobalFunction("void set_interrupt(bool)property", asFUNCTION(set_screen_reader_interrupt), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool get_interrupt()property", asFUNCTION(get_screen_reader_interrupt), asCALL_CDECL);
 
-	engine->RegisterGlobalFunction("void speak(const string &in, bool=interrupt)", asFUNCTION(speak), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void speak_wait(const string &in, bool=screen_reader_interrupt)", asFUNCTION(speak_wait), asCALL_CDECL);
+	engine->RegisterGlobalFunction("bool speak(const string &in, bool=interrupt)", asFUNCTION(speak), asCALL_CDECL);
+	engine->RegisterGlobalFunction("bool braille(const string &in)", asFUNCTION(braille), asCALL_CDECL);
 
 	engine->RegisterGlobalFunction("void stop_speech()", asFUNCTION(stop_speech), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string detect()", asFUNCTION(screen_reader_detect), asCALL_CDECL);
 	AS_END(engine);
 	engine->RegisterGlobalFunction("void set_exit_callback(exit_callback@=null)", asFUNCTION(set_exit_callback), asCALL_CDECL);
 
-	engine->RegisterGlobalFunction("void show_console()", asFUNCTION(show_console), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void hide_console()", asFUNCTION(hide_console), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool show_window(const string &in,int=640,int=480, bool=true)", asFUNCTION(show_window), asCALL_CDECL);
 	//	engine->RegisterGlobalFunction("bool focus_window()", asFUNCTION(focus_window), asCALL_CDECL);
 	engine->RegisterGlobalFunction("uint64 get_window_handle()", asFUNCTION(get_window_handle), asCALL_CDECL);

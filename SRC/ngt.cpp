@@ -48,16 +48,6 @@ extern "C"
 #include "AES/aes.hpp"
 asIScriptFunction* exit_callback = nullptr;
 using namespace string_literals;
-#ifdef _WIN32
-TTSVoice* voice_object = nullptr;
-bool g_COMInitialized = false;
-#endif
-template<typename T, typename D>
-unique_ptr<T, D> make_handle(T* handle, D deleter)
-{
-	return unique_ptr<T, D>{handle, deleter};
-}
-
 using namespace std;
 int mouse_x = 0, mouse_y = 0, mouse_z = 0;
 SDL_Event e;
@@ -83,121 +73,11 @@ wstring wstr(const string& utf8String)
 	Poco::UnicodeConverter::convert(utf8String, str);
 	return str;
 }
-wstring reader;
 #endif
 std::array<DeviceButton, 512> keys;
 std::array<DeviceButton, 8>buttons;
 bool keyhook = false;
 string inputtext;
-static void replace(string& str, const string& from, const string& to) {
-	size_t start_pos = 0;
-	while ((start_pos = str.find(from, start_pos)) != string::npos) {
-		str.replace(start_pos, from.length(), to);
-		start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
-	}
-}
-static std::vector<std::string> split(const std::string& str, const std::string& delimiter) {
-	std::vector<std::string> tokens;
-	size_t start = 0;
-	size_t end = str.find(delimiter);
-	while (end != std::string::npos) {
-		tokens.push_back(str.substr(start, end - start));
-		start = end + delimiter.length();
-		end = str.find(delimiter, start);
-	}
-	tokens.push_back(str.substr(start));
-	return tokens;
-}
-
-
-
-void as_printf(asIScriptGeneric* gen)
-{
-	void* ref = gen->GetArgAddress(0);
-	int typeId = gen->GetArgTypeId(0);
-
-	string format = *static_cast<string*>(ref);
-
-	for (int i = 1; i < 16; i++)
-	{
-		ref = gen->GetArgAddress(i);
-		typeId = gen->GetArgTypeId(i);
-
-		switch (typeId)
-		{
-		case 67108876: //string?
-		{
-			string local = *static_cast<string*>(ref);
-			replace(format, "%s", local);
-			break;
-		}
-		case 2:
-		{
-			char local = *static_cast<char*>(ref);
-			replace(format, "%d", to_string(local));
-			break;
-		}
-		case 3:
-		{
-			short local = *static_cast<short*>(ref);
-			replace(format, "%d", to_string(local));
-			break;
-		}
-		case 4:
-		{
-			int local = *static_cast<int*>(ref);
-			replace(format, "%d", to_string(local));
-			break;
-		}
-		case 5:
-		{
-			long long local = *static_cast<long long*>(ref);
-			replace(format, "%d", to_string(local));
-			break;
-		}
-		case 6:
-		{
-			unsigned char local = *static_cast<unsigned char*>(ref);
-			replace(format, "%d", to_string(local));
-			break;
-		}
-		case 7:
-		{
-			unsigned short local = *static_cast<unsigned short*>(ref);
-			replace(format, "%d", to_string(local));
-			break;
-		}
-		case 8:
-		{
-			asUINT local = *static_cast<asUINT*>(ref);
-			replace(format, "%d", to_string(local));
-			break;
-
-		}
-		case 9:
-		{
-			unsigned long long local = *static_cast<unsigned long long*>(ref);
-			replace(format, "%d", to_string(local));
-			break;
-		}
-		case 10:
-		{
-			float local = *static_cast<float*>(ref);
-			replace(format, "%f", to_string(local));
-			break;
-		}
-		case 11:
-		{
-			double local = *static_cast<double*>(ref);
-			replace(format, "%f", to_string(local));
-			break;
-		}
-		}
-	}
-
-	cout << format << endl;
-	return;
-}
 int get_cpu_count() {
 	return SDL_GetNumLogicalCPUCores();
 }
@@ -256,12 +136,10 @@ public:
 			if (window_event_show) {
 				window_event_show = false;
 				SDL_WindowFlags flags = 0;
-#ifdef _WIN32
-				if (reader == L"JAWS") {
+				if (SRAL_GetCurrentEngine() == ENGINE_JAWS) {
 					SDL_SetHint(SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED, "1");
 					flags |= SDL_WINDOW_KEYBOARD_GRABBED;
 				}
-#endif
 				win = SDL_CreateWindow(window_title, window_w, window_h, flags);
 
 				if (win != nullptr)
@@ -405,11 +283,11 @@ void set_screen_reader_interrupt(bool interrupt) {
 bool get_screen_reader_interrupt() {
 	return default_screen_reader_interrupt;
 }
-
-void speak(const string& text, bool stop) {
-	SRAL_Speak(text.c_str(), stop);
+bool speak(const string& text, bool stop) {
+	return SRAL_Speak(text.c_str(), stop);
 }
-void speak_wait(const string& text, bool stop) {
+bool braille(const string& text) {
+	return SRAL_Braille(text.c_str());
 }
 
 void stop_speech() {
@@ -434,25 +312,6 @@ string screen_reader_detect() {
 		return "None";
 	}
 	return "None";
-}
-void show_console() {
-#ifdef _WIN32
-	if (AllocConsole())
-	{
-		FILE* file = nullptr;
-		freopen_s(&file, "CONOUT$", "w", stdout);
-	}
-#else 
-	return; // Don't need to allocating console in other platforms.
-#endif
-}
-
-void hide_console() {
-#ifdef _WIN32
-	FreeConsole();
-#else 
-	return; // Don't need to allocating console in other platforms.
-#endif
 }
 bool show_window(const string& title, int width, int height, bool closable)
 {
@@ -536,7 +395,7 @@ void garbage_collect() {
 }
 SDL_Surface* get_window_surface() {
 	if (windowRunnable == nullptr || windowRunnable->win == nullptr)return NULL;
-	SDL_GetWindowSurface(windowRunnable->win);
+	return SDL_GetWindowSurface(windowRunnable->win);
 }
 SDL_Surface* load_bmp(const string& file) {
 	return SDL_LoadBMP(file.c_str());
@@ -657,6 +516,7 @@ void exit_engine(int return_number)
 	if (ctxmgr) {
 		ctxmgr->AbortAll();
 	}
+	std::exit(return_number);
 }
 CScriptArray* keys_pressed() {
 	asIScriptContext* ctx = asGetActiveContext();
@@ -812,7 +672,7 @@ bool key_repeat(int key_code)
 {
 	if (e.key.type == SDL_EVENT_KEY_DOWN)
 	{
-		if (key_pressed(key_code) or e.key.scancode == key_code and e.key.repeat > 0) {
+		if (key_pressed(key_code) || e.key.scancode == key_code and e.key.repeat > 0) {
 			return true;
 		}
 	}
@@ -927,6 +787,7 @@ string url_get(const string& url) {
 		asIScriptContext* ctx = asGetActiveContext();
 		ctx->SetException(e.displayText().c_str());
 	}
+	return "";
 }
 
 
@@ -949,7 +810,7 @@ string url_post(const string& url, const string& parameters) {
 		asIScriptContext* ctx = asGetActiveContext();
 		ctx->SetException(e.displayText().c_str());
 	}
-
+	return "";
 }
 
 string ascii_to_character(int the_ascii_code) {
@@ -963,6 +824,7 @@ int character_to_ascii(string the_character) {
 	else {
 		return -1; // Error: input string must be of length 1
 	}
+	return -1;
 }
 
 string hex_to_string(string the_hexadecimal_sequence) {
@@ -1021,55 +883,62 @@ string string_to_hex(string the_string) {
 	encoder.close();
 	return oss.str();
 }
+int message_box(const std::string& title, const std::string& text, const std::vector<std::string>& buttons, unsigned int mb_flags) {
+	std::vector<SDL_MessageBoxButtonData> sdlbuttons;
+
+	for (size_t i = 0; i < buttons.size(); ++i) {
+		const std::string& btn = buttons[i];
+
+		if (btn.empty() || btn[0] == '\0') {
+			continue; // Skip empty buttons
+		}
+
+		unsigned int button_flag = 0;
+		size_t skip = 0;
+
+		// Check for special flags in the button text
+		if (btn[0] == '`') {
+			button_flag |= SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT;
+			skip++;
+		}
+		if (skip < btn.size() && btn[skip] == '~') {
+			button_flag |= SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT;
+			skip++;
+		}
+
+		// Create button data
+		SDL_MessageBoxButtonData sdlbtn;
+		sdlbtn.flags = button_flag;
+		sdlbtn.buttonID = static_cast<int>(i + 1); // Button IDs start from 1
+		sdlbtn.text = btn.c_str() + skip;
+
+		sdlbuttons.push_back(sdlbtn);
+	}
+
+	SDL_MessageBoxData box = {
+		mb_flags,
+		SDL_GetKeyboardFocus(),
+		title.c_str(),
+		text.c_str(),
+		static_cast<int>(sdlbuttons.size()),
+		sdlbuttons.data(),
+		nullptr
+	};
+
+	int ret;
+	if (!SDL_ShowMessageBox(&box, &ret)) {
+		return -1; // Error handling
+	}
+
+	return ret;
+}
+
 bool alert(const string& title, const string& text, const string& button_name)
 {
-	SDL_MessageBoxButtonData buttons[] = {
-		{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT | SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 1, button_name.c_str()},
-	};
-
-	SDL_MessageBoxData messageboxdata = {
-		SDL_MESSAGEBOX_INFORMATION,
-		SDL_GetKeyboardFocus(),
-		title.c_str(),
-		text.c_str(),
-		SDL_arraysize(buttons),
-		buttons,
-		NULL
-	};
-
-	int buttonid;
-	if (SDL_ShowMessageBox(&messageboxdata, &buttonid) < 0) {
-		SDL_Log("Error displaying message box");
-		return false;
-	}
-
-
-
-	return true;
+	return message_box(title, text, { "`OK" }, 0) == 0;
 }
 int question(const string& title, const string& text) {
-	SDL_MessageBoxButtonData buttons[] = {
-	{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Yes" },
-	{ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 2, "No" },
-	};
-
-	SDL_MessageBoxData messageboxdata = {
-		SDL_MESSAGEBOX_INFORMATION,
-		SDL_GetKeyboardFocus(),
-		title.c_str(),
-		text.c_str(),
-		SDL_arraysize(buttons),
-		buttons,
-		NULL
-	};
-
-	int buttonid;
-	if (SDL_ShowMessageBox(&messageboxdata, &buttonid) < 0) {
-		SDL_Log("Error displaying message box");
-		return -1;
-	}
-
-	return buttonid;
+	return message_box(title, text, { "`Yes", "~No" }, 0);
 }
 
 

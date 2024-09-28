@@ -153,6 +153,8 @@ class sound_pool
 		}
 		if (sounds[id].volume > this.volume)
 			sounds[id].volume = this.volume;
+		sounds[id].set_position(listener_x, listener_y, listener_z, source_x, source_y, source_z, rotation);
+		sounds[id].hrtf = use_hrtf;
 		if (loop)
 		{
 			success = sounds[id].play_looped();

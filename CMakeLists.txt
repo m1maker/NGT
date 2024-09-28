@@ -151,6 +151,7 @@ set(NGT_SOURCES
   "SRC/scriptstdstring/scriptstdstring.cpp"
   "SRC/scriptstdstring/scriptstdstring_utils.cpp"
   "SRC/scriptstdstring/scriptstdwstring.cpp"
+  "SRC/print_func/print_func.cpp"
   "GUI/GUI.cpp"
   "SRC/obfuscate.h"
 )

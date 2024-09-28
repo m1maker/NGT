@@ -2,11 +2,12 @@
 void main(){
 sound_pool sp;
 show_window("Test");
+sp.use_hrtf=true;
 update_window_freq=0;
 while(true){
 wait_event();
 if(key_repeat(KEY_SPACE)){
-sp.play("C:/windows/media/Windows Default.wav");
+sp.play("C:/windows/media/Windows Default.wav", random(0, 10), random(0, 5), random(0, 10));
 }
 }
 }

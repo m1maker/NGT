@@ -1427,6 +1427,7 @@ public:
 		if (!active)return false;
 		ma_sound_stop(handle_);
 		ma_sound_seek_to_pcm_frame(handle_, 0);
+		return true;
 	}
 	bool close() {
 		if (!is_active())return false;
@@ -1926,6 +1927,7 @@ public:
 
 	bool is_paused() const {
 		if (!active)return false;
+		return false;
 	}
 
 	float get_position() {

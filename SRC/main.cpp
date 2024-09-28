@@ -1,5 +1,6 @@
 ﻿#ifdef _WIN32
 #define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
+#include <excpt.h>
 #include <Windows.h>
 #pragma section(".NGT")
 #else
@@ -588,10 +589,6 @@ public:
 			m_ctxMgr->DoneWithContext(scriptContext);
 			return r;
 		}
-		catch (const std::exception& e) {
-			alert("NGTRuntimeError", e.what());
-			return -1;
-		}
 		catch (const Poco::Exception& e) {
 			alert("NGTRuntimeError", e.displayText());
 			return -1;
@@ -683,6 +680,7 @@ protected:
 #ifdef _WIN32
 		timeBeginPeriod(1);
 #endif
+
 		Application::initialize(self);
 		this_exe = get_exe();
 		std::fstream read_file(this_exe.c_str(), std::ios::binary | std::ios::in);
@@ -698,16 +696,15 @@ protected:
 
 		}
 
-		init_engine();
 	}
 
 	void uninitialize()
 	{
-		exit_engine(0);
 		Application::uninitialize();
 #ifdef _WIN32
 		timeEndPeriod(1);
 #endif
+		exit_engine(0);
 
 	}
 
@@ -754,19 +751,39 @@ protected:
 		else if (name == "Compile") {
 			compileScript(name, value);
 		}
-
 		stopOptionsProcessing();
+
 	}
 	void displayHelp()
 	{
 		HelpFormatter helpFormatter(options());
+		helpFormatter.setUnixStyle(true);
+		helpFormatter.setIndent(4);
+
 		helpFormatter.setCommand(commandName());
 		helpFormatter.setUsage("OPTIONS");
 		helpFormatter.setHeader("NGT (New Game Toolkit)");
 		helpFormatter.format(std::cout);
+#ifdef _WIN32
+		if (GetConsoleWindow() == 0) {
+			std::stringstream ss;
+			helpFormatter.format(ss);
+			std::string str = ss.str();
+			app->scriptEngine->WriteMessage(get_exe().c_str(), 0, 0, asMSGTYPE_INFORMATION, str.c_str());
+			show_message(true, false, false);
+		}
+#endif
 	}
 
 	void debugScript(const std::string& name, const std::string& value) {
+#ifdef _WIN32
+		if (GetConsoleWindow() == 0) {
+			app->scriptEngine->WriteMessage(get_exe().c_str(), 0, 0, asMSGTYPE_ERROR, "Please use the command line version of NGT to invoke the debugger");
+			show_message();
+			m_retcode = -2;
+			return;
+		}
+#endif
 		// Compile the script
 		module = Compile(app->scriptEngine, value.c_str());
 		if (module == nullptr) {
@@ -781,6 +798,7 @@ protected:
 			return;
 		}
 		app->InitializeDebugger();
+		init_engine();
 		int result = app->Exec(func);
 		m_retcode = result;
 	}
@@ -800,6 +818,7 @@ protected:
 			m_retcode = 1;
 			return;
 		}
+		init_engine();
 		int result = app->Exec(func);
 		m_retcode = result;
 	}
@@ -876,12 +895,16 @@ protected:
 			m_retcode = 1;
 			return;
 		}
+		init_engine();
 		result = app->Exec(func);
 		m_retcode = result;
 	}
 
 	int main(const ArgVec& args)override
 	{
+		if (args.size() == 0) {
+			displayHelp();
+		}
 		if (bytecodeExecute) {
 			executeBytecode();
 			return m_retcode;
@@ -896,6 +919,8 @@ protected:
 
 
 int main(int argc, char** argv) {
+	g_argc = argc - (scriptArg + 1);
+	g_argv = argv + (scriptArg + 1);
 	AutoPtr<Application> a = new NGTEntry();
 	try {
 

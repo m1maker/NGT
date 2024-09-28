@@ -101,12 +101,11 @@ int get_last_error();
 
 void set_screen_reader_interrupt(bool);
 bool get_screen_reader_interrupt();
-void speak(const string& text, bool stop = get_screen_reader_interrupt());
-void speak_wait(const string& text, bool stop = true);
+bool speak(const string& text, bool stop = get_screen_reader_interrupt());
+bool braille(const string& text);
+
 void stop_speech();
 string screen_reader_detect();
-void show_console();
-void hide_console();
 bool show_window(const string& title, int width = 640, int height = 480, bool closable = true);
 void* get_window_handle();
 void hide_window();
@@ -162,6 +161,7 @@ string string_base32_encode(string the_string);
 string string_to_hex(string the_string);
 void string_pad(std::string&);
 void string_unpad(std::string&);
+int message_box(const std::string& title, const std::string& text, const std::vector<std::string>& buttons, unsigned int mb_flags);
 
 bool alert(const string& title, const string& text, const string& button_name = "OK");
 int question(const string& title, const string& text);
