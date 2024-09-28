@@ -812,7 +812,7 @@ protected:
 		}
 		// Call compiler to create executable file
 		std::string main_exe = get_exe();
-		std::vector<std::string> name_split = string_split(".", filename);
+		std::vector<std::string> name_split = string_split(".", value);
 		std::filesystem::copy_file(main_exe.c_str(), name_split[0] + ".exe");
 		std::fstream file(name_split[0] + ".exe", std::ios::app | std::ios::binary);
 		if (!file.is_open()) {
