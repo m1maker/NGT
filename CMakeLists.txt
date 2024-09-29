@@ -152,9 +152,11 @@ set(NGT_SOURCES
   "SRC/scriptstdstring/scriptstdstring_utils.cpp"
   "SRC/scriptstdstring/scriptstdwstring.cpp"
   "SRC/print_func/print_func.cpp"
-  "GUI/GUI.cpp"
   "SRC/obfuscate.h"
 )
+if(WIN32)
+  set(NGT_SOURCES ${NGT_SOURCES} GUI/GUI.cpp)
+endif()
 add_executable(${PROJECT_NAME} ${NGT_SOURCES})
 if(WIN32)
   add_executable(${PROJECT_NAME}W ${NGT_SOURCES})
@@ -179,14 +181,21 @@ if(WIN32)
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /DELAYLOAD:phonon.dll")
 else()
     set(PHONON_LIBRARIES
-    )
+            ${CMAKE_BINARY_DIR}/phonon-src/lib/linux-x64/libphonon.so
+)
 endif()
 
 
 
 target_link_libraries(${PROJECT_NAME} SRAL_static)
 target_link_libraries(${PROJECT_NAME} angelscript)
-target_link_libraries(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/external/installed/lib/SDL3-static.lib)
+if(WIN32)
+  target_link_libraries(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/external/installed/lib/SDL3-static.lib)
+else()
+  target_link_libraries(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/external/installed/lib/libSDL3.a)
+  find_package(X11 REQUIRED)
+  target_link_libraries(${PROJECT_NAME} ${X11_LIBRARIES})
+endif()
 target_link_libraries(${PROJECT_NAME} Poco::Foundation)
 target_link_libraries(${PROJECT_NAME} Poco::Net)
 target_link_libraries(${PROJECT_NAME} Poco::Util)

@@ -1,5 +1,5 @@
-#include <angelscript.h>
 #include"ngt.h"
+#include <angelscript.h>
 #define SRAL_STATIC
 #include <SRAL.h>
 #include "tts_voice.h"
@@ -14,6 +14,11 @@ TTSVoice::TTSVoice()
 {
 	ref = 1;
 	if (!SRAL_IsInitialized())SRAL_Initialize(0);
+#ifdef _WIN32
+	engine = ENGINE_SAPI;
+#else
+	engine = ENGINE_SPEECH_DISPATCHER;
+#endif
 }
 
 TTSVoice::~TTSVoice()
@@ -22,31 +27,31 @@ TTSVoice::~TTSVoice()
 
 bool TTSVoice::speak(const std::string& text)
 {
-	return SRAL_SpeakEx(ENGINE_SAPI, text.c_str(), false);
+	return SRAL_SpeakEx(engine, text.c_str(), false);
 }
 
 bool TTSVoice::speak_wait(const std::string& text)
 {
-	return SRAL_SpeakEx(ENGINE_SAPI, text.c_str(), false);
+	return SRAL_SpeakEx(engine, text.c_str(), false);
 }
 
 bool TTSVoice::speak_interrupt(const std::string& text)
 {
-	return SRAL_SpeakEx(ENGINE_SAPI, text.c_str(), true);
+	return SRAL_SpeakEx(engine, text.c_str(), true);
 }
 
 bool TTSVoice::speak_interrupt_wait(const std::string& text)
 {
-	return SRAL_SpeakEx(ENGINE_SAPI, text.c_str(), true);
+	return SRAL_SpeakEx(engine, text.c_str(), true);
 }
 
 std::vector<std::string> TTSVoice::get_voice_names()
 {
 	std::vector<std::string> names;
-	uint64_t count = SRAL_GetVoiceCountEx(ENGINE_SAPI);
+	uint64_t count = SRAL_GetVoiceCountEx(engine);
 	if (count == 0)return{};
 	for (uint64_t i = 0; i < count; ++i) {
-		const char* name = SRAL_GetVoiceNameEx(ENGINE_SAPI, i);
+		const char* name = SRAL_GetVoiceNameEx(engine, i);
 		names.push_back(std::string(name));
 	}
 	return names;
@@ -68,25 +73,25 @@ CScriptArray* TTSVoice::get_voice_names_script() {
 }
 void TTSVoice::set_voice(uint64_t voice_index)
 {
-	SRAL_SetVoiceEx(ENGINE_SAPI, voice_index);
+	SRAL_SetVoiceEx(engine, voice_index);
 }
 
 int TTSVoice::get_rate() const
 {
-	return SRAL_GetRateEx(ENGINE_SAPI);
+	return SRAL_GetRateEx(engine);
 }
 
 void TTSVoice::set_rate(int new_rate)
 {
-	SRAL_SetRateEx(ENGINE_SAPI, new_rate);
+	SRAL_SetRateEx(engine, new_rate);
 }
 
 int TTSVoice::get_volume() const
 {
-	return SRAL_GetVolumeEx(ENGINE_SAPI);;
+	return SRAL_GetVolumeEx(engine);;
 }
 
 void TTSVoice::set_volume(int new_volume)
 {
-	SRAL_SetVolumeEx(ENGINE_SAPI, new_volume);
+	SRAL_SetVolumeEx(engine, new_volume);
 }

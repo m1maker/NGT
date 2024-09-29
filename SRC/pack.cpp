@@ -20,8 +20,10 @@ bool  pack::open(const string& filename, const string& open_mode) {
 	else if (open_mode == "r")mode = "r+b";
 	else if (open_mode == "a")mode = "a+b";
 	else return false;
-	int result = fopen_s(&file, filename.c_str(), mode.c_str());
-	if (result != 0)return false;
+	file = fopen(filename.c_str(), mode.c_str());
+	if (file == nullptr)
+		return false;
+
 	cmp_init(&pctx, file, file_reader, file_skipper, file_writer);
 	if (mode == "w+b") {
 		cmp_write_str(&pctx, pack_header, strlen(pack_header));
@@ -128,7 +130,8 @@ bool pack::add_file(const string& file, const string& name) {
 	if (file_exists(name)) return false;
 	pkfile f;
 	FILE* temp = nullptr;
-	if (fopen_s(&temp, file.c_str(), "rb") != 0)return false;
+	temp = fopen(file.c_str(), "rb");
+	if (temp == nullptr)return false;
 	fseek(temp, 0, SEEK_END);
 	uint64_t size = ftell(temp);
 	fseek(temp, 0, SEEK_SET);
@@ -160,7 +163,10 @@ bool pack::file_exists(const string& filename) {
 }
 bool pack::extract_file(const string& internal_name, const string& file_on_disk) {
 	FILE* temp = nullptr;
-	if (fopen_s(&temp, file_on_disk.c_str(), "wb") != 0)return false;
+	temp = fopen(file_on_disk.c_str(), "wb");
+	if (file == nullptr)
+		return false;
+
 	auto data = get_file(internal_name);
 	fwrite(data.c_str(), 1, get_file_size(internal_name), temp);
 	fclose(temp);

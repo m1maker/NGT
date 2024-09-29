@@ -7,6 +7,13 @@
 #define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
 #include "../GUI/GUI.h"
 #include <Windows.h>
+#include <fcntl.h>
+#include <io.h>
+#else
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/keysym.h>
+
 #endif
 #define FFI_BUILDING
 #include "ffi.h"
@@ -54,8 +61,6 @@ using Poco::Net::SMTPClientSession;
 using Poco::Net::StringPartSource;
 
 #include <enet/enet.h>
-#include <fcntl.h>
-#include <io.h>
 #include "sqlite3.h"
 #include "scripthandle/scripthandle.h"
 #include <random>
@@ -118,9 +123,9 @@ SDL_Surface* load_bmp(const string& file);
 string key_to_string(SDL_Scancode);
 SDL_Scancode string_to_key(const string&);
 void garbage_collect();
-bool mouse_pressed(Uint8);
-bool mouse_released(Uint8);
-bool mouse_down(Uint8);
+bool mouse_pressed(unsigned char);
+bool mouse_released(unsigned char);
+bool mouse_down(unsigned char);
 int get_MOUSE_X();
 int get_MOUSE_Y();
 int get_MOUSE_Z();
@@ -212,7 +217,7 @@ public:
 		return m_type;
 	}
 
-	unsigned    int get_peer_id() const {
+	asQWORD get_peer_id() const {
 		return m_peerId;
 	}
 
@@ -225,7 +230,7 @@ public:
 	}
 
 	int m_type;
-	unsigned    int m_peerId;
+	asQWORD m_peerId;
 	int m_channel;
 	string m_message;
 	network_event& operator=(const network_event);
@@ -236,25 +241,25 @@ enum network_type {
 };
 class network : public as_class {
 public:
-	map<asUINT, _ENetPeer*> peers;
-	_ENetPeer* get_peer(asUINT);
+	map<asQWORD, _ENetPeer*> peers;
+	_ENetPeer* get_peer(asQWORD);
 	network_type type;
-	asUINT connect(const string& host, int port);
+	asQWORD connect(const string& host, int port);
 	bool destroy();
-	bool disconnect_peer(asUINT);
-	bool disconnect_peer_forcefully(asUINT);
-	bool disconnect_peer_softly(asUINT);
-	string get_peer_address(asUINT);
-	double get_peer_average_round_trip_time(asUINT);
+	bool disconnect_peer(asQWORD);
+	bool disconnect_peer_forcefully(asQWORD);
+	bool disconnect_peer_softly(asQWORD);
+	string get_peer_address(asQWORD);
+	double get_peer_average_round_trip_time(asQWORD);
 	CScriptArray* get_peer_list();
 	network_event* request(int timeout = 0);
-	bool send_reliable(asUINT peerId, const string& packet, int channel);
-	bool send_unreliable(asUINT peerId, const string& packet, int channel);
+	bool send_reliable(asQWORD peerId, const string& packet, int channel);
+	bool send_unreliable(asQWORD peerId, const string& packet, int channel);
 	bool set_bandwidth_limits(double incomingBandwidth, double outgoingBandwidth);
-	bool setup_client(int channels, int maxPeers);
-	bool setup_server(int listeningPort, int channels, int maxPeers);
+	bool setup_client(int channels, asQWORD maxPeers);
+	bool setup_server(int listeningPort, int channels, asQWORD maxPeers);
 	void flush();
-	int get_connected_peers() const;
+	asQWORD get_connected_peers() const;
 
 	double get_bytes_sent() const;
 
@@ -265,8 +270,8 @@ public:
 private:
 	ENetAddress address;
 	ENetHost* host;
-	asUINT current_peer_id = 1;
-	int m_connectedPeers;
+	asQWORD current_peer_id = 1;
+	asQWORD m_connectedPeers;
 	double m_bytesSent;
 	double m_bytesReceived;
 	bool m_active;

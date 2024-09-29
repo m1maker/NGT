@@ -22,7 +22,7 @@ void main() {
 			v.speak_interrupt(v.rate);
 		}
 
-		pressed = keys_pressed();
+		pressed = keys_down();
 		for(uint i=0;i<pressed.length();i++) {
 			if (interrupt)
 				v.speak_interrupt(key_to_string(pressed[i]));

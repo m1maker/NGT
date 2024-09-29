@@ -1,13 +1,13 @@
 #include "dlibrary.h"
 #include"ngt.h"
-#include <sdl3/sdl.h>
 #include<filesystem>
+#include <sdl3/sdl.h>
 bool dlibrary::load(const std::string& name) {
 	lib = SDL_LoadObject(name.c_str());
 	return lib != NULL;
 }
 void* dlibrary::get(const char* function_name) {
-	void* address = SDL_LoadFunction(lib, function_name);
+	void* address = (void*)SDL_LoadFunction(lib, function_name);
 	return address;
 }
 bool dlibrary::get_active()const {

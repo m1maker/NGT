@@ -23,4 +23,5 @@ public:
 
 private:
 	mutable int ref;
+	int engine;
 };

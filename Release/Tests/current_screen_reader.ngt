@@ -1,5 +1,4 @@
-tts_voice v;
 void main(){
-v.speak_interrupt(screen_reader::detect());
-wait(1000);
+printf(screen_reader::detect());
+screen_reader::speak("Test");
 }

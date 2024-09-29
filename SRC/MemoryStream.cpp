@@ -113,7 +113,7 @@ void RegisterMemstream(asIScriptEngine* engine) {
 	engine->RegisterObjectMethod("memory_stream", "void read(uint64&out, size_t)", asMETHODPR(MemoryStream, read, (char*, size_t), void), asCALL_THISCALL);
 	engine->RegisterObjectMethod("memory_stream", "void seek(int)", asMETHODPR(MemoryStream, seek, (size_t), void), asCALL_THISCALL);
 	engine->RegisterObjectMethod("memory_stream", "void seek(seek_origin, int)", asMETHODPR(MemoryStream, seek, (seek_origin, int), void), asCALL_THISCALL);
-	engine->RegisterObjectMethod("memory_stream", "size_t tell() const", asMETHOD(MemoryStream, tell), asCALL_THISCALL); assert(r >= 0);
-	engine->RegisterObjectMethod("memory_stream", "size_t get_size() const property", asMETHOD(MemoryStream, size), asCALL_THISCALL); assert(r >= 0);
-	engine->RegisterObjectMethod("memory_stream", "void clear() const", asMETHOD(MemoryStream, clear), asCALL_THISCALL); assert(r >= 0);
+	engine->RegisterObjectMethod("memory_stream", "size_t tell() const", asMETHOD(MemoryStream, tell), asCALL_THISCALL);
+	engine->RegisterObjectMethod("memory_stream", "size_t get_size() const property", asMETHOD(MemoryStream, size), asCALL_THISCALL);
+	engine->RegisterObjectMethod("memory_stream", "void clear() const", asMETHOD(MemoryStream, clear), asCALL_THISCALL);
 }

@@ -233,7 +233,6 @@ std::vector<unsigned char> vector_decrypt(const std::vector<unsigned char>& str,
 }
 
 
-
 class CBytecodeStream : public asIBinaryStream
 {
 public:
@@ -902,7 +901,7 @@ protected:
 
 	int main(const ArgVec& args)override
 	{
-		if (args.size() == 0) {
+		if (args.size() == 0 && !bytecodeExecute) {
 			displayHelp();
 		}
 		if (bytecodeExecute) {

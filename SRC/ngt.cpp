@@ -132,7 +132,6 @@ public:
 		while (!window_thread_event_shutdown) {
 			thread.sleep(update_window_freq + 1);
 			// Lock the mutex
-			Poco::Mutex::ScopedLock lock(window_mtx);
 			if (window_event_show) {
 				window_event_show = false;
 				SDL_WindowFlags flags = 0;
@@ -165,6 +164,7 @@ public:
 				SDL_SetWindowFullscreen(win, window_fullscreen);
 			}
 			if (win != nullptr) {
+				SDL_PumpEvents();
 				bool result = SDL_PollEvent(&e);
 				if (result == true)g_windowEvent.set();
 				if (window_event_push) {
@@ -413,7 +413,7 @@ void set_window_fullscreen(bool fullscreen) {
 	window_fullscreen = fullscreen;
 	window_event_fullscreen = true;
 }
-bool mouse_pressed(Uint8 button)
+bool mouse_pressed(unsigned char button)
 {
 	if (buttons[button].isDown == true and buttons[button].isPressed == false)
 	{
@@ -422,7 +422,7 @@ bool mouse_pressed(Uint8 button)
 	}
 	return false;
 }
-bool mouse_released(Uint8 button)
+bool mouse_released(unsigned char button)
 {
 	if (buttons[button].isDown == false and buttons[button].isReleased == false)
 	{
@@ -431,7 +431,7 @@ bool mouse_released(Uint8 button)
 	}
 	return false;
 }
-bool mouse_down(Uint8 button)
+bool mouse_down(unsigned char button)
 {
 	return buttons[button].isDown;
 }
@@ -1432,13 +1432,13 @@ network_event& network_event::operator=(const network_event new_event) {
 }
 
 
-_ENetPeer* network::get_peer(asUINT peer_id) {
+_ENetPeer* network::get_peer(asQWORD peer_id) {
 	auto it = peers.find(peer_id);
 	if (it == peers.end())return 0;
 	return it->second;
 }
 
-asUINT network::connect(const string& hostAddress, int port) {
+asQWORD network::connect(const string& hostAddress, int port) {
 	ENetAddress enetAddress;
 	enet_address_set_host(&enetAddress, hostAddress.c_str());
 	enetAddress.port = port;
@@ -1474,7 +1474,7 @@ bool network::destroy() {
 	}
 	return false;
 }
-bool network::disconnect_peer(asUINT peer_id) {
+bool network::disconnect_peer(asQWORD peer_id) {
 	if (host) {
 		_ENetPeer* peer = get_peer(peer_id);
 		if (!peer)return false;
@@ -1484,7 +1484,7 @@ bool network::disconnect_peer(asUINT peer_id) {
 	}
 	return false;
 }
-bool network::disconnect_peer_forcefully(asUINT peer_id) {
+bool network::disconnect_peer_forcefully(asQWORD peer_id) {
 	if (host) {
 		_ENetPeer* peer = get_peer(peer_id);
 		if (!peer)return false;
@@ -1505,12 +1505,12 @@ string address_to_string(const ENetAddress* address)
 }
 
 
-string network::get_peer_address(asUINT peer_id) {
+string network::get_peer_address(asQWORD peer_id) {
 	_ENetPeer* peer = get_peer(peer_id);
 	if (!peer)return "NULL";
 	return address_to_string(&peer->address);
 }
-double network::get_peer_average_round_trip_time(asUINT peerId) {
+double network::get_peer_average_round_trip_time(asQWORD peerId) {
 	_ENetPeer* peer = get_peer(peerId);
 	if (!peer)return -1;
 	return peer->roundTripTime;
@@ -1518,10 +1518,10 @@ double network::get_peer_average_round_trip_time(asUINT peerId) {
 CScriptArray* network::get_peer_list() {
 	asIScriptContext* ctx = asGetActiveContext();
 	asIScriptEngine* engine = ctx->GetEngine();
-	asITypeInfo* arrayType = engine->GetTypeInfoById(engine->GetTypeIdByDecl("array<uint>"));
+	asITypeInfo* arrayType = engine->GetTypeInfoById(engine->GetTypeIdByDecl("array<uint64>"));
 	CScriptArray* peers_array = CScriptArray::Create(arrayType, (asUINT)0);
 	for (auto it = peers.begin(); it != peers.end(); it++) {
-		asUINT peer_id = it->first;
+		asQWORD peer_id = it->first;
 		peers_array->InsertLast(&peer_id);
 	}
 	return peers_array;
@@ -1544,18 +1544,18 @@ network_event* network::request(int initial_timeout) {
 			current_peer_id += 1;
 		}
 		else if (this->type == NETWORK_TYPE_CLIENT) {
-			handle_->m_peerId = reinterpret_cast<asUINT>(event.peer->data);
+			handle_->m_peerId = (asQWORD)(event.peer->data);
 		}
 	}
 	if (event.type == ENET_EVENT_TYPE_DISCONNECT) {
-		asUINT peer = reinterpret_cast<asUINT>(event.peer->data);
+		asQWORD peer = (asQWORD)(event.peer->data);
 		event.peer->data = 0;
 		if (peer > 0)
 			peers.erase(peer);
 		handle_->m_peerId = peer;
 	}
 	if (event.type == ENET_EVENT_TYPE_RECEIVE && event.packet != nullptr) {
-		handle_->m_peerId = reinterpret_cast<asUINT>(event.peer->data);
+		handle_->m_peerId = (asQWORD)(event.peer->data);
 		handle_->m_message = string(reinterpret_cast<char*>(event.packet->data), event.packet->dataLength);
 		enet_packet_destroy(event.packet);
 	}
@@ -1563,7 +1563,7 @@ network_event* network::request(int initial_timeout) {
 	return handle_;
 }
 
-bool network::send_reliable(asUINT peer_id, const string& packet, int channel) {
+bool network::send_reliable(asQWORD peer_id, const string& packet, int channel) {
 	ENetPacket* p = enet_packet_create(packet.c_str(), strlen(packet.c_str()) + 1, ENET_PACKET_FLAG_RELIABLE);
 	enet_packet_resize(p, packet.size());
 	if (peer_id > 0) {
@@ -1581,7 +1581,7 @@ bool network::send_reliable(asUINT peer_id, const string& packet, int channel) {
 	}
 	return false;
 }
-bool network::send_unreliable(asUINT peer_id, const string& packet, int channel) {
+bool network::send_unreliable(asQWORD peer_id, const string& packet, int channel) {
 	ENetPacket* p = enet_packet_create(packet.c_str(), strlen(packet.c_str()) + 1, 0);
 	enet_packet_resize(p, packet.size());
 	if (peer_id > 0) {
@@ -1604,7 +1604,7 @@ bool network::set_bandwidth_limits(double incomingBandwidth, double outgoingBand
 	return true;
 }
 
-bool network::setup_client(int channels, int maxPeers) {
+bool network::setup_client(int channels, asQWORD maxPeers) {
 	address.host = ENET_HOST_ANY;
 	address.port = 0; // Let the system choose a port
 
@@ -1619,7 +1619,7 @@ bool network::setup_client(int channels, int maxPeers) {
 	return true;
 }
 
-bool network::setup_server(int listeningPort, int channels, int maxPeers) {
+bool network::setup_server(int listeningPort, int channels, asQWORD maxPeers) {
 	address.host = ENET_HOST_ANY;
 	address.port = listeningPort;
 
@@ -1636,7 +1636,7 @@ bool network::setup_server(int listeningPort, int channels, int maxPeers) {
 void network::flush() {
 	enet_host_flush(host);
 }
-int network::get_connected_peers() const {
+asQWORD network::get_connected_peers() const {
 	return host ? host->connectedPeers : 0;
 }
 
@@ -1866,7 +1866,7 @@ void library::unload() {
 }
 void* library::get_function_pointer(const std::string& name) {
 	if (lib == nullptr)return nullptr;
-	return SDL_LoadFunction(lib, name.c_str());
+	return (void*)SDL_LoadFunction(lib, name.c_str());
 }
 void library::clear_functions() {
 	functions.clear();
@@ -1925,10 +1925,13 @@ uint64_t user_idle::elapsed_weeks() {
 	return elapsed_days() / 7;
 }
 uint64_t user_idle::get_idle_time() {
+#ifdef _WIN32
 	LASTINPUTINFO lii = { sizeof(LASTINPUTINFO) };
 	GetLastInputInfo(&lii);
 	DWORD currentTick = GetTickCount();
 	return (currentTick - lii.dwTime);
+#endif
+	return 0;
 }
 
 uint64_t get_time_stamp_millis() {

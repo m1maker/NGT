@@ -99,8 +99,8 @@ void show_message(bool include_info, bool include_warning, bool include_error)
 		messages += g_ScriptMessagesWarning;
 	}
 	cout << title << endl << messages;
-	if (GetConsoleWindow() != 0)return;
 #if defined(_WIN32)
+	if (GetConsoleWindow() != 0)return;
 	wstring title_u;
 	title_u = wstr(title);
 	result_message = wstr(convertNewlines(messages));
@@ -166,7 +166,7 @@ void show_message(bool include_info, bool include_warning, bool include_error)
 	g_ScriptMessagesError = "";
 	g_ScriptMessagesWarning = "";
 	g_ScriptMessagesInfo = "";
-	}
+}
 #ifdef _WIN32
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -516,7 +516,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterObjectMethod("network_event", "network_event &opAssign(const network_event&in)", asMETHOD(network_event, operator=), asCALL_THISCALL);
 
 	engine->RegisterObjectProperty("network_event", "const int type", asOFFSET(network_event, m_type));
-	engine->RegisterObjectProperty("network_event", "const uint peer_id", asOFFSET(network_event, m_peerId));
+	engine->RegisterObjectProperty("network_event", "const uint64 peer_id", asOFFSET(network_event, m_peerId));
 	engine->RegisterObjectProperty("network_event", "const int channel", asOFFSET(network_event, m_channel));
 	engine->RegisterObjectProperty("network_event", "const string message", asOFFSET(network_event, m_message));
 
@@ -525,23 +525,23 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterObjectBehaviour("network", asBEHAVE_FACTORY, "network@ n()", asFUNCTION(fnetwork), asCALL_CDECL);
 	engine->RegisterObjectBehaviour("network", asBEHAVE_ADDREF, "void f()", asMETHOD(network, add_ref), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("network", asBEHAVE_RELEASE, "void f()", asMETHOD(network, release), asCALL_THISCALL);
-	engine->RegisterObjectMethod("network", "uint connect(string&in, int)", asMETHOD(network, connect), asCALL_THISCALL);
+	engine->RegisterObjectMethod("network", "uint64 connect(string&in, int)", asMETHOD(network, connect), asCALL_THISCALL);
 	engine->RegisterObjectMethod("network", "bool destroy()", asMETHOD(network, destroy), asCALL_THISCALL);
-	engine->RegisterObjectMethod("network", "bool disconnect_peer(uint)", asMETHOD(network, disconnect_peer), asCALL_THISCALL);
-	engine->RegisterObjectMethod("network", "bool disconnect_peer_forcefully(uint)", asMETHOD(network, disconnect_peer_forcefully), asCALL_THISCALL);
+	engine->RegisterObjectMethod("network", "bool disconnect_peer(uint64)", asMETHOD(network, disconnect_peer), asCALL_THISCALL);
+	engine->RegisterObjectMethod("network", "bool disconnect_peer_forcefully(uint64)", asMETHOD(network, disconnect_peer_forcefully), asCALL_THISCALL);
 	//    engine->RegisterObjectMethod("network", "bool disconnect_peer_softly(uint)", asMETHOD(network, disconnect_peer_softly), asCALL_THISCALL);
-	engine->RegisterObjectMethod("network", "string get_peer_address(uint)const property", asMETHOD(network, get_peer_address), asCALL_THISCALL);
-	engine->RegisterObjectMethod("network", "double get_peer_average_round_trip_time(uint)const property", asMETHOD(network, get_peer_average_round_trip_time), asCALL_THISCALL);
-	engine->RegisterObjectMethod("network", "uint[]@ get_peer_list()", asMETHOD(network, get_peer_list), asCALL_THISCALL);
+	engine->RegisterObjectMethod("network", "string get_peer_address(uint64)const property", asMETHOD(network, get_peer_address), asCALL_THISCALL);
+	engine->RegisterObjectMethod("network", "double get_peer_average_round_trip_time(uint64)const property", asMETHOD(network, get_peer_average_round_trip_time), asCALL_THISCALL);
+	engine->RegisterObjectMethod("network", "uint64[]@ get_peer_list()", asMETHOD(network, get_peer_list), asCALL_THISCALL);
 	engine->RegisterObjectMethod("network", "network_event@ request(int=0)", asMETHOD(network, request), asCALL_THISCALL);
-	engine->RegisterObjectMethod("network", "bool send_reliable(uint, string&in, int)", asMETHOD(network, send_reliable), asCALL_THISCALL);
-	engine->RegisterObjectMethod("network", "bool send_unreliable(uint, string&in, int)", asMETHOD(network, send_unreliable), asCALL_THISCALL);
+	engine->RegisterObjectMethod("network", "bool send_reliable(uint64, string&in, int)", asMETHOD(network, send_reliable), asCALL_THISCALL);
+	engine->RegisterObjectMethod("network", "bool send_unreliable(uint64, string&in, int)", asMETHOD(network, send_unreliable), asCALL_THISCALL);
 	engine->RegisterObjectMethod("network", "bool set_bandwidth_limits(double, double)", asMETHOD(network, set_bandwidth_limits), asCALL_THISCALL);
-	engine->RegisterObjectMethod("network", "bool setup_client(int, int)", asMETHOD(network, setup_client), asCALL_THISCALL);
-	engine->RegisterObjectMethod("network", "bool setup_server(int, int, int)", asMETHOD(network, setup_server), asCALL_THISCALL);
+	engine->RegisterObjectMethod("network", "bool setup_client(int, int64)", asMETHOD(network, setup_client), asCALL_THISCALL);
+	engine->RegisterObjectMethod("network", "bool setup_server(int, int, int64)", asMETHOD(network, setup_server), asCALL_THISCALL);
 	engine->RegisterObjectMethod("network", "void flush()const", asMETHOD(network, flush), asCALL_THISCALL);
 
-	engine->RegisterObjectMethod("network", "int get_connected_peers() const property", asMETHOD(network, get_connected_peers), asCALL_THISCALL);
+	engine->RegisterObjectMethod("network", "int64 get_connected_peers() const property", asMETHOD(network, get_connected_peers), asCALL_THISCALL);
 	engine->RegisterObjectMethod("network", "double get_bytes_sent() const property", asMETHOD(network, get_bytes_sent), asCALL_THISCALL);
 	engine->RegisterObjectMethod("network", "double get_bytes_received() const property", asMETHOD(network, get_bytes_received), asCALL_THISCALL);
 	engine->RegisterFuncdef("int sqlite3authorizer(string, int, string, string, string, string)");
