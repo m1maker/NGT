@@ -1,0 +1,42 @@
+float listener_x, listener_y, listener_z, source_x, source_y, source_z;
+
+sound s("/mnt/c/windows/media/tada.wav");
+void main(){
+source_x=0;
+source_y=0;
+source_z=0;
+listener_x=0;
+listener_y=0;
+listener_z=0;
+show_window("Positioner");
+s.play_looped();
+//s.set_hrtf(true);
+timer t;
+screen_reader::speak(s.file_path);
+while(true){
+wait_event();
+s.set_position(listener_x, listener_y, listener_z, source_x, source_y, source_z, 0);
+if(key_repeat(KEY_RIGHT))
+listener_x+=1;
+if(key_repeat(KEY_LEFT))
+listener_x-=1;
+if(key_repeat(KEY_UP))
+listener_y+=1;
+if(key_repeat(KEY_DOWN))
+listener_y-=1;
+if(key_repeat(KEY_PAGEDOWN))
+listener_z-=1;
+if(key_repeat(KEY_PAGEUP))
+listener_z+=1;
+if(key_repeat(KEY_F1)){
+s.set_hrtf(false);
+s.set_fx("reverb");
+s.set_reverb_parameters(1, 0.5, 0.3, 0, 0);
+}
+if(key_repeat(KEY_F2)){
+s.set_fx("reverb");
+s.set_reverb_parameters(1, 0.5, 0.3, 0, 0);
+s.set_hrtf(true);
+}
+}
+}

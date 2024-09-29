@@ -41,21 +41,37 @@ set(OPENSSL_USE_STATIC_LIBS ON)
 set(OPENSSL_MSVC_STATIC_RT ON)
 
 if(WIN32)
-    # Check for vcpkg at C:\vcpkg
-    if(EXISTS "C:/vcpkg/scripts/buildsystems/vcpkg.cmake")
-        set(CMAKE_TOOLCHAIN_FILE "C:/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
-        message(STATUS "Using vcpkg at C:/vcpkg")
-    else()
-        message(FATAL_ERROR 
-            "vcpkg not found at C:/vcpkg. Please install vcpkg:\n"
-            "1. Open PowerShell as Administrator\n"
-            "2. Run the following commands:\n"
-            "   cd C:\\\n"
-            "   git clone https://github.com/Microsoft/vcpkg.git\n"
-            "   .\\vcpkg\\bootstrap-vcpkg.bat\n"
-            "3. Install OpenSSL: C:\\vcpkg\\vcpkg install openssl:x64-windows-static\n"
-            "4. Run CMake again")
+  # Check for vcpkg at C:\vcpkg
+  if(EXISTS "C:/vcpkg/scripts/buildsystems/vcpkg.cmake")
+    set(CMAKE_TOOLCHAIN_FILE "C:/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
+    message(STATUS "Using vcpkg at C:/vcpkg")
+  else()
+    # Install vcpkg automatically
+    execute_process(
+      COMMAND powershell -Command "cd C:\\; git clone https://github.com/Microsoft/vcpkg.git; .\\vcpkg\\bootstrap-vcpkg.bat"
+      RESULT_VARIABLE vcpkg_install_result
+      OUTPUT_VARIABLE vcpkg_install_output
+      ERROR_VARIABLE vcpkg_install_error
+    )
+    if(NOT vcpkg_install_result EQUAL 0)
+      message(FATAL_ERROR "Failed to install vcpkg: ${vcpkg_install_error}")
     endif()
+
+    # Install OpenSSL
+    execute_process(
+      COMMAND powershell -Command "C:\\vcpkg\\vcpkg install openssl:x64-windows-static"
+      RESULT_VARIABLE openssl_install_result
+      OUTPUT_VARIABLE openssl_install_output
+      ERROR_VARIABLE openssl_install_error
+    )
+    if(NOT openssl_install_result EQUAL 0)
+      message(FATAL_ERROR "Failed to install OpenSSL: ${openssl_install_error}")
+    endif()
+
+    # Set the toolchain file
+    set(CMAKE_TOOLCHAIN_FILE "C:/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
+    message(STATUS "Using vcpkg at C:/vcpkg")
+  endif()
 
     set(OPENSSL_ROOT_DIR "${CMAKE_TOOLCHAIN_FILE}/../../../installed/x64-windows-static")
 else()
@@ -262,39 +278,61 @@ else()
 endif()
 
 
-target_link_libraries(${PROJECT_NAME} enet)
 target_link_libraries(${PROJECT_NAME} SRAL_static)
 target_link_libraries(${PROJECT_NAME} angelscript)
-
-target_link_libraries(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/external/installed/lib/SDL3-static.lib)
-target_link_libraries(${PROJECT_NAME}
-  Poco::NetSSL
-  Poco::Crypto
-  Poco::Foundation
-  Poco::Util
-  Poco::Net
-  ${OPENSSL_LIBRARIES}
-)
+target_link_libraries(${PROJECT_NAME} ${OPENSSL_LIBRARIES})
 
 if(WIN32)
   target_link_libraries(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/external/installed/lib/SDL3-static.lib)
-  target_link_libraries(${PROJECT_NAME}W
-    ${OPENSSL_LIBRARIES}
-    Poco::NetSSL
-    Poco::Crypto
-    Poco::Foundation
-    Poco::Util
-    Poco::Net
-    ${OPENSSL_LIBRARIES}
-    ${CMAKE_DL_LIBS}
-  )
 else()
   target_link_libraries(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/external/installed/lib/libSDL3.a)
   find_package(X11 REQUIRED)
   target_link_libraries(${PROJECT_NAME} ${X11_LIBRARIES})
 endif()
+target_link_libraries(${PROJECT_NAME} Poco::Foundation)
+target_link_libraries(${PROJECT_NAME} Poco::Net)
+target_link_libraries(${PROJECT_NAME} Poco::NetSSL)
+target_link_libraries(${PROJECT_NAME} Poco::Util)
 
+target_link_libraries(${PROJECT_NAME} enet)
+target_link_libraries(${PROJECT_NAME} ${PHONON_LIBRARIES})
+if(WIN32)
+  target_link_libraries(${PROJECT_NAME}W SRAL_static)
+  target_link_libraries(${PROJECT_NAME}W angelscript)
+  target_link_libraries(${PROJECT_NAME}W ${OPENSSL_LIBRARIES})
+  target_link_libraries(${PROJECT_NAME}W ${CMAKE_BINARY_DIR}/external/installed/lib/SDL3-static.lib)
+  target_link_libraries(${PROJECT_NAME}W Poco::Foundation)
+  target_link_libraries(${PROJECT_NAME}W Poco::Net)
+  target_link_libraries(${PROJECT_NAME}W Poco::NetSSL)
+
+  target_link_libraries(${PROJECT_NAME}W Poco::Util)
+  target_link_libraries(${PROJECT_NAME}W enet)
+  target_link_libraries(${PROJECT_NAME}W ${PHONON_LIBRARIES})
+  target_link_libraries(${PROJECT_NAME} winmm.lib)
+  target_link_libraries(${PROJECT_NAME} imm32.lib)
+  target_link_libraries(${PROJECT_NAME}W winmm.lib)
+  target_link_libraries(${PROJECT_NAME}W imm32.lib)
+
+  target_link_libraries(${PROJECT_NAME} msvcrt.lib)
+  target_link_libraries(${PROJECT_NAME}W msvcrt.lib)
+
+  target_link_libraries(${PROJECT_NAME}
+        version.lib
+        setupapi.lib
+        libcmt.lib
+        ws2_32.lib
+        iphlpapi.lib
+)
+target_link_libraries(${PROJECT_NAME}W
+        version.lib
+        setupapi.lib
+        libcmt.lib
+        ws2_32.lib
+        iphlpapi.lib
+)
+  endif()
 if(MSVC)
   target_link_libraries(${PROJECT_NAME} delayimp.lib)
   target_link_libraries(${PROJECT_NAME}W delayimp.lib)
+
 endif()
