@@ -36,6 +36,53 @@ add_definitions(-DENABLE_JSON=OFF)
 add_definitions(-DENABLE_MONGODB=OFF)
 add_definitions(-DENABLE_PROMETHEUS=OFF)
 
+# OpenSSL configuration
+set(OPENSSL_USE_STATIC_LIBS ON)
+set(OPENSSL_MSVC_STATIC_RT ON)
+
+if(WIN32)
+    # Check for vcpkg at C:\vcpkg
+    if(EXISTS "C:/vcpkg/scripts/buildsystems/vcpkg.cmake")
+        set(CMAKE_TOOLCHAIN_FILE "C:/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "Vcpkg toolchain file")
+        message(STATUS "Using vcpkg at C:/vcpkg")
+    else()
+        message(FATAL_ERROR 
+            "vcpkg not found at C:/vcpkg. Please install vcpkg:\n"
+            "1. Open PowerShell as Administrator\n"
+            "2. Run the following commands:\n"
+            "   cd C:\\\n"
+            "   git clone https://github.com/Microsoft/vcpkg.git\n"
+            "   .\\vcpkg\\bootstrap-vcpkg.bat\n"
+            "3. Install OpenSSL: C:\\vcpkg\\vcpkg install openssl:x64-windows-static\n"
+            "4. Run CMake again")
+    endif()
+
+    set(OPENSSL_ROOT_DIR "${CMAKE_TOOLCHAIN_FILE}/../../../installed/x64-windows-static")
+else()
+    if(APPLE)
+        # For macOS, use Homebrew's OpenSSL
+        execute_process(
+            COMMAND brew --prefix openssl
+            OUTPUT_VARIABLE OPENSSL_ROOT_DIR
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        if(NOT OPENSSL_ROOT_DIR)
+            message(FATAL_ERROR "OpenSSL not found. Please install it using 'brew install openssl'")
+        endif()
+    endif()
+    # For Linux, the system's package manager should be used (no special handling required)
+endif()
+
+find_package(OpenSSL REQUIRED)
+
+if(NOT OpenSSL_FOUND)
+    message(FATAL_ERROR "OpenSSL not found. Please install OpenSSL and try again.")
+endif()
+
+message(STATUS "OpenSSL_FOUND: ${OpenSSL_FOUND}")
+message(STATUS "OPENSSL_INCLUDE_DIR: ${OPENSSL_INCLUDE_DIR}")
+message(STATUS "OPENSSL_LIBRARIES: ${OPENSSL_LIBRARIES}")
+
 
 include(FetchContent)
 FetchContent_Declare(
@@ -81,12 +128,27 @@ FetchContent_Declare(SRAL
   GIT_TAG origin/main SYSTEM)
 FetchContent_MakeAvailable(SRAL)
 
+
+set(ENABLE_NETSSL ON CACHE BOOL "Enable NetSSL")
+set(ENABLE_CRYPTO ON CACHE BOOL "Enable Crypto")
 set(POCO_MT ON)
 set(BUILD_SHARED_LIBS OFF)
 
 FetchContent_Declare(Poco
   GIT_REPOSITORY "https://github.com/pocoproject/poco"
-  GIT_TAG "cd06553d89aee4bf7b5c820199121cd25d5bce94" SYSTEM)
+  GIT_TAG "cd06553d89aee4bf7b5c820199121cd25d5bce94"
+  CMAKE_ARGS
+    -DOPENSSL_ROOT_DIR=${OPENSSL_ROOT_DIR}
+    -DOPENSSL_USE_STATIC_LIBS=${OPENSSL_USE_STATIC_LIBS}
+    -DENABLE_NETSSL=${ENABLE_NETSSL}
+    -DENABLE_CRYPTO=${ENABLE_CRYPTO}
+    -DPOCO_STATIC=${POCO_STATIC}
+    -DENABLE_DATA_MYSQL=${ENABLE_DATA_MYSQL}
+    -DENABLE_DATA_POSTGRESQL=${ENABLE_DATA_POSTGRESQL}
+    -DENABLE_APACHECONNECTOR=${ENABLE_APACHECONNECTOR}
+    -DENABLE_CPPPARSER=${ENABLE_CPPPARSER}
+    -DENABLE_REDIS=${ENABLE_REDIS}
+)
 FetchContent_MakeAvailable(Poco)
 set(POCO_STATIC ON)
 
@@ -99,7 +161,10 @@ FetchContent_MakeAvailable(enet)
 
 include_directories(
   ${angelscript_SOURCE_DIR}/sdk/angelscript/include
+  ${OPENSSL_INCLUDE_DIR}
   ${Poco_SOURCE_DIR}/Net/include
+  ${poco_SOURCE_DIR}/NetSSL_OpenSSL/include
+  ${poco_SOURCE_DIR}/Crypto/include
   ${Poco_SOURCE_DIR}/Foundation/include
 
   ${enet_SOURCE_DIR}/include
@@ -183,67 +248,53 @@ set(SDL_STATIC_AVAILABLE ON)
 
 
 if(WIN32)
+    add_definitions(-DPOCO_STATIC)
+    set(OPENSSL_LIBRARIES ${OPENSSL_LIBRARIES} crypt32)
     set(PHONON_LIBRARIES
         ${CMAKE_BINARY_DIR}/phonon-src/lib/windows-x64/phonon.lib
     )
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /DELAYLOAD:phonon.dll")
 else()
+    find_package(Threads REQUIRED)
     set(PHONON_LIBRARIES
             ${CMAKE_BINARY_DIR}/phonon-src/lib/linux-x64/libphonon.so
 )
 endif()
 
 
-
+target_link_libraries(${PROJECT_NAME} enet)
 target_link_libraries(${PROJECT_NAME} SRAL_static)
 target_link_libraries(${PROJECT_NAME} angelscript)
+
+target_link_libraries(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/external/installed/lib/SDL3-static.lib)
+target_link_libraries(${PROJECT_NAME}
+  Poco::NetSSL
+  Poco::Crypto
+  Poco::Foundation
+  Poco::Util
+  Poco::Net
+  ${OPENSSL_LIBRARIES}
+)
+
 if(WIN32)
   target_link_libraries(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/external/installed/lib/SDL3-static.lib)
+  target_link_libraries(${PROJECT_NAME}W
+    ${OPENSSL_LIBRARIES}
+    Poco::NetSSL
+    Poco::Crypto
+    Poco::Foundation
+    Poco::Util
+    Poco::Net
+    ${OPENSSL_LIBRARIES}
+    ${CMAKE_DL_LIBS}
+  )
 else()
   target_link_libraries(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/external/installed/lib/libSDL3.a)
   find_package(X11 REQUIRED)
   target_link_libraries(${PROJECT_NAME} ${X11_LIBRARIES})
 endif()
-target_link_libraries(${PROJECT_NAME} Poco::Foundation)
-target_link_libraries(${PROJECT_NAME} Poco::Net)
-target_link_libraries(${PROJECT_NAME} Poco::Util)
 
-target_link_libraries(${PROJECT_NAME} enet)
-target_link_libraries(${PROJECT_NAME} ${PHONON_LIBRARIES})
-if(WIN32)
-  target_link_libraries(${PROJECT_NAME}W SRAL_static)
-  target_link_libraries(${PROJECT_NAME}W angelscript)
-  target_link_libraries(${PROJECT_NAME}W ${CMAKE_BINARY_DIR}/external/installed/lib/SDL3-static.lib)
-  target_link_libraries(${PROJECT_NAME}W Poco::Foundation)
-  target_link_libraries(${PROJECT_NAME}W Poco::Net)
-  target_link_libraries(${PROJECT_NAME}W Poco::Util)
-  target_link_libraries(${PROJECT_NAME}W enet)
-  target_link_libraries(${PROJECT_NAME}W ${PHONON_LIBRARIES})
-  target_link_libraries(${PROJECT_NAME} winmm.lib)
-  target_link_libraries(${PROJECT_NAME} imm32.lib)
-  target_link_libraries(${PROJECT_NAME}W winmm.lib)
-  target_link_libraries(${PROJECT_NAME}W imm32.lib)
-
-  target_link_libraries(${PROJECT_NAME} msvcrt.lib)
-  target_link_libraries(${PROJECT_NAME}W msvcrt.lib)
-
-  target_link_libraries(${PROJECT_NAME}
-        version.lib
-        setupapi.lib
-        libcmt.lib
-        ws2_32.lib
-        iphlpapi.lib
-)
-target_link_libraries(${PROJECT_NAME}W
-        version.lib
-        setupapi.lib
-        libcmt.lib
-        ws2_32.lib
-        iphlpapi.lib
-)
-  endif()
 if(MSVC)
   target_link_libraries(${PROJECT_NAME} delayimp.lib)
   target_link_libraries(${PROJECT_NAME}W delayimp.lib)
-
 endif()

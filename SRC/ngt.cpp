@@ -777,11 +777,26 @@ string url_encode(const string& url) {
 
 string url_get(const string& url) {
 	try {
-		HTTPClientSession session(url);
-		HTTPRequest request(HTTPRequest::HTTP_GET, "/");
-		session.sendRequest(request);
+		URI uri(url);
+		string path(uri.getPathAndQuery());
+		if (path.empty()) path = "/";
+		HTTPClientSession* session = nullptr;
+
+		if (uri.getScheme() == "https") {
+			SharedPtr<InvalidCertificateHandler> certHandler = new AcceptCertificateHandler(false);
+			Context::Ptr sslContext = new Context(Context::CLIENT_USE, "", Context::VERIFY_NONE);
+			SSLManager::instance().initializeClient(0, certHandler, sslContext);
+
+			session = new HTTPSClientSession(uri.getHost(), uri.getPort(), sslContext);
+		}
+		else {
+			session = new HTTPClientSession(uri.getHost(), uri.getPort());
+		}
+
+		HTTPRequest request(HTTPRequest::HTTP_GET, path, HTTPMessage::HTTP_1_1);
+		session->sendRequest(request);
 		HTTPResponse response;
-		istream& rs = session.receiveResponse(response);
+		istream& rs = session->receiveResponse(response);
 		string result;
 		StreamCopier::copyToString(rs, result);
 		return result;
