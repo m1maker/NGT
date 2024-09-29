@@ -365,7 +365,7 @@ static int Load(asIScriptEngine* engine, std::vector<asBYTE> code)
 
 	return 0;
 }
-
+std::string g_Platform = "Auto";
 
 
 std::string StringToString(void* obj, int /* expandMembers */, CDebugger* /* dbg */)
@@ -831,8 +831,20 @@ protected:
 		// Call compiler to create executable file
 		std::string main_exe = get_exe();
 		std::vector<std::string> name_split = string_split(".", value);
-		std::filesystem::copy_file(main_exe.c_str(), name_split[0] + ".exe");
-		std::fstream file(name_split[0] + ".exe", std::ios::app | std::ios::binary);
+		std::string bundle = name_split[0];
+		if (g_Platform == "Auto") {
+#ifdef _WIN32
+			g_Platform = "Windows";
+#else
+			g_Platform = "Linux";
+#endif
+		}
+
+		if (g_Platform == "Windows") {
+			bundle += ".exe";
+		}
+		std::filesystem::copy_file(main_exe.c_str(), bundle);
+		std::fstream file(bundle, std::ios::app | std::ios::binary);
 		if (!file.is_open()) {
 			app->scriptEngine->WriteMessage(this_exe.c_str(), 0, 0, asMSGTYPE_ERROR, "Failed to open output file for writing");
 
@@ -901,9 +913,6 @@ protected:
 
 	int main(const ArgVec& args)override
 	{
-		if (args.size() == 0 && !bytecodeExecute) {
-			displayHelp();
-		}
 		if (bytecodeExecute) {
 			executeBytecode();
 			return m_retcode;

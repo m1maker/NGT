@@ -73,11 +73,11 @@ WriteUninstaller "$INSTDIR\uninstall.exe"
 WriteRegStr HKCR ".ngt" "" "NGT-File"
 WriteRegStr HKCR "NGT-File" "" "NGT executable"
 WriteRegStr HKCR "NGT-File\shell\Open" "" "Open with NGT Script"
-WriteRegStr HKCR "NGT-File\shell\Open\command" "" '"$INSTDIR\NGTScript.exe" "%1" -d'
+WriteRegStr HKCR "NGT-File\shell\Open\command" "" '"$INSTDIR\NGTW.exe" -r "%1"'
 WriteRegStr HKCR "NGT-File\shell\Compile" "" "Compile NGT Script"
-WriteRegStr HKCR "NGT-File\shell\Compile\command" "" '"$INSTDIR\NGTScript.exe" "%1" -c'
+WriteRegStr HKCR "NGT-File\shell\Compile\command" "" '"$INSTDIR\NGTW.exe" -c "%1"'
 WriteRegStr HKCR "NGT-File\shell\Run" "" "Run NGT Script"
-WriteRegStr HKCR "NGT-File\shell\Run\command" "" '"$INSTDIR\NGTScript.exe" "%1" -d'
+WriteRegStr HKCR "NGT-File\shell\Run\command" "" '"$INSTDIR\NGTW.exe" -r "%1"'
 SectionEnd
 
 ; Optional section (can be disabled by the user)

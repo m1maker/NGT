@@ -132,6 +132,7 @@ public:
 		while (!window_thread_event_shutdown) {
 			thread.sleep(update_window_freq + 1);
 			// Lock the mutex
+			Poco::Mutex::ScopedLock lock(window_mtx);
 			if (window_event_show) {
 				window_event_show = false;
 				SDL_WindowFlags flags = 0;
@@ -164,7 +165,6 @@ public:
 				SDL_SetWindowFullscreen(win, window_fullscreen);
 			}
 			if (win != nullptr) {
-				SDL_PumpEvents();
 				bool result = SDL_PollEvent(&e);
 				if (result == true)g_windowEvent.set();
 				if (window_event_push) {
@@ -239,7 +239,10 @@ long get_update_window_freq() {
 void init_engine() {
 	SDL_Init(SDL_INIT_VIDEO);
 	SRAL_Initialize(0);
+#ifdef _WIN32
+	// SRAL keyboard hooks is stopping all the events on Linux
 	SRAL_RegisterKeyboardHooks();
+#endif
 	enet_initialize();
 }
 void set_library_path(const string& path) {

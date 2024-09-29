@@ -163,7 +163,15 @@ if(WIN32)
   add_compile_definitions(${PROJECT_NAME}W NGTW)
   set_target_properties(${PROJECT_NAME}W PROPERTIES 
     WIN32_EXECUTABLE TRUE)  # This sets the subsystem to WINDOWS
+else()
+  add_custom_command(
+    TARGET "${PROJECT_NAME}" POST_BUILD
+    DEPENDS "${PROJECT_NAME}"
+    COMMAND $<$<CONFIG:release>:${CMAKE_STRIP}>
+    ARGS --strip-all $<TARGET_FILE:${PROJECT_NAME}>
+)
 endif()
+
 
 
 add_dependencies(${PROJECT_NAME} SDL3)
