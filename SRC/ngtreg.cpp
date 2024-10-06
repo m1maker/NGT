@@ -1,4 +1,5 @@
-﻿#include "MemoryStream.h"
+﻿#include "autowrapper/aswrappedcall.h"
+#include "MemoryStream.h"
 #include "ngtreg.h"
 #include "obfuscate.h"
 #include "Poco/UnicodeConverter.h"
@@ -354,7 +355,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterEnumValue("smtp_login_method", "AUTH_PLAIN", Poco::Net::SMTPClientSession::AUTH_PLAIN);
 	engine->RegisterEnumValue("smtp_login_method", "AUTH_XOAUTH2", Poco::Net::SMTPClientSession::AUTH_XOAUTH2);
 	engine->RegisterEnumValue("smtp_login_method", "AUTH_NTLM", Poco::Net::SMTPClientSession::AUTH_NTLM);
-	engine->RegisterGlobalFunction("void mail_send(smtp_login_method, uint, const string &in, const string &in, const string&in, const string&in, const string&in, const string&in, const string&in, const string&in=\"\")", asFUNCTION(mail_send), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void mail_send(smtp_login_method, uint, const string &in, const string &in, const string&in, const string&in, const string&in, const string&in, const string&in, const string&in=\"\")", WRAP_FN(mail_send), asCALL_GENERIC);
 	AS_END(engine);
 	engine->RegisterGlobalFunction("void exit(int=0)", asFUNCTION(exit_engine), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string number_to_words(uint64, bool)", asFUNCTION(number_to_words), asCALL_CDECL);
@@ -372,8 +373,8 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("int[]@ keys_released()", asFUNCTION(keys_released), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int[]@ keys_down()", asFUNCTION(keys_down), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int[]@ keys_repeat()", asFUNCTION(keys_repeat), asCALL_CDECL);
-	engine->RegisterGlobalFunction("string key_to_string(int)", asFUNCTION(key_to_string), asCALL_CDECL);
-	engine->RegisterGlobalFunction("int string_to_key(const string&in)", asFUNCTION(string_to_key), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string key_to_string(int)", WRAP_FN(key_to_string), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("int string_to_key(const string&in)", WRAP_FN(string_to_key), asCALL_GENERIC);
 	engine->RegisterGlobalFunction("bool force_key_down(keycode)", asFUNCTION(force_key_down), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool force_key_up(keycode)", asFUNCTION(force_key_up), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void reset_all_forced_keys()", asFUNCTION(reset_all_forced_keys), asCALL_CDECL);

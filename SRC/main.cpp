@@ -104,7 +104,6 @@ int IncludeCallback(const char* include, const char* from, CScriptBuilder* build
 	for (const auto& match : matches) {
 		builder->AddSectionFromFile(match.c_str());
 	}
-	g_ScriptMessagesError = "";
 	return 0;
 }
 CScriptBuilder builder;

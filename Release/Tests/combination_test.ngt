@@ -1,0 +1,31 @@
+#include "../include/combination"
+void main() {
+    combination comb;
+
+    if (comb.generate_all_combinations(3, 2)) {
+        while (true) {
+            array<int> combo = comb.next();
+            if (combo.length() == 0) break;
+
+            for (uint i = 0; i < combo.length(); ++i) {
+                printf(combo[i] + " ");
+            }
+            printf("\n");
+        }
+    }
+
+    comb.reset();
+
+    if (comb.generate_unique_combinations(4, 2)) {
+        while (true) {
+            array<int> combo = comb.next();
+            if (combo.length() == 0) break;
+
+            for (uint i = 0; i < combo.length(); ++i) {
+                printf(combo[i] + " ");
+            }
+            printf("\n");
+        }
+    }
+}
+
