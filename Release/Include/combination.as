@@ -113,4 +113,4 @@ class combination
 		}
 		return array<int>(); // Return empty array if no more combinations
 	}
-}
+};
