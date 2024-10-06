@@ -1,0 +1,33 @@
+#include "../include/map"
+int main() {
+    // Create a new map with dimensions 5x5x3
+    map my_map(5, 5, 3);
+
+    // Set some tiles
+    my_map.set_tile(1, 1, 0, tiletype::WALKABLE);
+    my_map.set_tile(2, 1, 0, tiletype::WATER);
+    my_map.set_tile(3, 1, 0, tiletype::GRASS);
+    my_map.set_tile(1, 1, 1, tiletype::WALL);
+
+    // Add a wall between two points
+    my_map.add_wall(0, 0, 0, 4, 0, 0); // Create a wall at the bottom layer
+
+    // Print the map for debugging
+    printf("Initial _map:\n");
+    my_map.print();
+
+    // Serialize the map to a string
+    string serialized_map = my_map.serialize();
+    printf(serialized_map + "\n");
+    // Create another map and deserialize the data into it
+    map new_map;
+    if (new_map.deserialize(serialized_map)) {
+        printf("Deserialized _map:\n");
+        new_map.print();
+    } else {
+        printf("Failed to deserialize the map.");
+    }
+
+    return 0;
+}
+
