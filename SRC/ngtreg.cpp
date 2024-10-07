@@ -1,4 +1,5 @@
 ﻿#include "autowrapper/aswrappedcall.h"
+#include "IOStreams.h"
 #include "MemoryStream.h"
 #include "ngtreg.h"
 #include "obfuscate.h"
@@ -423,6 +424,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("void unicode_convert(const wstring &in, string &out)", asFUNCTIONPR(Poco::UnicodeConverter::convert, (const std::wstring&, std::string&), void), asCALL_CDECL);
 	register_pack(engine);
 	register_sound(engine);
+	RegisterScriptIOStreams(engine);
 	RegisterMemstream(engine);
 	AS_BEGIN(engine, "scripting");
 	RegisterScripting(engine);

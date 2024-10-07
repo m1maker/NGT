@@ -1,0 +1,6 @@
+file f;
+void main(){
+f.open("Test", "w");
+f<<"W";
+f.close();
+}
