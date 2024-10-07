@@ -1,15 +1,17 @@
 #include "../include/application"
 class example_application : application{
-sound@ s = null;
+sound s;
 void initialize(){
 s.load("C:/windows/media/tada.wav");
-printf(this.output);
 }
 
 void uninitialize(){
 s.close();
 }
 int main(array<string>@ args){
+for(auto i = 0;i<args.length();i++){
+log(args[i] + "\n");
+}
 s.play_wait();
 return 0;
 }

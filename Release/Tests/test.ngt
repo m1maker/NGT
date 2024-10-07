@@ -1,6 +1,6 @@
 float listener_x, listener_y, listener_z, source_x, source_y, source_z;
 
-sound s("/mnt/c/windows/media/tada.wav");
+sound s("c:/windows/media/tada.wav");
 void main(){
 source_x=0;
 source_y=0;

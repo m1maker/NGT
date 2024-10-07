@@ -1,5 +1,6 @@
 void main(){
 string r;
+cout<<"Entr any text:";
 cin>>r;
 cout<<r;
 }
