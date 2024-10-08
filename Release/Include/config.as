@@ -18,7 +18,7 @@ class save_data
 	private int saveType = SAVEDATA_DEF;
 
 	// Constructor
-	save_data(string filename, string encryptionKey = "", int type = SAVEDATA_DEF)
+	save_data(const string&in filename, const string&in encryptionKey = "", SaveDataTypes type = SAVEDATA_DEF)
 	{
 		this.filename = filename;
 		this.key = encryptionKey;
@@ -51,29 +51,29 @@ class save_data
 	}
 
 	// Add a numeric value
-	void add(string name, double value)
+	void add(const string&in name, double value)
 	{
 		dataDictionary.set(name, value);
 	}
 
 	// Read a numeric value
-	double readNumber(string name)
+	double readNumber(const string&in name)
 	{
 		if (this.saveType == SAVEDATA_INI)
 			return string_to_number(this.read(name));
-		
+
 		double temp;
 		return dataDictionary.get(name, temp) ? temp : -1;
 	}
 
 	// Overloaded function to add a string
-	void add(string name, string value)
+	void add(const string&in name, const string&in value)
 	{
 		dataDictionary.set(name, value);
 	}
 
 	// Read a string
-	string read(string name)
+	string read(const string&in name)
 	{
 		string temp;
 		dataDictionary.get(name, temp);
@@ -99,10 +99,10 @@ class save_data
 	{
 		if (this.key != "")
 			data = string_decrypt(data, this.key);
-		
+
 		if (this.saveType == SAVEDATA_INI)
 			return parseIniData(data);
-		
+
 		return deserialize(data);
 	}
 
@@ -113,14 +113,14 @@ class save_data
 			finalData = convertToIniFormat(d);
 		else
 			finalData = serialize(d);
-		
+
 		if (this.key != "")
 			finalData = string_encrypt(finalData, this.key);
-		
+
 		return finalData;
 	}
 
-	private dictionary parseIniData(string data)
+	private dictionary parseIniData(const string&in data)
 	{
 		dictionary d;
 		string[] lines = data.split("\r\n");

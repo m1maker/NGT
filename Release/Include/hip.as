@@ -55,7 +55,7 @@ namespace hip
 	class lister
 	{
 		// list to string convertion.
-		string convert(string[] arr, string each = ", ")
+		string convert(string[] arr, const string&in each = ", ")
 		{
 			string list;
 			if (arr.length() == 0)
@@ -71,7 +71,7 @@ namespace hip
 			}
 			return list;
 		}
-		string convert(int[] arr, string each = ", ")
+		string convert(int[] arr, const string&in each = ", ")
 		{
 			string list;
 			if (arr.length() == 0)
@@ -87,7 +87,7 @@ namespace hip
 			}
 			return list;
 		}
-		string convert(double[] arr, string each = ", ")
+		string convert(double[] arr, const string&in each = ", ")
 		{
 			string list;
 			if (arr.length() == 0)
@@ -103,7 +103,7 @@ namespace hip
 			}
 			return list;
 		}
-		string convert(float[] arr, string each = ", ")
+		string convert(float[] arr, const string&in each = ", ")
 		{
 			string list;
 			if (arr.length() == 0)
@@ -119,7 +119,7 @@ namespace hip
 			}
 			return list;
 		}
-		string convert(uint[] arr, string each = ", ")
+		string convert(uint[] arr, const string&in each = ", ")
 		{
 			string list;
 			if (arr.length() == 0)
@@ -176,7 +176,7 @@ namespace hip
 		return "";
 	}
 
-	double convert_month_number(string monthname) {
+	double convert_month_number(const string&in monthname) {
 		for (int i = 0; i < MONTH_NAMES.length(); i++)
 		{
 			if (monthname == MONTH_NAMES[i])
@@ -195,7 +195,7 @@ namespace hip
 		return "";
 	}
 
-	double convert_weekday_number(string weekdayname) {
+	double convert_weekday_number(const string&in weekdayname) {
 		for (int i = 0; i < WEEKDAY_NAMES.length(); i++)
 		{
 			if (weekdayname == WEEKDAY_NAMES[i])
@@ -222,7 +222,7 @@ namespace hip
 			return round(0, round_to);
 		}
 	}
-	string get_item_text(string text, string split_with = "[[]]")
+	string get_item_text(const string&in text, const string&in split_with = "[[]]")
 	{
 		string final;
 		string[] ma = text.split(split_with);
@@ -234,7 +234,7 @@ namespace hip
 			final = ma[0];
 		return final;
 	}
-	string get_item_name(string text, string split_with = "[[]]")
+	string get_item_name(const string&in text, const string&in split_with = "[[]]")
 	{
 		string final;
 		string[] ma = text.split(split_with);
@@ -255,7 +255,7 @@ namespace hip
 	// these are the constants for the file_put_contents function.
 	const uint8 FILE_WRITE = 250;
 	const uint8 FILE_APPEND = 255;
-	bool file_put_contents(string filename, string contents, uint8 filemode = FILE_WRITE)
+	bool file_put_contents(const string&in filename, const string&in contents, uint8 filemode = FILE_WRITE)
 	{
 		int ret;
 		file tempfile;
@@ -276,7 +276,7 @@ namespace hip
 			return false;
 		return true;
 	}
-	string file_get_contents(string filename)
+	string file_get_contents(const string&in filename)
 	{
 		file tempfile;
 		tempfile.open(filename, "r");
@@ -406,17 +406,17 @@ namespace hip
 	/*
 	string utilities
 	*/
-	string string_left(string str, uint count)
+	string string_left(const string&in str, uint count)
 	{
 		return str.substr(0, count);
 	}
-	string string_right(string str, uint count)
+	string string_right(const string&in str, uint count)
 	{
 		if (count < 1)
 			return"";
 		return str.substr(str.length() - count);
 	}
-	string string_trim_left(string str, uint count)
+	string string_trim_left(const string&in str, uint count)
 	{
 		if (count > str.length())
 			return str;
@@ -424,7 +424,7 @@ namespace hip
 			return"";
 		return str.substr(count);
 	}
-	string string_trim_right(string str, uint count)
+	string string_trim_right(const string&in str, uint count)
 	{
 		if (count > str.length())
 			return str;
@@ -433,7 +433,7 @@ namespace hip
 		count = str.length() - count;
 		return str.substr(0, count);
 	}
-	string var_replace(string text, string[] replacers = {}, string opening = "%", string closing = "%")
+	string var_replace(string&out text, string[] replacers = {}, const string&in opening = "%", const string&in closing = "%")
 	{
 		if (replacers.length() < 1)
 			return text;
@@ -444,7 +444,7 @@ namespace hip
 		}
 		return text;
 	}
-	string var_replace2(string text, string[] fir = {}, string[] sec = {})
+	string var_replace2(string&out text, string[] fir = {}, string[] sec = {})
 	{
 		if (fir.length() < 1)
 			return text;
@@ -492,7 +492,9 @@ namespace hip
 		gender_pd,
 		gender_pp,
 		gender_r
-	} string get_gender(string gend, int n = 0)
+	};
+
+	string get_gender(const string&in gend, int n = 0)
 	{
 		if (n == 0)
 			return gend;
