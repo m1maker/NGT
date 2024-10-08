@@ -240,11 +240,17 @@ if(WIN32)
   set(NGT_SOURCES ${NGT_SOURCES} GUI/GUI.cpp)
 endif()
 add_executable(${PROJECT_NAME} ${NGT_SOURCES})
+set_target_properties(${PROJECT_NAME} PROPERTIES
+  RUNTIME_OUTPUT_DIRECTORY "Release/"
+)
+
 if(WIN32)
   add_executable(${PROJECT_NAME}W ${NGT_SOURCES})
   add_compile_definitions(${PROJECT_NAME}W NGTW)
   set_target_properties(${PROJECT_NAME}W PROPERTIES 
-    WIN32_EXECUTABLE TRUE)  # This sets the subsystem to WINDOWS
+    WIN32_EXECUTABLE TRUE      # This sets the subsystem to WINDOWS
+    RUNTIME_OUTPUT_DIRECTORY "Release/"
+)
 else()
   add_custom_command(
     TARGET "${PROJECT_NAME}" POST_BUILD
