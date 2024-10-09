@@ -919,15 +919,15 @@ string GetExceptionInfo(asIScriptContext* ctx, bool showStack)
 	stringstream text;
 
 	const asIScriptFunction* function = ctx->GetExceptionFunction();
-	text << "func: " << function->GetDeclaration() << "\n";
-	text << "modl: " << (function->GetModuleName() ? function->GetModuleName() : "") << "\n";
-	text << "sect: " << (function->GetScriptSectionName() ? function->GetScriptSectionName() : "") << "\n";
-	text << "line: " << ctx->GetExceptionLineNumber() << "\n";
-	text << "desc: " << ctx->GetExceptionString() << "\n";
+	text << "Function: " << function->GetDeclaration() << "\n";
+	text << "Module: " << (function->GetModuleName() ? function->GetModuleName() : "") << "\n";
+	text << "File: " << (function->GetScriptSectionName() ? function->GetScriptSectionName() : "") << "\n";
+	text << "Line: " << ctx->GetExceptionLineNumber() << "\n";
+	text << "Exception: " << ctx->GetExceptionString() << "\n";
 
 	if (showStack)
 	{
-		text << "--- call stack ---\n";
+		text << "--- Call stack ---\n";
 		for (asUINT n = 1; n < ctx->GetCallstackSize(); n++)
 		{
 			function = ctx->GetFunction(n);
@@ -988,7 +988,7 @@ void RegisterExceptionRoutines(asIScriptEngine* engine)
 	}
 	else
 	{
-		r = engine->RegisterGlobalFunction("void throw(const string &in)", WRAP_FN(ScriptThrow), asCALL_GENERIC); assert(r >= 0);
+		r = engine->RegisterGlobalFunction("void throw(const string & in)", WRAP_FN(ScriptThrow), asCALL_GENERIC); assert(r >= 0);
 		r = engine->RegisterGlobalFunction("string get_exception_info()", WRAP_FN(ScriptGetExceptionInfo), asCALL_GENERIC); assert(r >= 0);
 	}
 }

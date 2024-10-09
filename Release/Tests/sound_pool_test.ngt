@@ -1,4 +1,4 @@
-#include "../include/sound_pool"
+#include "../include/sound_pool.as"
 void main(){
 sound_pool sp;
 show_window("Test");

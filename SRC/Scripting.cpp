@@ -220,6 +220,8 @@ void RegisterScripting(asIScriptEngine* engine) {
 	engine->RegisterObjectMethod("context", "uint64 get_return_address()const", asMETHOD(asIScriptContext, GetReturnAddress), asCALL_THISCALL);
 	engine->RegisterObjectMethod("context", "uint64 get_address_of_return_value()const", asMETHOD(asIScriptContext, GetAddressOfReturnValue), asCALL_THISCALL);
 	engine->RegisterObjectMethod("context", "string get_exception_info(bool=true)const", asFUNCTION(ContextGetExceptionInfo), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("context@ get_active_context()property", asFUNCTION(asGetActiveContext), asCALL_CDECL);
+
 
 
 	engine->RegisterObjectType("module", sizeof(asIScriptModule), asOBJ_REF | asOBJ_NOCOUNT);

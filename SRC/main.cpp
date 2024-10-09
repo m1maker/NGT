@@ -44,7 +44,7 @@
 #include <Poco/Exception.h>
 #define SDL_MAIN_HANDLED
 
-#define NGT_BYTECODE_ENCRYPTION_KEY "0Z1Eif2JShwWsaAfgw1EfiOwudDAnNg6"
+#define NGT_BYTECODE_ENCRYPTION_KEY "0Z1Eif2JShwWsaAfgw1EfiOwudDAnNg6WdsIuwyTgsJAiw(us)wjHdc87&6w()"
 
 using Poco::Util::Application;
 using Poco::Util::Option;
@@ -54,7 +54,7 @@ using Poco::Util::AbstractConfiguration;
 using Poco::Util::OptionCallback;
 using Poco::AutoPtr;
 
-
+static std::string get_exe_path();
 int IncludeCallback(const char* include, const char* from, CScriptBuilder* builder, void* userParam) {
 	// 1. Resolve the relative path
 	std::string absoluteIncludePath = Poco::Path(from).append("../" + std::string(include)).toString(); // Construct an absolute path
@@ -65,7 +65,7 @@ int IncludeCallback(const char* include, const char* from, CScriptBuilder* build
 	}
 
 	// 3. Try the 'include' directory
-	std::string includeDirectoryPath = Poco::Path("include", include).toString();
+	std::string includeDirectoryPath = Poco::Path(get_exe_path() + "/include", include).toString();
 	if (builder->AddSectionFromFile(includeDirectoryPath.c_str()) > -1) {
 		g_ScriptMessagesError = "";
 		return 0;
@@ -118,6 +118,10 @@ static void crypt(std::vector<asBYTE>& bytes) {
 static std::string get_exe() {
 	return Poco::Util::Application::instance().config().getString("application.path");
 }
+static std::string get_exe_path() {
+	return Poco::Util::Application::instance().config().getString("application.dir");
+}
+
 static std::vector<std::string> string_split(const std::string& delim, const std::string& str)
 {
 	std::vector<std::string> array;
@@ -141,18 +145,22 @@ static std::vector<std::string> string_split(const std::string& delim, const std
 }
 
 std::vector<std::string> defines;
+void TrimWhitespace(std::string& str) {
+	str.erase(0, str.find_first_not_of(" \t\r\n")); // Trim leading whitespace
+	str.erase(str.find_last_not_of(" \t\r\n") + 1); // Trim trailing whitespace
+}
+
+
 
 int PragmaCallback(const std::string& pragmaText, CScriptBuilder& builder, void* userParam) {
 	const std::string definePrefix = " define ";
-	if (pragmaText.compare(0, definePrefix.length(), definePrefix) == 0) {
-		std::string word = pragmaText.substr(definePrefix.length());
 
-		word.erase(0, word.find_first_not_of(" \t\r\n"));
-		word.erase(word.find_last_not_of(" \t\r\n") + 1);
+	if (pragmaText.starts_with(definePrefix)) {
+		std::string word = pragmaText.substr(definePrefix.length());
+		TrimWhitespace(word);
 		defines.push_back(word);
 		return 0;
 	}
-
 	return -1;
 }
 
@@ -294,14 +302,14 @@ asIScriptModule* Compile(asIScriptEngine* engine, const char* inputFile)
 {
 	builder.SetPragmaCallback(PragmaCallback, nullptr);
 	builder.SetIncludeCallback(IncludeCallback, nullptr);
-	asIScriptModule* module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
-	int result = builder.StartNewModule(engine, "ngtgame");
+	asIScriptModule* module = engine->GetModule(get_exe().c_str(), asGM_ALWAYS_CREATE);
+	int result = builder.StartNewModule(engine, get_exe().c_str());
 	result = builder.AddSectionFromFile(inputFile);
 	if (defines.size() > 0) {
 		// Now, restart all, because we need to define all words before adding section
 		builder.ClearAll();
-		module = engine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
-		result = builder.StartNewModule(engine, "ngtgame");
+		module = engine->GetModule(get_exe().c_str(), asGM_ALWAYS_CREATE);
+		result = builder.StartNewModule(engine, get_exe().c_str());
 		for (uint64_t i = 0; i < defines.size(); ++i) {
 			builder.DefineWord(defines[i].c_str());
 		}
@@ -342,7 +350,7 @@ static int Load(asIScriptEngine* engine, std::vector<asBYTE> code)
 {
 	int r;
 	CBytecodeStream stream;
-	asIScriptModule* mod = engine->GetModule("ngtgame");
+	asIScriptModule* mod = engine->GetModule(get_exe().c_str());
 	if (mod == 0)
 	{
 		engine->WriteMessage("Product.ngt", 0, 0, asMSGTYPE_ERROR, "Failed to retrieve the compiled bytecode");
@@ -535,6 +543,8 @@ public:
 		scriptEngine->RegisterGlobalFunction("int exec(const string &in)", asFUNCTIONPR(ExecSystemCmd, (const string&), int), asCALL_CDECL);
 		scriptEngine->RegisterGlobalFunction("int exec(const string &in, string &out)", asFUNCTIONPR(ExecSystemCmd, (const string&, string&), int), asCALL_CDECL);
 		scriptEngine->RegisterGlobalProperty("const bool SCRIPT_COMPILED", (void*)&SCRIPT_COMPILED);
+		scriptEngine->RegisterGlobalFunction("string get_SCRIPT_EXECUTABLE()property", asFUNCTION(get_exe), asCALL_CDECL);
+		scriptEngine->RegisterGlobalFunction("string get_SCRIPT_EXECUTABLE_PATH()property", asFUNCTION(get_exe_path), asCALL_CDECL);
 		m_ctxMgr = new CContextMgr();
 		m_ctxMgr->RegisterCoRoutineSupport(scriptEngine);
 
@@ -702,7 +712,6 @@ protected:
 #ifdef _WIN32
 		timeEndPeriod(1);
 #endif
-		exit_engine(0);
 
 	}
 
@@ -866,9 +875,9 @@ protected:
 	void executeBytecode() {
 		SCRIPT_COMPILED = true;
 		// Execute the script
-		module = app->scriptEngine->GetModule("ngtgame", asGM_ALWAYS_CREATE);
+		module = app->scriptEngine->GetModule(get_exe().c_str(), asGM_ALWAYS_CREATE);
 		int result;
-		module = app->scriptEngine->GetModule("ngtgame");
+		module = app->scriptEngine->GetModule(get_exe().c_str());
 		if (module)
 		{
 			std::fstream read_file(this_exe.c_str(), std::ios::binary | std::ios::in);
