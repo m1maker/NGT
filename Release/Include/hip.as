@@ -177,7 +177,7 @@ namespace hip
 	}
 
 	double convert_month_number(const string&in monthname) {
-		for (int i = 0; i < MONTH_NAMES.length(); i++)
+		for (uint i = 0; i < MONTH_NAMES.length(); i++)
 		{
 			if (monthname == MONTH_NAMES[i])
 			{
@@ -196,7 +196,7 @@ namespace hip
 	}
 
 	double convert_weekday_number(const string&in weekdayname) {
-		for (int i = 0; i < WEEKDAY_NAMES.length(); i++)
+		for (uint i = 0; i < WEEKDAY_NAMES.length(); i++)
 		{
 			if (weekdayname == WEEKDAY_NAMES[i])
 			{

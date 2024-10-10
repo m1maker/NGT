@@ -259,13 +259,11 @@ void set_library_path(const string& path) {
 
 random_device rd;
 mt19937 gen(rd());
-long random(long min, long max) {
-	static_assert(is_integral<long>::value, "Type must be integral");
-
-	uniform_int_distribution<long> dis(min, max);
-
-	return dis(gen); // Ensure 'gen' is a valid random number generator
+int64_t random(int64_t min, int64_t max) {
+	uniform_int_distribution<int64_t> dis(min, max); // Use int64_t 
+	return dis(gen);
 }
+
 double randomDouble(double min, double max) {
 	static_assert(is_floating_point<double>::value, "Type must be floating point");
 
@@ -855,8 +853,8 @@ string hex_to_string(string the_hexadecimal_sequence) {
 }
 
 
-string number_to_hex_string(double the_number) {
-	return Poco::NumberFormatter::formatHex(static_cast<asUINT>(the_number));
+string number_to_hex_string(asINT64 the_number) {
+	return Poco::NumberFormatter::formatHex(the_number);
 }
 
 string string_base64_decode(string base64_string) {
@@ -949,6 +947,19 @@ int message_box(const std::string& title, const std::string& text, const std::ve
 	}
 
 	return ret;
+}
+
+
+int message_box_script(const std::string& title, const std::string& text, CScriptArray* buttons, unsigned int flags) {
+	const unsigned int buttonCount = buttons->GetSize();
+	std::vector<std::string> v_buttons;
+	v_buttons.reserve(buttonCount); // Reserve space for efficiency
+
+	for (unsigned int i = 0; i < buttonCount; ++i) {
+		v_buttons.emplace_back(*(std::string*)(buttons->At(i))); // Use emplace_back for better performance
+	}
+
+	return message_box(title, text, v_buttons, flags);
 }
 
 bool alert(const string& title, const string& text, const string& button_name)

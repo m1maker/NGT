@@ -105,7 +105,7 @@ void set_update_window_freq(long);
 long get_update_window_freq();
 void init_engine();
 void set_library_path(const string& path);
-long random(long min, long max);
+int64_t random(int64_t min, int64_t max);
 double randomDouble(double min, double max);
 bool random_bool();
 int get_last_error();
@@ -164,7 +164,7 @@ void mail_send(Poco::Net::SMTPClientSession::LoginMethod login_method, asUINT po
 string ascii_to_character(int the_ascii_code);
 int character_to_ascii(string the_character);
 string hex_to_string(string the_hexadecimal_sequence);
-string number_to_hex_string(double the_number);
+string number_to_hex_string(asINT64 the_number);
 string string_base64_decode(string base64_string);
 string string_base64_encode(string the_string);
 string string_base32_decode(string base32_string);
@@ -173,6 +173,8 @@ string string_to_hex(string the_string);
 void string_pad(std::string&);
 void string_unpad(std::string&);
 int message_box(const std::string& title, const std::string& text, const std::vector<std::string>& buttons, unsigned int mb_flags);
+
+int message_box_script(const std::string& title, const std::string& text, CScriptArray* buttons, unsigned int flags);
 
 bool alert(const string& title, const string& text, const string& button_name = "OK");
 int question(const string& title, const string& text);

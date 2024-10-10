@@ -305,7 +305,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("uint64 get_time_stamp_seconds()property", asFUNCTION(get_time_stamp_seconds), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void set_library_path(const string &in)", asFUNCTION(set_library_path), asCALL_CDECL);
 
-	engine->RegisterGlobalFunction("long random(long, long)", asFUNCTIONPR(random, (long, long), long), asCALL_CDECL);
+	engine->RegisterGlobalFunction("long random(long, long)", asFUNCTIONPR(random, (int64_t, int64_t), int64_t), asCALL_CDECL);
 	engine->RegisterGlobalFunction("double random(double, double)", asFUNCTIONPR(randomDouble, (double, double), double), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool random_bool()", asFUNCTION(random_bool), asCALL_CDECL);
 
@@ -391,12 +391,20 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("string ascii_to_character(int)", asFUNCTION(ascii_to_character), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int character_to_ascii(const string      &in)", asFUNCTION(character_to_ascii), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string hex_to_string(const string& in)", asFUNCTION(hex_to_string), asCALL_CDECL);
-	engine->RegisterGlobalFunction("string number_to_hex_string(double)", asFUNCTION(number_to_hex_string), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string number_to_hex_string(int64)", asFUNCTION(number_to_hex_string), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string string_base64_decode(const string &in)", asFUNCTION(string_base64_decode), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string string_base64_encode(const string &in)", asFUNCTION(string_base64_encode), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string string_base32_decode(const string &in)", asFUNCTION(string_base32_decode), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string string_base32_encode(const string &in)", asFUNCTION(string_base32_encode), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string string_to_hex(const string &in)", asFUNCTION(string_to_hex), asCALL_CDECL);
+	engine->RegisterEnum(_O("message_box_flags"));
+	engine->RegisterEnumValue(_O("message_box_flags"), _O("MESSAGE_BOX_ERROR"), SDL_MESSAGEBOX_ERROR);
+	engine->RegisterEnumValue(_O("message_box_flags"), _O("MESSAGE_BOX_WARNING"), SDL_MESSAGEBOX_WARNING);
+	engine->RegisterEnumValue(_O("message_box_flags"), _O("MESSAGE_BOX_INFORMATION"), SDL_MESSAGEBOX_INFORMATION);
+	engine->RegisterEnumValue(_O("message_box_flags"), _O("MESSAGE_BOX_BUTTONS_LEFT_TO_RIGHT"), SDL_MESSAGEBOX_BUTTONS_LEFT_TO_RIGHT);
+	engine->RegisterEnumValue(_O("message_box_flags"), _O("MESSAGE_BOX_BUTTONS_RIGHT_TO_LEFT"), SDL_MESSAGEBOX_BUTTONS_RIGHT_TO_LEFT);
+	engine->RegisterGlobalFunction("int message_box(const string& in, const string& in, array<string>@, uint = 0)", asFUNCTION(message_box_script), asCALL_CDECL);
+
 	engine->RegisterGlobalFunction("bool alert(const string &in, const string &in, const string &in=\"OK\")", asFUNCTION(alert), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int question(const string &in, const string &in)", asFUNCTION(question), asCALL_CDECL);
 
