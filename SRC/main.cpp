@@ -109,7 +109,7 @@ int IncludeCallback(const char* include, const char* from, CScriptBuilder* build
 	return 0;
 }
 CScriptBuilder builder;
-static void crypt(std::vector<asBYTE>& bytes) {
+static inline void crypt(std::vector<asBYTE>& bytes) {
 	for (size_t i = 0; i < bytes.size(); ++i) {
 		bytes[i] ^= bytes.size();
 	}
@@ -147,7 +147,7 @@ static std::vector<std::string> string_split(const std::string& delim, const std
 }
 
 std::vector<std::string> defines;
-void TrimWhitespace(std::string& str) {
+static inline void TrimWhitespace(std::string& str) {
 	str.erase(0, str.find_first_not_of(" \t\r\n")); // Trim leading whitespace
 	str.erase(str.find_last_not_of(" \t\r\n") + 1); // Trim trailing whitespace
 }
@@ -193,7 +193,7 @@ void vector_unpad(std::vector<unsigned char>& text) {
 	}
 }
 
-std::vector<unsigned char> vector_encrypt(const std::vector<unsigned char>& str, const std::string& encryption_key) {
+static std::vector<unsigned char> vector_encrypt(const std::vector<unsigned char>& str, const std::string& encryption_key) {
 	std::vector<unsigned char> the_vector = str;
 	Poco::SHA2Engine hash;
 	hash.update(encryption_key);
@@ -216,7 +216,7 @@ std::vector<unsigned char> vector_encrypt(const std::vector<unsigned char>& str,
 	return the_vector;
 }
 
-std::vector<unsigned char> vector_decrypt(const std::vector<unsigned char>& str, const std::string& encryption_key) {
+static std::vector<unsigned char> vector_decrypt(const std::vector<unsigned char>& str, const std::string& encryption_key) {
 	if (str.size() % 16 != 0) return {};
 
 	std::vector<unsigned char> the_vector = str;
@@ -300,7 +300,7 @@ public:
 };
 
 
-asIScriptModule* Compile(asIScriptEngine* engine, const char* inputFile)
+static asIScriptModule* Compile(asIScriptEngine* engine, const char* inputFile)
 {
 	builder.SetPragmaCallback(PragmaCallback, nullptr);
 	builder.SetIncludeCallback(IncludeCallback, nullptr);
@@ -701,7 +701,7 @@ protected:
 		read_file.seekg(file_size - sizeof(asUINT));
 
 		read_file.read(reinterpret_cast<char*>(&buffer_size), sizeof(asUINT));
-		if (buffer_size != NULL) {
+		if (buffer_size != 0) {
 			bytecodeExecute = true;
 			stopOptionsProcessing();
 

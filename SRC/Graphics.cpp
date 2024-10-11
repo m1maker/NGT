@@ -74,6 +74,107 @@ void RegisterScriptGraphics(asIScriptEngine* engine) {
 	engine->RegisterEnumValue("pixeltype", "PIXELTYPE_INDEX2", SDL_PIXELTYPE_INDEX2);
 
 	engine->RegisterEnum("bitmaporder");
+	engine->RegisterEnumValue("bitmaporder", "BITMAPORDER_NONE", SDL_BITMAPORDER_NONE);
+	engine->RegisterEnumValue("bitmaporder", "BITMAPORDER_4321", SDL_BITMAPORDER_4321);
+	engine->RegisterEnumValue("bitmaporder", "BITMAPORDER_1234", SDL_BITMAPORDER_1234);
+
+	engine->RegisterEnum("packedorder");
+	engine->RegisterEnumValue("packedorder", "PACKEDORDER_NONE", SDL_PACKEDORDER_NONE);
+	engine->RegisterEnumValue("packedorder", "PACKEDORDER_XRGB", SDL_PACKEDORDER_XRGB);
+	engine->RegisterEnumValue("packedorder", "PACKEDORDER_RGBX", SDL_PACKEDORDER_RGBX);
+	engine->RegisterEnumValue("packedorder", "PACKEDORDER_ARGB", SDL_PACKEDORDER_ARGB);
+	engine->RegisterEnumValue("packedorder", "PACKEDORDER_RGBA", SDL_PACKEDORDER_RGBA);
+	engine->RegisterEnumValue("packedorder", "PACKEDORDER_XBGR", SDL_PACKEDORDER_XBGR);
+	engine->RegisterEnumValue("packedorder", "PACKEDORDER_BGRX", SDL_PACKEDORDER_BGRX);
+	engine->RegisterEnumValue("packedorder", "PACKEDORDER_ABGR", SDL_PACKEDORDER_ABGR);
+	engine->RegisterEnumValue("packedorder", "PACKEDORDER_BGRA", SDL_PACKEDORDER_BGRA);
+
+	engine->RegisterEnum("arrayorder");
+	engine->RegisterEnumValue("arrayorder", "ARRAYORDER_NONE", SDL_ARRAYORDER_NONE);
+	engine->RegisterEnumValue("arrayorder", "ARRAYORDER_RGB", SDL_ARRAYORDER_RGB);
+	engine->RegisterEnumValue("arrayorder", "ARRAYORDER_RGBA", SDL_ARRAYORDER_RGBA);
+	engine->RegisterEnumValue("arrayorder", "ARRAYORDER_ARGB", SDL_ARRAYORDER_ARGB);
+	engine->RegisterEnumValue("arrayorder", "ARRAYORDER_BGR", SDL_ARRAYORDER_BGR);
+	engine->RegisterEnumValue("arrayorder", "ARRAYORDER_BGRA", SDL_ARRAYORDER_BGRA);
+	engine->RegisterEnumValue("arrayorder", "ARRAYORDER_ABGR", SDL_ARRAYORDER_ABGR);
+
+	engine->RegisterEnum("packedlayout");
+	engine->RegisterEnumValue("packedlayout", "PACKEDLAYOUT_NONE", SDL_PACKEDLAYOUT_NONE);
+	engine->RegisterEnumValue("packedlayout", "PACKEDLAYOUT_332", SDL_PACKEDLAYOUT_332);
+	engine->RegisterEnumValue("packedlayout", "PACKEDLAYOUT_4444", SDL_PACKEDLAYOUT_4444);
+	engine->RegisterEnumValue("packedlayout", "PACKEDLAYOUT_1555", SDL_PACKEDLAYOUT_1555);
+	engine->RegisterEnumValue("packedlayout", "PACKEDLAYOUT_5551", SDL_PACKEDLAYOUT_5551);
+	engine->RegisterEnumValue("packedlayout", "PACKEDLAYOUT_565", SDL_PACKEDLAYOUT_565);
+	engine->RegisterEnumValue("packedlayout", "PACKEDLAYOUT_8888", SDL_PACKEDLAYOUT_8888);
+	engine->RegisterEnumValue("packedlayout", "PACKEDLAYOUT_2101010", SDL_PACKEDLAYOUT_2101010);
+	engine->RegisterEnumValue("packedlayout", "PACKEDLAYOUT_1010102", SDL_PACKEDLAYOUT_1010102);
+
+	engine->RegisterEnum("pixelformat");
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_UNKNOWN", SDL_PIXELFORMAT_UNKNOWN);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_INDEX1LSB", SDL_PIXELFORMAT_INDEX1LSB);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_INDEX1MSB", SDL_PIXELFORMAT_INDEX1MSB);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_INDEX2LSB", SDL_PIXELFORMAT_INDEX2LSB);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_INDEX2MSB", SDL_PIXELFORMAT_INDEX2MSB);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_INDEX4LSB", SDL_PIXELFORMAT_INDEX4LSB);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_INDEX4MSB", SDL_PIXELFORMAT_INDEX4MSB);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_INDEX8", SDL_PIXELFORMAT_INDEX8);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_XRGB4444", SDL_PIXELFORMAT_XRGB4444);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_XBGR4444", SDL_PIXELFORMAT_XBGR4444);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_XRGB1555", SDL_PIXELFORMAT_XRGB1555);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_XBGR1555", SDL_PIXELFORMAT_XBGR1555);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_ARGB4444", SDL_PIXELFORMAT_ARGB4444);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_RGBA4444", SDL_PIXELFORMAT_RGBA4444);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_ABGR4444", SDL_PIXELFORMAT_ABGR4444);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_BGRA4444", SDL_PIXELFORMAT_BGRA4444);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_ARGB1555", SDL_PIXELFORMAT_ARGB1555);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_RGBA5551", SDL_PIXELFORMAT_RGBA5551);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_ABGR1555", SDL_PIXELFORMAT_ABGR1555);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_BGRA5551", SDL_PIXELFORMAT_BGRA5551);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_RGB565", SDL_PIXELFORMAT_RGB565);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_BGR565", SDL_PIXELFORMAT_BGR565);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_RGB24", SDL_PIXELFORMAT_RGB24);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_BGR24", SDL_PIXELFORMAT_BGR24);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_XRGB8888", SDL_PIXELFORMAT_XRGB8888);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_RGBX8888", SDL_PIXELFORMAT_RGBX8888);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_XBGR8888", SDL_PIXELFORMAT_XBGR8888);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_BGRX8888", SDL_PIXELFORMAT_BGRX8888);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_ARGB8888", SDL_PIXELFORMAT_ARGB8888);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_RGBA8888", SDL_PIXELFORMAT_RGBA8888);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_ABGR8888", SDL_PIXELFORMAT_ABGR8888);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_BGRA8888", SDL_PIXELFORMAT_BGRA8888);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_XRGB2101010", SDL_PIXELFORMAT_XRGB2101010);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_XBGR2101010", SDL_PIXELFORMAT_XBGR2101010);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_ARGB2101010", SDL_PIXELFORMAT_ARGB2101010);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_ABGR2101010", SDL_PIXELFORMAT_ABGR2101010);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_RGB48", SDL_PIXELFORMAT_RGB48);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_BGR48", SDL_PIXELFORMAT_BGR48);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_RGBA64", SDL_PIXELFORMAT_RGBA64);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_ARGB64", SDL_PIXELFORMAT_ARGB64);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_BGRA64", SDL_PIXELFORMAT_BGRA64);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_ABGR64", SDL_PIXELFORMAT_ABGR64);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_RGB48_FLOAT", SDL_PIXELFORMAT_RGB48_FLOAT);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_BGR48_FLOAT", SDL_PIXELFORMAT_BGR48_FLOAT);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_RGBA64_FLOAT", SDL_PIXELFORMAT_RGBA64_FLOAT);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_ARGB64_FLOAT", SDL_PIXELFORMAT_ARGB64_FLOAT);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_BGRA64_FLOAT", SDL_PIXELFORMAT_BGRA64_FLOAT);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_ABGR64_FLOAT", SDL_PIXELFORMAT_ABGR64_FLOAT);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_RGB96_FLOAT", SDL_PIXELFORMAT_RGB96_FLOAT);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_BGR96_FLOAT", SDL_PIXELFORMAT_BGR96_FLOAT);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_RGBA128_FLOAT", SDL_PIXELFORMAT_RGBA128_FLOAT);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_ARGB128_FLOAT", SDL_PIXELFORMAT_ARGB128_FLOAT);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_BGRA128_FLOAT", SDL_PIXELFORMAT_BGRA128_FLOAT);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_ABGR128_FLOAT", SDL_PIXELFORMAT_ABGR128_FLOAT);
+
+	// Add video texture formats
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_YV12", SDL_PIXELFORMAT_YV12);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_IYUV", SDL_PIXELFORMAT_IYUV);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_YUY2", SDL_PIXELFORMAT_YUY2);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_UYVY", SDL_PIXELFORMAT_UYVY);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_YVYU", SDL_PIXELFORMAT_YVYU);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_NV12", SDL_PIXELFORMAT_NV12);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_NV21", SDL_PIXELFORMAT_NV21);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_P010", SDL_PIXELFORMAT_P010);
+	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_EXTERNAL_OES", SDL_PIXELFORMAT_EXTERNAL_OES);
 
 	engine->RegisterGlobalFunction("int get_num_render_drivers() property", asFUNCTION(SDL_GetNumRenderDrivers), asCALL_CDECL);
 
