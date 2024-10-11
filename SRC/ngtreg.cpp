@@ -1,9 +1,9 @@
 ﻿#include "autowrapper/aswrappedcall.h"
+#include "Graphics.h"
 #include "IOStreams.h"
 #include "MemoryStream.h"
 #include "ngtreg.h"
 #include "obfuscate.h"
-#include "Poco/UnicodeConverter.h"
 #include "print_func/print_func.h"
 #include "scriptbuilder/scriptbuilder.h"
 #include "Scripting.h"
@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <Poco/UnicodeConverter.h>
 #ifdef _WIN32
 #define _WINSOCKAPI_   /* Prevent inclusion of winsock.h in windows.h */
 #include <windows.h>
@@ -30,8 +31,6 @@ const int EVENT_NONE = ENET_EVENT_TYPE_NONE;
 const int EVENT_CONNECT = ENET_EVENT_TYPE_CONNECT;
 const int EVENT_RECEIVE = ENET_EVENT_TYPE_RECEIVE;
 const int EVENT_DISCONNECT = ENET_EVENT_TYPE_DISCONNECT;
-const int as_CDECL = 0;
-const int AS_STD_CALL = 1;
 using namespace std;
 #ifdef _WIN32
 std::string convertNewlines(const std::string& input) {
@@ -277,13 +276,6 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterTypedef("short", "int16");
 	engine->RegisterTypedef("ushort", "uint16");
 	engine->RegisterTypedef("size_t", "uint64");
-	engine->RegisterTypedef("surface", "int64");
-	engine->RegisterObjectType("rect", sizeof(SDL_Rect), asOBJ_REF | asOBJ_NOCOUNT);
-	engine->RegisterObjectBehaviour("rect", asBEHAVE_FACTORY, "rect@ r()", asFUNCTION(frect), asCALL_CDECL);
-	engine->RegisterObjectProperty(_O("rect"), "int x", asOFFSET(SDL_Rect, x));
-	engine->RegisterObjectProperty(_O("rect"), "int y", asOFFSET(SDL_Rect, y));
-	engine->RegisterObjectProperty(_O("rect"), "int h", asOFFSET(SDL_Rect, h));
-	engine->RegisterObjectProperty(_O("rect"), "int w", asOFFSET(SDL_Rect, w));
 	engine->RegisterFuncdef("int exit_callback()");
 	engine->RegisterObjectType("vector", sizeof(ngtvector), asOBJ_REF);
 	engine->RegisterObjectBehaviour("vector", asBEHAVE_FACTORY, "vector@ v()", asFUNCTION(fngtvector), asCALL_CDECL);
@@ -426,6 +418,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("void unicode_convert(const wstring &in wide_string, string &out utf8_string)", asFUNCTIONPR(Poco::UnicodeConverter::convert, (const std::wstring&, std::string&), void), asCALL_CDECL);
 	register_pack(engine);
 	register_sound(engine);
+	RegisterScriptGraphics(engine);
 	RegisterScriptIOStreams(engine);
 	RegisterMemstream(engine);
 	AS_BEGIN(engine, "scripting");

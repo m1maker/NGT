@@ -236,6 +236,7 @@ set(NGT_SOURCES
   "SRC/print_func/print_func.cpp"
   "SRC/obfuscate.h"
   "SRC/IOStreams.cpp"
+  "SRC/Graphics.cpp"
 )
 if(WIN32)
   set(NGT_SOURCES ${NGT_SOURCES} GUI/GUI.cpp)
