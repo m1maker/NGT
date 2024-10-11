@@ -58,6 +58,11 @@ CScriptRenderer* request_renderer() {
 	return r;
 }
 
+CScriptRenderer* RendererFactory() {
+	if (get_window_renderer() == nullptr)show_window("");
+	return request_renderer();
+}
+
 void RegisterScriptGraphics(asIScriptEngine* engine) {
 	engine->RegisterEnum("textureaccess");
 	engine->RegisterEnumValue("textureaccess", "TEXTUREACCESS_STATIC", SDL_TEXTUREACCESS_STATIC);
