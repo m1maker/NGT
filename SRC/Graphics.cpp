@@ -176,7 +176,78 @@ void RegisterScriptGraphics(asIScriptEngine* engine) {
 	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_P010", SDL_PIXELFORMAT_P010);
 	engine->RegisterEnumValue("pixelformat", "PIXELFORMAT_EXTERNAL_OES", SDL_PIXELFORMAT_EXTERNAL_OES);
 
+	engine->RegisterEnum("colortype");
+	engine->RegisterEnumValue("colortype", "COLOR_TYPE_UNKNOWN", SDL_COLOR_TYPE_UNKNOWN);
+	engine->RegisterEnumValue("colortype", "COLOR_TYPE_RGB", SDL_COLOR_TYPE_RGB);
+	engine->RegisterEnumValue("colortype", "COLOR_TYPE_YCBCR", SDL_COLOR_TYPE_YCBCR);
+
+	engine->RegisterEnum("colorrange");
+	engine->RegisterEnumValue("colorrange", "COLOR_RANGE_UNKNOWN", SDL_COLOR_RANGE_UNKNOWN);
+	engine->RegisterEnumValue("colorrange", "COLOR_RANGE_LIMITED", SDL_COLOR_RANGE_LIMITED);
+	engine->RegisterEnumValue("colorrange", "COLOR_RANGE_FULL", SDL_COLOR_RANGE_FULL);
+
+	engine->RegisterEnum("colorprimaries");
+	engine->RegisterEnumValue("colorprimaries", "PRIMARIES_UNKNOWN", SDL_COLOR_PRIMARIES_UNKNOWN);
+	engine->RegisterEnumValue("colorprimaries", "PRIMARIES_BT709", SDL_COLOR_PRIMARIES_BT709);
+	engine->RegisterEnumValue("colorprimaries", "PRIMARIES_UNSPECIFIED", SDL_COLOR_PRIMARIES_UNSPECIFIED);
+	engine->RegisterEnumValue("colorprimaries", "PRIMARIES_BT470M", SDL_COLOR_PRIMARIES_BT470M);
+	engine->RegisterEnumValue("colorprimaries", "PRIMARIES_BT470BG", SDL_COLOR_PRIMARIES_BT470BG);
+	engine->RegisterEnumValue("colorprimaries", "PRIMARIES_BT601", SDL_COLOR_PRIMARIES_BT601);
+	engine->RegisterEnumValue("colorprimaries", "PRIMARIES_SMPTE240", SDL_COLOR_PRIMARIES_SMPTE240);
+	engine->RegisterEnumValue("colorprimaries", "PRIMARIES_GENERIC_FILM", SDL_COLOR_PRIMARIES_GENERIC_FILM);
+	engine->RegisterEnumValue("colorprimaries", "PRIMARIES_BT2020", SDL_COLOR_PRIMARIES_BT2020);
+	engine->RegisterEnumValue("colorprimaries", "PRIMARIES_XYZ", SDL_COLOR_PRIMARIES_XYZ);
+	engine->RegisterEnumValue("colorprimaries", "PRIMARIES_SMPTE431", SDL_COLOR_PRIMARIES_SMPTE431);
+	engine->RegisterEnumValue("colorprimaries", "PRIMARIES_SMPTE432", SDL_COLOR_PRIMARIES_SMPTE432);
+	engine->RegisterEnumValue("colorprimaries", "PRIMARIES_EBU3213", SDL_COLOR_PRIMARIES_EBU3213);
+	engine->RegisterEnumValue("colorprimaries", "PRIMARIES_CUSTOM", SDL_COLOR_PRIMARIES_CUSTOM);
+
+	engine->RegisterEnum("transfercharacteristics");
+	engine->RegisterEnumValue("transfercharacteristics", "TRANSFER_CHARACTERISTICS_UNKNOWN", SDL_TRANSFER_CHARACTERISTICS_UNKNOWN);
+	engine->RegisterEnumValue("transfercharacteristics", "TRANSFER_CHARACTERISTICS_BT709", SDL_TRANSFER_CHARACTERISTICS_BT709);
+	engine->RegisterEnumValue("transfercharacteristics", "TRANSFER_CHARACTERISTICS_UNSPECIFIED", SDL_TRANSFER_CHARACTERISTICS_UNSPECIFIED);
+	engine->RegisterEnumValue("transfercharacteristics", "TRANSFER_CHARACTERISTICS_GAMMA22", SDL_TRANSFER_CHARACTERISTICS_GAMMA22);
+	engine->RegisterEnumValue("transfercharacteristics", "TRANSFER_CHARACTERISTICS_GAMMA28", SDL_TRANSFER_CHARACTERISTICS_GAMMA28);
+	engine->RegisterEnumValue("transfercharacteristics", "TRANSFER_CHARACTERISTICS_BT601", SDL_TRANSFER_CHARACTERISTICS_BT601);
+	engine->RegisterEnumValue("transfercharacteristics", "TRANSFER_CHARACTERISTICS_SMPTE240", SDL_TRANSFER_CHARACTERISTICS_SMPTE240);
+	engine->RegisterEnumValue("transfercharacteristics", "TRANSFER_CHARACTERISTICS_LINEAR", SDL_TRANSFER_CHARACTERISTICS_LINEAR);
+	engine->RegisterEnumValue("transfercharacteristics", "TRANSFER_CHARACTERISTICS_LOG100", SDL_TRANSFER_CHARACTERISTICS_LOG100);
+	engine->RegisterEnumValue("transfercharacteristics", "TRANSFER_CHARACTERISTICS_LOG100_SQRT10", SDL_TRANSFER_CHARACTERISTICS_LOG100_SQRT10);
+	engine->RegisterEnumValue("transfercharacteristics", "TRANSFER_CHARACTERISTICS_IEC61966", SDL_TRANSFER_CHARACTERISTICS_IEC61966);
+	engine->RegisterEnumValue("transfercharacteristics", "TRANSFER_CHARACTERISTICS_BT1361", SDL_TRANSFER_CHARACTERISTICS_BT1361);
+	engine->RegisterEnumValue("transfercharacteristics", "TRANSFER_CHARACTERISTICS_SRGB", SDL_TRANSFER_CHARACTERISTICS_SRGB);
+	engine->RegisterEnumValue("transfercharacteristics", "TRANSFER_CHARACTERISTICS_BT2020_10BIT", SDL_TRANSFER_CHARACTERISTICS_BT2020_10BIT);
+	engine->RegisterEnumValue("transfercharacteristics", "TRANSFER_CHARACTERISTICS_BT2020_12BIT", SDL_TRANSFER_CHARACTERISTICS_BT2020_12BIT);
+	engine->RegisterEnumValue("transfercharacteristics", "TRANSFER_CHARACTERISTICS_PQ", SDL_TRANSFER_CHARACTERISTICS_PQ);
+	engine->RegisterEnumValue("transfercharacteristics", "TRANSFER_CHARACTERISTICS_SMPTE428", SDL_TRANSFER_CHARACTERISTICS_SMPTE428);
+	engine->RegisterEnumValue("transfercharacteristics", "TRANSFER_CHARACTERISTICS_HLG", SDL_TRANSFER_CHARACTERISTICS_HLG);
+	engine->RegisterEnumValue("transfercharacteristics", "TRANSFER_CHARACTERISTICS_CUSTOM", SDL_TRANSFER_CHARACTERISTICS_CUSTOM);
+
+	engine->RegisterEnum("matrixcoefficients");
+	engine->RegisterEnumValue("matrixcoefficients", "MATRIX_COEFFICIENTS_IDENTITY", SDL_MATRIX_COEFFICIENTS_IDENTITY);
+	engine->RegisterEnumValue("matrixcoefficients", "MATRIX_COEFFICIENTS_BT709", SDL_MATRIX_COEFFICIENTS_BT709);
+	engine->RegisterEnumValue("matrixcoefficients", "MATRIX_COEFFICIENTS_UNSPECIFIED", SDL_MATRIX_COEFFICIENTS_UNSPECIFIED);
+	engine->RegisterEnumValue("matrixcoefficients", "MATRIX_COEFFICIENTS_FCC", SDL_MATRIX_COEFFICIENTS_FCC);
+	engine->RegisterEnumValue("matrixcoefficients", "MATRIX_COEFFICIENTS_BT470BG", SDL_MATRIX_COEFFICIENTS_BT470BG);
+	engine->RegisterEnumValue("matrixcoefficients", "MATRIX_COEFFICIENTS_BT601", SDL_MATRIX_COEFFICIENTS_BT601);
+	engine->RegisterEnumValue("matrixcoefficients", "MATRIX_COEFFICIENTS_SMPTE240", SDL_MATRIX_COEFFICIENTS_SMPTE240);
+	engine->RegisterEnumValue("matrixcoefficients", "MATRIX_COEFFICIENTS_YCGCO", SDL_MATRIX_COEFFICIENTS_YCGCO);
+	engine->RegisterEnumValue("matrixcoefficients", "MATRIX_COEFFICIENTS_BT2020_NCL", SDL_MATRIX_COEFFICIENTS_BT2020_NCL);
+	engine->RegisterEnumValue("matrixcoefficients", "MATRIX_COEFFICIENTS_BT2020_CL", SDL_MATRIX_COEFFICIENTS_BT2020_CL);
+	engine->RegisterEnumValue("matrixcoefficients", "MATRIX_COEFFICIENTS_SMPTE2085", SDL_MATRIX_COEFFICIENTS_SMPTE2085);
+	engine->RegisterEnumValue("matrixcoefficients", "MATRIX_COEFFICIENTS_CHROMA_DERIVED_NCL", SDL_MATRIX_COEFFICIENTS_CHROMA_DERIVED_NCL);
+	engine->RegisterEnumValue("matrixcoefficients", "MATRIX_COEFFICIENTS_CHROMA_DERIVED_CL", SDL_MATRIX_COEFFICIENTS_CHROMA_DERIVED_CL);
+	engine->RegisterEnumValue("matrixcoefficients", "MATRIX_COEFFICIENTS_ICTCP", SDL_MATRIX_COEFFICIENTS_ICTCP);
+	engine->RegisterEnumValue("matrixcoefficients", "MATRIX_COEFFICIENTS_CUSTOM", SDL_MATRIX_COEFFICIENTS_CUSTOM);
+
+	engine->RegisterEnum("chromalocation");
+	engine->RegisterEnumValue("chromalocation", "CHROMA_LOCATION_NONE", SDL_CHROMA_LOCATION_NONE);
+	engine->RegisterEnumValue("chromalocation", "CHROMA_LOCATION_LEFT", SDL_CHROMA_LOCATION_LEFT);
+	engine->RegisterEnumValue("chromalocation", "CHROMA_LOCATION_CENTER", SDL_CHROMA_LOCATION_CENTER);
+	engine->RegisterEnumValue("chromalocation", "CHROMA_LOCATION_TOPLEFT", SDL_CHROMA_LOCATION_TOPLEFT);
+
 	engine->RegisterGlobalFunction("int get_num_render_drivers() property", asFUNCTION(SDL_GetNumRenderDrivers), asCALL_CDECL);
+	engine->RegisterGlobalFunction("int get_render_driver(int index)", asFUNCTION(get_render_driver), asCALL_CDECL);
 
 
 }
