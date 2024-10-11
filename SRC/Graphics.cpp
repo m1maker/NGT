@@ -4,10 +4,68 @@
 #include <SDL3/SDL.h>
 #include <string>
 using namespace std;
-
+class CScriptRenderer;
 class CScriptTexture {
 public:
 	SDL_Texture* texture;
+	void AddRef()const {
+		ref += 1;
+	}
+
+	void Release()const {
+		if (--ref < 1) {
+			delete this;
+		}
+	}
+
+
+
+	CScriptRenderer* get_renderer();
+	bool get_size(float& w, float& h) {
+		return SDL_GetTextureSize(texture, &w, &h);
+	}
+	bool set_color_mode(unsigned char r, unsigned char g, unsigned char b) {
+		return SDL_SetTextureColorMod(texture, r, g, b);
+	}
+	bool set_color_mode(float r, float g, float b) {
+		return SDL_SetTextureColorModFloat(texture, r, g, b);
+	}
+	bool get_color_mode(unsigned char& r, unsigned char& g, unsigned char& b) {
+		return SDL_GetTextureColorMod(texture, &r, &g, &b);
+	}
+	bool get_color_mode(float& r, float& g, float& b) {
+		return SDL_GetTextureColorModFloat(texture, &r, &g, &b);
+	}
+	bool set_alpha_mod(unsigned char alpha) {
+		return SDL_SetTextureAlphaMod(texture, alpha);
+	}
+	bool set_alpha_mod(float alpha) {
+		return SDL_SetTextureAlphaModFloat(texture, alpha);
+	}
+	bool get_alpha_mod(unsigned char& alpha) {
+		return SDL_GetTextureAlphaMod(texture, &alpha);
+	}
+	bool get_alpha_mod(float& alpha) {
+		return SDL_GetTextureAlphaModFloat(texture, &alpha);
+	}
+	bool set_blend_mode(SDL_BlendMode mode) {
+		return SDL_SetTextureBlendMode(texture, mode);
+	}
+	SDL_BlendMode get_blend_mode() {
+		SDL_BlendMode mode;
+		SDL_GetTextureBlendMode(texture, &mode);
+		return mode;
+	}
+	bool set_scale_mode(SDL_ScaleMode mode) {
+		return SDL_SetTextureScaleMode(texture, mode);
+	}
+	SDL_ScaleMode get_scale_mode() {
+		SDL_ScaleMode mode;
+		SDL_GetTextureScaleMode(texture, &mode);
+		return mode;
+	}
+private:
+	mutable int ref = 0;
 };
 
 
@@ -39,10 +97,74 @@ public:
 		t->texture = SDL_CreateTexture(renderer, format, access, w, h);
 		return t;
 	}
+	bool set_target(CScriptTexture* texture) {
+		if (texture == nullptr || texture->texture == nullptr)return false;
+		return SDL_SetRenderTarget(renderer, texture->texture);
+	}
+	CScriptTexture* get_target() {
+		CScriptTexture* t = new CScriptTexture;
+		t->texture = SDL_GetRenderTarget(renderer);
+		t->AddRef();
+		return t;
+	}
+	bool set_logical_presentation(int w, int h, SDL_RendererLogicalPresentation mode, SDL_ScaleMode scale_mode) {
+		return SDL_SetRenderLogicalPresentation(renderer, w, h, mode, scale_mode);
+	}
+	bool get_logical_presentation(int& w, int& h, SDL_RendererLogicalPresentation& mode, SDL_ScaleMode& scale_mode) {
+		return SDL_GetRenderLogicalPresentation(renderer, &w, &h, &mode, &scale_mode);
+	}
+	bool set_render_scale(float x, float y) {
+		return SDL_SetRenderScale(renderer, x, y);
+	}
+	bool get_render_scale(float& x, float& y) {
+		return SDL_GetRenderScale(renderer, &x, &y);
+	}
+	bool set_draw_color(unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
+		return SDL_SetRenderDrawColor(renderer, r, g, b, a);
+	}
+	bool set_draw_color(float r, float g, float b, float a) {
+		return SDL_SetRenderDrawColorFloat(renderer, r, g, b, a);
+	}
+	bool get_draw_color(unsigned char& r, unsigned char& g, unsigned char& b, unsigned char& a) {
+		return SDL_GetRenderDrawColor(renderer, &r, &g, &b, &a);
+	}
+	bool get_draw_color(float& r, float& g, float& b, float& a) {
+		return SDL_GetRenderDrawColorFloat(renderer, &r, &g, &b, &a);
+	}
+
+	bool set_color_scale(float scale) {
+		return SDL_SetRenderColorScale(renderer, scale);
+	}
+	float get_color_scale() {
+		float scale;
+		SDL_GetRenderColorScale(renderer, &scale);
+		return scale;
+	}
+	bool set_draw_blend_mode(SDL_BlendMode mode) {
+		return SDL_SetRenderDrawBlendMode(renderer, mode);
+	}
+	SDL_BlendMode get_draw_blend_mode() {
+		SDL_BlendMode mode;
+		SDL_GetRenderDrawBlendMode(renderer, &mode);
+		return mode;
+	}
+	void clear() {
+		SDL_RenderClear(renderer);
+	}
+	bool render_point(float x, float y) {
+		return SDL_RenderPoint(renderer, x, y);
+	}
 
 private:
 	mutable int ref = 0;
 };
+
+CScriptRenderer* CScriptTexture::get_renderer() {
+	CScriptRenderer* r = new CScriptRenderer;
+	r->renderer = SDL_GetRendererFromTexture(texture);
+	r->AddRef();
+	return r;
+}
 
 std::string get_render_driver(int index) {
 	return std::string(SDL_GetRenderDriver(index));
