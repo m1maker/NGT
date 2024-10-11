@@ -3,7 +3,11 @@
 #include <angelscript.h>
 #include <SDL3/SDL.h>
 #include <string>
+
 using namespace std;
+
+
+
 class CScriptRenderer;
 class CScriptTexture {
 public:
@@ -95,6 +99,7 @@ public:
 	CScriptTexture* create_texture(SDL_PixelFormat format, SDL_TextureAccess access, int w, int h) {
 		CScriptTexture* t = new CScriptTexture;
 		t->texture = SDL_CreateTexture(renderer, format, access, w, h);
+		t->AddRef();
 		return t;
 	}
 	bool set_target(CScriptTexture* texture) {
@@ -185,6 +190,10 @@ CScriptRenderer* RendererFactory() {
 	return request_renderer();
 }
 
+CScriptTexture* TextureFactory() {
+	return nullptr;
+}
+
 void RegisterScriptGraphics(asIScriptEngine* engine) {
 	engine->RegisterEnum("textureaccess");
 	engine->RegisterEnumValue("textureaccess", "TEXTUREACCESS_STATIC", SDL_TEXTUREACCESS_STATIC);
@@ -201,6 +210,16 @@ void RegisterScriptGraphics(asIScriptEngine* engine) {
 	engine->RegisterEnum("scalemode");
 	engine->RegisterEnumValue("scalemode", "SCALEMODE_NEAREST", SDL_SCALEMODE_NEAREST);
 	engine->RegisterEnumValue("scalemode", "SCALEMODE_LINEAR", SDL_SCALEMODE_LINEAR);
+
+	engine->RegisterEnum("blendmode");
+	engine->RegisterEnumValue("blendmode", "BLENDMODE_NONE", SDL_BLENDMODE_NONE);
+	engine->RegisterEnumValue("blendmode", "BLENDMODE_BLEND", SDL_BLENDMODE_BLEND);
+	engine->RegisterEnumValue("blendmode", "BLENDMODE_BLEND_PREMULTIPLIED", SDL_BLENDMODE_BLEND_PREMULTIPLIED);
+	engine->RegisterEnumValue("blendmode", "BLENDMODE_ADD", SDL_BLENDMODE_ADD);
+	engine->RegisterEnumValue("blendmode", "BLENDMODE_ADD_PREMULTIPLIED", SDL_BLENDMODE_ADD_PREMULTIPLIED);
+	engine->RegisterEnumValue("blendmode", "BLENDMODE_MOD", SDL_BLENDMODE_MOD);
+	engine->RegisterEnumValue("blendmode", "BLENDMODE_MUL", SDL_BLENDMODE_MUL);
+	engine->RegisterEnumValue("blendmode", "BLENDMODE_INVALID", SDL_BLENDMODE_INVALID);
 
 	engine->RegisterEnum("flipmode");
 	engine->RegisterEnumValue("flipmode", "FLIP_NONE", SDL_FLIP_NONE);
@@ -394,6 +413,38 @@ void RegisterScriptGraphics(asIScriptEngine* engine) {
 	engine->RegisterEnumValue("chromalocation", "CHROMA_LOCATION_LEFT", SDL_CHROMA_LOCATION_LEFT);
 	engine->RegisterEnumValue("chromalocation", "CHROMA_LOCATION_CENTER", SDL_CHROMA_LOCATION_CENTER);
 	engine->RegisterEnumValue("chromalocation", "CHROMA_LOCATION_TOPLEFT", SDL_CHROMA_LOCATION_TOPLEFT);
+
+	engine->RegisterObjectType("texture", sizeof(CScriptTexture), asOBJ_REF);
+	engine->RegisterObjectType("renderer", sizeof(CScriptRenderer), asOBJ_REF);
+
+	engine->RegisterObjectBehaviour("texture", asBEHAVE_FACTORY, "texture@ g()", asFUNCTION(TextureFactory), asCALL_CDECL);
+
+	engine->RegisterObjectBehaviour("texture", asBEHAVE_ADDREF, "void f()", asMETHOD(CScriptTexture, AddRef), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("texture", asBEHAVE_RELEASE, "void f()", asMETHOD(CScriptTexture, Release), asCALL_THISCALL);
+
+	engine->RegisterObjectMethod("texture", "renderer@ get_renderer() const property", asMETHOD(CScriptTexture, get_renderer), asCALL_THISCALL);
+	engine->RegisterObjectMethod("texture", "bool get_size(float&out w, float&out h)", asMETHOD(CScriptTexture, get_size), asCALL_THISCALL);
+	engine->RegisterObjectMethod("texture", "bool set_color_mode(uchar r, uchar g, uchar b)", asMETHODPR(CScriptTexture, set_color_mode, (unsigned char, unsigned char, unsigned char), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod("texture", "bool set_color_mode(float r, float g, float b)", asMETHODPR(CScriptTexture, set_color_mode, (float, float, float), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod("texture", "bool get_color_mode(uchar&out r, uchar&out g, uchar&out b)", asMETHODPR(CScriptTexture, get_color_mode, (unsigned char&, unsigned char&, unsigned char&), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod("texture", "bool get_color_mode(float&out r, float&out g, float&out b)", asMETHODPR(CScriptTexture, get_color_mode, (float&, float&, float&), bool), asCALL_THISCALL);
+
+	engine->RegisterObjectMethod("texture", "bool set_alpha_mod(uchar a)", asMETHODPR(CScriptTexture, set_alpha_mod, (unsigned char), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod("texture", "bool set_alpha_mod(float a)", asMETHODPR(CScriptTexture, set_alpha_mod, (float), bool), asCALL_THISCALL);
+
+	engine->RegisterObjectMethod("texture", "bool get_alpha_mod(uchar&out a)", asMETHODPR(CScriptTexture, get_alpha_mod, (unsigned char&), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod("texture", "bool get_alpha_mod(float&out a)", asMETHODPR(CScriptTexture, get_alpha_mod, (float&), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod("texture", "void set_blend_mode(blendmode mode) const property", asMETHOD(CScriptTexture, set_blend_mode), asCALL_THISCALL);
+	engine->RegisterObjectMethod("texture", "blendmode get_blend_mode() const property", asMETHOD(CScriptTexture, get_blend_mode), asCALL_THISCALL);
+	engine->RegisterObjectMethod("texture", "void set_scale_mode(scalemode mode) const property", asMETHOD(CScriptTexture, set_scale_mode), asCALL_THISCALL);
+	engine->RegisterObjectMethod("texture", "scalemode get_scale_mode() const property", asMETHOD(CScriptTexture, get_scale_mode), asCALL_THISCALL);
+
+	engine->RegisterObjectBehaviour("renderer", asBEHAVE_FACTORY, "renderer@ g()", asFUNCTION(RendererFactory), asCALL_CDECL);
+
+	engine->RegisterObjectBehaviour("renderer", asBEHAVE_ADDREF, "void f()", asMETHOD(CScriptRenderer, AddRef), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("renderer", asBEHAVE_RELEASE, "void f()", asMETHOD(CScriptRenderer, Release), asCALL_THISCALL);
+
+	engine->RegisterGlobalFunction("renderer@ request_renderer()", asFUNCTION(request_renderer), asCALL_CDECL);
 
 	engine->RegisterGlobalFunction("int get_num_render_drivers() property", asFUNCTION(SDL_GetNumRenderDrivers), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int get_render_driver(int index)", asFUNCTION(get_render_driver), asCALL_CDECL);
