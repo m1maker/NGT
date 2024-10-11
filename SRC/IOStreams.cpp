@@ -72,6 +72,11 @@ public:
 	}
 
 
+	std::string str() {
+		std::stringstream ss;
+		ss << outputStream->rdbuf();
+		return ss.str();
+	}
 private:
 	mutable int ref;
 };
@@ -291,6 +296,8 @@ void RegisterScriptIOStreams(asIScriptEngine* engine) {
 
 	engine->RegisterObjectMethod("iostream", "void seekp(size_t)", asMETHOD(CScriptIOStream, seekp), asCALL_THISCALL);
 	engine->RegisterObjectMethod("iostream", "size_t tellp()", asMETHOD(CScriptIOStream, tellp), asCALL_THISCALL);
+	engine->RegisterObjectMethod("iostream", "string str()", asMETHOD(CScriptIOStream, str), asCALL_THISCALL);
+
 	engine->RegisterObjectMethod("iostream", "iostream& opShl(?&in)", asFUNCTION(WriteGeneric), asCALL_GENERIC);
 	engine->RegisterObjectMethod("iostream", "iostream& opShr(?&out)", asFUNCTION(ReadGeneric), asCALL_GENERIC);
 

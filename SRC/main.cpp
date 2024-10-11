@@ -33,6 +33,8 @@
 #include "scripthandle/scripthandle.h"
 #include "scripthelper/scripthelper.h"
 #include "scriptmath/scriptmath.h"
+#include "scriptmath/scriptmathcomplex.h"
+
 #include "scriptstdstring/scriptstdstring.h"
 #include "scriptstdstring/scriptstdwstring.h"
 #include <assert.h>  // assert()
@@ -536,6 +538,7 @@ public:
 		RegisterScriptFileSystem(scriptEngine);
 		RegisterExceptionRoutines(scriptEngine);
 		RegisterScriptMath(scriptEngine);
+		RegisterScriptMathComplex(scriptEngine);
 		RegisterScriptHandle(scriptEngine);
 		RegisterScriptAny(scriptEngine);
 		RegisterFunctions(scriptEngine);

@@ -1691,7 +1691,10 @@ bool library::active()const {
 void library_call(asIScriptGeneric* gen) {
 #undef GetObject
 	/*
-		asIScriptContext* ctx = asGetActiveContext();
+//	Soon LibFFI will not be needed. I will write on the engine itself the ability to call functions.
+//The point is that there are additional build issues with FFI, so we'll use scripting::context for this.
+//And this will work if you handle pointers, strings, etc. correctly.
+	asIScriptContext* ctx = asGetActiveContext();
 		library* lib_obj = (library*)gen->GetObject();
 		void* address = nullptr;
 		void* ref = gen->GetArgAddress(0);

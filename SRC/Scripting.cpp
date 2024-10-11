@@ -133,6 +133,12 @@ void ContextGetExceptionInfo(asIScriptGeneric* gen) {
 	gen->SetReturnObject(&exception);
 }
 
+std::string GetEngineConfig() {
+	std::stringstream ss;
+	WriteConfigToStream(asGetActiveContext()->GetEngine(), ss);
+	return ss.str();
+}
+
 void RegisterScripting(asIScriptEngine* engine) {
 	engine->RegisterEnum("typeid");
 	engine->RegisterEnumValue("typeid", "VOID", asTYPEID_VOID);
@@ -161,6 +167,8 @@ void RegisterScripting(asIScriptEngine* engine) {
 	engine->RegisterEnum("callconv");
 	engine->RegisterEnumValue("callconv", "CDECL", asCALL_CDECL);
 	engine->RegisterEnumValue("callconv", "STDCALL", asCALL_STDCALL);
+
+	engine->RegisterGlobalFunction("string get_engine_config() property", asFUNCTION(GetEngineConfig), asCALL_CDECL);
 
 	engine->RegisterGlobalFunction("int register_function(const string &in, uint64, callconv)", asFUNCTION(RegisterFunction), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string get_messages(bool=true, bool=true, bool=false)", asFUNCTION(GetMessages), asCALL_CDECL);

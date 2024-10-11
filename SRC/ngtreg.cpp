@@ -303,10 +303,10 @@ void RegisterFunctions(asIScriptEngine* engine)
 	AS_END(engine);
 	engine->RegisterGlobalFunction("uint64 get_time_stamp_millis()property", asFUNCTION(get_time_stamp_millis), asCALL_CDECL);
 	engine->RegisterGlobalFunction("uint64 get_time_stamp_seconds()property", asFUNCTION(get_time_stamp_seconds), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void set_library_path(const string &in)", asFUNCTION(set_library_path), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void set_library_path(const string &in path)", asFUNCTION(set_library_path), asCALL_CDECL);
 
-	engine->RegisterGlobalFunction("long random(long, long)", asFUNCTIONPR(random, (int64_t, int64_t), int64_t), asCALL_CDECL);
-	engine->RegisterGlobalFunction("double random(double, double)", asFUNCTIONPR(randomDouble, (double, double), double), asCALL_CDECL);
+	engine->RegisterGlobalFunction("long random(long min, long max)", asFUNCTIONPR(random, (int64_t, int64_t), int64_t), asCALL_CDECL);
+	engine->RegisterGlobalFunction("double random(double min, double max)", asFUNCTIONPR(randomDouble, (double, double), double), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool random_bool()", asFUNCTION(random_bool), asCALL_CDECL);
 
 	engine->RegisterGlobalFunction("int get_last_error()property", asFUNCTION(get_last_error), asCALL_CDECL);
@@ -314,16 +314,15 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("void set_interrupt(bool)property", asFUNCTION(set_screen_reader_interrupt), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool get_interrupt()property", asFUNCTION(get_screen_reader_interrupt), asCALL_CDECL);
 
-	engine->RegisterGlobalFunction("bool speak(const string &in, bool=interrupt)", asFUNCTION(speak), asCALL_CDECL);
-	engine->RegisterGlobalFunction("bool braille(const string &in)", asFUNCTION(braille), asCALL_CDECL);
+	engine->RegisterGlobalFunction("bool speak(const string &in text, bool interrupt = interrupt)", asFUNCTION(speak), asCALL_CDECL);
+	engine->RegisterGlobalFunction("bool braille(const string &in text)", asFUNCTION(braille), asCALL_CDECL);
 
 	engine->RegisterGlobalFunction("void stop_speech()", asFUNCTION(stop_speech), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string detect()", asFUNCTION(screen_reader_detect), asCALL_CDECL);
 	AS_END(engine);
 	engine->RegisterGlobalFunction("void set_exit_callback(exit_callback@=null)", asFUNCTION(set_exit_callback), asCALL_CDECL);
 
-	engine->RegisterGlobalFunction("bool show_window(const string &in,int=640,int=480, bool=true)", asFUNCTION(show_window), asCALL_CDECL);
-	//	engine->RegisterGlobalFunction("bool focus_window()", asFUNCTION(focus_window), asCALL_CDECL);
+	engine->RegisterGlobalFunction("bool show_window(const string &in title, int width = 640, int height = 480, bool closable = true)", asFUNCTION(show_window), asCALL_CDECL);
 	engine->RegisterGlobalFunction("uint64 get_window_handle()", asFUNCTION(get_window_handle), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void hide_window()", asFUNCTION(hide_window), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void set_update_window_freq(long)property", asFUNCTION(set_update_window_freq), asCALL_CDECL);
@@ -332,22 +331,17 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("void set_window_closable(bool)property", asFUNCTION(set_window_closable), asCALL_CDECL);
 
 	engine->RegisterGlobalFunction("void garbage_collect()", asFUNCTION(garbage_collect), asCALL_CDECL);
-	engine->RegisterGlobalFunction("surface get_window_surface()property", asFUNCTION(get_window_surface), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void free_surface(surface)", asFUNCTION(SDL_DestroySurface), asCALL_CDECL);
-	engine->RegisterGlobalFunction("surface load_bmp(const string &in)", asFUNCTION(load_bmp), asCALL_CDECL);
-	engine->RegisterGlobalFunction("int fill_rect(surface, rect@, uint32)", asFUNCTION(SDL_FillSurfaceRect), asCALL_CDECL);
-	engine->RegisterGlobalFunction("int blit_surface(surface, rect@, surface, rect@)", asFUNCTION(SDL_BlitSurface), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool get_window_active()property", asFUNCTION(get_window_active), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void set_window_fullscreen(bool)property", asFUNCTION(set_window_fullscreen), asCALL_CDECL);
 
-	engine->RegisterGlobalFunction("bool mouse_pressed(uint8)", asFUNCTION(mouse_pressed), asCALL_CDECL);
-	engine->RegisterGlobalFunction("bool mouse_released(uint8)", asFUNCTION(mouse_released), asCALL_CDECL);
-	engine->RegisterGlobalFunction("bool mouse_down(uint8)", asFUNCTION(mouse_down), asCALL_CDECL);
+	engine->RegisterGlobalFunction("bool mouse_pressed(uint8 button)", asFUNCTION(mouse_pressed), asCALL_CDECL);
+	engine->RegisterGlobalFunction("bool mouse_released(uint8 button)", asFUNCTION(mouse_released), asCALL_CDECL);
+	engine->RegisterGlobalFunction("bool mouse_down(uint8 button)", asFUNCTION(mouse_down), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int get_MOUSE_X()property", asFUNCTION(get_MOUSE_X), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int get_MOUSE_Y()property", asFUNCTION(get_MOUSE_Y), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int get_MOUSE_Z()property", asFUNCTION(get_MOUSE_Z), asCALL_CDECL);
 	AS_BEGIN(engine, "internet");
-	engine->RegisterGlobalFunction("void ftp_download(const string& in, const string &in)", asFUNCTION(ftp_download), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void ftp_download(const string& in url, const string &in filename)", asFUNCTION(ftp_download), asCALL_CDECL);
 	engine->RegisterEnum("smtp_login_method");
 	engine->RegisterEnumValue("smtp_login_method", "AUTH_NONE", Poco::Net::SMTPClientSession::AUTH_NONE);
 	engine->RegisterEnumValue("smtp_login_method", "AUTH_CRAM_MD5", Poco::Net::SMTPClientSession::AUTH_CRAM_MD5);
@@ -356,14 +350,14 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterEnumValue("smtp_login_method", "AUTH_PLAIN", Poco::Net::SMTPClientSession::AUTH_PLAIN);
 	engine->RegisterEnumValue("smtp_login_method", "AUTH_XOAUTH2", Poco::Net::SMTPClientSession::AUTH_XOAUTH2);
 	engine->RegisterEnumValue("smtp_login_method", "AUTH_NTLM", Poco::Net::SMTPClientSession::AUTH_NTLM);
-	engine->RegisterGlobalFunction("void mail_send(smtp_login_method, uint, const string &in, const string &in, const string&in, const string&in, const string&in, const string&in, const string&in, const string&in=\"\")", WRAP_FN(mail_send), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("void mail_send(smtp_login_method, uint port, const string&in username, const string&in password, const string&in mailhost, const string&in sender, const string&in recipient, const string&in subject, const string&in content, const string&in attachment = \"\")", WRAP_FN(mail_send), asCALL_GENERIC);
 	AS_END(engine);
-	engine->RegisterGlobalFunction("void exit(int=0)", asFUNCTION(exit_engine), asCALL_CDECL);
-	engine->RegisterGlobalFunction("string number_to_words(uint64, bool)", asFUNCTION(number_to_words), asCALL_CDECL);
-	engine->RegisterGlobalFunction("bool clipboard_copy_text(const string &in)", asFUNCTION(clipboard_copy_text), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void exit(int retcode = 0)", asFUNCTION(exit_engine), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string number_to_words(uint64 number, bool include_and)", asFUNCTION(number_to_words), asCALL_CDECL);
+	engine->RegisterGlobalFunction("bool clipboard_copy_text(const string &in text)", asFUNCTION(clipboard_copy_text), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string clipboard_read_text()", asFUNCTION(clipboard_read_text), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string get_input()", asFUNCTION(get_input), asCALL_CDECL);
-	engine->RegisterGlobalFunction("string input_box(const string &in, const string &in, const string &in=\"\", bool=false, bool=false)", asFUNCTION(input_box), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string input_box(const string &in title, const string &in text, const string &in default_text = \"\", bool secure = false, bool multiline = false)", asFUNCTION(input_box), asCALL_CDECL);
 
 	engine->RegisterEnum("keycode");
 	engine->RegisterGlobalFunction("bool key_pressed(keycode)", asFUNCTION(key_pressed), asCALL_CDECL);
@@ -374,62 +368,62 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("int[]@ keys_released()", asFUNCTION(keys_released), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int[]@ keys_down()", asFUNCTION(keys_down), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int[]@ keys_repeat()", asFUNCTION(keys_repeat), asCALL_CDECL);
-	engine->RegisterGlobalFunction("string key_to_string(int)", WRAP_FN(key_to_string), asCALL_GENERIC);
-	engine->RegisterGlobalFunction("int string_to_key(const string&in)", WRAP_FN(string_to_key), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("string key_to_string(int key_code)", WRAP_FN(key_to_string), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("int string_to_key(const string&in key_name)", WRAP_FN(string_to_key), asCALL_GENERIC);
 	engine->RegisterGlobalFunction("bool force_key_down(keycode)", asFUNCTION(force_key_down), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool force_key_up(keycode)", asFUNCTION(force_key_up), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void reset_all_forced_keys()", asFUNCTION(reset_all_forced_keys), asCALL_CDECL);
 
-	engine->RegisterGlobalFunction("string string_encrypt(const string &in, string &in)", asFUNCTION(string_encrypt), asCALL_CDECL);
-	engine->RegisterGlobalFunction("string string_decrypt(const string &in, string &in)", asFUNCTION(string_decrypt), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string string_encrypt(const string &in the_string, string &in key)", asFUNCTION(string_encrypt), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string string_decrypt(const string &in the_string, string &in key)", asFUNCTION(string_decrypt), asCALL_CDECL);
 	AS_BEGIN(engine, "internet");
-	engine->RegisterGlobalFunction("string url_decode(const string &in)", asFUNCTION(url_decode), asCALL_CDECL);
-	engine->RegisterGlobalFunction("string url_encode(const string &in)", asFUNCTION(url_encode), asCALL_CDECL);
-	engine->RegisterGlobalFunction("string url_get(const string &in)", asFUNCTION(url_get), asCALL_CDECL);
-	engine->RegisterGlobalFunction("string url_post(const string &in, const string &in)", asFUNCTION(url_post), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string url_decode(const string &in url)", asFUNCTION(url_decode), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string url_encode(const string &in url)", asFUNCTION(url_encode), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string url_get(const string &in url)", asFUNCTION(url_get), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string url_post(const string &in url, const string &in parameters)", asFUNCTION(url_post), asCALL_CDECL);
 	AS_END(engine);
-	engine->RegisterGlobalFunction("string ascii_to_character(int)", asFUNCTION(ascii_to_character), asCALL_CDECL);
-	engine->RegisterGlobalFunction("int character_to_ascii(const string      &in)", asFUNCTION(character_to_ascii), asCALL_CDECL);
-	engine->RegisterGlobalFunction("string hex_to_string(const string& in)", asFUNCTION(hex_to_string), asCALL_CDECL);
-	engine->RegisterGlobalFunction("string number_to_hex_string(int64)", asFUNCTION(number_to_hex_string), asCALL_CDECL);
-	engine->RegisterGlobalFunction("string string_base64_decode(const string &in)", asFUNCTION(string_base64_decode), asCALL_CDECL);
-	engine->RegisterGlobalFunction("string string_base64_encode(const string &in)", asFUNCTION(string_base64_encode), asCALL_CDECL);
-	engine->RegisterGlobalFunction("string string_base32_decode(const string &in)", asFUNCTION(string_base32_decode), asCALL_CDECL);
-	engine->RegisterGlobalFunction("string string_base32_encode(const string &in)", asFUNCTION(string_base32_encode), asCALL_CDECL);
-	engine->RegisterGlobalFunction("string string_to_hex(const string &in)", asFUNCTION(string_to_hex), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string ascii_to_character(int ascii)", asFUNCTION(ascii_to_character), asCALL_CDECL);
+	engine->RegisterGlobalFunction("int character_to_ascii(const string      &in character)", asFUNCTION(character_to_ascii), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string hex_to_string(const string& in the_hexadecimal_sequence)", asFUNCTION(hex_to_string), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string number_to_hex_string(int64 the_number)", asFUNCTION(number_to_hex_string), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string string_base64_decode(const string &in base64_encoded_string)", asFUNCTION(string_base64_decode), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string string_base64_encode(const string &in the_string)", asFUNCTION(string_base64_encode), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string string_base32_decode(const string &in base32_encoded_string)", asFUNCTION(string_base32_decode), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string string_base32_encode(const string &in the_string)", asFUNCTION(string_base32_encode), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string string_to_hex(const string &in the_string)", asFUNCTION(string_to_hex), asCALL_CDECL);
 	engine->RegisterEnum(_O("message_box_flags"));
 	engine->RegisterEnumValue(_O("message_box_flags"), _O("MESSAGE_BOX_ERROR"), SDL_MESSAGEBOX_ERROR);
 	engine->RegisterEnumValue(_O("message_box_flags"), _O("MESSAGE_BOX_WARNING"), SDL_MESSAGEBOX_WARNING);
 	engine->RegisterEnumValue(_O("message_box_flags"), _O("MESSAGE_BOX_INFORMATION"), SDL_MESSAGEBOX_INFORMATION);
 	engine->RegisterEnumValue(_O("message_box_flags"), _O("MESSAGE_BOX_BUTTONS_LEFT_TO_RIGHT"), SDL_MESSAGEBOX_BUTTONS_LEFT_TO_RIGHT);
 	engine->RegisterEnumValue(_O("message_box_flags"), _O("MESSAGE_BOX_BUTTONS_RIGHT_TO_LEFT"), SDL_MESSAGEBOX_BUTTONS_RIGHT_TO_LEFT);
-	engine->RegisterGlobalFunction("int message_box(const string& in, const string& in, array<string>@, uint = 0)", asFUNCTION(message_box_script), asCALL_CDECL);
+	engine->RegisterGlobalFunction("int message_box(const string& in title, const string& in text, array<string>@ buttons, uint flags = 0)", asFUNCTION(message_box_script), asCALL_CDECL);
 
-	engine->RegisterGlobalFunction("bool alert(const string &in, const string &in, const string &in=\"OK\")", asFUNCTION(alert), asCALL_CDECL);
-	engine->RegisterGlobalFunction("int question(const string &in, const string &in)", asFUNCTION(question), asCALL_CDECL);
+	engine->RegisterGlobalFunction("bool alert(const string &in title, const string &in text, const string &in button_name = \"OK\")", asFUNCTION(alert), asCALL_CDECL);
+	engine->RegisterGlobalFunction("int question(const string &in title, const string &in text)", asFUNCTION(question), asCALL_CDECL);
 
-	engine->RegisterGlobalFunction("void wait(uint64)", asFUNCTION(wait), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void wait(uint64 ms)", asFUNCTION(wait), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void wait_event()", asFUNCTION(wait_event), asCALL_CDECL);
 
-	engine->RegisterGlobalFunction("string read_environment_variable(const string&in)", asFUNCTION(read_environment_variable), asCALL_CDECL);
-	engine->RegisterGlobalFunction("bool write_environment_variable(const string&in, const string &in)", asFUNCTION(write_environment_variable), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string read_environment_variable(const string&in var_name)", asFUNCTION(read_environment_variable), asCALL_CDECL);
+	engine->RegisterGlobalFunction("bool write_environment_variable(const string&in var_name, const string &in value)", asFUNCTION(write_environment_variable), asCALL_CDECL);
 
-	engine->RegisterGlobalFunction("string serialize(dictionary@=null)", asFUNCTION(serialize), asCALL_CDECL);
-	engine->RegisterGlobalFunction("dictionary@ deserialize(const string &in)", asFUNCTION(deserialize), asCALL_CDECL);
-	engine->RegisterGlobalFunction("bool urlopen(const string &in)", asFUNCTION(urlopen), asCALL_CDECL);
-	engine->RegisterGlobalFunction("uint64 malloc(uint64)", asFUNCTION(malloc), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string serialize(dictionary@ handle = null)", asFUNCTION(serialize), asCALL_CDECL);
+	engine->RegisterGlobalFunction("dictionary@ deserialize(const string &in the_serialized_dictionary)", asFUNCTION(deserialize), asCALL_CDECL);
+	engine->RegisterGlobalFunction("bool urlopen(const string &in url)", asFUNCTION(urlopen), asCALL_CDECL);
+	engine->RegisterGlobalFunction("uint64 malloc(size_t alloc_size)", asFUNCTION(malloc), asCALL_CDECL);
 	engine->RegisterGlobalFunction("uint64 calloc(uint64, uint64)", asFUNCTION(calloc), asCALL_CDECL);
 	engine->RegisterGlobalFunction("uint64 realloc(uint64, uint64)", asFUNCTION(realloc), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void free(uint64)", asFUNCTION(free), asCALL_CDECL);
 	engine->RegisterGlobalFunction("uint64 memcpy(uint64, uint64, size_t)", asFUNCTION(memcpy), asCALL_CDECL);
 
-	engine->RegisterGlobalFunction("string c_str_to_string(uint64, size_t=0)", asFUNCTION(c_str_to_string), asCALL_CDECL);
-	engine->RegisterGlobalFunction("wstring wc_str_to_wstring(uint64, size_t=0)", asFUNCTION(wc_str_to_wstring), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string c_str_to_string(uint64 array_pointer, size_t string_length = 0)", asFUNCTION(c_str_to_string), asCALL_CDECL);
+	engine->RegisterGlobalFunction("wstring wc_str_to_wstring(uint64 array_pointer, size_t string_length = 0)", asFUNCTION(wc_str_to_wstring), asCALL_CDECL);
 
-	engine->RegisterGlobalFunction("size_t c_str_len(uint64)", asFUNCTION(strlen), asCALL_CDECL);
-	engine->RegisterGlobalFunction("size_t wc_str_len(uint64)", asFUNCTION(wcslen), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void unicode_convert(const string &in, wstring &out)", asFUNCTIONPR(Poco::UnicodeConverter::convert, (const std::string&, std::wstring&), void), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void unicode_convert(const wstring &in, string &out)", asFUNCTIONPR(Poco::UnicodeConverter::convert, (const std::wstring&, std::string&), void), asCALL_CDECL);
+	engine->RegisterGlobalFunction("size_t c_str_len(uint64 array_pointer)", asFUNCTION(strlen), asCALL_CDECL);
+	engine->RegisterGlobalFunction("size_t wc_str_len(uint64 array_pointer)", asFUNCTION(wcslen), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void unicode_convert(const string &in utf8_string, wstring &out wide_string)", asFUNCTIONPR(Poco::UnicodeConverter::convert, (const std::string&, std::wstring&), void), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void unicode_convert(const wstring &in wide_string, string &out utf8_string)", asFUNCTIONPR(Poco::UnicodeConverter::convert, (const std::wstring&, std::string&), void), asCALL_CDECL);
 	register_pack(engine);
 	register_sound(engine);
 	RegisterScriptIOStreams(engine);
@@ -443,10 +437,10 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterObjectBehaviour("tts_voice", asBEHAVE_RELEASE, "void f()", asMETHOD(TTSVoice, release), asCALL_THISCALL);
 
 
-	engine->RegisterObjectMethod(_O("tts_voice"), "void speak(const string& in)const", asMETHOD(TTSVoice, speak), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("tts_voice"), "void speak_wait(const string& in)const", asMETHOD(TTSVoice, speak_wait), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("tts_voice"), "void speak_interrupt(const string& in)const", asMETHOD(TTSVoice, speak_interrupt), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("tts_voice"), "void speak_interrupt_wait(const string& in)const", asMETHOD(TTSVoice, speak_interrupt_wait), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("tts_voice"), "void speak(const string& in text)const", asMETHOD(TTSVoice, speak), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("tts_voice"), "void speak_wait(const string& in text)const", asMETHOD(TTSVoice, speak_wait), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("tts_voice"), "void speak_interrupt(const string& in text)const", asMETHOD(TTSVoice, speak_interrupt), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("tts_voice"), "void speak_interrupt_wait(const string& in text)const", asMETHOD(TTSVoice, speak_interrupt_wait), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("tts_voice"), "int get_rate()const property", asMETHOD(TTSVoice, get_rate), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("tts_voice"), "void set_rate(int)property", asMETHOD(TTSVoice, set_rate), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("tts_voice"), "int get_volume()const property", asMETHOD(TTSVoice, get_volume), asCALL_THISCALL);
@@ -491,12 +485,11 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterObjectBehaviour("library", asBEHAVE_FACTORY, "library@ l()", asFUNCTION(flibrary), asCALL_CDECL);
 	engine->RegisterObjectBehaviour("library", asBEHAVE_ADDREF, "void f()", asMETHOD(library, add_ref), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("library", asBEHAVE_RELEASE, "void f()", asMETHOD(library, release), asCALL_THISCALL);
-	engine->RegisterObjectMethod("library", "bool load(const string&in)const", asMETHOD(library, load), asCALL_THISCALL);
+	engine->RegisterObjectMethod("library", "bool load(const string&in library_path)const", asMETHOD(library, load), asCALL_THISCALL);
 	engine->RegisterObjectMethod("library", "bool get_active()const property", asMETHOD(library, active), asCALL_THISCALL);
 
-	engine->RegisterObjectMethod("library", _O("dictionary@ call(const string&in, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null, ?&in=null)const"), asFUNCTION(library_call), asCALL_GENERIC);
 	engine->RegisterObjectMethod("library", "void unload()const", asMETHOD(library, unload), asCALL_THISCALL);
-	engine->RegisterObjectMethod("library", "uint64 get_function_pointer(const string &in)const", asMETHOD(library, get_function_pointer), asCALL_THISCALL);
+	engine->RegisterObjectMethod("library", "uint64 get_function_pointer(const string &in function_name)const", asMETHOD(library, get_function_pointer), asCALL_THISCALL);
 	engine->RegisterObjectMethod("library", "void clear_functions()const", asMETHOD(library, clear_functions), asCALL_THISCALL);
 
 	engine->RegisterFuncdef("void thread_func()");
@@ -509,7 +502,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterObjectMethod("thread", "void join()const", asMETHOD(script_thread, join), asCALL_THISCALL);
 	engine->RegisterObjectMethod("thread", "void destroy()const", asMETHOD(script_thread, destroy), asCALL_THISCALL);
 	engine->RegisterObjectType("instance", sizeof(instance), asOBJ_REF);
-	engine->RegisterObjectBehaviour("instance", asBEHAVE_FACTORY, "instance@ i(const string&in)", asFUNCTION(finstance), asCALL_CDECL);
+	engine->RegisterObjectBehaviour("instance", asBEHAVE_FACTORY, "instance@ i(const string&in application_name)", asFUNCTION(finstance), asCALL_CDECL);
 	engine->RegisterObjectBehaviour("instance", asBEHAVE_ADDREF, "void f()", asMETHOD(instance, add_ref), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("instance", asBEHAVE_RELEASE, "void f()", asMETHOD(instance, release), asCALL_THISCALL);
 	engine->RegisterObjectMethod("instance", "bool is_running()", asMETHOD(instance, is_running), asCALL_THISCALL);
@@ -536,20 +529,20 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterObjectBehaviour("network", asBEHAVE_FACTORY, "network@ n()", asFUNCTION(fnetwork), asCALL_CDECL);
 	engine->RegisterObjectBehaviour("network", asBEHAVE_ADDREF, "void f()", asMETHOD(network, add_ref), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("network", asBEHAVE_RELEASE, "void f()", asMETHOD(network, release), asCALL_THISCALL);
-	engine->RegisterObjectMethod("network", "uint64 connect(string&in, int)", asMETHOD(network, connect), asCALL_THISCALL);
+	engine->RegisterObjectMethod("network", "uint64 connect(string&in host, int port)", asMETHOD(network, connect), asCALL_THISCALL);
 	engine->RegisterObjectMethod("network", "bool destroy()", asMETHOD(network, destroy), asCALL_THISCALL);
-	engine->RegisterObjectMethod("network", "bool disconnect_peer(uint64)", asMETHOD(network, disconnect_peer), asCALL_THISCALL);
-	engine->RegisterObjectMethod("network", "bool disconnect_peer_forcefully(uint64)", asMETHOD(network, disconnect_peer_forcefully), asCALL_THISCALL);
+	engine->RegisterObjectMethod("network", "bool disconnect_peer(uint64 peer_id)", asMETHOD(network, disconnect_peer), asCALL_THISCALL);
+	engine->RegisterObjectMethod("network", "bool disconnect_peer_forcefully(uint64 peer_id)", asMETHOD(network, disconnect_peer_forcefully), asCALL_THISCALL);
 	//    engine->RegisterObjectMethod("network", "bool disconnect_peer_softly(uint)", asMETHOD(network, disconnect_peer_softly), asCALL_THISCALL);
-	engine->RegisterObjectMethod("network", "string get_peer_address(uint64)const property", asMETHOD(network, get_peer_address), asCALL_THISCALL);
-	engine->RegisterObjectMethod("network", "double get_peer_average_round_trip_time(uint64)const property", asMETHOD(network, get_peer_average_round_trip_time), asCALL_THISCALL);
+	engine->RegisterObjectMethod("network", "string get_peer_address(uint64 peer_id)const property", asMETHOD(network, get_peer_address), asCALL_THISCALL);
+	engine->RegisterObjectMethod("network", "double get_peer_average_round_trip_time(uint64 peer_id)const property", asMETHOD(network, get_peer_average_round_trip_time), asCALL_THISCALL);
 	engine->RegisterObjectMethod("network", "uint64[]@ get_peer_list()", asMETHOD(network, get_peer_list), asCALL_THISCALL);
-	engine->RegisterObjectMethod("network", "network_event@ request(int=0)", asMETHOD(network, request), asCALL_THISCALL);
-	engine->RegisterObjectMethod("network", "bool send_reliable(uint64, string&in, int)", asMETHOD(network, send_reliable), asCALL_THISCALL);
-	engine->RegisterObjectMethod("network", "bool send_unreliable(uint64, string&in, int)", asMETHOD(network, send_unreliable), asCALL_THISCALL);
-	engine->RegisterObjectMethod("network", "bool set_bandwidth_limits(double, double)", asMETHOD(network, set_bandwidth_limits), asCALL_THISCALL);
-	engine->RegisterObjectMethod("network", "bool setup_client(int, int64)", asMETHOD(network, setup_client), asCALL_THISCALL);
-	engine->RegisterObjectMethod("network", "bool setup_server(int, int, int64)", asMETHOD(network, setup_server), asCALL_THISCALL);
+	engine->RegisterObjectMethod("network", "network_event@ request(int timeout = 0)", asMETHOD(network, request), asCALL_THISCALL);
+	engine->RegisterObjectMethod("network", "bool send_reliable(uint64 peer_id, string&in packet, int channel)", asMETHOD(network, send_reliable), asCALL_THISCALL);
+	engine->RegisterObjectMethod("network", "bool send_unreliable(uint64 peer_id, string&in packet, int channel)", asMETHOD(network, send_unreliable), asCALL_THISCALL);
+	engine->RegisterObjectMethod("network", "bool set_bandwidth_limits(double incomingBandwidth, double outgoingBandwidth)", asMETHOD(network, set_bandwidth_limits), asCALL_THISCALL);
+	engine->RegisterObjectMethod("network", "bool setup_client(int channels, int64 max_peers)", asMETHOD(network, setup_client), asCALL_THISCALL);
+	engine->RegisterObjectMethod("network", "bool setup_server(int port, int channels, int64 max_peers)", asMETHOD(network, setup_server), asCALL_THISCALL);
 	engine->RegisterObjectMethod("network", "void flush()const", asMETHOD(network, flush), asCALL_THISCALL);
 
 	engine->RegisterObjectMethod("network", "int64 get_connected_peers() const property", asMETHOD(network, get_connected_peers), asCALL_THISCALL);
