@@ -1,4 +1,5 @@
 #include "Graphics.h"
+#include "ngt.h"
 #include <angelscript.h>
 #include <SDL3/SDL.h>
 #include <string>
@@ -13,6 +14,17 @@ public:
 class CScriptRenderer {
 public:
 	SDL_Renderer* renderer;
+	void AddRef()const {
+		ref += 1;
+	}
+
+	void Release()const {
+		if (--ref < 1) {
+			delete this;
+		}
+	}
+
+
 	std::string get_name() {
 		return std::string(SDL_GetRendererName(renderer));
 	}
@@ -34,6 +46,16 @@ private:
 
 std::string get_render_driver(int index) {
 	return std::string(SDL_GetRenderDriver(index));
+}
+
+
+CScriptRenderer* request_renderer() {
+	SDL_Renderer* rend = get_window_renderer();
+	if (rend == nullptr)return nullptr;
+	CScriptRenderer* r = new CScriptRenderer;
+	r->renderer = rend;
+	r->AddRef();
+	return r;
 }
 
 void RegisterScriptGraphics(asIScriptEngine* engine) {

@@ -147,10 +147,12 @@ public:
 					SDL_RaiseWindow(win);
 					window_is_focused = true;
 					SDL_StartTextInput(win);
+					renderer = SDL_CreateRenderer(win, nullptr);
 				}
 			}
 			if (window_event_hide) {
 				window_event_hide = false;
+				SDL_DestroyRenderer(renderer);
 				SDL_DestroyWindow(win);
 				win = nullptr;
 			}
@@ -389,6 +391,11 @@ void set_window_title(const string& new_title) {
 void set_window_closable(bool set_closable) {
 	window_closable = set_closable;
 }
+SDL_Renderer* get_window_renderer() {
+	if (windowRunnable != nullptr)return windowRunnable->renderer;
+	return nullptr;
+}
+
 void garbage_collect() {
 	asIScriptContext* ctx = asGetActiveContext();
 	asIScriptEngine* engine = ctx->GetEngine();
