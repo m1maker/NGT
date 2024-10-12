@@ -15,11 +15,11 @@ int device_id=0;
 update_window_freq=0;
 while(true){
 wait(5);
-if(key_pressed(KEY_DOWN) and device_id<devices.length()-1){
+if(key_repeat(KEY_DOWN) and device_id<devices.length()-1){
 device_id+=1;
 screen_reader::speak(devices[device_id]);
 }
-if(key_pressed(KEY_UP) and device_id>0){
+if(key_repeat(KEY_UP) and device_id>0){
 device_id-=1;
 screen_reader::speak(devices[device_id]);
 }

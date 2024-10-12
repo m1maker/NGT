@@ -710,11 +710,8 @@ bool key_down(int key_code)
 }
 bool key_repeat(int key_code)
 {
-	if (e.key.type == SDL_EVENT_KEY_DOWN)
-	{
-		if (key_pressed(key_code) || (e.key.scancode == key_code && e.key.repeat == true)) {
-			return true;
-		}
+	if (key_pressed(key_code) || (e.key.scancode == key_code && e.key.repeat == true)) {
+		return true;
 	}
 	return false;
 }
