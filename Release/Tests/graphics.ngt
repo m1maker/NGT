@@ -8,7 +8,7 @@ r.render_point(i+4, i+6) ;
 }
 window_present();
 while(true){
-wait(5);
-if(key_repeat(KEY_UP))screen_reader::speak(r.name, true);
+wait(1000);
+if(key_pressed(KEY_UP))screen_reader::speak(r.name, true);
 }
 }

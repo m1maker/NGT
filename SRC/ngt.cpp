@@ -1012,12 +1012,17 @@ void wait(uint64_t time) {
 	}
 	else {
 		auto start = std::chrono::steady_clock::now();
-		while (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() < time) {
-			SDL_Delay(1);
-			if (windowRunnable != nullptr) {
-				windowRunnable->monitor();
-				SDL_PumpEvents();
+		while (true) {
+			auto now = std::chrono::steady_clock::now();
+			auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();
+
+			if (elapsed >= time) {
+				break;
 			}
+
+			windowRunnable->monitor();
+
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		}
 	}
 }
