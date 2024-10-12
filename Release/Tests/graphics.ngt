@@ -1,14 +1,46 @@
-renderer@ r;
 void main(){
-show_window("Test", enable_renderer:true);
+show_window("Render Test", enable_renderer:true);
 wait(1000);
-@r = request_renderer();
-for(int i = 0;i<600;i++){
-r.render_point(i+4, i+6) ;
-}
+// Create a renderer
+renderer@ myRenderer = request_renderer();
+
+// Create a texture
+texture@ myTexture = myRenderer.create_texture(PIXELFORMAT_XRGB4444, TEXTUREACCESS_STATIC, 256, 256);
+
+// Set the target texture
+myRenderer.set_target(myTexture);
+
+// Set the draw color
+myRenderer.set_draw_color(255, 255, 255, 255);
+
+// Render a rectangle
+frect myRect;
+myRect.w = 100;
+myRect.h = 100;
+myRect.x = 50;
+myRect.y = 50;
+myRenderer.render_fill_rect(myRect);
+screen_reader::speak("Rendering fill rect");
 window_present();
-while(true){
 wait(1000);
-if(key_pressed(KEY_UP))screen_reader::speak(r.name, true);
-}
+// Render a texture
+frect srcRect, dstRect;
+srcRect.w = 64;
+srcRect.h = 64;
+srcRect.x = 0;
+srcRect.y = 0;
+dstRect.w = 128;
+dstRect.h = 128;
+dstRect.x = 200;
+dstRect.y = 200;
+myRenderer.render_texture(myTexture, srcRect, dstRect);
+screen_reader::speak("Rendering texture");
+window_present();
+wait(1000);
+// Flush the renderer
+myRenderer.flush();
+screen_reader::speak("Flushing renderer");
+window_present();
+wait(1000);
+
 }
