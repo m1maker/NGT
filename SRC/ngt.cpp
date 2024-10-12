@@ -119,7 +119,8 @@ static size_t cmp_write_bytes(cmp_ctx_t* ctx, const void* input, size_t len) {
 	buf->data->append((const char*)input, len);
 	return len;
 }
-Poco::Mutex window_mtx;
+std::vector<SDL_Event> window_events;
+bool hold_events = false;
 class WindowThread : public Poco::Runnable {
 private:
 	Poco::Thread thread;
@@ -141,8 +142,6 @@ public:
 		}
 	}
 	void monitor() {
-		// Lock the mutex
-		Poco::Mutex::ScopedLock lock(window_mtx);
 		if (window_event_show) {
 			window_event_show = false;
 			SDL_WindowFlags flags = 0;
@@ -177,9 +176,15 @@ public:
 			SDL_SetWindowFullscreen(win, window_fullscreen);
 		}
 		if (win != nullptr) {
+			SDL_PumpEvents();
 			bool result = SDL_PollEvent(&e);
 			if (result == true) {
-				g_windowEvent.set();
+				if (!window_has_renderer) {
+					g_windowEvent.set();
+					if (hold_events) {
+						window_events.push_back(e);
+					}
+				}
 			}
 			if (window_event_push) {
 				window_event_push = false;
@@ -344,7 +349,6 @@ bool show_window(const string& title, int width, int height, bool closable, bool
 	window_closable = closable;
 	// Starting window
 	window_event_show = true;
-	while (windowRunnable->win == NULL) {}
 	// Initialize mouse and keyboard state.
 	keys_released();
 	for (int i = 0; i < 8; i++) {
@@ -1011,18 +1015,18 @@ void wait(uint64_t time) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(time));
 	}
 	else {
-		auto start = std::chrono::steady_clock::now();
-		while (true) {
-			auto now = std::chrono::steady_clock::now();
-			auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - start).count();
-
-			if (elapsed >= time) {
-				break;
-			}
-
+		hold_events = true;
+		for (uint64_t i = 0; i < time; ++i) {
 			windowRunnable->monitor();
 
 			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		}
+		hold_events = false;
+		if (window_events.size() > 0) {
+			for (SDL_Event& evt : window_events) {
+				SDL_PushEvent(&evt);
+			}
+			window_events.clear();
 		}
 	}
 }

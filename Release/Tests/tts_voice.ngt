@@ -6,7 +6,7 @@ void main() {
 	show_window("TTSVoice");
 	v.speak("Press any key. Press f 1 to switch interrupt. Press F2 / F3 to set speech rate.");
 	while(true) {
-		wait_event();
+		wait(5);
 		// Hook the Shift and Ctrl keys to resolve the speech keyboard hooks
 		key_pressed(KEY_LSHIFT) || key_pressed(KEY_RSHIFT) || key_pressed(KEY_LCTRL) || key_pressed(KEY_RCTRL);
 		if (key_pressed(KEY_F1)) {
