@@ -437,12 +437,34 @@ void RegisterScriptGraphics(asIScriptEngine* engine) {
 	engine->RegisterObjectMethod("texture", "void set_blend_mode(blendmode mode) const property", asMETHOD(CScriptTexture, set_blend_mode), asCALL_THISCALL);
 	engine->RegisterObjectMethod("texture", "blendmode get_blend_mode() const property", asMETHOD(CScriptTexture, get_blend_mode), asCALL_THISCALL);
 	engine->RegisterObjectMethod("texture", "void set_scale_mode(scalemode mode) const property", asMETHOD(CScriptTexture, set_scale_mode), asCALL_THISCALL);
-	engine->RegisterObjectMethod("texture", "scalemode get_scale_mode() const property", asMETHOD(CScriptTexture, get_scale_mode), asCALL_THISCALL);
 
 	engine->RegisterObjectBehaviour("renderer", asBEHAVE_FACTORY, "renderer@ g()", asFUNCTION(RendererFactory), asCALL_CDECL);
 
 	engine->RegisterObjectBehaviour("renderer", asBEHAVE_ADDREF, "void f()", asMETHOD(CScriptRenderer, AddRef), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("renderer", asBEHAVE_RELEASE, "void f()", asMETHOD(CScriptRenderer, Release), asCALL_THISCALL);
+
+	engine->RegisterObjectMethod("renderer", "string get_name() const property", asMETHOD(CScriptRenderer, get_name), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "bool get_output_size(int&out w, int&out h)", asMETHOD(CScriptRenderer, get_output_size), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "bool get_current_output_size(int&out w, int&out h)", asMETHOD(CScriptRenderer, get_current_output_size), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "texture@ create_texture(pixelformat format, textureaccess access, int w, int h)", asMETHOD(CScriptRenderer, create_texture), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "void set_target(texture@ target) const property", asMETHOD(CScriptRenderer, set_target), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "texture@ get_target() const property", asMETHOD(CScriptRenderer, get_target), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "bool set_logical_presentation(int w, int h, rendererlogicalpresentation mode, scalemode scale_mode)", asMETHOD(CScriptRenderer, set_logical_presentation), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "bool get_logical_presentation(int&out w, int&out h, rendererlogicalpresentation&out mode, scalemode&out scale_mode)", asMETHOD(CScriptRenderer, get_logical_presentation), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "bool set_render_scale(float x, float y)", asMETHOD(CScriptRenderer, set_render_scale), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "bool get_render_scale(float&out x, float&out y)", asMETHOD(CScriptRenderer, get_render_scale), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "bool set_draw_color(uchar r, uchar g, uchar b, uchar a)", asMETHODPR(CScriptRenderer, set_draw_color, (unsigned char, unsigned char, unsigned char, unsigned char), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "bool set_draw_color(float r, float g, float b, float a)", asMETHODPR(CScriptRenderer, set_draw_color, (float, float, float, float), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "bool get_draw_color(uchar&out r, uchar&out g, uchar&out b, uchar&out a)", asMETHODPR(CScriptRenderer, get_draw_color, (unsigned char&, unsigned char&, unsigned char&, unsigned char&), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "bool get_draw_color(float&out r, float&out g, float&out b, float&out a)", asMETHODPR(CScriptRenderer, get_draw_color, (float&, float&, float&, float&), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "void set_color_scale(float scale) const property", asMETHOD(CScriptRenderer, set_color_scale), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "float get_color_scale() const property", asMETHOD(CScriptRenderer, get_color_scale), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "void set_draw_blend_mode(blendmode mode) const property", asMETHOD(CScriptRenderer, set_draw_blend_mode), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "blendmode get_draw_blend_mode() const property", asMETHOD(CScriptRenderer, get_draw_blend_mode), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "void clear()", asMETHOD(CScriptRenderer, clear), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "bool render_point(float x, float y)", asMETHOD(CScriptRenderer, render_point), asCALL_THISCALL);
+
+
 
 	engine->RegisterGlobalFunction("renderer@ request_renderer()", asFUNCTION(request_renderer), asCALL_CDECL);
 

@@ -1,0 +1,11 @@
+renderer@ r;
+void main(){
+show_window("Test");
+wait(1000);
+@r = request_renderer();
+screen_reader::speak(r.render_point(400, 300));
+while(true){
+wait(5);
+if(key_pressed(KEY_UP))screen_reader::speak(r.name, true);
+}
+}
