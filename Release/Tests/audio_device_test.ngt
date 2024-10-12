@@ -1,7 +1,7 @@
 sound s;
 void main(){
 screen_reader::interrupt = true;
-show_window("Audio device test", enable_renderer:true);
+show_window("Audio device test");
 s.load("C:/windows/media/ring01.wav");
 s.play_looped();
 array<string>@ devices=get_output_audio_devices();

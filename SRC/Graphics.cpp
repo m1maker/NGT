@@ -20,6 +20,7 @@ public:
 
 	void Release()const {
 		if (--ref < 1) {
+			SDL_DestroyTexture(texture);
 			delete this;
 		}
 	}
@@ -78,6 +79,152 @@ private:
 	mutable int ref = 0;
 };
 
+class CScriptSurface {
+public:
+	SDL_Surface* surface;
+	void AddRef()const {
+		ref += 1;
+	}
+
+	void Release()const {
+		if (--ref < 1) {
+			SDL_DestroySurface(surface);
+			delete this;
+		}
+	}
+	CScriptSurface(int width, int height, SDL_PixelFormat format) :ref(1) {
+		surface = SDL_CreateSurface(width, height, format);
+	}
+	CScriptSurface(int width, int height, SDL_PixelFormat format, void* pixels, int pitch) :ref(1) {
+		surface = SDL_CreateSurfaceFrom(width, height, format, pixels, pitch);
+	}
+	CScriptSurface(const std::string& filename) :ref(1) {
+		surface = SDL_LoadBMP(filename.c_str());
+	}
+
+	bool set_colorspace(SDL_Colorspace color) {
+		return SDL_SetSurfaceColorspace(surface, color);
+	}
+	SDL_Colorspace get_colorspace() {
+		return SDL_GetSurfaceColorspace(surface);
+	}
+	bool add_alternate_image(CScriptSurface* s) {
+		if (s == nullptr)return false;
+		return SDL_AddSurfaceAlternateImage(surface, s->surface);
+	}
+	bool has_alternate_images() {
+		return SDL_SurfaceHasAlternateImages(surface);
+	}
+	void remove_alternate_images() {
+		SDL_RemoveSurfaceAlternateImages(surface);
+	}
+	bool lock() {
+		return SDL_LockSurface(surface);
+	}
+	void unlock() {
+		SDL_UnlockSurface(surface);
+	}
+	bool save_to_file(const std::string& filename) {
+		return SDL_SaveBMP(surface, filename.c_str());
+	}
+	bool set_rle(bool rle) {
+		return SDL_SetSurfaceRLE(surface, rle);
+	}
+	bool get_rle() {
+		return SDL_SurfaceHasRLE(surface);
+	}
+	bool set_color_key(bool enabled, uint32_t key) {
+		return SDL_SetSurfaceColorKey(surface, enabled, key);
+	}
+	bool has_color_key() {
+		return SDL_SurfaceHasColorKey(surface);
+	}
+	bool set_color_mod(unsigned char r, unsigned char g, unsigned char b) {
+		return SDL_SetSurfaceColorMod(surface, r, g, b);
+	}
+	bool get_color_mode(unsigned char& r, unsigned char& g, unsigned char& b) {
+		return SDL_GetSurfaceColorMod(surface, &r, &g, &b);
+	}
+	bool set_alpha_mod(unsigned char alpha) {
+		return SDL_SetSurfaceAlphaMod(surface, alpha);
+	}
+	unsigned char get_alpha_mod() {
+		unsigned char mod;
+		SDL_GetSurfaceAlphaMod(surface, &mod);
+		return mod;
+	}
+	bool set_blend_mode(SDL_BlendMode mode) {
+		return SDL_SetSurfaceBlendMode(surface, mode);
+	}
+	SDL_BlendMode get_blend_mode() {
+		SDL_BlendMode mode;
+		SDL_GetSurfaceBlendMode(surface, &mode);
+		return mode;
+	}
+	bool set_clip_rect(const SDL_Rect* rect) {
+		return SDL_SetSurfaceClipRect(surface, rect);
+	}
+	SDL_Rect* get_clip_rect() {
+		SDL_Rect* rect = new SDL_Rect;
+		SDL_GetSurfaceClipRect(surface, rect);
+		return rect;
+	}
+	bool flip(SDL_FlipMode flip) {
+		return SDL_FlipSurface(surface, flip);
+	}
+	bool clear(float r, float g, float b, float a) {
+		return SDL_ClearSurface(surface, r, g, b, a);
+	}
+	bool fill_rect(const SDL_Rect* rect, uint32_t color) {
+		return SDL_FillSurfaceRect(surface, rect, color);
+	}
+	bool blit(const SDL_Rect* srcrect, CScriptSurface* dst, const SDL_Rect* dstrect) {
+		return SDL_BlitSurface(surface, srcrect, dst->surface, dstrect);
+	}
+	bool blit(const SDL_Rect* srcrect, CScriptSurface* dst, const SDL_Rect* dstrect, SDL_ScaleMode scaleMode) {
+		return SDL_BlitSurfaceScaled(surface, srcrect, dst->surface, dstrect, scaleMode);
+	}
+	bool blit(const SDL_Rect* srcrect, int left_width, int right_width, int top_height, int bottom_height, float scale, SDL_ScaleMode scaleMode, CScriptSurface* dst, const SDL_Rect* dstrect) {
+		return SDL_BlitSurface9Grid(surface, srcrect, left_width, right_width, top_height, bottom_height, scale, scaleMode, dst->surface, dstrect);
+	}
+
+	bool blit_unchecked(const SDL_Rect* srcrect, CScriptSurface* dst, const SDL_Rect* dstrect) {
+		return SDL_BlitSurfaceUnchecked(surface, srcrect, dst->surface, dstrect);
+	}
+	bool blit_unchecked(const SDL_Rect* srcrect, CScriptSurface* dst, const SDL_Rect* dstrect, SDL_ScaleMode scaleMode) {
+		return SDL_BlitSurfaceUncheckedScaled(surface, srcrect, dst->surface, dstrect, scaleMode);
+	}
+	bool blit_tiled(const SDL_Rect* srcrect, CScriptSurface* dst, const SDL_Rect* dstrect) {
+		return SDL_BlitSurfaceTiled(surface, srcrect, dst->surface, dstrect);
+	}
+
+	bool blit_tiled(const SDL_Rect* srcrect, float scale, SDL_ScaleMode scaleMode, CScriptSurface* dst, const SDL_Rect* dstrect) {
+		return SDL_BlitSurfaceTiledWithScale(surface, srcrect, scale, scaleMode, dst->surface, dstrect);
+	}
+
+	uint32_t map(unsigned char r, unsigned char g, unsigned char b) {
+		return SDL_MapSurfaceRGB(surface, r, g, b);
+	}
+	uint32_t map(unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
+		return SDL_MapSurfaceRGBA(surface, r, g, b, a);
+	}
+	bool read_pixel(int x, int y, unsigned char& r, unsigned char& g, unsigned char& b, unsigned char& a) {
+		return SDL_ReadSurfacePixel(surface, x, y, &r, &g, &b, &a);
+	}
+	bool read_pixel(int x, int y, float& r, float& g, float& b, float& a) {
+		return SDL_ReadSurfacePixelFloat(surface, x, y, &r, &g, &b, &a);
+	}
+	bool write_pixel(int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
+		return SDL_WriteSurfacePixel(surface, x, y, r, g, b, a);
+	}
+	bool write_pixel(int x, int y, float r, float g, float b, float a) {
+		return SDL_WriteSurfacePixelFloat(surface, x, y, r, g, b, a);
+	}
+
+private:
+	mutable int ref = 0;
+};
+
 
 class CScriptRenderer {
 public:
@@ -88,6 +235,7 @@ public:
 
 	void Release()const {
 		if (--ref < 1) {
+			SDL_DestroyRenderer(renderer);
 			delete this;
 		}
 	}
@@ -108,6 +256,13 @@ public:
 		t->AddRef();
 		return t;
 	}
+	CScriptTexture* create_texture(CScriptSurface* surface) {
+		CScriptTexture* t = new CScriptTexture;
+		t->texture = SDL_CreateTextureFromSurface(renderer, surface->surface);
+		t->AddRef();
+		return t;
+	}
+
 	bool set_target(CScriptTexture* texture) {
 		if (texture == nullptr || texture->texture == nullptr)return false;
 		return SDL_SetRenderTarget(renderer, texture->texture);
@@ -254,6 +409,15 @@ SDL_Rect* RectFactory() {
 }
 SDL_FRect* FRectFactory() {
 	return new SDL_FRect;
+}
+CScriptSurface* SurfaceFactory(int width, int height, SDL_PixelFormat format) {
+	return new CScriptSurface(width, height, format);
+}
+CScriptSurface* SurfaceFactory(int width, int height, SDL_PixelFormat format, void* pixels, int pitch) {
+	return new CScriptSurface(width, height, format, pixels, pitch);
+}
+CScriptSurface* SurfaceFactory(const std::string& filename) {
+	return new CScriptSurface(filename);
 }
 
 void RegisterScriptGraphics(asIScriptEngine* engine) {
@@ -519,6 +683,31 @@ void RegisterScriptGraphics(asIScriptEngine* engine) {
 	engine->RegisterObjectMethod("texture", "void set_blend_mode(blendmode mode) const property", asMETHOD(CScriptTexture, set_blend_mode), asCALL_THISCALL);
 	engine->RegisterObjectMethod("texture", "blendmode get_blend_mode() const property", asMETHOD(CScriptTexture, get_blend_mode), asCALL_THISCALL);
 	engine->RegisterObjectMethod("texture", "void set_scale_mode(scalemode mode) const property", asMETHOD(CScriptTexture, set_scale_mode), asCALL_THISCALL);
+	engine->RegisterObjectType("surface", sizeof(CScriptSurface), asOBJ_REF);
+
+	engine->RegisterObjectBehaviour("surface", asBEHAVE_FACTORY, "surface@ g(int width, int height, pixelformat format)", asFUNCTIONPR(SurfaceFactory, (int, int, SDL_PixelFormat), CScriptSurface*), asCALL_CDECL);
+	engine->RegisterObjectBehaviour("surface", asBEHAVE_FACTORY, "surface@ g(int width, int height, pixelformat format, uint64 pixels, int pitch)", asFUNCTIONPR(SurfaceFactory, (int, int, SDL_PixelFormat, void*, int), CScriptSurface*), asCALL_CDECL);
+	engine->RegisterObjectBehaviour("surface", asBEHAVE_FACTORY, "surface@ g(const string&in filename)", asFUNCTIONPR(SurfaceFactory, (const std::string&), CScriptSurface*), asCALL_CDECL);
+
+	engine->RegisterObjectBehaviour("surface", asBEHAVE_ADDREF, "void f()", asMETHOD(CScriptSurface, AddRef), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("surface", asBEHAVE_RELEASE, "void f()", asMETHOD(CScriptSurface, Release), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "void set_colorspace(int colorspace) const property", asMETHOD(CScriptSurface, set_colorspace), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "int get_colorspace() const property", asMETHOD(CScriptSurface, get_colorspace), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "bool add_alternate_image(surface@ s)", asMETHOD(CScriptSurface, add_alternate_image), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "bool has_alternate_images()", asMETHOD(CScriptSurface, has_alternate_images), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "void remove_alternate_images()", asMETHOD(CScriptSurface, remove_alternate_images), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "bool lock()", asMETHOD(CScriptSurface, lock), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "void unlock()", asMETHOD(CScriptSurface, unlock), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "bool save_to_file(const string&in filename)", asMETHOD(CScriptSurface, save_to_file), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "void set_rle(bool rle) const property", asMETHOD(CScriptSurface, set_rle), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "bool get_rle() const property", asMETHOD(CScriptSurface, get_rle), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "bool set_color_key(bool enabled, uint32 key)", asMETHOD(CScriptSurface, set_color_key), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "bool has_color_key()", asMETHOD(CScriptSurface, has_color_key), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "bool set_color_mod(uchar r, uchar g, uchar b)", asMETHOD(CScriptSurface, set_color_mod), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "bool get_color_mod(uchar&out r, uchar&out g, uchar&out b)", asMETHOD(CScriptSurface, get_color_mode), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "void set_alpha_mod(uchar alpha) const property", asMETHOD(CScriptSurface, set_alpha_mod), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "uchar get_alpha_mod() const property", asMETHOD(CScriptSurface, get_alpha_mod), asCALL_THISCALL);
+
 
 	engine->RegisterObjectBehaviour("renderer", asBEHAVE_FACTORY, "renderer@ g()", asFUNCTION(RendererFactory), asCALL_CDECL);
 
@@ -528,7 +717,9 @@ void RegisterScriptGraphics(asIScriptEngine* engine) {
 	engine->RegisterObjectMethod("renderer", "string get_name() const property", asMETHOD(CScriptRenderer, get_name), asCALL_THISCALL);
 	engine->RegisterObjectMethod("renderer", "bool get_output_size(int&out w, int&out h)", asMETHOD(CScriptRenderer, get_output_size), asCALL_THISCALL);
 	engine->RegisterObjectMethod("renderer", "bool get_current_output_size(int&out w, int&out h)", asMETHOD(CScriptRenderer, get_current_output_size), asCALL_THISCALL);
-	engine->RegisterObjectMethod("renderer", "texture@ create_texture(pixelformat format, textureaccess access, int w, int h)", asMETHOD(CScriptRenderer, create_texture), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "texture@ create_texture(pixelformat format, textureaccess access, int w, int h)", asMETHODPR(CScriptRenderer, create_texture, (SDL_PixelFormat, SDL_TextureAccess, int, int), CScriptTexture*), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "texture@ create_texture(surface@ s)", asMETHODPR(CScriptRenderer, create_texture, (CScriptSurface*), CScriptTexture*), asCALL_THISCALL);
+
 	engine->RegisterObjectMethod("renderer", "void set_target(texture@ target) const property", asMETHOD(CScriptRenderer, set_target), asCALL_THISCALL);
 	engine->RegisterObjectMethod("renderer", "texture@ get_target() const property", asMETHOD(CScriptRenderer, get_target), asCALL_THISCALL);
 	engine->RegisterObjectMethod("renderer", "bool set_logical_presentation(int w, int h, rendererlogicalpresentation mode, scalemode scale_mode)", asMETHOD(CScriptRenderer, set_logical_presentation), asCALL_THISCALL);
