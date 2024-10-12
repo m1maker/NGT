@@ -8,6 +8,8 @@ using namespace std;
 
 
 
+
+
 class CScriptRenderer;
 class CScriptTexture {
 public:
@@ -52,6 +54,10 @@ public:
 	bool get_alpha_mod(float& alpha) {
 		return SDL_GetTextureAlphaModFloat(texture, &alpha);
 	}
+	bool update(const SDL_Rect* rect, void* pixels, int pitch) {
+		return SDL_UpdateTexture(texture, rect, pixels, pitch);
+	}
+
 	bool set_blend_mode(SDL_BlendMode mode) {
 		return SDL_SetTextureBlendMode(texture, mode);
 	}
@@ -159,6 +165,56 @@ public:
 	bool render_point(float x, float y) {
 		return SDL_RenderPoint(renderer, x, y);
 	}
+	bool render_line(float x1, float y1, float x2, float y2) {
+		return SDL_RenderLine(renderer, x1, y1, x2, y2);
+	}
+	bool render_rect(const SDL_FRect* rect) {
+		return SDL_RenderRect(renderer, rect);
+	}
+	bool render_fill_rect(const SDL_FRect* rect) {
+		return SDL_RenderFillRect(renderer, rect);
+	}
+	bool render_texture(CScriptTexture* texture, const SDL_FRect* srcrect, const SDL_FRect* dstrect) {
+		if (texture == nullptr)return false;
+		return SDL_RenderTexture(renderer, texture->texture, srcrect, dstrect);
+	}
+	bool render_texture(CScriptTexture* texture, const SDL_FRect* srcrect, float scale, const SDL_FRect* dstrect) {
+		if (texture == nullptr)return false;
+		return SDL_RenderTextureTiled(renderer, texture->texture, srcrect, scale, dstrect);
+	}
+	bool render_texture(CScriptTexture* texture, const SDL_FRect* srcrect, float left_width, float right_width, float top_height, float bottom_height, float scale, const SDL_FRect* dstrect) {
+		if (texture == nullptr)return false;
+		return SDL_RenderTexture9Grid(renderer, texture->texture, srcrect, left_width, right_width, top_height, bottom_height, scale, dstrect);
+	}
+
+	bool flush() {
+		return SDL_FlushRenderer(renderer);
+	}
+
+	bool set_viewport(const SDL_Rect* rect) {
+		return SDL_SetRenderViewport(renderer, rect);
+	}
+	SDL_Rect* get_viewport() {
+		SDL_Rect* rect = new SDL_Rect;
+		SDL_GetRenderViewport(renderer, rect);
+		return rect;
+	}
+	SDL_Rect* get_render_safe_area() {
+		SDL_Rect* rect = new SDL_Rect;
+		SDL_GetRenderSafeArea(renderer, rect);
+		return rect;
+	}
+	void set_render_clip_rect(const SDL_Rect* rect) {
+		SDL_SetRenderClipRect(renderer, rect);
+	}
+	SDL_Rect* get_render_clip_rect() {
+		SDL_Rect* rect = new SDL_Rect;
+		SDL_GetRenderClipRect(renderer, rect);
+		return rect;
+	}
+	bool render_clip_enabled() {
+		return SDL_RenderClipEnabled(renderer);
+	}
 
 private:
 	mutable int ref = 0;
@@ -192,6 +248,12 @@ CScriptRenderer* RendererFactory() {
 
 CScriptTexture* TextureFactory() {
 	return nullptr;
+}
+SDL_Rect* RectFactory() {
+	return new SDL_Rect;
+}
+SDL_FRect* FRectFactory() {
+	return new SDL_FRect;
 }
 
 void RegisterScriptGraphics(asIScriptEngine* engine) {
@@ -414,6 +476,24 @@ void RegisterScriptGraphics(asIScriptEngine* engine) {
 	engine->RegisterEnumValue("chromalocation", "CHROMA_LOCATION_CENTER", SDL_CHROMA_LOCATION_CENTER);
 	engine->RegisterEnumValue("chromalocation", "CHROMA_LOCATION_TOPLEFT", SDL_CHROMA_LOCATION_TOPLEFT);
 
+	engine->RegisterObjectType("rect", sizeof(SDL_Rect), asOBJ_REF | asOBJ_NOCOUNT);
+
+	engine->RegisterObjectBehaviour("rect", asBEHAVE_FACTORY, "rect@ g()", asFUNCTION(RectFactory), asCALL_CDECL);
+
+	engine->RegisterObjectProperty("rect", "int x", asOFFSET(SDL_Rect, x));
+	engine->RegisterObjectProperty("rect", "int y", asOFFSET(SDL_Rect, y));
+	engine->RegisterObjectProperty("rect", "int w", asOFFSET(SDL_Rect, w));
+	engine->RegisterObjectProperty("rect", "int h", asOFFSET(SDL_Rect, h));
+
+	engine->RegisterObjectType("frect", sizeof(SDL_FRect), asOBJ_REF | asOBJ_NOCOUNT);
+
+	engine->RegisterObjectBehaviour("frect", asBEHAVE_FACTORY, "frect@ g()", asFUNCTION(FRectFactory), asCALL_CDECL);
+	engine->RegisterObjectProperty("frect", "float x", asOFFSET(SDL_FRect, x));
+	engine->RegisterObjectProperty("frect", "float y", asOFFSET(SDL_FRect, y));
+	engine->RegisterObjectProperty("frect", "float w", asOFFSET(SDL_FRect, w));
+	engine->RegisterObjectProperty("frect", "float h", asOFFSET(SDL_FRect, h));
+
+
 	engine->RegisterObjectType("texture", sizeof(CScriptTexture), asOBJ_REF);
 	engine->RegisterObjectType("renderer", sizeof(CScriptRenderer), asOBJ_REF);
 
@@ -434,6 +514,8 @@ void RegisterScriptGraphics(asIScriptEngine* engine) {
 
 	engine->RegisterObjectMethod("texture", "bool get_alpha_mod(uchar&out a)", asMETHODPR(CScriptTexture, get_alpha_mod, (unsigned char&), bool), asCALL_THISCALL);
 	engine->RegisterObjectMethod("texture", "bool get_alpha_mod(float&out a)", asMETHODPR(CScriptTexture, get_alpha_mod, (float&), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod("texture", "bool update(rect@ r, uint64 pixels, int pitch)", asMETHOD(CScriptTexture, update), asCALL_THISCALL);
+
 	engine->RegisterObjectMethod("texture", "void set_blend_mode(blendmode mode) const property", asMETHOD(CScriptTexture, set_blend_mode), asCALL_THISCALL);
 	engine->RegisterObjectMethod("texture", "blendmode get_blend_mode() const property", asMETHOD(CScriptTexture, get_blend_mode), asCALL_THISCALL);
 	engine->RegisterObjectMethod("texture", "void set_scale_mode(scalemode mode) const property", asMETHOD(CScriptTexture, set_scale_mode), asCALL_THISCALL);
@@ -463,6 +545,22 @@ void RegisterScriptGraphics(asIScriptEngine* engine) {
 	engine->RegisterObjectMethod("renderer", "blendmode get_draw_blend_mode() const property", asMETHOD(CScriptRenderer, get_draw_blend_mode), asCALL_THISCALL);
 	engine->RegisterObjectMethod("renderer", "void clear()", asMETHOD(CScriptRenderer, clear), asCALL_THISCALL);
 	engine->RegisterObjectMethod("renderer", "bool render_point(float x, float y)", asMETHOD(CScriptRenderer, render_point), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "bool render_line(float x1, float y1, float x2, float y2)", asMETHOD(CScriptRenderer, render_line), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "bool render_rect(frect@ r)", asMETHOD(CScriptRenderer, render_rect), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "bool render_fill_rect(frect@ r)", asMETHOD(CScriptRenderer, render_fill_rect), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "bool render_texture(texture@ t, frect@ srcrect, frect@ dstrect)", asMETHODPR(CScriptRenderer, render_texture, (CScriptTexture*, const SDL_FRect*, const SDL_FRect*), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "bool render_texture(texture@ t, frect@ srcrect, float scale, frect@ dstrect)", asMETHODPR(CScriptRenderer, render_texture, (CScriptTexture*, const SDL_FRect*, float, const SDL_FRect*), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "bool render_texture(texture@ t, frect@ srcrect, float left_width, float right_width, float top_height, float bottom_height, float scale, frect@ dstrect)", asMETHODPR(CScriptRenderer, render_texture, (CScriptTexture*, const SDL_FRect*, float, float, float, float, float, const SDL_FRect*), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "bool flush()", asMETHOD(CScriptRenderer, flush), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "void set_viewport(rect@ r) const property", asMETHOD(CScriptRenderer, set_viewport), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "rect@ get_viewport() const property", asMETHOD(CScriptRenderer, get_viewport), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "rect@ get_render_safe_area() const property", asMETHOD(CScriptRenderer, get_render_safe_area), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "void set_render_clip_rect(rect@ r) const property", asMETHOD(CScriptRenderer, set_render_clip_rect), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "rect@ get_render_clip_rect() const property", asMETHOD(CScriptRenderer, get_render_clip_rect), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "bool get_render_clip_enabled() const property", asMETHOD(CScriptRenderer, render_clip_enabled), asCALL_THISCALL);
+
+
+
 
 
 
