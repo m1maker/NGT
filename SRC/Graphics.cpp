@@ -707,6 +707,26 @@ void RegisterScriptGraphics(asIScriptEngine* engine) {
 	engine->RegisterObjectMethod("surface", "bool get_color_mod(uchar&out r, uchar&out g, uchar&out b)", asMETHOD(CScriptSurface, get_color_mode), asCALL_THISCALL);
 	engine->RegisterObjectMethod("surface", "void set_alpha_mod(uchar alpha) const property", asMETHOD(CScriptSurface, set_alpha_mod), asCALL_THISCALL);
 	engine->RegisterObjectMethod("surface", "uchar get_alpha_mod() const property", asMETHOD(CScriptSurface, get_alpha_mod), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "void set_blend_mode(blendmode mode) const property", asMETHOD(CScriptSurface, set_blend_mode), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "blendmode get_blend_mode() const property", asMETHOD(CScriptSurface, get_blend_mode), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "void set_clip_rect(rect@ r) const property", asMETHOD(CScriptSurface, set_clip_rect), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "rect@ get_clip_rect() const property", asMETHOD(CScriptSurface, get_clip_rect), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "bool flip(flipmode flip)", asMETHOD(CScriptSurface, flip), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "bool clear(float r, float g, float b, float a)", asMETHOD(CScriptSurface, clear), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "bool fill_rect(rect@ r, uint32 color)", asMETHOD(CScriptSurface, fill_rect), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "bool blit(rect@ srcrect, surface@ dst, rect@ dstrect)", asMETHODPR(CScriptSurface, blit, (const SDL_Rect*, CScriptSurface*, const SDL_Rect*), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "bool blit(rect@ srcrect, surface@ dst, rect@ dstrect, scalemode scale_mode)", asMETHODPR(CScriptSurface, blit, (const SDL_Rect*, CScriptSurface*, const SDL_Rect*, SDL_ScaleMode), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "bool blit(rect@ srcrect, int left_width, int right_width, int top_height, int bottom_height, float scale, scalemode scale_mode, surface@ dst, rect@ dstrect)", asMETHODPR(CScriptSurface, blit, (const SDL_Rect*, int, int, int, int, float, SDL_ScaleMode, CScriptSurface*, const SDL_Rect*), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "bool blit_unchecked(rect@ srcrect, surface@ dst, rect@ dstrect)", asMETHODPR(CScriptSurface, blit_unchecked, (const SDL_Rect*, CScriptSurface*, const SDL_Rect*), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "bool blit_unchecked(rect@ srcrect, surface@ dst, rect@ dstrect, scalemode scale_mode)", asMETHODPR(CScriptSurface, blit_unchecked, (const SDL_Rect*, CScriptSurface*, const SDL_Rect*, SDL_ScaleMode), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "bool blit_tiled(rect@ srcrect, surface@ dst, rect@ dstrect)", asMETHODPR(CScriptSurface, blit_tiled, (const SDL_Rect*, CScriptSurface*, const SDL_Rect*), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "bool blit_tiled(rect@ srcrect, float scale, scalemode scale_mode, surface@ dst, rect@ dstrect)", asMETHODPR(CScriptSurface, blit_tiled, (const SDL_Rect*, float, SDL_ScaleMode, CScriptSurface*, const SDL_Rect*), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "uint32 map(uchar r, uchar g, uchar b)", asMETHODPR(CScriptSurface, map, (unsigned char, unsigned char, unsigned char), uint32_t), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "uint32 map(uchar r, uchar g, uchar b, uchar a)", asMETHODPR(CScriptSurface, map, (unsigned char, unsigned char, unsigned char, unsigned char), uint32_t), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "bool read_pixel(int x, int y, uchar&out r, uchar&out g, uchar&out b, uchar&out a)", asMETHODPR(CScriptSurface, read_pixel, (int, int, unsigned char&, unsigned char&, unsigned char&, unsigned char&), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "bool read_pixel(int x, int y, float&out r, float&out g, float&out b, float&out a)", asMETHODPR(CScriptSurface, read_pixel, (int, int, float&, float&, float&, float&), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "bool write_pixel(int x, int y, uchar r, uchar g, uchar b, uchar a)", asMETHODPR(CScriptSurface, write_pixel, (int, int, unsigned char, unsigned char, unsigned char, unsigned char), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "bool write_pixel(int x, int y, float r, float g, float b, float a)", asMETHODPR(CScriptSurface, write_pixel, (int, int, float, float, float, float), bool), asCALL_THISCALL);
 
 
 	engine->RegisterObjectBehaviour("renderer", asBEHAVE_FACTORY, "renderer@ g()", asFUNCTION(RendererFactory), asCALL_CDECL);
