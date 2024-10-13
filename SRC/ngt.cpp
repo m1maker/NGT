@@ -121,6 +121,7 @@ static size_t cmp_write_bytes(cmp_ctx_t* ctx, const void* input, size_t len) {
 }
 std::vector<SDL_Event> window_events;
 bool hold_events = false;
+bool wait_event_requested = false;
 class WindowThread : public Poco::Runnable {
 private:
 	Poco::Thread thread;
@@ -177,7 +178,13 @@ public:
 		}
 		if (win != nullptr) {
 			SDL_PumpEvents();
-			bool result = SDL_PollEvent(&e);
+			bool result;
+			if (window_has_renderer && wait_event_requested) {
+				wait_event_requested = false;
+				result = SDL_WaitEvent(&e);
+			}
+			else
+				result = SDL_PollEvent(&e);
 			if (result == true) {
 				if (!window_has_renderer) {
 					g_windowEvent.set();
@@ -1008,28 +1015,20 @@ int question(const string& title, const string& text) {
 
 
 void wait(uint64_t time) {
-	if (!window_has_renderer || windowRunnable == nullptr) {
-		std::this_thread::sleep_for(std::chrono::milliseconds(time));
-	}
-	else {
-		hold_events = true;
-		for (uint64_t i = 0; i < time; ++i) {
-			windowRunnable->monitor();
-
-			std::this_thread::sleep_for(std::chrono::milliseconds(1));
-		}
-		hold_events = false;
-		if (window_events.size() > 0) {
-			for (SDL_Event& evt : window_events) {
-				SDL_PushEvent(&evt);
-			}
-			window_events.clear();
-		}
+	std::this_thread::sleep_for(std::chrono::milliseconds(time));
+	if (windowRunnable != nullptr) {
+		windowRunnable->monitor();
 	}
 }
 
 void wait_event() {
-	g_windowEvent.wait();
+	if (windowRunnable == nullptr)return;
+	if (window_has_renderer) {
+		wait_event_requested = true;
+		windowRunnable->monitor();
+	}
+	else
+		g_windowEvent.wait();
 }
 string serialize(CScriptDictionary* data) {
 	if (data == nullptr) return "";
