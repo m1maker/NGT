@@ -1,5 +1,6 @@
 ﻿#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS 
 #include "cmp.h"
+
 #include "ngtreg.h"
 #include "sound.h"
 #include <Poco/BinaryReader.h>
@@ -11,6 +12,7 @@
 #include <Poco/Thread.h>
 #include <Poco/Unicode.h>
 #include <Poco/UnicodeConverter.h>
+#include <Poco/Util/Application.h>
 #include<sdl3/SDL.h>
 extern "C" {
 #define SRAL_STATIC
@@ -119,8 +121,6 @@ static size_t cmp_write_bytes(cmp_ctx_t* ctx, const void* input, size_t len) {
 	buf->data->append((const char*)input, len);
 	return len;
 }
-std::vector<SDL_Event> window_events;
-bool hold_events = false;
 bool wait_event_requested = false;
 class WindowThread : public Poco::Runnable {
 private:
@@ -141,10 +141,12 @@ public:
 			win = nullptr;
 			window_is_focused = false;
 		}
+		SDL_Quit();
 	}
 	void monitor() {
 		if (window_event_show) {
 			window_event_show = false;
+			SDL_Init(SDL_INIT_VIDEO);
 			SDL_WindowFlags flags = 0;
 			if (SRAL_GetCurrentEngine() == ENGINE_JAWS) {
 				SDL_SetHint(SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED, "1");
@@ -188,9 +190,6 @@ public:
 			if (result == true) {
 				if (!window_has_renderer) {
 					g_windowEvent.set();
-					if (hold_events) {
-						window_events.push_back(e);
-					}
 				}
 			}
 			if (window_event_push) {
@@ -205,8 +204,9 @@ public:
 				window_event_keyboard_reset = false;
 				SDL_ResetKeyboard();
 			}
-			if (e.type == SDL_EVENT_QUIT and window_closable == true)
+			if (e.type == SDL_EVENT_QUIT and window_closable == true) {
 				exit_engine();
+			}
 			if (e.type == SDL_EVENT_TEXT_INPUT)
 			{
 				inputtext += e.text.text;
@@ -237,7 +237,7 @@ public:
 				mouse_y = e.motion.y;
 			}
 			if (e.type == SDL_EVENT_MOUSE_WHEEL) {
-				mouse_z = e.wheel.y;
+				mouse_z += e.wheel.y;
 			}
 			if (e.type == SDL_EVENT_WINDOW_FOCUS_GAINED)
 				window_is_focused = true;
@@ -268,7 +268,6 @@ long get_update_window_freq() {
 	return update_window_freq;
 }
 void init_engine() {
-	SDL_Init(SDL_INIT_VIDEO);
 	SRAL_Initialize(0);
 #ifdef _WIN32
 	// SRAL keyboard hooks is stopping all the events on Linux
@@ -347,6 +346,10 @@ string screen_reader_detect() {
 }
 bool show_window(const string& title, int width, int height, bool closable, bool enable_render)
 {
+	if (windowRunnable != nullptr) {
+		set_window_title(title);
+		return true;
+	}
 	windowRunnable = new WindowThread;
 	window_thread_event_shutdown = false;
 	if (!enable_render)windowRunnable->start();
@@ -361,7 +364,11 @@ bool show_window(const string& title, int width, int height, bool closable, bool
 	for (int i = 0; i < 8; i++) {
 		mouse_released(i);
 	}
+	window_event_keyboard_reset = true;
 	if (enable_render)windowRunnable->monitor();
+	else {
+		while (windowRunnable->win == nullptr);
+	}
 	window_has_renderer = enable_render;
 	return windowRunnable->win != 0;
 }
@@ -410,10 +417,8 @@ void hide_window() {
 	window_event_hide = true;
 	window_thread_event_shutdown = true;
 	wait(20);
-	if (!window_has_renderer)
-		windowRunnable->stop();
-	else
-		windowRunnable->destroy();
+	windowRunnable->stop();
+	windowRunnable->destroy();
 
 	delete windowRunnable;
 	windowRunnable = nullptr;
@@ -553,18 +558,18 @@ void exit_engine(int return_number)
 		e_ctx->Release();
 		exit_callback = nullptr;
 	}
+	if (windowRunnable != nullptr)
+		hide_window();
 	soundsystem_free();
-	hide_window();
 	enet_deinitialize();
-	SRAL_UnregisterKeyboardHooks();
-	SRAL_Uninitialize();
-	SDL_Quit();
+	SRAL_Uninitialize(); // Keyboard hooks are automatically uninstalls when uninitialize
 	CContextMgr* ctxmgr = get_context_manager();
 	if (ctxmgr) {
 		ctxmgr->AbortAll();
 	}
 	std::exit(return_number);
 }
+
 CScriptArray* keys_pressed() {
 	asIScriptContext* ctx = asGetActiveContext();
 	asIScriptEngine* engine = ctx->GetEngine();
@@ -673,24 +678,29 @@ string input_box(const string& title, const string& text, const string& default_
 			break;
 		}
 	}
+	gui::delete_control(edit);
+	gui::delete_control(ok);
+	gui::delete_control(cancel);
+	gui::hide_window(main_window);
+
 	if (user_pressed == 1) {
 		std::string result;
 		std::wstring Wtext = gui::get_text(edit);
 		Poco::UnicodeConverter::convert(Wtext, result);
-		gui::delete_control(edit);
-		gui::delete_control(ok);
-		gui::delete_control(cancel);
-		gui::hide_window(main_window);
 		return result;
 	}
 	else if (user_pressed == 2) {
-		gui::hide_window(main_window);
 		return "";
 	}
-	gui::hide_window(main_window);
 	return "";
 #else 
-	return ""; // Needs to implement in other platforms also.
+	std::cout << title << ": " << text << std::endl << default_text;
+	std::string result;
+	std::getline(std::cin, result);
+	if (result.empty()) {
+		result = default_text;
+	}
+	return result;
 #endif
 }
 bool key_pressed(int key_code)
@@ -1013,14 +1023,20 @@ int question(const string& title, const string& text) {
 	return message_box(title, text, { "`Yes", "~No" }, 0);
 }
 
-
+timer g_windowUpdater;
 void wait(uint64_t time) {
-	std::this_thread::sleep_for(std::chrono::milliseconds(time));
-	if (windowRunnable != nullptr) {
-		windowRunnable->monitor();
+	if (!window_has_renderer) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(time));
+		return;
+	}
+	for (int64_t i = 0; i < time; ++i) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		if (windowRunnable != nullptr && g_windowUpdater.elapsed_millis() > update_window_freq) {
+			windowRunnable->monitor();
+			g_windowUpdater.restart();
+		}
 	}
 }
-
 void wait_event() {
 	if (windowRunnable == nullptr)return;
 	if (window_has_renderer) {

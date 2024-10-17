@@ -668,6 +668,11 @@ NGTScripting* app = nullptr;
 CContextMgr* get_context_manager() {
 	return app->m_ctxMgr;
 }
+NGTScripting* get_scripting_instance() {
+	if (app)
+		return app;
+	return nullptr;
+}
 class NGTEntry : public Application {
 private:
 	bool _helpRequested;
@@ -682,8 +687,10 @@ public:
 		app->RegisterStd();
 	}
 	~NGTEntry() {
-		delete app;
-		app = nullptr;
+		if (app) {
+			delete app;
+			app = nullptr;
+		}
 	}
 protected:
 	void initialize(Application& self)

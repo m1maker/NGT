@@ -14,6 +14,8 @@ BEGIN_AS_NAMESPACE
 //
 // Ref: http://mathworld.wolfram.com/ComplexNumber.html
 
+#undef Complex
+
 struct Complex
 {
 	Complex();

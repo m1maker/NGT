@@ -93,7 +93,7 @@ public:
 wstring wstr(const string& utf8String);
 extern bool g_COMInitialized;
 #endif
-string unicode_convert(string str, string from, string to);
+void application_exit(int retcode);
 uint64_t get_time_stamp_millis();
 uint64_t get_time_stamp_seconds();
 void as_printf(asIScriptGeneric* gen);
@@ -135,6 +135,8 @@ bool mouse_down(unsigned char);
 int get_MOUSE_X();
 int get_MOUSE_Y();
 int get_MOUSE_Z();
+class NGTScripting;
+NGTScripting* get_scripting_instance();
 void exit_engine(int = 0);
 string number_to_words(uint64_t, bool);
 bool clipboard_copy_text(const string&);

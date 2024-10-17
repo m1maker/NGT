@@ -185,6 +185,7 @@ include_directories(
   ${Poco_SOURCE_DIR}/Foundation/include
 
   ${enet_SOURCE_DIR}/include
+
   ${SRAL_SOURCE_DIR}/Include
   ${CMAKE_BINARY_DIR}/external/installed/include
   ${CMAKE_BINARY_DIR}/phonon-src/include

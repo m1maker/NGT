@@ -315,7 +315,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("void set_exit_callback(exit_callback@=null)", asFUNCTION(set_exit_callback), asCALL_CDECL);
 
 	engine->RegisterGlobalFunction("bool show_window(const string &in title, int width = 640, int height = 480, bool closable = true, bool enable_renderer = false)", asFUNCTION(show_window), asCALL_CDECL);
-	engine->RegisterGlobalFunction("uint64 get_window_handle()", asFUNCTION(get_window_handle), asCALL_CDECL);
+	engine->RegisterGlobalFunction("uint64 get_window_handle() property", asFUNCTION(get_window_handle), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void hide_window()", asFUNCTION(hide_window), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void set_update_window_freq(long)property", asFUNCTION(set_update_window_freq), asCALL_CDECL);
 	engine->RegisterGlobalFunction("long get_update_window_freq()property", asFUNCTION(get_update_window_freq), asCALL_CDECL);
