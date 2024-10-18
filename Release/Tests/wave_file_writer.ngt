@@ -1,0 +1,14 @@
+#include "../include/wave"
+wave_file_data d;
+void main(){
+    array<double> sample = {
+    0.1, 0.0
+    };
+
+
+    d.channels_count = 1;
+    d.interleaved_samples = sample;
+    d.write_file("Test.wav");
+    sound s("Test.wav");
+    s.play_wait();
+}

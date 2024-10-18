@@ -241,8 +241,10 @@ public:
 			}
 			if (e.type == SDL_EVENT_WINDOW_FOCUS_GAINED)
 				window_is_focused = true;
-			if (e.type == SDL_EVENT_WINDOW_FOCUS_LOST)
+			if (e.type == SDL_EVENT_WINDOW_FOCUS_LOST) {
+				window_event_keyboard_reset = true;
 				window_is_focused = false;
+			}
 			SDL_UpdateWindowSurface(win);
 
 		}
@@ -746,7 +748,7 @@ bool force_key_up(SDL_Scancode keycode) {
 	window_event_push = true;
 	return !key_down(keycode);
 }
-void reset_all_forced_keys() {
+void reset_keyboard() {
 	for (int i = 0; i < 512; i++) {
 		keys[i].isDown = false;
 	}

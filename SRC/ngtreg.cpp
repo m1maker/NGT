@@ -365,7 +365,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("int string_to_key(const string&in key_name)", WRAP_FN(string_to_key), asCALL_GENERIC);
 	engine->RegisterGlobalFunction("bool force_key_down(keycode)", asFUNCTION(force_key_down), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool force_key_up(keycode)", asFUNCTION(force_key_up), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void reset_all_forced_keys()", asFUNCTION(reset_all_forced_keys), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void reset_keyboard()", asFUNCTION(reset_keyboard), asCALL_CDECL);
 
 	engine->RegisterGlobalFunction("string string_encrypt(const string &in the_string, string &in key)", asFUNCTION(string_encrypt), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string string_decrypt(const string &in the_string, string &in key)", asFUNCTION(string_decrypt), asCALL_CDECL);

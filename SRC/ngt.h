@@ -149,7 +149,7 @@ bool key_down(int);
 bool key_repeat(int);
 bool force_key_down(SDL_Scancode);
 bool force_key_up(SDL_Scancode);
-void reset_all_forced_keys();
+void reset_keyboard();
 
 CScriptArray* keys_pressed();
 CScriptArray* keys_released();
