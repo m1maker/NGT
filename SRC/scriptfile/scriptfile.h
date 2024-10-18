@@ -49,16 +49,26 @@ public:
 	// mode = "r" -> open the file for reading
 	//        "w" -> open the file for writing (overwrites existing file)
 	//        "a" -> open the file for appending
-	int  Open(const std::string& filename, const std::string& mode);
+	int  Open(const std::string &filename, const std::string &mode);
 	int  Close();
 	int  GetSize() const;
 	bool IsEOF() const;
 
 	// Reading
-	std::string Read(unsigned int length = 0);
+	std::string ReadString(unsigned int length);
 	std::string ReadLine();
+	asINT64     ReadInt(asUINT bytes);
+	asQWORD     ReadUInt(asUINT bytes);
+	float       ReadFloat();
+	double      ReadDouble();
+
 	// Writing
-	int Write(const std::string& str);
+	int WriteString(const std::string &str);
+	int WriteInt(asINT64 v, asUINT bytes);
+	int WriteUInt(asQWORD v, asUINT bytes);
+	int WriteFloat(float v);
+	int WriteDouble(double v);
+
 	// Cursor
 	int GetPos() const;
 	int SetPos(int pos);
@@ -71,20 +81,20 @@ protected:
 	~CScriptFile();
 
 	mutable int refCount;
-	FILE* file;
+	FILE       *file;
 };
 
 // This function will determine the configuration of the engine
 // and use one of the two functions below to register the file type
-void RegisterScriptFile(asIScriptEngine* engine);
+void RegisterScriptFile(asIScriptEngine *engine);
 
 // Call this function to register the file type
 // using native calling conventions
-void RegisterScriptFile_Native(asIScriptEngine* engine);
+void RegisterScriptFile_Native(asIScriptEngine *engine);
 
 // Use this one instead if native calling conventions
 // are not supported on the target platform
-void RegisterScriptFile_Generic(asIScriptEngine* engine);
+void RegisterScriptFile_Generic(asIScriptEngine *engine);
 
 END_AS_NAMESPACE
 
