@@ -1029,7 +1029,9 @@ void wait(uint64_t time) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(time));
 		return;
 	}
+	timer t;
 	for (int64_t i = 0; i < time; ++i) {
+		if (t.elapsed_millis() > time)break;
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 		if (windowRunnable != nullptr && g_windowUpdater.elapsed_millis() > update_window_freq) {
 			windowRunnable->monitor();

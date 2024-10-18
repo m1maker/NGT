@@ -22,7 +22,7 @@ myRect.y = 50;
 myRenderer.render_fill_rect(myRect);
 screen_reader::speak("Rendering fill rect");
 window_present();
-wait(5000);
+wait(1000);
 // Render a texture
 frect srcRect, dstRect;
 srcRect.w = 64;
@@ -36,7 +36,7 @@ dstRect.y = 200;
 myRenderer.render_texture(myTexture, srcRect, dstRect);
 screen_reader::speak("Rendering texture");
 window_present();
-wait(5000);
+wait(1000);
 // Flush the renderer
 myRenderer.flush();
 screen_reader::speak("Flushing renderer");
