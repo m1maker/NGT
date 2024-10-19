@@ -1397,6 +1397,7 @@ public:
 		if (!active)return false;
 		ma_sound_set_looping(handle_, false);
 		ma_sound_start(handle_);
+		this->paused = false;
 		return true;
 	}
 	bool play_looped() {
@@ -1404,11 +1405,15 @@ public:
 
 		ma_sound_set_looping(handle_, true);
 		ma_sound_start(handle_);
+		this->paused = false;
+
 		return true;
 	}
 	bool pause() {
 		if (!active)return false;
 		ma_sound_stop(handle_);
+		this->paused = true;
+
 		return true;
 	}
 	bool play_wait() {
@@ -1515,7 +1520,6 @@ public:
 			reverbNodeConfig = ma_reverb_node_config_init(engineConfig.channels, engineConfig.sampleRate, 100, 100, 100);
 			ma_reverb_node_init(ma_engine_get_node_graph(&sound_default_mixer), &reverbNodeConfig, NULL, &m_reverbNode);
 			auto last = --effects.end();
-
 			ma_node_attach_output_bus(&m_reverbNode, 0, last->second, 0);
 			ma_node_attach_output_bus(handle_, 0, &m_reverbNode, 0);
 			effects[fx] = &m_reverbNode;
@@ -1599,7 +1603,6 @@ public:
 	void delete_fx(const string& fx) {
 		if (!active)return;
 		if (effects.find(fx) == effects.end())return;
-		effects.erase(fx);
 		if (fx == "reverb") {
 			ma_reverb_node_uninit(&m_reverbNode, NULL);
 		}
@@ -1629,9 +1632,16 @@ public:
 			ma_notch_node_uninit(&notch, NULL);
 
 		}
+		effects[fx] = nullptr;
+		effects.erase(fx);
+
 		auto last = --effects.end();
 
 		ma_node_attach_output_bus(handle_, 0, last->second, 0);
+		if (last->first == "hrtf") {
+			this->set_hrtf(false);
+			this->set_hrtf(true);
+		}
 	}
 	void set_reverb_parameters(float dry, float wet, float room_size, float damping, float mode) {
 		if (!active)return;
@@ -1783,12 +1793,17 @@ public:
 		ma_sound_set_doppler_factor(handle_, pitch_step);
 	}
 	bool seek(float new_position) {
-		if (!active)return false;
-		if (new_position > this->get_length())
-			return false;
-		ma_sound_seek_to_pcm_frame(handle_, static_cast<ma_uint64>(new_position * 100));
+		if (!active) return false;
+
+		if (new_position > this->get_length() || new_position <= 0.0f) return false;
+
+		// Convert milliseconds to PCM frames for seeking
+		ma_uint64 pcm_frame = static_cast<ma_uint64>((new_position / 1000.0f) * SAMPLE_RATE);
+		ma_sound_seek_to_pcm_frame(handle_, pcm_frame);
+
 		return true;
 	}
+
 	void set_looping(bool looping) {
 		if (!active)return;
 		ma_sound_set_looping(handle_, looping);
@@ -1850,30 +1865,38 @@ public:
 
 	bool is_paused() const {
 		if (!active)return false;
-		return false;
+		return this->paused;
 	}
 
 	float get_position() {
 		if (!active)return -17435;
-		float position = 0;
-		position = ma_sound_get_time_in_milliseconds(handle_);
-		return position;
+		ma_uint64 position = 0;
+		ma_sound_get_cursor_in_pcm_frames(handle_, &position);
+		return static_cast<float>(position) / SAMPLE_RATE * 1000.0f;
 	}
 
 	float get_length() {
-		if (!active)return-17435;
+		if (!active) return -17435;
+
 		ma_uint64 length = 0;
 		ma_sound_get_length_in_pcm_frames(handle_, &length);
-		return static_cast<float>(length / 100);
+
+		// Convert PCM frames to milliseconds
+		return static_cast<float>(length) / SAMPLE_RATE * 1000.0f;
 	}
 
-	void set_length(float length = 0.0) {
-		if (!active)return;
-		if (length > this->get_length())            return;
-		ma_sound_set_stop_time_in_pcm_frames(handle_, static_cast<ma_uint64>(length * 100));
+	void set_length(float length = 0.0f) {
+		if (!active) return;
+
+		if (length > this->get_length()) return;
+
+		// Convert milliseconds back to PCM frames for setting stop time
+		ma_uint64 pcm_frames = static_cast<ma_uint64>((length / 1000.0f) * SAMPLE_RATE);
+		ma_sound_set_stop_time_in_pcm_frames(handle_, pcm_frames);
 	}
+
 	float get_sample_rate() const {
-		float rate = 0;
+		float rate = SAMPLE_RATE;
 		return rate;
 	}
 };

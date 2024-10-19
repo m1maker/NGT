@@ -1,6 +1,6 @@
 float listener_x, listener_y, listener_z, source_x, source_y, source_z;
 
-sound s("c:/windows/media/tada.wav");
+sound s;
 void main(){
 source_x=0;
 source_y=0;
@@ -9,6 +9,7 @@ listener_x=0;
 listener_y=0;
 listener_z=0;
 show_window("Positioner");
+s.load("C:/windows/media/ring01.wav");
 s.play_looped();
 s.set_fx("reverb");
 s.set_reverb_parameters(1, 0.5, 0.3, 0, 0);
@@ -35,6 +36,29 @@ s.set_hrtf(false);
 }
 if(key_repeat(KEY_F2)){
 s.set_hrtf(true);
+s.set_fx("reverb");
+s.set_reverb_parameters(1, 0.5, 0.3, 0, 0);
+}
+if(key_repeat(KEY_F3)){
+s.delete_fx("reverb");
+}
+if(key_repeat(KEY_F4)){
+s.set_fx("reverb");
+s.set_reverb_parameters(1, 0.5, 0.3, 0, 0);
+
+}
+if(key_pressed(KEY_1))
+s.seek(s.position - 1000);
+if(key_pressed(KEY_2))
+s.seek(s.position + 1000);
+if(key_repeat(KEY_3))
+s.pitch=s.pitch-5;
+if(key_repeat(KEY_4))
+s.pitch=s.pitch+5;
+
+if(key_pressed(KEY_SPACE)){
+if(!s.paused)s.pause();
+else s.play_looped();
 }
 }
 }
