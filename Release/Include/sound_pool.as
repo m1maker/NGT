@@ -125,57 +125,68 @@ class sound_pool
 			@pool[i] = sound_pool_item();
 		}
 	}
-	int play_stationary(const string&in filename, bool looping, bool memory = false, bool persistent = false) {
-		return play_stationary(filename, looping, 0, 0, 0, 100.0, memory, persistent);
+	int play_stationary(const string& in filename, bool looping, bool memory = false, bool persistent = false) {
+		return play_3d(filename, looping : looping, memory : memory, persistent : persistent);
 	}
 
-	int play_stationary(const string&in filename, bool looping, float offset, float start_pan, float start_volume, float start_pitch, bool memory = false, bool persistent = false) {
-		int i = get_free_sound_id();
-		if (i == -1)
-			return -1;
-		pool[i].sound_instance.load(filename);
-		pool[i].sound_instance.set_looping(looping);
-		pool[i].sound_instance.set_pan(start_pan);
-		pool[i].sound_instance.set_volume(start_volume);
-		pool[i].sound_instance.set_pitch(start_pitch);
-		pool[i].sound_instance.seek(offset);
-		pool[i].play(looping);
-		return i; // Return index
+	int play_stationary(const string& in filename, bool looping, float offset, float start_pan, float start_volume, float start_pitch, bool memory = false, bool persistent = false) {
+		return play_3d(filename, looping : looping, offset : offset, start_pan : start_pan, start_volume : start_volume, start_pitch : start_pitch, memory : memory, persistent : persistent);
 	}
 
-	int play_1d(const string&in filename, int listener_x, int sound_x, bool looping, bool memory = false, bool persistent = false) {
-		return play_1d(filename, listener_x, sound_x, 0, 0, looping, 0, 0, 0, 100, memory, persistent);
+	int play_1d(const string& in filename, float listener_x, float sound_x, bool looping, bool memory = false, bool persistent = false) {
+		return play_3d(filename, listener_x : listener_x, sound_x : sound_x, looping : looping, memory : memory, persistent : persistent);
 	}
 
-	int play_1d(const string&in filename, int listener_x, int sound_x, int left_range, int right_range, bool looping, float offset, float start_pan, float start_volume, float start_pitch, bool memory = false, bool persistent = false) {
-		int i = get_free_sound_id();
-		if (i == -1)
-			return -1;
-		pool[i].sound_instance.load(filename);
-		pool[i].sound_instance.set_looping(looping);
-
-		// Set initial properties
-		pool[i].sound_instance.set_pan(start_pan);
-		pool[i].sound_instance.set_volume(start_volume);
-		pool[i].sound_instance.set_pitch(start_pitch);
-
-		// Calculate pan based on position
-		float pan = (sound_x - listener_x) / 100.0; // Assuming a range of -100 to 100
-		pool[i].sound_instance.set_pan(pan);
-		pool[i].sound_instance.set_position(listener_x, 0, 0, sound_x, 0, 0);
-		pool[i].left_range = left_range;
-		pool[i].right_range = right_range;
-		pool[i].play(looping);
-		return i; // Return index
-	}
-
-	int play_2d(const string&in filename, int listener_x, int listener_y, int sound_x, int sound_y, bool looping, bool memory = false, bool persistent = false) {
-		return play_2d(filename, listener_x, listener_y, sound_x, sound_y, 0, 0, 0, 0, looping, 0, 0, 0, 100, memory, persistent);
-	}
-
-	int play_2d(const string&in filename, int listener_x, int listener_y,
-				int sound_x, int sound_y,
+	int play_1d(const string& in filename, float listener_x, float sound_x,
 				int left_range, int right_range,
+				bool looping,
+				float offset,
+				float start_pan,
+				float start_volume,
+				float start_pitch,
+				bool memory = false,
+				bool persistent = false)
+	{
+		return play_3d(filename,
+					   listener_x : listener_x,
+									sound_x : sound_x,
+											  left_range : left_range,
+														   right_range : right_range,
+																		 looping : looping,
+																				   offset : offset,
+																							start_pan : start_pan,
+																										start_volume : start_volume,
+																													   start_pitch : start_pitch,
+																																	 memory : memory,
+																																			  persistent : persistent);
+	}
+
+	int play_2d(const string& in filename,
+				float listener_x,
+				float listener_y,
+				float sound_x,
+				float sound_y,
+				bool looping,
+				bool memory = false,
+				bool persistent = false)
+	{
+		return play_3d(filename,
+					   listener_x : listener_x,
+									listener_y : listener_y,
+												 sound_x : sound_x,
+														   sound_y : sound_y,
+																	 looping : looping,
+																			   memory : memory,
+																						persistent : persistent);
+	}
+
+	int play_2d(const string& in filename,
+				float listener_x,
+				float listener_y,
+				float sound_x,
+				float sound_y,
+				int left_range,
+				int right_range,
 				int backward_range,
 				int forward_range,
 				bool looping,
@@ -186,39 +197,31 @@ class sound_pool
 				bool memory = false,
 				bool persistent = false)
 	{
-
-		int i = get_free_sound_id();
-		if (i == -1)
-			return -1;
-		pool[i].sound_instance.load(filename);
-		pool[i].sound_instance.set_looping(looping);
-
-		// Set initial properties
-		pool[i].sound_instance.set_pan(start_pan);
-		pool[i].sound_instance.set_volume(start_volume);
-		pool[i].sound_instance.set_pitch(start_pitch);
-
-		// Calculate distance and pan based on positions
-		float dx = (sound_x - listener_x);
-		float dy = (sound_y - listener_y);
-
-		float distance = sqrt(dx * dx + dy * dy);
-
-		// Normalize for pan
-		float pan = dx / (distance + 1e-6); // Add small value to avoid division by zero
-		pool[i].sound_instance.set_pan(pan);
-		pool[i].sound_instance.set_position(listener_x, listener_y, 0, sound_x, sound_y, 0);
-		pool[i].left_range = left_range;
-		pool[i].right_range = right_range;
-		pool[i].backward_range = backward_range;
-		pool[i].forward_range = forward_range;
-
-		pool[i].play(looping);
-		return i; // Return index
+		return play_3d(filename,
+					   listener_x : listener_x,
+									listener_y : listener_y,
+												 sound_x : sound_x,
+														   sound_y : sound_y,
+																	 left_range : left_range,
+																				  right_range : right_range,
+																								backward_range : backward_range,
+																												 forward_range : forward_range,
+																																 looping : looping,
+																																		   offset : offset,
+																																					start_pan : start_pan,
+																																								start_volume : start_volume,
+																																											   start_pitch : start_pitch,
+																																															 memory : memory,
+																																																	  persistent : persistent);
 	}
 
-	int play_3d(const string&in filename, float listener_x, float listener_y, float listener_z,
-				float sound_x, float sound_y, float sound_z,
+	int play_3d(const string& in filename,
+				float listener_x,
+				float listener_y,
+				float listener_z,
+				float sound_x,
+				float sound_y,
+				float sound_z,
 				float rotation,
 				bool looping,
 				bool memory = false,
@@ -227,21 +230,28 @@ class sound_pool
 		return play_3d(filename, listener_x, listener_y, listener_z, sound_x, sound_y, sound_z, rotation, 0, 0, 0, 0, 0, 0, looping, 0, 0, 0, 100, memory, persistent);
 	}
 
-	int play_3d(const string&in filename, float listener_x, float listener_y, float listener_z,
-				float sound_x, float sound_y, float sound_z,
-				float rotation,
-				int left_range,
-				int right_range,
-				int backward_range,
-				int forward_range,
-				int upper_range,
-				int lower_range,
-				bool looping,
-				float offset,
-				float start_pan, float start_volume,
-				float start_pitch,
-				bool memory = false,
-				bool persistent = false)
+	int play_3d(
+		const string&in filename,
+		float listener_x = 0,
+		float listener_y = 0,
+		float listener_z = 0,
+		float sound_x = 0,
+		float sound_y = 0,
+		float sound_z = 0,
+		float rotation = 0,
+		int left_range = 0,
+		int right_range = 0,
+		int backward_range = 0,
+		int forward_range = 0,
+		int upper_range = 0,
+		int lower_range = 0,
+		bool looping = false,
+		float offset = 0,
+		float start_pan = 0,
+		float start_volume = 0,
+		float start_pitch = 0,
+		bool memory = false,
+		bool persistent = false)
 	{
 
 		int i = get_free_sound_id();
