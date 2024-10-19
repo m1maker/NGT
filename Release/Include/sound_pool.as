@@ -1,3 +1,4 @@
+#include "hip"
 class sound_pool_item
 {
 	float upper_range;
@@ -18,7 +19,6 @@ class sound_pool_item
 		reset();
 	}
 	void reset() {
-
 		left_range = 0;
 		right_range = 0;
 		backward_range = 0;
@@ -32,48 +32,25 @@ class sound_pool_item
 		@sound_instance = sound();
 	}
 
-	void update(float listener_x, float listener_y, float listener_z, float rotation = 0.0f, int max_distance = 0) {
-		float distance = get_total_distance(listener_x, listener_y, listener_z);
-		if (distance < max_distance)
-		{
-			float volume = 0 - (distance / max_distance);
-			sound_instance.set_volume(volume);
-			sound_instance.set_position(listener_x, listener_y, listener_z, sound_instance.get_source_position().x, sound_instance.get_source_position().y, sound_instance.get_source_position().z, rotation);
-		}
-		else
-		{
-			sound_instance.set_volume(-100.0); // Mute if out of range
-		}
-		update_listener_position(listener_x, listener_y, listener_z, rotation);
-	}
-
 	void update_listener_position(float listener_x, float listener_y, float listener_z, float rotation) {
 		vector @pos = sound_instance.get_source_position();
+		if (pos is null)
+			return;
+		// Calculate boundaries
 		float delta_left = pos.x - left_range;
 		float delta_right = pos.x + right_range;
 		float delta_backward = pos.y - backward_range;
 		float delta_forward = pos.y + forward_range;
 		float delta_upper = pos.z + upper_range;
 		float delta_lower = pos.z - lower_range;
-		float true_x = listener_x;
-		float true_y = listener_y;
-		float true_z = listener_z;
-		if (listener_x < delta_left)
-			true_x = delta_left;
-		else if (listener_x > delta_right)
-			true_x = delta_right;
 
-		if (listener_y < delta_backward)
-			true_y = delta_backward;
-		else if (listener_y > delta_forward)
-			true_y = delta_forward;
+		// Clamp listener position within defined ranges
+		listener_x = clamp(listener_x, delta_left, delta_right);
+		listener_y = clamp(listener_y, delta_backward, delta_forward);
+		listener_z = clamp(listener_z, delta_lower, delta_upper);
 
-		if (listener_z < delta_lower)
-			true_z = delta_lower;
-		else if (listener_z > delta_upper)
-			true_z = delta_upper;
-
-		sound_instance.set_position(listener_x, listener_y, listener_z, true_x, true_y, true_z, rotation);
+		// Update sound instance position
+		sound_instance.set_position(listener_x, listener_y, listener_z, listener_x, listener_y, listener_z, rotation);
 	}
 
 	float get_total_distance(float listener_x, float listener_y, float listener_z) {
@@ -111,6 +88,7 @@ class sound_pool_item
 
 class sound_pool
 {
+	int max_distance;
 	protected array<sound_pool_item @> pool;
 	protected int max_sounds;
 
@@ -266,7 +244,7 @@ class sound_pool
 		pool[i].sound_instance.set_pitch(start_pitch);
 
 		// Set position in 3D space
-		pool[i].sound_instance.set_position(listener_x, listener_y, listener_z, sound_x, sound_y, sound_z, rotation);
+
 		pool[i].left_range = left_range;
 		pool[i].right_range = right_range;
 		pool[i].backward_range = backward_range;
@@ -275,14 +253,18 @@ class sound_pool
 		pool[i].upper_range = upper_range;
 
 		pool[i].play(looping);
+		if (offset > 0)
+			pool[i].sound_instance.seek(offset);
+		pool[i].update_listener_position(listener_x, listener_y, listener_z, rotation);
+
 		return i; // Return index
 	}
-	void update(float listener_x, float listener_y, float listener_z) {
+	void update(float listener_x, float listener_y, float listener_z, float rotation = 0) {
 		for (int i = 0; i < max_sounds; ++i)
 		{
 			if (pool[i].active && pool[i].playing)
 			{
-				pool[i].update(listener_x, listener_y, listener_z);
+				pool[i].update_listener_position(listener_x, listener_y, listener_z, rotation);
 			}
 			else
 			{

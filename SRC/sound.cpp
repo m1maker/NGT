@@ -1260,7 +1260,8 @@ public:
 	std::map<std::string, ma_node*> effects;
 	mutable int ref = 0;
 	string file;
-	ngtvector source_position, listener_position;
+	ngtvector* source_position = nullptr;
+	ngtvector* listener_position = nullptr;
 	sound(const string& filename = "", bool set3d = false) {
 		ref = 1;
 		if (!g_SoundInitialized) {
@@ -1269,6 +1270,10 @@ public:
 		if (filename != "")
 			this->load(filename, set3d);
 		effects["Default"] = ma_engine_get_endpoint(&sound_default_mixer);
+		listener_position = new ngtvector;
+		source_position = new ngtvector;
+		listener_position->reset();
+		source_position->reset();
 	}
 	~sound() {
 	}
@@ -1278,6 +1283,8 @@ public:
 	void release() {
 		if (--ref < 1) {
 			if (active)this->close();
+			if (listener_position)delete listener_position;
+			if (source_position)delete source_position;
 			delete this;
 		}
 	}
@@ -1507,8 +1514,8 @@ public:
 			delete handle_;
 		}
 		if (!file.empty())file.clear();
-		listener_position.reset();
-		source_position.reset();
+		listener_position->reset();
+		source_position->reset();
 		handle_ = nullptr;
 		active = false;
 		return true;
@@ -1731,12 +1738,12 @@ public:
 			this->set_volume(final_volume);
 		if (this->get_pitch() != final_pitch)
 			this->set_pitch(final_pitch);
-		listener_position.x = listener_x;
-		listener_position.y = listener_y;
-		listener_position.z = listener_z;
-		source_position.x = source_x;
-		source_position.y = source_y;
-		source_position.z = source_z;
+		listener_position->x = listener_x;
+		listener_position->y = listener_y;
+		listener_position->z = listener_z;
+		source_position->x = source_x;
+		source_position->y = source_y;
+		source_position->z = source_z;
 	}
 	void set_position(const ngtvector* listener, const ngtvector* source, double theta, float pan_step, float volume_step, float behind_pitch_decrease, float start_pan, float start_volume, float start_pitch) {
 		if (!active)return;
@@ -1778,8 +1785,14 @@ public:
 	bool get_hrtf() {
 		return effects.find("hrtf") != effects.end();
 	}
-	ngtvector* get_listener_position() { return &listener_position; }
-	ngtvector* get_source_position() { return &source_position; }
+	ngtvector* get_listener_position() {
+		listener_position->add_ref();
+		return listener_position;
+	}
+	ngtvector* get_source_position() {
+		source_position->add_ref();
+		return source_position;
+	}
 	void set_volume_step(float volume_step) {
 		if (!active)return;
 		ma_sound_set_rolloff(handle_, volume_step);
