@@ -43,14 +43,25 @@ class sound_pool_item
 		float delta_forward = pos.y + forward_range;
 		float delta_upper = pos.z + upper_range;
 		float delta_lower = pos.z - lower_range;
+		float true_x = listener_x;
+		float true_y = listener_y;
+		float true_z = listener_z;
+		if (listener_x < delta_left)
+			true_x = delta_left;
+		else if (listener_x > delta_right)
+			true_x = delta_right;
 
-		// Clamp listener position within defined ranges
-		listener_x = clamp(listener_x, delta_left, delta_right);
-		listener_y = clamp(listener_y, delta_backward, delta_forward);
-		listener_z = clamp(listener_z, delta_lower, delta_upper);
+		if (listener_y < delta_backward)
+			true_y = delta_backward;
+		else if (listener_y > delta_forward)
+			true_y = delta_forward;
 
-		// Update sound instance position
-		sound_instance.set_position(listener_x, listener_y, listener_z, listener_x, listener_y, listener_z, rotation);
+		if (listener_z < delta_lower)
+			true_z = delta_lower;
+		else if (listener_z > delta_upper)
+			true_z = delta_upper;
+
+		sound_instance.set_position(listener_x, listener_y, listener_z, true_x, true_y, true_z, rotation);
 	}
 
 	float get_total_distance(float listener_x, float listener_y, float listener_z) {
