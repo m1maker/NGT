@@ -1,0 +1,1410 @@
+// AngelScript 2.38.0 WIP
+// Lib options  AS_64BIT_PTR AS_WIN AS_X64_MSVC 
+// Engine properties
+ep 0 0
+ep 1 0
+ep 2 1
+ep 3 1
+ep 4 0
+ep 5 0
+ep 6 1
+ep 7 0
+ep 8 0
+ep 9 1
+ep 10 0
+ep 11 1
+ep 12 0
+ep 13 0
+ep 14 3
+ep 15 0
+ep 16 1
+ep 17 0
+ep 18 0
+ep 19 1
+ep 20 0
+ep 21 0
+ep 22 0
+ep 23 0
+ep 24 0
+ep 25 0
+ep 26 1
+ep 27 100
+ep 28 1
+ep 29 4096
+ep 30 10
+ep 31 0
+ep 32 0
+ep 33 0
+ep 34 0
+ep 35 1
+ep 36 0
+ep 37 0
+ep 38 1
+
+// Enums
+access ffffffff
+namespace "internet"
+enum smtp_login_method
+enumval smtp_login_method AUTH_NONE 0
+enumval smtp_login_method AUTH_CRAM_MD5 1
+enumval smtp_login_method AUTH_CRAM_SHA1 2
+enumval smtp_login_method AUTH_LOGIN 3
+enumval smtp_login_method AUTH_PLAIN 4
+enumval smtp_login_method AUTH_XOAUTH2 5
+enumval smtp_login_method AUTH_NTLM 6
+namespace ""
+enum keycode
+enumval keycode KEY_UNKNOWN 0
+enumval keycode KEY_A 4
+enumval keycode KEY_B 5
+enumval keycode KEY_C 6
+enumval keycode KEY_D 7
+enumval keycode KEY_E 8
+enumval keycode KEY_F 9
+enumval keycode KEY_G 10
+enumval keycode KEY_H 11
+enumval keycode KEY_I 12
+enumval keycode KEY_J 13
+enumval keycode KEY_K 14
+enumval keycode KEY_L 15
+enumval keycode KEY_M 16
+enumval keycode KEY_N 17
+enumval keycode KEY_O 18
+enumval keycode KEY_P 19
+enumval keycode KEY_Q 20
+enumval keycode KEY_R 21
+enumval keycode KEY_S 22
+enumval keycode KEY_T 23
+enumval keycode KEY_U 24
+enumval keycode KEY_V 25
+enumval keycode KEY_W 26
+enumval keycode KEY_X 27
+enumval keycode KEY_Y 28
+enumval keycode KEY_Z 29
+enumval keycode KEY_1 30
+enumval keycode KEY_2 31
+enumval keycode KEY_3 32
+enumval keycode KEY_4 33
+enumval keycode KEY_5 34
+enumval keycode KEY_6 35
+enumval keycode KEY_7 36
+enumval keycode KEY_8 37
+enumval keycode KEY_9 38
+enumval keycode KEY_0 39
+enumval keycode KEY_RETURN 40
+enumval keycode KEY_ESCAPE 41
+enumval keycode KEY_BACK 42
+enumval keycode KEY_TAB 43
+enumval keycode KEY_SPACE 44
+enumval keycode KEY_MINUS 45
+enumval keycode KEY_EQUALS 46
+enumval keycode KEY_LEFTBRACKET 47
+enumval keycode KEY_RIGHTBRACKET 48
+enumval keycode KEY_BACKSLASH 49
+enumval keycode KEY_NONUSHASH 50
+enumval keycode KEY_SEMICOLON 51
+enumval keycode KEY_APOSTROPHE 52
+enumval keycode KEY_GRAVE 53
+enumval keycode KEY_COMMA 54
+enumval keycode KEY_PERIOD 55
+enumval keycode KEY_SLASH 56
+enumval keycode KEY_CAPSLOCK 57
+enumval keycode KEY_F1 58
+enumval keycode KEY_F2 59
+enumval keycode KEY_F3 60
+enumval keycode KEY_F4 61
+enumval keycode KEY_F5 62
+enumval keycode KEY_F6 63
+enumval keycode KEY_F7 64
+enumval keycode KEY_F8 65
+enumval keycode KEY_F9 66
+enumval keycode KEY_F10 67
+enumval keycode KEY_F11 68
+enumval keycode KEY_F12 69
+enumval keycode KEY_PRINTSCREEN 70
+enumval keycode KEY_SCROLLLOCK 71
+enumval keycode KEY_PAUSE 72
+enumval keycode KEY_INSERT 73
+enumval keycode KEY_HOME 74
+enumval keycode KEY_PAGEUP 75
+enumval keycode KEY_DELETE 76
+enumval keycode KEY_END 77
+enumval keycode KEY_PAGEDOWN 78
+enumval keycode KEY_RIGHT 79
+enumval keycode KEY_LEFT 80
+enumval keycode KEY_DOWN 81
+enumval keycode KEY_UP 82
+enumval keycode KEY_NUMLOCKCLEAR 83
+enumval keycode KEY_NUMPAD_DIVIDE 84
+enumval keycode KEY_NUMPAD_MULTIPLY 85
+enumval keycode KEY_NUMPAD_MINUS 86
+enumval keycode KEY_NUMPAD_PLUS 87
+enumval keycode KEY_NUMPAD_ENTER 88
+enumval keycode KEY_NUMPAD_1 89
+enumval keycode KEY_NUMPAD_2 90
+enumval keycode KEY_NUMPAD_3 91
+enumval keycode KEY_NUMPAD_4 92
+enumval keycode KEY_NUMPAD_5 93
+enumval keycode KEY_NUMPAD_6 94
+enumval keycode KEY_NUMPAD_7 95
+enumval keycode KEY_NUMPAD_8 96
+enumval keycode KEY_NUMPAD_9 97
+enumval keycode KEY_NUMPAD_0 98
+enumval keycode KEY_NUMPAD_PERIOD 99
+enumval keycode KEY_NONUSBACKSLASH 100
+enumval keycode KEY_APPLICATION 101
+enumval keycode KEY_POWER 102
+enumval keycode KEY_NUMPAD_EQUALS 103
+enumval keycode KEY_F13 104
+enumval keycode KEY_F14 105
+enumval keycode KEY_F15 106
+enumval keycode KEY_F16 107
+enumval keycode KEY_F17 108
+enumval keycode KEY_F18 109
+enumval keycode KEY_F19 110
+enumval keycode KEY_F20 111
+enumval keycode KEY_F21 112
+enumval keycode KEY_F22 113
+enumval keycode KEY_F23 114
+enumval keycode KEY_F24 115
+enumval keycode KEY_EXECUTE 116
+enumval keycode KEY_HELP 117
+enumval keycode KEY_MENU 118
+enumval keycode KEY_SELECT 119
+enumval keycode KEY_STOP 120
+enumval keycode KEY_AGAIN 121
+enumval keycode KEY_UNDO 122
+enumval keycode KEY_CUT 123
+enumval keycode KEY_COPY 124
+enumval keycode KEY_PASTE 125
+enumval keycode KEY_FIND 126
+enumval keycode KEY_MUTE 127
+enumval keycode KEY_VOLUMEUP 128
+enumval keycode KEY_VOLUMEDOWN 129
+enumval keycode KEY_NUMPAD_COMMA 133
+enumval keycode KEY_NUMPAD_EQUALSAS400 134
+enumval keycode KEY_INTERNATIONAL1 135
+enumval keycode KEY_INTERNATIONAL2 136
+enumval keycode KEY_INTERNATIONAL3 137
+enumval keycode KEY_INTERNATIONAL4 138
+enumval keycode KEY_INTERNATIONAL5 139
+enumval keycode KEY_INTERNATIONAL6 140
+enumval keycode KEY_INTERNATIONAL7 141
+enumval keycode KEY_INTERNATIONAL8 142
+enumval keycode KEY_INTERNATIONAL9 143
+enumval keycode KEY_LANG1 144
+enumval keycode KEY_LANG2 145
+enumval keycode KEY_LANG3 146
+enumval keycode KEY_LANG4 147
+enumval keycode KEY_LANG5 148
+enumval keycode KEY_LANG6 149
+enumval keycode KEY_LANG7 150
+enumval keycode KEY_LANG8 151
+enumval keycode KEY_LANG9 152
+enumval keycode KEY_ALTERASE 153
+enumval keycode KEY_SYSREQ 154
+enumval keycode KEY_CANCEL 155
+enumval keycode KEY_CLEAR 156
+enumval keycode KEY_SDL_PRIOR 157
+enumval keycode KEY_RETURN2 158
+enumval keycode KEY_SEPARATOR 159
+enumval keycode KEY_OUT 160
+enumval keycode KEY_OPER 161
+enumval keycode KEY_CLEARAGAIN 162
+enumval keycode KEY_CRSEL 163
+enumval keycode KEY_EXSEL 164
+enumval keycode KEY_NUMPAD_00 176
+enumval keycode KEY_NUMPAD_000 177
+enumval keycode KEY_THOUSANDSSEPARATOR 178
+enumval keycode KEY_DECIMALSEPARATOR 179
+enumval keycode KEY_CURRENCYUNIT 180
+enumval keycode KEY_CURRENCYSUBUNIT 181
+enumval keycode KEY_NUMPAD_LEFTPAREN 182
+enumval keycode KEY_NUMPAD_RIGHTPAREN 183
+enumval keycode KEY_NUMPAD_LEFTBRACE 184
+enumval keycode KEY_NUMPAD_RIGHTBRACE 185
+enumval keycode KEY_NUMPAD_TAB 186
+enumval keycode KEY_NUMPAD_BACKSPACE 187
+enumval keycode KEY_NUMPAD_A 188
+enumval keycode KEY_NUMPAD_B 189
+enumval keycode KEY_NUMPAD_C 190
+enumval keycode KEY_NUMPAD_D 191
+enumval keycode KEY_NUMPAD_E 192
+enumval keycode KEY_NUMPAD_F 193
+enumval keycode KEY_NUMPAD_XOR 194
+enumval keycode KEY_NUMPAD_POWER 195
+enumval keycode KEY_NUMPAD_PERCENT 196
+enumval keycode KEY_NUMPAD_LESS 197
+enumval keycode KEY_NUMPAD_GREATER 198
+enumval keycode KEY_NUMPAD_AMPERSAND 199
+enumval keycode KEY_NUMPAD_DBLAMPERSAND 200
+enumval keycode KEY_NUMPAD_VERTICALBAR 201
+enumval keycode KEY_NUMPAD_DBLVERTICALBAR 202
+enumval keycode KEY_NUMPAD_COLON 203
+enumval keycode KEY_NUMPAD_HASH 204
+enumval keycode KEY_NUMPAD_SPACE 205
+enumval keycode KEY_NUMPAD_AT 206
+enumval keycode KEY_NUMPAD_EXCLAM 207
+enumval keycode KEY_NUMPAD_MEMSTORE 208
+enumval keycode KEY_NUMPAD_MEMRECALL 209
+enumval keycode KEY_NUMPAD_MEMCLEAR 210
+enumval keycode KEY_NUMPAD_MEMADD 211
+enumval keycode KEY_NUMPAD_MEMSUBTRACT 212
+enumval keycode KEY_NUMPAD_MEMMULTIPLY 213
+enumval keycode KEY_NUMPAD_MEMDIVIDE 214
+enumval keycode KEY_NUMPAD_PLUSMINUS 215
+enumval keycode KEY_NUMPAD_CLEAR 216
+enumval keycode KEY_NUMPAD_CLEARENTRY 217
+enumval keycode KEY_NUMPAD_BINARY 218
+enumval keycode KEY_NUMPAD_OCTAL 219
+enumval keycode KEY_NUMPAD_DECIMAL 220
+enumval keycode KEY_NUMPAD_HEXADECIMAL 221
+enumval keycode KEY_LCTRL 224
+enumval keycode KEY_LSHIFT 225
+enumval keycode KEY_LALT 226
+enumval keycode KEY_LGUI 227
+enumval keycode KEY_RCTRL 228
+enumval keycode KEY_RSHIFT 229
+enumval keycode KEY_RALT 230
+enumval keycode KEY_RGUI 231
+enumval keycode KEY_MODE 257
+enumval keycode KEY_MEDIA_NEXT_TRACK 267
+enumval keycode KEY_MEDIA_PREVIOUS_TRACK 268
+enumval keycode KEY_MEDIA_STOP 269
+enumval keycode KEY_MEDIA_PLAY 262
+enumval keycode KEY_MEDIA_SELECT 272
+enumval keycode KEY_AC_SEARCH 280
+enumval keycode KEY_AC_HOME 281
+enumval keycode KEY_AC_BACK 282
+enumval keycode KEY_AC_FORWARD 283
+enumval keycode KEY_AC_STOP 284
+enumval keycode KEY_AC_REFRESH 285
+enumval keycode KEY_AC_BOOKMARKS 286
+enumval keycode KEY_MEDIA_EJECT 270
+enumval keycode KEY_SLEEP 258
+enumval keycode KEY_MEDIA_REWIND 266
+enumval keycode KEY_MEDIA_FAST_FORWARD 265
+enumval keycode KEY_SOFTLEFT 287
+enumval keycode KEY_SOFTRIGHT 288
+enumval keycode KEY_CALL 289
+enumval keycode KEY_ENDCALL 290
+enum message_box_flags
+enumval message_box_flags MESSAGE_BOX_ERROR 16
+enumval message_box_flags MESSAGE_BOX_WARNING 32
+enumval message_box_flags MESSAGE_BOX_INFORMATION 64
+enumval message_box_flags MESSAGE_BOX_BUTTONS_LEFT_TO_RIGHT 128
+enumval message_box_flags MESSAGE_BOX_BUTTONS_RIGHT_TO_LEFT 256
+enum textureaccess
+enumval textureaccess TEXTUREACCESS_STATIC 0
+enumval textureaccess TEXTUREACCESS_STREAMING 1
+enumval textureaccess TEXTUREACCESS_TARGET 2
+enum rendererlogicalpresentation
+enumval rendererlogicalpresentation LOGICAL_PRESENTATION_DISABLED 0
+enumval rendererlogicalpresentation LOGICAL_PRESENTATION_STRETCH 1
+enumval rendererlogicalpresentation LOGICAL_PRESENTATION_LETTERBOX 2
+enumval rendererlogicalpresentation LOGICAL_PRESENTATION_OVERSCAN 3
+enumval rendererlogicalpresentation LOGICAL_PRESENTATION_INTEGER_SCALE 4
+enum scalemode
+enumval scalemode SCALEMODE_NEAREST 0
+enumval scalemode SCALEMODE_LINEAR 1
+enum blendmode
+enumval blendmode BLENDMODE_NONE 0
+enumval blendmode BLENDMODE_BLEND 1
+enumval blendmode BLENDMODE_BLEND_PREMULTIPLIED 16
+enumval blendmode BLENDMODE_ADD 2
+enumval blendmode BLENDMODE_ADD_PREMULTIPLIED 32
+enumval blendmode BLENDMODE_MOD 4
+enumval blendmode BLENDMODE_MUL 8
+enumval blendmode BLENDMODE_INVALID 2147483647
+enum flipmode
+enumval flipmode FLIP_NONE 0
+enumval flipmode FLIP_HORIZONTAL 1
+enumval flipmode FLIP_VERTICAL 2
+enum pixeltype
+enumval pixeltype PIXELTYPE_UNKNOWN 0
+enumval pixeltype PIXELTYPE_INDEX1 1
+enumval pixeltype PIXELTYPE_INDEX4 2
+enumval pixeltype PIXELTYPE_INDEX8 3
+enumval pixeltype PIXELTYPE_PACKED8 4
+enumval pixeltype PIXELTYPE_PACKED16 5
+enumval pixeltype PIXELTYPE_PACKED32 6
+enumval pixeltype PIXELTYPE_ARRAYU8 7
+enumval pixeltype PIXELTYPE_ARRAYU16 8
+enumval pixeltype PIXELTYPE_ARRAYU32 9
+enumval pixeltype PIXELTYPE_ARRAYF16 10
+enumval pixeltype PIXELTYPE_ARRAYF32 11
+enumval pixeltype PIXELTYPE_INDEX2 12
+enum bitmaporder
+enumval bitmaporder BITMAPORDER_NONE 0
+enumval bitmaporder BITMAPORDER_4321 1
+enumval bitmaporder BITMAPORDER_1234 2
+enum packedorder
+enumval packedorder PACKEDORDER_NONE 0
+enumval packedorder PACKEDORDER_XRGB 1
+enumval packedorder PACKEDORDER_RGBX 2
+enumval packedorder PACKEDORDER_ARGB 3
+enumval packedorder PACKEDORDER_RGBA 4
+enumval packedorder PACKEDORDER_XBGR 5
+enumval packedorder PACKEDORDER_BGRX 6
+enumval packedorder PACKEDORDER_ABGR 7
+enumval packedorder PACKEDORDER_BGRA 8
+enum arrayorder
+enumval arrayorder ARRAYORDER_NONE 0
+enumval arrayorder ARRAYORDER_RGB 1
+enumval arrayorder ARRAYORDER_RGBA 2
+enumval arrayorder ARRAYORDER_ARGB 3
+enumval arrayorder ARRAYORDER_BGR 4
+enumval arrayorder ARRAYORDER_BGRA 5
+enumval arrayorder ARRAYORDER_ABGR 6
+enum packedlayout
+enumval packedlayout PACKEDLAYOUT_NONE 0
+enumval packedlayout PACKEDLAYOUT_332 1
+enumval packedlayout PACKEDLAYOUT_4444 2
+enumval packedlayout PACKEDLAYOUT_1555 3
+enumval packedlayout PACKEDLAYOUT_5551 4
+enumval packedlayout PACKEDLAYOUT_565 5
+enumval packedlayout PACKEDLAYOUT_8888 6
+enumval packedlayout PACKEDLAYOUT_2101010 7
+enumval packedlayout PACKEDLAYOUT_1010102 8
+enum pixelformat
+enumval pixelformat PIXELFORMAT_UNKNOWN 0
+enumval pixelformat PIXELFORMAT_INDEX1LSB 286261504
+enumval pixelformat PIXELFORMAT_INDEX1MSB 287310080
+enumval pixelformat PIXELFORMAT_INDEX2LSB 470811136
+enumval pixelformat PIXELFORMAT_INDEX2MSB 471859712
+enumval pixelformat PIXELFORMAT_INDEX4LSB 303039488
+enumval pixelformat PIXELFORMAT_INDEX4MSB 304088064
+enumval pixelformat PIXELFORMAT_INDEX8 318769153
+enumval pixelformat PIXELFORMAT_XRGB4444 353504258
+enumval pixelformat PIXELFORMAT_XBGR4444 357698562
+enumval pixelformat PIXELFORMAT_XRGB1555 353570562
+enumval pixelformat PIXELFORMAT_XBGR1555 357764866
+enumval pixelformat PIXELFORMAT_ARGB4444 355602434
+enumval pixelformat PIXELFORMAT_RGBA4444 356651010
+enumval pixelformat PIXELFORMAT_ABGR4444 359796738
+enumval pixelformat PIXELFORMAT_BGRA4444 360845314
+enumval pixelformat PIXELFORMAT_ARGB1555 355667970
+enumval pixelformat PIXELFORMAT_RGBA5551 356782082
+enumval pixelformat PIXELFORMAT_ABGR1555 359862274
+enumval pixelformat PIXELFORMAT_BGRA5551 360976386
+enumval pixelformat PIXELFORMAT_RGB565 353701890
+enumval pixelformat PIXELFORMAT_BGR565 357896194
+enumval pixelformat PIXELFORMAT_RGB24 386930691
+enumval pixelformat PIXELFORMAT_BGR24 390076419
+enumval pixelformat PIXELFORMAT_XRGB8888 370546692
+enumval pixelformat PIXELFORMAT_RGBX8888 371595268
+enumval pixelformat PIXELFORMAT_XBGR8888 374740996
+enumval pixelformat PIXELFORMAT_BGRX8888 375789572
+enumval pixelformat PIXELFORMAT_ARGB8888 372645892
+enumval pixelformat PIXELFORMAT_RGBA8888 373694468
+enumval pixelformat PIXELFORMAT_ABGR8888 376840196
+enumval pixelformat PIXELFORMAT_BGRA8888 377888772
+enumval pixelformat PIXELFORMAT_XRGB2101010 370614276
+enumval pixelformat PIXELFORMAT_XBGR2101010 374808580
+enumval pixelformat PIXELFORMAT_ARGB2101010 372711428
+enumval pixelformat PIXELFORMAT_ABGR2101010 376905732
+enumval pixelformat PIXELFORMAT_RGB48 403714054
+enumval pixelformat PIXELFORMAT_BGR48 406859782
+enumval pixelformat PIXELFORMAT_RGBA64 404766728
+enumval pixelformat PIXELFORMAT_ARGB64 405815304
+enumval pixelformat PIXELFORMAT_BGRA64 407912456
+enumval pixelformat PIXELFORMAT_ABGR64 408961032
+enumval pixelformat PIXELFORMAT_RGB48_FLOAT 437268486
+enumval pixelformat PIXELFORMAT_BGR48_FLOAT 440414214
+enumval pixelformat PIXELFORMAT_RGBA64_FLOAT 438321160
+enumval pixelformat PIXELFORMAT_ARGB64_FLOAT 439369736
+enumval pixelformat PIXELFORMAT_BGRA64_FLOAT 441466888
+enumval pixelformat PIXELFORMAT_ABGR64_FLOAT 442515464
+enumval pixelformat PIXELFORMAT_RGB96_FLOAT 454057996
+enumval pixelformat PIXELFORMAT_BGR96_FLOAT 457203724
+enumval pixelformat PIXELFORMAT_RGBA128_FLOAT 455114768
+enumval pixelformat PIXELFORMAT_ARGB128_FLOAT 456163344
+enumval pixelformat PIXELFORMAT_BGRA128_FLOAT 458260496
+enumval pixelformat PIXELFORMAT_ABGR128_FLOAT 459309072
+enumval pixelformat PIXELFORMAT_YV12 842094169
+enumval pixelformat PIXELFORMAT_IYUV 1448433993
+enumval pixelformat PIXELFORMAT_YUY2 844715353
+enumval pixelformat PIXELFORMAT_UYVY 1498831189
+enumval pixelformat PIXELFORMAT_YVYU 1431918169
+enumval pixelformat PIXELFORMAT_NV12 842094158
+enumval pixelformat PIXELFORMAT_NV21 825382478
+enumval pixelformat PIXELFORMAT_P010 808530000
+enumval pixelformat PIXELFORMAT_EXTERNAL_OES 542328143
+enum colortype
+enumval colortype COLOR_TYPE_UNKNOWN 0
+enumval colortype COLOR_TYPE_RGB 1
+enumval colortype COLOR_TYPE_YCBCR 2
+enum colorrange
+enumval colorrange COLOR_RANGE_UNKNOWN 0
+enumval colorrange COLOR_RANGE_LIMITED 1
+enumval colorrange COLOR_RANGE_FULL 2
+enum colorprimaries
+enumval colorprimaries PRIMARIES_UNKNOWN 0
+enumval colorprimaries PRIMARIES_BT709 1
+enumval colorprimaries PRIMARIES_UNSPECIFIED 2
+enumval colorprimaries PRIMARIES_BT470M 4
+enumval colorprimaries PRIMARIES_BT470BG 5
+enumval colorprimaries PRIMARIES_BT601 6
+enumval colorprimaries PRIMARIES_SMPTE240 7
+enumval colorprimaries PRIMARIES_GENERIC_FILM 8
+enumval colorprimaries PRIMARIES_BT2020 9
+enumval colorprimaries PRIMARIES_XYZ 10
+enumval colorprimaries PRIMARIES_SMPTE431 11
+enumval colorprimaries PRIMARIES_SMPTE432 12
+enumval colorprimaries PRIMARIES_EBU3213 22
+enumval colorprimaries PRIMARIES_CUSTOM 31
+enum transfercharacteristics
+enumval transfercharacteristics TRANSFER_CHARACTERISTICS_UNKNOWN 0
+enumval transfercharacteristics TRANSFER_CHARACTERISTICS_BT709 1
+enumval transfercharacteristics TRANSFER_CHARACTERISTICS_UNSPECIFIED 2
+enumval transfercharacteristics TRANSFER_CHARACTERISTICS_GAMMA22 4
+enumval transfercharacteristics TRANSFER_CHARACTERISTICS_GAMMA28 5
+enumval transfercharacteristics TRANSFER_CHARACTERISTICS_BT601 6
+enumval transfercharacteristics TRANSFER_CHARACTERISTICS_SMPTE240 7
+enumval transfercharacteristics TRANSFER_CHARACTERISTICS_LINEAR 8
+enumval transfercharacteristics TRANSFER_CHARACTERISTICS_LOG100 9
+enumval transfercharacteristics TRANSFER_CHARACTERISTICS_LOG100_SQRT10 10
+enumval transfercharacteristics TRANSFER_CHARACTERISTICS_IEC61966 11
+enumval transfercharacteristics TRANSFER_CHARACTERISTICS_BT1361 12
+enumval transfercharacteristics TRANSFER_CHARACTERISTICS_SRGB 13
+enumval transfercharacteristics TRANSFER_CHARACTERISTICS_BT2020_10BIT 14
+enumval transfercharacteristics TRANSFER_CHARACTERISTICS_BT2020_12BIT 15
+enumval transfercharacteristics TRANSFER_CHARACTERISTICS_PQ 16
+enumval transfercharacteristics TRANSFER_CHARACTERISTICS_SMPTE428 17
+enumval transfercharacteristics TRANSFER_CHARACTERISTICS_HLG 18
+enumval transfercharacteristics TRANSFER_CHARACTERISTICS_CUSTOM 31
+enum matrixcoefficients
+enumval matrixcoefficients MATRIX_COEFFICIENTS_IDENTITY 0
+enumval matrixcoefficients MATRIX_COEFFICIENTS_BT709 1
+enumval matrixcoefficients MATRIX_COEFFICIENTS_UNSPECIFIED 2
+enumval matrixcoefficients MATRIX_COEFFICIENTS_FCC 4
+enumval matrixcoefficients MATRIX_COEFFICIENTS_BT470BG 5
+enumval matrixcoefficients MATRIX_COEFFICIENTS_BT601 6
+enumval matrixcoefficients MATRIX_COEFFICIENTS_SMPTE240 7
+enumval matrixcoefficients MATRIX_COEFFICIENTS_YCGCO 8
+enumval matrixcoefficients MATRIX_COEFFICIENTS_BT2020_NCL 9
+enumval matrixcoefficients MATRIX_COEFFICIENTS_BT2020_CL 10
+enumval matrixcoefficients MATRIX_COEFFICIENTS_SMPTE2085 11
+enumval matrixcoefficients MATRIX_COEFFICIENTS_CHROMA_DERIVED_NCL 12
+enumval matrixcoefficients MATRIX_COEFFICIENTS_CHROMA_DERIVED_CL 13
+enumval matrixcoefficients MATRIX_COEFFICIENTS_ICTCP 14
+enumval matrixcoefficients MATRIX_COEFFICIENTS_CUSTOM 31
+enum chromalocation
+enumval chromalocation CHROMA_LOCATION_NONE 0
+enumval chromalocation CHROMA_LOCATION_LEFT 1
+enumval chromalocation CHROMA_LOCATION_CENTER 2
+enumval chromalocation CHROMA_LOCATION_TOPLEFT 3
+enum seek_origin
+enumval seek_origin SEEK_ORIGIN_START 0
+enumval seek_origin SEEK_ORIGIN_CURRENT 1
+enumval seek_origin SEEK_ORIGIN_END 2
+namespace "scripting"
+enum typeid
+enumval typeid VOID 0
+enumval typeid BOOL 1
+enumval typeid INT8 2
+enumval typeid INT16 3
+enumval typeid INT32 4
+enumval typeid INT64 5
+enumval typeid UINT8 6
+enumval typeid UINT16 7
+enumval typeid UINT32 8
+enumval typeid UINT64 9
+enumval typeid FLOAT 10
+enumval typeid DOUBLE 11
+enumval typeid OBJHANDLE 1073741824
+enumval typeid HANDLETOCONST 536870912
+enumval typeid MASK_OBJECT 469762048
+enumval typeid APPOBJECT 67108864
+enumval typeid SCRIPTOBJECT 134217728
+enumval typeid TEMPLATE 268435456
+enumval typeid MASK_SEQNBR 67108863
+enum callconv
+enumval callconv CDECL 0
+enumval callconv STDCALL 1
+enum ctxstate
+enumval ctxstate EXECUTION_FINISHED 0
+enumval ctxstate EXECUTION_SUSPENDED 1
+enumval ctxstate EXECUTION_ABORTED 2
+enumval ctxstate EXECUTION_EXCEPTION 3
+enumval ctxstate EXECUTION_PREPARED 4
+enumval ctxstate EXECUTION_UNINITIALIZED 5
+enumval ctxstate EXECUTION_ACTIVE 6
+enumval ctxstate EXECUTION_ERROR 7
+
+// Types
+namespace ""
+objtype "string" 7938
+objtype "wstring" 7938
+objtype "array<T>" 69
+objtype "dictionaryValue" 6022
+objtype "dictionary" 5
+objtype "datetime" 6922
+objtype "file" 1
+objtype "filesystem" 1
+objtype "complex" 137994
+objtype "ref" 8070
+objtype "any" 5
+objtype "vector" 1
+objtype "pack" 1
+objtype "mixer" 262145
+objtype "sound" 1
+objtype "rect" 262145
+objtype "frect" 262145
+objtype "texture" 1
+objtype "renderer" 1
+objtype "surface" 1
+objtype "iostream" 1
+objtype "memory_stream" 1
+namespace "scripting"
+objtype "function" 1
+objtype "context" 1
+objtype "module" 262145
+namespace ""
+objtype "tts_voice" 1
+objtype "user_idle" 1
+objtype "timer" 1
+objtype "library" 1
+objtype "thread" 1
+objtype "instance" 1
+objtype "network_event" 1
+objtype "network" 1
+objtype "sqlite3statement" 1
+objtype "sqlite3" 1
+typedef long "int64"
+typedef ulong "uint64"
+typedef char "int8"
+typedef uchar "uint8"
+typedef short "int16"
+typedef ushort "uint16"
+typedef size_t "uint64"
+funcdef "bool array<T>::less(const T&in a, const T&in b)"
+funcdef "int exit_callback()"
+funcdef "void sound_end_callback(const ?&in = null)"
+funcdef "void thread_func()"
+funcdef "int sqlite3authorizer(string, int, string, string, string, string)"
+funcdef "void coroutine(dictionary@)"
+
+// Template type members
+objbeh "array<T>" 3 "array<T>@ array(int&in)"
+objbeh "array<T>" 3 "array<T>@ array(int&in, uint length)"
+objbeh "array<T>" 3 "array<T>@ array(int&in, uint length, const T&in value)"
+objbeh "array<T>" 5 "void $beh5()"
+objbeh "array<T>" 6 "void $beh6()"
+objbeh "array<T>" 9 "int $beh9()"
+objbeh "array<T>" 10 "void $beh10()"
+objbeh "array<T>" 11 "bool $beh11()"
+objbeh "array<T>" 12 "void $beh12(int&in)"
+objbeh "array<T>" 13 "void $beh13(int&in)"
+objbeh "array<T>" 8 "bool $beh8(int&in, bool&out)"
+objbeh "array<T>" 4 "array<T>@ $list(int&in, int&in) { repeat T }"
+objmthd "array<T>" "T& opIndex(uint index)"
+objmthd "array<T>" "const T& opIndex(uint index) const"
+objmthd "array<T>" "array<T>& opAssign(const array<T>&in)"
+objmthd "array<T>" "void insert_at(uint index, const T&in value)"
+objmthd "array<T>" "void insert_at(uint index, const array<T>&inout arr)"
+objmthd "array<T>" "void insert_last(const T&in value)"
+objmthd "array<T>" "void remove_at(uint index)"
+objmthd "array<T>" "void remove_last()"
+objmthd "array<T>" "void remove_range(uint start, uint count)"
+objmthd "array<T>" "uint length() const"
+objmthd "array<T>" "void reserve(uint length)"
+objmthd "array<T>" "void resize(uint length)"
+objmthd "array<T>" "void sort_asc()"
+objmthd "array<T>" "void sort_asc(uint startAt, uint count)"
+objmthd "array<T>" "void sort_desc()"
+objmthd "array<T>" "void sort_desc(uint startAt, uint count)"
+objmthd "array<T>" "void reverse()"
+objmthd "array<T>" "int find(const T&in value) const"
+objmthd "array<T>" "int find(uint startAt, const T&in value) const"
+objmthd "array<T>" "int find_by_ref(const T&in value) const"
+objmthd "array<T>" "int find_by_ref(uint startAt, const T&in value) const"
+objmthd "array<T>" "bool op_equals(const array<T>&in) const"
+objmthd "array<T>" "bool is_empty() const"
+objmthd "array<T>" "void sort(array<T>::less&in, uint startAt = 0, uint count = uint ( - 1 ))"
+
+// Type members
+objbeh "string" 2 "void string()"
+objbeh "string" 0 "void string()"
+objbeh "string" 0 "void string(const string&in)"
+objbeh "string" 0 "void string(uint64)"
+objbeh "string" 0 "void string(int64)"
+objbeh "string" 0 "void string(uint)"
+objbeh "string" 0 "void string(int)"
+objbeh "string" 0 "void string(double)"
+objbeh "string" 0 "void string(float)"
+objbeh "string" 0 "void string(bool)"
+objbeh "string" 0 "void string(const ?&in, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null)"
+objmthd "string" "string& opAssign(const string&in)"
+objmthd "string" "string& opAddAssign(const string&in)"
+objmthd "string" "bool opEquals(const string&in) const"
+objmthd "string" "int opCmp(const string&in) const"
+objmthd "string" "string opAdd(const string&in) const"
+objmthd "string" "uint length() const"
+objmthd "string" "void resize(uint)"
+objmthd "string" "bool is_empty() const"
+objmthd "string" "string opIndex(uint)"
+objmthd "string" "const string opIndex(uint) const"
+objmthd "string" "string& opAssign(double)"
+objmthd "string" "string& opAddAssign(double)"
+objmthd "string" "string opAdd(double) const"
+objmthd "string" "string opAdd_r(double) const"
+objmthd "string" "string& opAssign(float)"
+objmthd "string" "string& opAddAssign(float)"
+objmthd "string" "string opAdd(float) const"
+objmthd "string" "string opAdd_r(float) const"
+objmthd "string" "string& opAssign(int64)"
+objmthd "string" "string& opAddAssign(int64)"
+objmthd "string" "string opAdd(int64) const"
+objmthd "string" "string opAdd_r(int64) const"
+objmthd "string" "string& opAssign(uint64)"
+objmthd "string" "string& opAddAssign(uint64)"
+objmthd "string" "string opAdd(uint64) const"
+objmthd "string" "string opAdd_r(uint64) const"
+objmthd "string" "string& opAssign(bool)"
+objmthd "string" "string& opAddAssign(bool)"
+objmthd "string" "string opAdd(bool) const"
+objmthd "string" "string opAdd_r(bool) const"
+objmthd "string" "string substr(uint start = 0, int count = - 1) const"
+objmthd "string" "int find_first(const string&in, uint start = 0) const"
+objmthd "string" "int find_first_of(const string&in, uint start = 0) const"
+objmthd "string" "int find_first_not_of(const string&in, uint start = 0) const"
+objmthd "string" "int find_last(const string&in, int start = - 1) const"
+objmthd "string" "int find_last_of(const string&in, int start = - 1) const"
+objmthd "string" "int find_last_not_of(const string&in, int start = - 1) const"
+objmthd "string" "void insert(uint pos, const string&in other)"
+objmthd "string" "void erase(uint pos, int count = - 1)"
+objmthd "string" "array<string>@ split(const string&in) const"
+objmthd "string" "string replace(const string&in, const string&in) const"
+objmthd "string" "string capitalize() const"
+objmthd "string" "string upper() const"
+objmthd "string" "string lower() const"
+objmthd "string" "array<string>@ split_lines() const"
+objmthd "string" "bool ends_with(const string&in) const"
+objmthd "string" "bool starts_with(const string&in) const"
+objmthd "string" "bool contains(const string&in) const"
+objmthd "string" "bool is_upper() const"
+objmthd "string" "bool is_lower() const"
+objmthd "string" "string format(const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null) const"
+objmthd "string" "uint64 c_str()"
+objbeh "wstring" 2 "void wstring()"
+objbeh "wstring" 0 "void wstring()"
+objbeh "wstring" 0 "void wstring(const wstring&in)"
+objmthd "wstring" "wstring& opAssign(const wstring&in)"
+objmthd "wstring" "wstring& opAddAssign(const wstring&in)"
+objmthd "wstring" "void clear()"
+objmthd "wstring" "uint64 c_str()"
+objbeh "dictionaryValue" 2 "void dictionaryValue()"
+objbeh "dictionaryValue" 12 "void $beh12(int&in)"
+objbeh "dictionaryValue" 13 "void $beh13(int&in)"
+objbeh "dictionaryValue" 0 "void dictionaryValue()"
+objmthd "dictionaryValue" "dictionaryValue& opAssign(const dictionaryValue&in)"
+objmthd "dictionaryValue" "dictionaryValue& opHndlAssign(const ?&in)"
+objmthd "dictionaryValue" "dictionaryValue& opHndlAssign(const dictionaryValue&in)"
+objmthd "dictionaryValue" "dictionaryValue& opAssign(const ?&in)"
+objmthd "dictionaryValue" "dictionaryValue& opAssign(double)"
+objmthd "dictionaryValue" "dictionaryValue& opAssign(int64)"
+objmthd "dictionaryValue" "void opCast(?&out)"
+objmthd "dictionaryValue" "void opConv(?&out)"
+objmthd "dictionaryValue" "int64 opConv()"
+objmthd "dictionaryValue" "double opConv()"
+objbeh "dictionary" 3 "dictionary@ dictionary()"
+objbeh "dictionary" 5 "void $beh5()"
+objbeh "dictionary" 6 "void $beh6()"
+objbeh "dictionary" 9 "int $beh9()"
+objbeh "dictionary" 10 "void $beh10()"
+objbeh "dictionary" 11 "bool $beh11()"
+objbeh "dictionary" 12 "void $beh12(int&in)"
+objbeh "dictionary" 13 "void $beh13(int&in)"
+objbeh "dictionary" 4 "dictionary@ $list(int&in) { repeat { string, ? } }"
+objmthd "dictionary" "dictionary& opAssign(const dictionary&in)"
+objmthd "dictionary" "void set(const string&in, const ?&in)"
+objmthd "dictionary" "bool get(const string&in, ?&out) const"
+objmthd "dictionary" "void set(const string&in, const int64&in)"
+objmthd "dictionary" "bool get(const string&in, int64&out) const"
+objmthd "dictionary" "void set(const string&in, const double&in)"
+objmthd "dictionary" "bool get(const string&in, double&out) const"
+objmthd "dictionary" "bool exists(const string&in) const"
+objmthd "dictionary" "bool is_empty() const"
+objmthd "dictionary" "uint get_size() const"
+objmthd "dictionary" "bool delete(const string&in)"
+objmthd "dictionary" "void delete_all()"
+objmthd "dictionary" "array<string>@ get_keys() const"
+objmthd "dictionary" "dictionaryValue& opIndex(const string&in)"
+objmthd "dictionary" "const dictionaryValue& opIndex(const string&in) const"
+objbeh "datetime" 0 "void datetime()"
+objbeh "datetime" 0 "void datetime(const datetime&in)"
+objbeh "datetime" 0 "void datetime(uint, uint, uint, uint = 0, uint = 0, uint = 0)"
+objmthd "datetime" "datetime& opAssign(const datetime&in)"
+objmthd "datetime" "uint get_year() const property"
+objmthd "datetime" "uint get_month() const property"
+objmthd "datetime" "uint get_day() const property"
+objmthd "datetime" "uint get_hour() const property"
+objmthd "datetime" "uint get_minute() const property"
+objmthd "datetime" "uint get_second() const property"
+objmthd "datetime" "bool setDate(uint year, uint month, uint day)"
+objmthd "datetime" "bool setTime(uint hour, uint minute, uint second)"
+objmthd "datetime" "int64 opSub(const datetime&in) const"
+objmthd "datetime" "datetime opAdd(int64 seconds) const"
+objmthd "datetime" "datetime opAdd_r(int64 seconds) const"
+objmthd "datetime" "datetime& opAddAssign(int64 seconds)"
+objmthd "datetime" "datetime opSub(int64 seconds) const"
+objmthd "datetime" "datetime opSub_r(int64 seconds) const"
+objmthd "datetime" "datetime& opSubAssign(int64 seconds)"
+objmthd "datetime" "bool opEquals(const datetime&in) const"
+objmthd "datetime" "int opCmp(const datetime&in) const"
+objbeh "file" 3 "file@ file()"
+objbeh "file" 5 "void $beh5()"
+objbeh "file" 6 "void $beh6()"
+objmthd "file" "int open(const string&in, const string&in)"
+objmthd "file" "int close()"
+objmthd "file" "int get_size() const property"
+objmthd "file" "bool is_end_of_file() const"
+objmthd "file" "string read(uint)"
+objmthd "file" "string read_line()"
+objmthd "file" "int64 read_int(uint)"
+objmthd "file" "uint64 read_uint(uint)"
+objmthd "file" "float read_float()"
+objmthd "file" "double read_double()"
+objmthd "file" "int write(const string&in)"
+objmthd "file" "int write_int(int64, uint)"
+objmthd "file" "int write_uint(uint64, uint)"
+objmthd "file" "int write_float(float)"
+objmthd "file" "int write_double(double)"
+objmthd "file" "int get_pos() const property"
+objmthd "file" "void set_pos(int) const property"
+objmthd "file" "int move_pos(int)"
+objprop "file" "bool most_significant_byte_first" 0 0
+objbeh "filesystem" 3 "filesystem@ filesystem()"
+objbeh "filesystem" 5 "void $beh5()"
+objbeh "filesystem" 6 "void $beh6()"
+objmthd "filesystem" "bool file_exists(const string&in)"
+objmthd "filesystem" "bool dir_exists(const string&in)"
+objmthd "filesystem" "bool change_current_path(const string&in)"
+objmthd "filesystem" "string get_current_path() const property"
+objmthd "filesystem" "array<string>@ get_dirs() const property"
+objmthd "filesystem" "array<string>@ get_files(string = \"*\") const"
+objmthd "filesystem" "bool is_dir(const string&in) const"
+objmthd "filesystem" "bool is_link(const string&in) const"
+objmthd "filesystem" "int64 get_size(const string&in) const"
+objmthd "filesystem" "int make_dir(const string&in)"
+objmthd "filesystem" "int remove_dir(const string&in)"
+objmthd "filesystem" "int delete_file(const string&in)"
+objmthd "filesystem" "int copy_file(const string&in, const string&in)"
+objmthd "filesystem" "int move(const string&in, const string&in)"
+objmthd "filesystem" "datetime get_create_date_time(const string&in) const"
+objmthd "filesystem" "datetime get_modify_date_time(const string&in) const"
+objbeh "complex" 1 "void $list(const int&in) { float, float }"
+objbeh "complex" 0 "void complex()"
+objbeh "complex" 0 "void complex(const complex&in)"
+objbeh "complex" 0 "void complex(float)"
+objbeh "complex" 0 "void complex(float, float)"
+objmthd "complex" "complex& opAddAssign(const complex&in)"
+objmthd "complex" "complex& opSubAssign(const complex&in)"
+objmthd "complex" "complex& opMulAssign(const complex&in)"
+objmthd "complex" "complex& opDivAssign(const complex&in)"
+objmthd "complex" "bool opEquals(const complex&in) const"
+objmthd "complex" "complex opAdd(const complex&in) const"
+objmthd "complex" "complex opSub(const complex&in) const"
+objmthd "complex" "complex opMul(const complex&in) const"
+objmthd "complex" "complex opDiv(const complex&in) const"
+objmthd "complex" "float abs() const"
+objmthd "complex" "complex get_ri() const property"
+objmthd "complex" "complex get_ir() const property"
+objmthd "complex" "void set_ri(const complex&in) property"
+objmthd "complex" "void set_ir(const complex&in) property"
+objprop "complex" "float r" 0 0
+objprop "complex" "float i" 0 0
+objbeh "ref" 2 "void ref()"
+objbeh "ref" 12 "void $beh12(int&in)"
+objbeh "ref" 13 "void $beh13(int&in)"
+objbeh "ref" 0 "void ref()"
+objbeh "ref" 0 "void ref(const ref&in)"
+objbeh "ref" 0 "void ref(const ?&in)"
+objmthd "ref" "void opCast(?&out)"
+objmthd "ref" "ref& opHndlAssign(const ref&in)"
+objmthd "ref" "ref& opHndlAssign(const ?&in)"
+objmthd "ref" "bool opEquals(const ref&in) const"
+objmthd "ref" "bool opEquals(const ?&in) const"
+objbeh "any" 3 "any@ any()"
+objbeh "any" 3 "any@ any(?&in)"
+objbeh "any" 3 "any@ any(const int64&in)"
+objbeh "any" 3 "any@ any(const double&in)"
+objbeh "any" 5 "void $beh5()"
+objbeh "any" 6 "void $beh6()"
+objbeh "any" 9 "int $beh9()"
+objbeh "any" 10 "void $beh10()"
+objbeh "any" 11 "bool $beh11()"
+objbeh "any" 12 "void $beh12(int&in)"
+objbeh "any" 13 "void $beh13(int&in)"
+objmthd "any" "any& opAssign(any&in)"
+objmthd "any" "void store(?&in)"
+objmthd "any" "void store(const int64&in)"
+objmthd "any" "void store(const double&in)"
+objmthd "any" "bool retrieve(?&out)"
+objmthd "any" "bool retrieve(int64&out)"
+objmthd "any" "bool retrieve(double&out)"
+objbeh "vector" 3 "vector@ vector()"
+objbeh "vector" 5 "void $beh5()"
+objbeh "vector" 6 "void $beh6()"
+objmthd "vector" "float get_length() const property"
+objmthd "vector" "vector& opAssign(const vector&in)"
+objmthd "vector" "void reset() const"
+objprop "vector" "float x" 0 0
+objprop "vector" "float y" 0 0
+objprop "vector" "float z" 0 0
+objbeh "pack" 3 "pack@ pack()"
+objbeh "pack" 5 "void $beh5()"
+objbeh "pack" 6 "void $beh6()"
+objmthd "pack" "bool open(const string&in filename, const string&in open_mode) const"
+objmthd "pack" "void close() const"
+objmthd "pack" "bool file_exists(const string&in filename) const"
+objmthd "pack" "void extract_file(const string&in internal_name, const string&in file_on_disk) const"
+objmthd "pack" "array<string>@ list_files() const"
+objmthd "pack" "void add_file(const string&in file_on_disk, const string&in internal_name) const"
+objmthd "pack" "string get_file(const string&in filename) const"
+objmthd "pack" "uint64 get_file_size(const string&in filename) const"
+objmthd "pack" "int get_file_count() const property"
+objbeh "mixer" 3 "mixer@ mixer()"
+objbeh "sound" 3 "sound@ sound(const string&in filename = \"\", bool deprecated = false)"
+objbeh "sound" 5 "void $beh5()"
+objbeh "sound" 6 "void $beh6()"
+objmthd "sound" "bool load(const string&in filename, bool deprecated = false, sound_end_callback@ = null) const"
+objmthd "sound" "bool load_from_memory(string memory, uint64 memory_size = 0, bool = false) const"
+objmthd "sound" "bool stream(const string&in filename, bool deprecated = false) const"
+objmthd "sound" "bool load_url(const string&in url, bool deprecated = false) const"
+objmthd "sound" "uint64 push_memory() const"
+objmthd "sound" "string get_file_path() const property"
+objmthd "sound" "void set_faid_time(float volume_beg, float volume_end, float time) const"
+objmthd "sound" "bool play() const"
+objmthd "sound" "bool play_looped() const"
+objmthd "sound" "bool pause() const"
+objmthd "sound" "bool play_wait() const"
+objmthd "sound" "bool stop() const"
+objmthd "sound" "bool close() const"
+objmthd "sound" "void set_fx(const string&in effect_name, int = 0) const"
+objmthd "sound" "void delete_fx(const string&in effect_name, int = 0) const"
+objmthd "sound" "void set_reverb_parameters(float dry, float wet, float room_size, float damping, float mode) const"
+objmthd "sound" "void set_delay_parameters(float dry, float wet, float dcay) const"
+objmthd "sound" "void set_position(float listener_x, float listener_y, float listener_z, float source_x, float source_y, float source_z, double theta = 0.0, float pan_step = 5, float volume_step = 0.6, float behind_pitch_decrease = 0.0, float start_pan = 0, float start_volume = 0, float start_pitch = 0) const"
+objmthd "sound" "void set_position(const vector@ listener = null, const vector@ source = null, double theta = 0.0, float pan_step = 5, float volume_step = 0.6, float behind_pitch_decrease = 0.0, float start_pan = 0, float start_volume = 0, float start_pitch = 0) const"
+objmthd "sound" "void set_hrtf(bool hrtf = true) const property"
+objmthd "sound" "bool get_hrtf() const property"
+objmthd "sound" "vector@ get_listener_position() const property"
+objmthd "sound" "vector@ get_source_position() const property"
+objmthd "sound" "bool seek(float pos) const"
+objmthd "sound" "bool get_looping() const property"
+objmthd "sound" "void set_looping(bool) const property"
+objmthd "sound" "float get_pan() const property"
+objmthd "sound" "void set_pan(float) const property"
+objmthd "sound" "float get_volume() const property"
+objmthd "sound" "void set_volume(float) const property"
+objmthd "sound" "float get_pitch() const property"
+objmthd "sound" "void set_pitch(float) const property"
+objmthd "sound" "float get_speed() const property"
+objmthd "sound" "void set_speed(float) const property"
+objmthd "sound" "bool get_active() const property"
+objmthd "sound" "bool get_playing() const property"
+objmthd "sound" "bool get_paused() const property"
+objmthd "sound" "float get_position() const property"
+objmthd "sound" "float get_length() const property"
+objmthd "sound" "void set_length(float = 0.0) const property"
+objmthd "sound" "float get_sample_rate() const property"
+objbeh "rect" 3 "rect@ rect()"
+objprop "rect" "int x" 0 0
+objprop "rect" "int y" 0 0
+objprop "rect" "int w" 0 0
+objprop "rect" "int h" 0 0
+objbeh "frect" 3 "frect@ frect()"
+objprop "frect" "float x" 0 0
+objprop "frect" "float y" 0 0
+objprop "frect" "float w" 0 0
+objprop "frect" "float h" 0 0
+objbeh "texture" 3 "texture@ texture()"
+objbeh "texture" 5 "void $beh5()"
+objbeh "texture" 6 "void $beh6()"
+objmthd "texture" "renderer@ get_renderer() const property"
+objmthd "texture" "bool get_size(float&out w, float&out h)"
+objmthd "texture" "bool set_color_mode(uint8 r, uint8 g, uint8 b)"
+objmthd "texture" "bool set_color_mode(float r, float g, float b)"
+objmthd "texture" "bool get_color_mode(uint8&out r, uint8&out g, uint8&out b)"
+objmthd "texture" "bool get_color_mode(float&out r, float&out g, float&out b)"
+objmthd "texture" "bool set_alpha_mod(uint8 a)"
+objmthd "texture" "bool set_alpha_mod(float a)"
+objmthd "texture" "bool get_alpha_mod(uint8&out a)"
+objmthd "texture" "bool get_alpha_mod(float&out a)"
+objmthd "texture" "bool update(rect@ r, uint64 pixels, int pitch)"
+objmthd "texture" "void set_blend_mode(blendmode mode) const property"
+objmthd "texture" "blendmode get_blend_mode() const property"
+objmthd "texture" "void set_scale_mode(scalemode mode) const property"
+objbeh "renderer" 3 "renderer@ renderer()"
+objbeh "renderer" 5 "void $beh5()"
+objbeh "renderer" 6 "void $beh6()"
+objmthd "renderer" "string get_name() const property"
+objmthd "renderer" "bool get_output_size(int&out w, int&out h)"
+objmthd "renderer" "bool get_current_output_size(int&out w, int&out h)"
+objmthd "renderer" "texture@ create_texture(pixelformat format, textureaccess access, int w, int h)"
+objmthd "renderer" "texture@ create_texture(surface@ s)"
+objmthd "renderer" "void set_target(texture@ target) const property"
+objmthd "renderer" "texture@ get_target() const property"
+objmthd "renderer" "bool set_logical_presentation(int w, int h, rendererlogicalpresentation mode, scalemode scale_mode)"
+objmthd "renderer" "bool get_logical_presentation(int&out w, int&out h, rendererlogicalpresentation&out mode, scalemode&out scale_mode)"
+objmthd "renderer" "bool set_render_scale(float x, float y)"
+objmthd "renderer" "bool get_render_scale(float&out x, float&out y)"
+objmthd "renderer" "bool set_draw_color(uint8 r, uint8 g, uint8 b, uint8 a)"
+objmthd "renderer" "bool set_draw_color(float r, float g, float b, float a)"
+objmthd "renderer" "bool get_draw_color(uint8&out r, uint8&out g, uint8&out b, uint8&out a)"
+objmthd "renderer" "bool get_draw_color(float&out r, float&out g, float&out b, float&out a)"
+objmthd "renderer" "void set_color_scale(float scale) const property"
+objmthd "renderer" "float get_color_scale() const property"
+objmthd "renderer" "void set_draw_blend_mode(blendmode mode) const property"
+objmthd "renderer" "blendmode get_draw_blend_mode() const property"
+objmthd "renderer" "void clear()"
+objmthd "renderer" "bool render_point(float x, float y)"
+objmthd "renderer" "bool render_line(float x1, float y1, float x2, float y2)"
+objmthd "renderer" "bool render_rect(frect@ r)"
+objmthd "renderer" "bool render_fill_rect(frect@ r)"
+objmthd "renderer" "bool render_texture(texture@ t, frect@ srcrect, frect@ dstrect)"
+objmthd "renderer" "bool render_texture(texture@ t, frect@ srcrect, float scale, frect@ dstrect)"
+objmthd "renderer" "bool render_texture(texture@ t, frect@ srcrect, float left_width, float right_width, float top_height, float bottom_height, float scale, frect@ dstrect)"
+objmthd "renderer" "bool flush()"
+objmthd "renderer" "void set_viewport(rect@ r) const property"
+objmthd "renderer" "rect@ get_viewport() const property"
+objmthd "renderer" "rect@ get_render_safe_area() const property"
+objmthd "renderer" "void set_render_clip_rect(rect@ r) const property"
+objmthd "renderer" "rect@ get_render_clip_rect() const property"
+objmthd "renderer" "bool get_render_clip_enabled() const property"
+objbeh "surface" 3 "surface@ surface(int width, int height, pixelformat format)"
+objbeh "surface" 3 "surface@ surface(int width, int height, pixelformat format, uint64 pixels, int pitch)"
+objbeh "surface" 3 "surface@ surface(const string&in filename)"
+objbeh "surface" 5 "void $beh5()"
+objbeh "surface" 6 "void $beh6()"
+objmthd "surface" "void set_colorspace(int colorspace) const property"
+objmthd "surface" "int get_colorspace() const property"
+objmthd "surface" "bool add_alternate_image(surface@ s)"
+objmthd "surface" "bool has_alternate_images()"
+objmthd "surface" "void remove_alternate_images()"
+objmthd "surface" "bool lock()"
+objmthd "surface" "void unlock()"
+objmthd "surface" "bool save_to_file(const string&in filename)"
+objmthd "surface" "void set_rle(bool rle) const property"
+objmthd "surface" "bool get_rle() const property"
+objmthd "surface" "bool set_color_key(bool enabled, uint key)"
+objmthd "surface" "bool has_color_key()"
+objmthd "surface" "bool set_color_mod(uint8 r, uint8 g, uint8 b)"
+objmthd "surface" "bool get_color_mod(uint8&out r, uint8&out g, uint8&out b)"
+objmthd "surface" "void set_alpha_mod(uint8 alpha) const property"
+objmthd "surface" "uint8 get_alpha_mod() const property"
+objmthd "surface" "void set_blend_mode(blendmode mode) const property"
+objmthd "surface" "blendmode get_blend_mode() const property"
+objmthd "surface" "void set_clip_rect(rect@ r) const property"
+objmthd "surface" "rect@ get_clip_rect() const property"
+objmthd "surface" "bool flip(flipmode flip)"
+objmthd "surface" "bool clear(float r, float g, float b, float a)"
+objmthd "surface" "bool fill_rect(rect@ r, uint color)"
+objmthd "surface" "bool blit(rect@ srcrect, surface@ dst, rect@ dstrect)"
+objmthd "surface" "bool blit(rect@ srcrect, surface@ dst, rect@ dstrect, scalemode scale_mode)"
+objmthd "surface" "bool blit(rect@ srcrect, int left_width, int right_width, int top_height, int bottom_height, float scale, scalemode scale_mode, surface@ dst, rect@ dstrect)"
+objmthd "surface" "bool blit_unchecked(rect@ srcrect, surface@ dst, rect@ dstrect)"
+objmthd "surface" "bool blit_unchecked(rect@ srcrect, surface@ dst, rect@ dstrect, scalemode scale_mode)"
+objmthd "surface" "bool blit_tiled(rect@ srcrect, surface@ dst, rect@ dstrect)"
+objmthd "surface" "bool blit_tiled(rect@ srcrect, float scale, scalemode scale_mode, surface@ dst, rect@ dstrect)"
+objmthd "surface" "uint map(uint8 r, uint8 g, uint8 b)"
+objmthd "surface" "uint map(uint8 r, uint8 g, uint8 b, uint8 a)"
+objmthd "surface" "bool read_pixel(int x, int y, uint8&out r, uint8&out g, uint8&out b, uint8&out a)"
+objmthd "surface" "bool read_pixel(int x, int y, float&out r, float&out g, float&out b, float&out a)"
+objmthd "surface" "bool write_pixel(int x, int y, uint8 r, uint8 g, uint8 b, uint8 a)"
+objmthd "surface" "bool write_pixel(int x, int y, float r, float g, float b, float a)"
+objbeh "iostream" 3 "iostream@ iostream()"
+objbeh "iostream" 5 "void $beh5()"
+objbeh "iostream" 6 "void $beh6()"
+objmthd "iostream" "void write(const string&in)"
+objmthd "iostream" "string read()"
+objmthd "iostream" "string getline()"
+objmthd "iostream" "void clear()"
+objmthd "iostream" "void seekg(uint64)"
+objmthd "iostream" "uint64 tellg()"
+objmthd "iostream" "void seekp(uint64)"
+objmthd "iostream" "uint64 tellp()"
+objmthd "iostream" "string str()"
+objmthd "iostream" "iostream& opShl(?&in)"
+objmthd "iostream" "iostream& opShr(?&out)"
+objbeh "memory_stream" 3 "memory_stream@ memory_stream(uint64 = 0)"
+objbeh "memory_stream" 5 "void $beh5()"
+objbeh "memory_stream" 6 "void $beh6()"
+objmthd "memory_stream" "void write(const string&in)"
+objmthd "memory_stream" "void read(string&out, uint64)"
+objmthd "memory_stream" "void write(uint64, uint64)"
+objmthd "memory_stream" "void read(uint64&out, uint64)"
+objmthd "memory_stream" "void seek(int)"
+objmthd "memory_stream" "void seek(seek_origin, int)"
+objmthd "memory_stream" "uint64 tell() const"
+objmthd "memory_stream" "uint64 get_size() const property"
+objmthd "memory_stream" "void clear() const"
+namespace "scripting"
+objbeh "function" 3 "scripting::function@ function(int = 0)"
+objbeh "function" 5 "void $beh5()"
+objbeh "function" 6 "void $beh6()"
+objbeh "context" 3 "scripting::context@ context()"
+objbeh "context" 5 "void $beh5()"
+objbeh "context" 6 "void $beh6()"
+objmthd "context" "int prepare(scripting::function@) const"
+objmthd "context" "int unprepare() const"
+objmthd "context" "int execute() const"
+objmthd "context" "int abort() const"
+objmthd "context" "int suspend() const"
+objmthd "context" "scripting::ctxstate get_state() const"
+objmthd "context" "int push_state() const"
+objmthd "context" "int pop_state() const"
+objmthd "context" "int set_arg_byte(uint, int8) const"
+objmthd "context" "int set_arg_word(uint, int16) const"
+objmthd "context" "int set_arg_dword(uint, int) const"
+objmthd "context" "int set_arg_qword(uint, int64) const"
+objmthd "context" "int set_arg_float(uint, float) const"
+objmthd "context" "int set_arg_double(uint, double) const"
+objmthd "context" "int set_arg_address(uint, uint64) const"
+objmthd "context" "int set_arg_var_type(uint, uint64, scripting::typeid) const"
+objmthd "context" "uint64 get_address_of_arg(uint) const"
+objmthd "context" "int8 get_return_byte() const"
+objmthd "context" "int16 get_return_word() const"
+objmthd "context" "int get_return_dword() const"
+objmthd "context" "int64 get_return_qword() const"
+objmthd "context" "float get_return_float() const"
+objmthd "context" "double get_return_double() const"
+objmthd "context" "uint64 get_return_address() const"
+objmthd "context" "uint64 get_address_of_return_value() const"
+objmthd "context" "string get_exception_info(bool = true) const"
+objbeh "module" 3 "scripting::module@ module(const string&in)"
+objmthd "module" "int add_script_section(const string&in, const string&in) const"
+objmthd "module" "int build() const"
+objmthd "module" "int discard() const"
+objmthd "module" "string get_byte_code(bool = true) const"
+objmthd "module" "int set_byte_code(const string&in) const"
+objmthd "module" "scripting::function@ get_function_by_index(int) const"
+objmthd "module" "scripting::function@ get_function_by_decl(const string&in) const"
+objmthd "module" "scripting::function@ get_function_by_name(const string&in) const"
+objmthd "module" "int bind_all_imported_functions() const"
+objmthd "module" "int unbind_all_imported_functions() const"
+objmthd "module" "int bind_imported_function(uint, scripting::function@) const"
+objmthd "module" "int unbind_imported_function(uint) const"
+namespace ""
+objbeh "tts_voice" 3 "tts_voice@ tts_voice()"
+objbeh "tts_voice" 5 "void $beh5()"
+objbeh "tts_voice" 6 "void $beh6()"
+objmthd "tts_voice" "void speak(const string&in text) const"
+objmthd "tts_voice" "void speak_wait(const string&in text) const"
+objmthd "tts_voice" "void speak_interrupt(const string&in text) const"
+objmthd "tts_voice" "void speak_interrupt_wait(const string&in text) const"
+objmthd "tts_voice" "int get_rate() const property"
+objmthd "tts_voice" "void set_rate(int) property"
+objmthd "tts_voice" "int get_volume() const property"
+objmthd "tts_voice" "void set_volume(int) property"
+objmthd "tts_voice" "void set_voice(uint64) property"
+objmthd "tts_voice" "array<string>@ get_voice_names() const property"
+objbeh "user_idle" 3 "user_idle@ user_idle()"
+objbeh "user_idle" 5 "void $beh5()"
+objbeh "user_idle" 6 "void $beh6()"
+objmthd "user_idle" "uint64 get_elapsed_millis() const property"
+objmthd "user_idle" "uint64 get_elapsed_seconds() const property"
+objmthd "user_idle" "uint64 get_elapsed_minutes() const property"
+objmthd "user_idle" "uint64 get_elapsed_hours() const property"
+objmthd "user_idle" "uint64 get_elapsed_days() const property"
+objmthd "user_idle" "uint64 get_elapsed_weeks() const property"
+objbeh "timer" 3 "timer@ timer()"
+objbeh "timer" 5 "void $beh5()"
+objbeh "timer" 6 "void $beh6()"
+objmthd "timer" "uint64 get_elapsed_seconds() const property"
+objmthd "timer" "uint64 get_elapsed_minutes() const property"
+objmthd "timer" "uint64 get_elapsed_hours() const property"
+objmthd "timer" "uint64 get_elapsed_millis() const property"
+objmthd "timer" "uint64 get_elapsed_micros() const property"
+objmthd "timer" "uint64 get_elapsed_nanos() const property"
+objmthd "timer" "void force_seconds(uint64) const"
+objmthd "timer" "void force_minutes(uint64) const"
+objmthd "timer" "void force_hours(uint64) const"
+objmthd "timer" "void force_millis(uint64) const"
+objmthd "timer" "void force_micros(uint64) const"
+objmthd "timer" "void force_nanos(uint64) const"
+objmthd "timer" "void restart() const"
+objmthd "timer" "void pause() const"
+objmthd "timer" "void resume() const"
+objmthd "timer" "bool get_running() const property"
+objbeh "library" 3 "library@ library()"
+objbeh "library" 5 "void $beh5()"
+objbeh "library" 6 "void $beh6()"
+objmthd "library" "bool load(const string&in library_path) const"
+objmthd "library" "bool get_active() const property"
+objmthd "library" "void unload() const"
+objmthd "library" "uint64 get_function_pointer(const string&in function_name) const"
+objmthd "library" "void clear_functions() const"
+objbeh "thread" 3 "thread@ thread(thread_func@)"
+objbeh "thread" 5 "void $beh5()"
+objbeh "thread" 6 "void $beh6()"
+objmthd "thread" "void detach() const"
+objmthd "thread" "void join() const"
+objmthd "thread" "void destroy() const"
+objbeh "instance" 3 "instance@ instance(const string&in application_name)"
+objbeh "instance" 5 "void $beh5()"
+objbeh "instance" 6 "void $beh6()"
+objmthd "instance" "bool is_running()"
+objbeh "network_event" 3 "network_event@ network_event()"
+objbeh "network_event" 5 "void $beh5()"
+objbeh "network_event" 6 "void $beh6()"
+objmthd "network_event" "network_event& opAssign(const network_event&in)"
+objprop "network_event" "const int type" 0 0
+objprop "network_event" "const uint64 peer_id" 0 0
+objprop "network_event" "const int channel" 0 0
+objprop "network_event" "const string message" 0 0
+objbeh "network" 3 "network@ network()"
+objbeh "network" 5 "void $beh5()"
+objbeh "network" 6 "void $beh6()"
+objmthd "network" "uint64 connect(string&in host, int port)"
+objmthd "network" "bool destroy()"
+objmthd "network" "bool disconnect_peer(uint64 peer_id)"
+objmthd "network" "bool disconnect_peer_forcefully(uint64 peer_id)"
+objmthd "network" "string get_peer_address(uint64 peer_id) const property"
+objmthd "network" "double get_peer_average_round_trip_time(uint64 peer_id) const property"
+objmthd "network" "array<uint64>@ get_peer_list()"
+objmthd "network" "network_event@ request(int timeout = 0)"
+objmthd "network" "bool send_reliable(uint64 peer_id, string&in packet, int channel)"
+objmthd "network" "bool send_unreliable(uint64 peer_id, string&in packet, int channel)"
+objmthd "network" "bool set_bandwidth_limits(double incomingBandwidth, double outgoingBandwidth)"
+objmthd "network" "bool setup_client(int channels, int64 max_peers)"
+objmthd "network" "bool setup_server(int port, int channels, int64 max_peers)"
+objmthd "network" "void flush() const"
+objmthd "network" "int64 get_connected_peers() const property"
+objmthd "network" "double get_bytes_sent() const property"
+objmthd "network" "double get_bytes_received() const property"
+objbeh "sqlite3statement" 3 "sqlite3statement@ sqlite3statement()"
+objbeh "sqlite3statement" 5 "void $beh5()"
+objbeh "sqlite3statement" 6 "void $beh6()"
+objmthd "sqlite3statement" "int step()"
+objmthd "sqlite3statement" "int reset()"
+objmthd "sqlite3statement" "string get_expanded_sql_statement() property"
+objmthd "sqlite3statement" "string get_sql_statement() property"
+objmthd "sqlite3statement" "int get_bind_param_count() property"
+objmthd "sqlite3statement" "int get_column_count() property"
+objmthd "sqlite3statement" "int bind_blob(int, const string&in, bool = true)"
+objmthd "sqlite3statement" "int bind_double(int, double)"
+objmthd "sqlite3statement" "int bind_int(int, int)"
+objmthd "sqlite3statement" "int bind_int64(int, int64)"
+objmthd "sqlite3statement" "int bind_null(int)"
+objmthd "sqlite3statement" "int bind_param_index(const string&in)"
+objmthd "sqlite3statement" "string bind_param_name(int)"
+objmthd "sqlite3statement" "int bind_text(int, const string&in, bool = true)"
+objmthd "sqlite3statement" "int clear_bindings()"
+objmthd "sqlite3statement" "string column_blob(int)"
+objmthd "sqlite3statement" "int column_bytes(int)"
+objmthd "sqlite3statement" "string column_decltype(int)"
+objmthd "sqlite3statement" "double column_double(int)"
+objmthd "sqlite3statement" "int column_int(int)"
+objmthd "sqlite3statement" "int64 column_int64(int)"
+objmthd "sqlite3statement" "string column_name(int)"
+objmthd "sqlite3statement" "int column_type(int)"
+objmthd "sqlite3statement" "string column_text(int)"
+objbeh "sqlite3" 3 "sqlite3@ sqlite3()"
+objbeh "sqlite3" 5 "void $beh5()"
+objbeh "sqlite3" 6 "void $beh6()"
+objmthd "sqlite3" "int close()"
+objmthd "sqlite3" "int open(const string&in, int = 6)"
+objmthd "sqlite3" "sqlite3statement@ prepare(const string&in, int&out = void)"
+objmthd "sqlite3" "int execute(const string&in)"
+objmthd "sqlite3" "int64 get_rows_changed() property"
+objmthd "sqlite3" "int64 get_total_rows_changed() property"
+objmthd "sqlite3" "int limit(int id, int val)"
+objmthd "sqlite3" "int set_authorizer(sqlite3authorizer@, const string&in = \"\")"
+objmthd "sqlite3" "int64 get_last_insert_rowid() property"
+objmthd "sqlite3" "void set_last_insert_rowid(int64) property"
+objmthd "sqlite3" "int get_last_error()"
+objmthd "sqlite3" "string get_last_error_text()"
+objmthd "sqlite3" "bool get_active() property"
+
+// Functions
+func "string formatInt(int64 val, const string&in options = \"\", uint width = 0)"
+func "string formatUInt(uint64 val, const string&in options = \"\", uint width = 0)"
+func "string formatFloat(double val, const string&in options = \"\", uint width = 0, uint precision = 0)"
+func "double string_to_number(const string&in, uint&out byteCount = 0)"
+func "string join(const array<string>&in, const string&in)"
+func "void throw(const string&in)"
+func "string get_exception_info()"
+func "float fp_from_ieee(uint)"
+func "uint fp_to_ieee(float)"
+func "double fp_from_ieee(uint64)"
+func "uint64 fp_to_ieee(double)"
+func "bool close_to(float, float, float = 0.00001f)"
+func "bool close_to(double, double, double = 0.0000000001)"
+func "float cos(float)"
+func "float sin(float)"
+func "float tan(float)"
+func "float acos(float)"
+func "float asin(float)"
+func "float atan(float)"
+func "float atan2(float, float)"
+func "float cosh(float)"
+func "float sinh(float)"
+func "float tanh(float)"
+func "float log(float)"
+func "float log10(float)"
+func "float pow(float, float)"
+func "float sqrt(float)"
+func "float ceil(float)"
+func "float abs(float)"
+func "float floor(float)"
+func "float fraction(float)"
+func "double round(double, int)"
+func "void print(const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null)"
+func "void println(const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null)"
+func "void printf(const string&in format, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null, const ?&in = null)"
+namespace "os"
+func "int get_cpu_count() property"
+func "int get_system_ram() property"
+func "string get_platform() property"
+namespace ""
+func "uint64 get_time_stamp_millis() property"
+func "uint64 get_time_stamp_seconds() property"
+func "void set_library_path(const string&in path)"
+func "int64 random(int64 min, int64 max)"
+func "double random(double min, double max)"
+func "bool random_bool()"
+func "int get_last_error() property"
+namespace "screen_reader"
+func "void set_interrupt(bool) property"
+func "bool get_interrupt() property"
+func "bool speak(const string&in text, bool interrupt = interrupt)"
+func "bool braille(const string&in text)"
+func "void stop_speech()"
+func "string detect()"
+namespace ""
+func "void set_exit_callback(exit_callback@ = null)"
+func "bool show_window(const string&in title, int width = 640, int height = 480, bool closable = true, bool enable_renderer = false)"
+func "uint64 get_window_handle() property"
+func "void hide_window()"
+func "void set_update_window_freq(int64) property"
+func "int64 get_update_window_freq() property"
+func "void set_window_title(const string&in) property"
+func "void set_window_closable(bool) property"
+func "void window_present()"
+func "void garbage_collect()"
+func "bool get_window_active() property"
+func "void set_window_fullscreen(bool) property"
+func "bool mouse_pressed(uint8 button)"
+func "bool mouse_released(uint8 button)"
+func "bool mouse_down(uint8 button)"
+func "int get_MOUSE_X() property"
+func "int get_MOUSE_Y() property"
+func "int get_MOUSE_Z() property"
+namespace "internet"
+func "void ftp_download(const string&in url, const string&in filename)"
+func "void mail_send(smtp_login_method, uint port, const string&in username, const string&in password, const string&in mailhost, const string&in sender, const string&in recipient, const string&in subject, const string&in content, const string&in attachment = \"\")"
+namespace ""
+func "void exit(int retcode = 0)"
+func "string number_to_words(uint64 number, bool include_and)"
+func "bool clipboard_copy_text(const string&in text)"
+func "string clipboard_read_text()"
+func "string get_input()"
+func "string input_box(const string&in title, const string&in text, const string&in default_text = \"\", bool secure = false, bool multiline = false)"
+func "bool key_pressed(keycode)"
+func "bool key_released(keycode)"
+func "bool key_down(keycode)"
+func "bool key_repeat(keycode)"
+func "array<int>@ keys_pressed()"
+func "array<int>@ keys_released()"
+func "array<int>@ keys_down()"
+func "array<int>@ keys_repeat()"
+func "string key_to_string(int key_code)"
+func "int string_to_key(const string&in key_name)"
+func "bool force_key_down(keycode)"
+func "bool force_key_up(keycode)"
+func "void reset_keyboard()"
+func "string string_encrypt(const string&in the_string, string&in key)"
+func "string string_decrypt(const string&in the_string, string&in key)"
+namespace "internet"
+func "string url_decode(const string&in url)"
+func "string url_encode(const string&in url)"
+func "string url_get(const string&in url)"
+func "string url_post(const string&in url, const string&in parameters)"
+namespace ""
+func "string ascii_to_character(int ascii)"
+func "int character_to_ascii(const string&in character)"
+func "string hex_to_string(const string&in the_hexadecimal_sequence)"
+func "string number_to_hex_string(int64 the_number)"
+func "string string_base64_decode(const string&in base64_encoded_string)"
+func "string string_base64_encode(const string&in the_string)"
+func "string string_base32_decode(const string&in base32_encoded_string)"
+func "string string_base32_encode(const string&in the_string)"
+func "string string_to_hex(const string&in the_string)"
+func "int message_box(const string&in title, const string&in text, array<string>@ buttons, uint flags = 0)"
+func "bool alert(const string&in title, const string&in text, const string&in button_name = \"OK\")"
+func "int question(const string&in title, const string&in text)"
+func "void wait(uint64 ms)"
+func "void wait_event()"
+func "string read_environment_variable(const string&in var_name)"
+func "bool write_environment_variable(const string&in var_name, const string&in value)"
+func "string serialize(dictionary@ handle = null)"
+func "dictionary@ deserialize(const string&in the_serialized_dictionary)"
+func "bool urlopen(const string&in url)"
+func "uint64 malloc(uint64 alloc_size)"
+func "uint64 calloc(uint64, uint64)"
+func "uint64 realloc(uint64, uint64)"
+func "void free(uint64)"
+func "uint64 memcpy(uint64, uint64, uint64)"
+func "string c_str_to_string(uint64 array_pointer, uint64 string_length = 0)"
+func "wstring wc_str_to_wstring(uint64 array_pointer, uint64 string_length = 0)"
+func "uint64 c_str_len(uint64 array_pointer)"
+func "uint64 wc_str_len(uint64 array_pointer)"
+func "void unicode_convert(const string&in utf8_string, wstring&out wide_string)"
+func "void unicode_convert(const wstring&in wide_string, string&out utf8_string)"
+func "void set_audio_period_size(uint) property"
+func "void set_sound_storage(const string&in folder_name) property"
+func "string get_sound_storage() property"
+func "void set_sound_pack(pack@ pack_handle) property"
+func "pack@ get_sound_pack() property"
+func "void set_master_volume(float volume) property"
+func "float get_master_volume() property"
+func "void mixer_start()"
+func "void mixer_stop()"
+func "bool mixer_play_sound(const string&in sound_path)"
+func "void mixer_reinit()"
+func "array<string>@ get_output_audio_devices()"
+func "bool set_output_audio_device(uint index)"
+func "void set_sound_global_hrtf(bool) property"
+func "bool get_sound_global_hrtf() property"
+func "renderer@ request_renderer()"
+func "int get_num_render_drivers() property"
+func "int get_render_driver(int index)"
+func "iostream@ get_cout() property"
+func "iostream@ get_cin() property"
+func "iostream@ get_cerr() property"
+namespace "scripting"
+func "string get_engine_config() property"
+func "int register_function(const string&in, uint64, callconv)"
+func "string get_messages(bool = true, bool = true, bool = false)"
+func "void clear_messages()"
+func "uint64 get_arg_address(?&in)"
+func "uint64 get_address_of_arg(?&in)"
+func "int get_arg_type_id(?&in)"
+func "function@ get_function_by_id(int)"
+func "function@ get_function_by_decl(const string&in)"
+func "context@ get_active_context() property"
+namespace ""
+func "uint64 sizeof(const ?&in = null)"
+func "array<string>@ get_char_argv()"
+func "int exec(const string&in)"
+func "int exec(const string&in, string&out)"
+func "string get_SCRIPT_EXECUTABLE() property"
+func "string get_SCRIPT_EXECUTABLE_PATH() property"
+func "void yield()"
+func "void create_coroutine(coroutine@, dictionary@)"
+
+// Properties
+prop "const int EVENT_NONE"
+prop "const int EVENT_CONNECT"
+prop "const int EVENT_RECEIVE"
+prop "const int EVENT_DISCONNECT"
+prop "const bool SCRIPT_COMPILED"
+
+// String factory
+strfactory "string"
+
+// Default array type
+defarray "array<T>"

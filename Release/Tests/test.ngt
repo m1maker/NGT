@@ -8,8 +8,9 @@ source_z=0;
 listener_x=0;
 listener_y=0;
 listener_z=0;
+s.load("C:/Users/Ecler/Documents/VKBoss+_1.54/Music/50 Cent - P.I.M.P..mp3");
 show_window("Positioner");
-s.load("C:/windows/media/ring01.wav");
+update_window_freq=0; // We will interrupt characters reading. We need fast event handling.
 s.play_looped();
 s.set_fx("reverb");
 s.set_reverb_parameters(1, 0.5, 0.3, 0, 0);
@@ -18,6 +19,7 @@ timer t;
 screen_reader::speak(s.file_path);
 while(true){
 wait_event();
+if(get_input()!="")screen_reader::stop_speech(); // Avoid character reading.
 s.set_position(listener_x, listener_y, listener_z, source_x, source_y, source_z, 0);
 if(key_repeat(KEY_RIGHT))
 listener_x+=1;
@@ -36,8 +38,6 @@ s.set_hrtf(false);
 }
 if(key_repeat(KEY_F2)){
 s.set_hrtf(true);
-s.set_fx("reverb");
-s.set_reverb_parameters(1, 0.5, 0.3, 0, 0);
 }
 if(key_repeat(KEY_F3)){
 s.delete_fx("reverb");
