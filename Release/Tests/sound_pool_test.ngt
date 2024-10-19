@@ -7,7 +7,7 @@ update_window_freq=0;
 while(true){
 wait_event();
 if(key_repeat(KEY_SPACE)){
-sp.play("c:/windows/media/Windows Default.wav", random(0, 10), random(0, 5), random(0, 10));
+sp.play_1d("c:/windows/media/Windows Default.wav", 0, 10, false);
 }
 }
 }

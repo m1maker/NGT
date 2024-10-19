@@ -47,9 +47,9 @@ s.set_fx("reverb");
 s.set_reverb_parameters(1, 0.5, 0.3, 0, 0);
 
 }
-if(key_pressed(KEY_1))
+if(key_repeat(KEY_1))
 s.seek(s.position - 1000);
-if(key_pressed(KEY_2))
+if(key_repeat(KEY_2))
 s.seek(s.position + 1000);
 if(key_repeat(KEY_3))
 s.pitch=s.pitch-5;
