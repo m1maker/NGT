@@ -6,14 +6,15 @@ void main(){
 sound_pool sp;
 r.set_wet(0.5);
 r.set_dry(1.0);
-sp.add_effect(r);
+//sp.add_effect(r);
 show_window("Test");
 //sp.use_hrtf=true;
 update_window_freq=0;
 while(true){
 wait_event();
 if(key_repeat(KEY_SPACE)){
-sp.play_1d("c:/windows/media/Windows Default.wav", 0, 10, false);
+sp.play_1d("c:/windows/media/Windows Default.wav", 0, 200, false);
+sp.update_listener_position(20, 0, 0);
 }
 }
 }
