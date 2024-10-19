@@ -1,3 +1,4 @@
+#include "effect"
 class sound_pool_item
 {
 	float upper_range;
