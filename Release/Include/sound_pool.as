@@ -226,6 +226,62 @@ class sound_pool
 		return play_3d(filename, listener_x, listener_y, listener_z, sound_x, sound_y, sound_z, rotation, 0, 0, 0, 0, 0, 0, looping, 0, 0, 0, 100, memory, persistent);
 	}
 
+	int play_3d(const string& in filename,
+				vector @listener,
+				vector @source,
+				float rotation,
+				bool looping,
+				bool memory = false,
+				bool persistent = false)
+	{
+		return play_3d(filename, listener.x, listener.y, listener.z, source.x, source.y, source.z, rotation, 0, 0, 0, 0, 0, 0, looping, 0, 0, 0, 100, memory, persistent);
+	}
+
+	int play_3d(
+		const string&in filename,
+		vector @listener,
+		vector @source,
+
+		float rotation = 0,
+		int left_range = 0,
+		int right_range = 0,
+		int backward_range = 0,
+		int forward_range = 0,
+		int upper_range = 0,
+		int lower_range = 0,
+		bool looping = false,
+		float offset = 0,
+		float start_pan = 0,
+		float start_volume = 0,
+		float start_pitch = 0,
+		bool memory = false,
+		bool persistent = false)
+	{
+		return play_3d(
+			filename,
+			listener.x,
+			listener.y,
+			listener.z,
+			source.x,
+			source.y,
+			source.z,
+
+			rotation,
+			left_range,
+			right_range,
+			backward_range,
+			forward_range,
+			upper_range,
+			lower_range,
+			looping,
+			offset,
+			start_pan,
+			start_volume,
+			start_pitch,
+			memory,
+			persistent);
+	}
+
 	int play_3d(
 		const string&in filename,
 		float listener_x = 0,
