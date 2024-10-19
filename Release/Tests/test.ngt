@@ -10,7 +10,9 @@ listener_y=0;
 listener_z=0;
 show_window("Positioner");
 s.play_looped();
-//s.set_hrtf(true);
+s.set_fx("reverb");
+s.set_reverb_parameters(1, 0.5, 0.3, 0, 0);
+s.set_hrtf(true);
 timer t;
 screen_reader::speak(s.file_path);
 while(true){
@@ -30,12 +32,8 @@ if(key_repeat(KEY_PAGEUP))
 listener_z+=1;
 if(key_repeat(KEY_F1)){
 s.set_hrtf(false);
-s.set_fx("reverb");
-s.set_reverb_parameters(1, 0.5, 0.3, 0, 0);
 }
 if(key_repeat(KEY_F2)){
-s.set_fx("reverb");
-s.set_reverb_parameters(1, 0.5, 0.3, 0, 0);
 s.set_hrtf(true);
 }
 }

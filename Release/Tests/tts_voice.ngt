@@ -12,11 +12,11 @@ void main() {
 			interrupt = interrupt ? false : true;
 			v.speak_interrupt("Interrupt : " + interrupt);
 		}
-		else if (key_pressed(KEY_F2) && v.rate > -10) {
+		else if (key_pressed(KEY_F2) && v.rate > -100) {
 			v.rate = v.rate - 1;
 			v.speak_interrupt(v.rate);
 		}
-		else if (key_pressed(KEY_F3) && v.rate < 10) {
+		else if (key_pressed(KEY_F3) && v.rate < 100) {
 			v.rate = v.rate + 1;
 			v.speak_interrupt(v.rate);
 		}

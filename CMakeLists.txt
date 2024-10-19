@@ -125,12 +125,12 @@ ExternalProject_Add(SDL3
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/external/installed -DSDL_STATIC=ON -DMSVC_RUNTIME_LIBRARY=MultiThreaded -DFORCE_STATIC_VCRT=ON
     )
 
-    ExternalProject_Add(TTF
-    PREFIX "${CMAKE_BINARY_DIR}/external"
-    GIT_REPOSITORY    "https://github.com/libsdl-org/SDL_ttf"
-    GIT_TAG           "5986e158279dbb0fe6de70e841c16bc1e9702d9f"
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/external/installed -DSDL_STATIC=ON -DMSVC_RUNTIME_LIBRARY=MultiThreaded -DFORCE_STATIC_VCRT=ON
-    )
+#    ExternalProject_Add(TTF
+#    PREFIX "${CMAKE_BINARY_DIR}/external"
+#    GIT_REPOSITORY    "https://github.com/libsdl-org/SDL_ttf"
+#    GIT_TAG           "5986e158279dbb0fe6de70e841c16bc1e9702d9f"
+#    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/external/installed -DSDL_STATIC=ON -DMSVC_RUNTIME_LIBRARY=MultiThreaded -DFORCE_STATIC_VCRT=ON
+#    )
 
 
 

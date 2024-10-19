@@ -24,7 +24,7 @@ using namespace std;
 #define SAMPLE_RATE 44100
 #include "fx/freeverb.h"
 #define VERBLIB_IMPLEMENTATION
-
+#include <map>
 #include "fx/verblib.h"
 
 #ifdef __cplusplus
@@ -953,8 +953,8 @@ MA_API ma_result ma_steamaudio_binaural_node_set_direction(ma_steamaudio_binaura
 IPLScene scene;
 IPLSimulator simulator;
 IPLSimulationSharedInputs simulator_inputs;
-void soundsystem_init() {
-	if (g_SoundInitialized == true)return;
+bool soundsystem_init() {
+	if (g_SoundInitialized == true)return true;
 	engineConfig = ma_engine_config_init();
 	engineConfig.noDevice = MA_TRUE;
 	engineConfig.channels = CHANNELS;
@@ -965,7 +965,7 @@ void soundsystem_init() {
 	devConfig.playback.channels = CHANNELS;
 	devConfig.sampleRate = SAMPLE_RATE;
 	devConfig.dataCallback = sound_mixer_device_callback;
-	if (ma_device_init(nullptr, &devConfig, &sound_mixer_device) != MA_SUCCESS)return;
+	if (ma_device_init(nullptr, &devConfig, &sound_mixer_device) != MA_SUCCESS)return false;
 	mixer_start();
 	ma_engine_init(&engineConfig, &sound_default_mixer);
 	MA_ZERO_OBJECT(&iplAudioSettings);
@@ -1007,6 +1007,7 @@ void soundsystem_init() {
 	simulator_inputs.irradianceMinDistance = 1.0f;
 	iplSimulatorSetScene(simulator, scene);
 	iplSimulatorCommit(simulator);
+	return true;
 }
 void soundsystem_free() {
 	if (g_SoundInitialized == false)return;
@@ -1054,7 +1055,10 @@ void mixer_stop() {
 }
 bool mixer_play_sound(const string& filename) {
 	if (!g_SoundInitialized) {
-		soundsystem_init();
+		if (!soundsystem_init()) {
+			return false;
+		}
+
 		g_SoundInitialized = true;
 	}
 	string result;
@@ -1234,49 +1238,37 @@ public:
 	ma_steamaudio_binaural_node m_binauralNode;   /* The echo effect is achieved using a delay node. */
 	ma_reverb_node      m_reverbNode;        /* The reverb node. */
 	ma_reverb_node_config reverbNodeConfig;
-	bool reverb = false;
 	ma_vocoder_node     m_vocoderNode;   /* The vocoder node. */
 	ma_vocoder_node_config vocoderNodeConfig;
-	bool vocoder = false;
 	ma_delay_node       m_delayNode;         /* The delay node. */
 	ma_delay_node_config delayNodeConfig;
-	bool delayf = false;
 	ma_ltrim_node       m_trimNode;        /* The trim node. */
 	ma_ltrim_node_config trimNodeConfig;
-	bool ltrim = false;
 	ma_channel_separator_node m_separatorNode;   /* The separator node. */
-	bool separator = false;
 	ma_channel_combiner_node  m_combinerNode;    /* The combiner node. */
 	ma_channel_separator_node_config separatorNodeConfig;
 	ma_channel_combiner_node_config combinerNodeConfig;
-	bool combiner = false;
 	ma_hpf_node highpass;
 	ma_hpf_node_config highpassConfig;
-	bool hp = false;
 	ma_lpf_node lowpass;
 	ma_lpf_node_config lowpassConfig;
-	bool lp = false;
 	ma_notch_node notch;
 	ma_notch_node_config notchConfig;
-	bool notchf = false;
 	ma_playback_speed_node m_playback_speed_node;
 	ma_playback_speed_node_config m_speed_config;
-	bool speeding = false;
 	ma_steamaudio_binaural_node_config binauralNodeConfig;
-	bool sound_hrtf = false;
-	ma_node* current_fx = nullptr;
+	std::map<std::string, ma_node*> effects;
 	mutable int ref = 0;
 	string file;
 	ngtvector source_position, listener_position;
 	sound(const string& filename = "", bool set3d = false) {
 		ref = 1;
 		if (!g_SoundInitialized) {
-			soundsystem_init();
-			g_SoundInitialized = true;
+			g_SoundInitialized = soundsystem_init();
 		}
 		if (filename != "")
 			this->load(filename, set3d);
-		current_fx = ma_engine_get_endpoint(&sound_default_mixer);
+		effects["Default"] = ma_engine_get_endpoint(&sound_default_mixer);
 	}
 	~sound() {
 	}
@@ -1312,10 +1304,13 @@ public:
 		}
 		active = true;
 		file = result;
+		auto last = --effects.end();
+
+		ma_node_attach_output_bus(handle_, 0, last->second, 0);
+
 		if (sound_global_hrtf)
 			this->set_hrtf(true);
 		ma_sound_set_rolloff(handle_, 2);
-		ma_sound_set_end_callback(handle_, at_stop, current_fx);
 		return true;
 	}
 	bool load_from_memory(string data, size_t stream_size, bool set3d) {
@@ -1331,9 +1326,12 @@ public:
 		}
 		decoderInitialized = true;
 		active = true;
+		auto last = --effects.end();
+
+		ma_node_attach_output_bus(handle_, 0, last->second, 0);
+
 		if (sound_global_hrtf)
 			this->set_hrtf(true);
-		ma_sound_set_end_callback(handle_, at_stop, current_fx);
 
 		return active;
 	}
@@ -1353,10 +1351,13 @@ public:
 			return false;
 		}
 		active = true;
+		auto last = --effects.end();
+
+		ma_node_attach_output_bus(handle_, 0, last->second, 0);
+
 		file = result;
 		if (sound_global_hrtf)
 			this->set_hrtf(true);
-		ma_sound_set_end_callback(handle_, at_stop, current_fx);
 
 		return true;
 	}
@@ -1379,7 +1380,6 @@ public:
 		active = true;
 		if (sound_global_hrtf)
 			this->set_hrtf(true);
-		ma_sound_set_end_callback(handle_, at_stop, current_fx);
 
 		return active;
 	}
@@ -1431,54 +1431,68 @@ public:
 	}
 	bool close() {
 		if (!is_active())return false;
-		if (reverb) {
+		if (effects.find("reverb") != effects.end()) {
 			ma_reverb_node_uninit(&m_reverbNode, NULL);
-			reverb = false;
+			effects["reverb"] = nullptr;
+			effects.erase("reverb");
 		}
-		if (vocoder) {
+		if (effects.find("vocoder") != effects.end()) {
 
 			ma_vocoder_node_uninit(&m_vocoderNode, NULL);
-			vocoder = false;
+			effects["vocoder"] = nullptr;
+			effects.erase("vocoder");
+
 		}
-		if (delayf) {
+		if (effects.find("delay") != effects.end()) {
 			ma_delay_node_uninit(&m_delayNode, NULL);
-			delayf = false;
+			effects["delay"] = nullptr;
+			effects.erase("delay");
+
 		}
-		if (ltrim) {
+		if (effects.find("ltrim") != effects.end()) {
 			ma_ltrim_node_uninit(&m_trimNode, NULL);
-			ltrim = false;
+			effects["ltrim"] = nullptr;
+			effects.erase("ltrim");
+
 		}
-		if (combiner) {
+		if (effects.find("combiner") != effects.end()) {
 			ma_channel_combiner_node_uninit(&m_combinerNode, NULL);
-			combiner = false;
+			effects["combiner"] = nullptr;
+			effects.erase("combiner");
+
 		}
-		if (separator) {
+		if (effects.find("separator") != effects.end()) {
 			ma_channel_separator_node_uninit(&m_separatorNode, NULL);
-			separator = false;
+			effects["separator"] = nullptr;
+			effects.erase("separator");
+
 		}
-		if (hp) {
+		if (effects.find("highpass") != effects.end()) {
 			ma_hpf_node_uninit(&highpass, NULL);
-			hp = false;
+			effects["highpass"] = nullptr;
+			effects.erase("highpass");
 
 		}
-		if (lp) {
+		if (effects.find("lowpass") != effects.end()) {
 			ma_lpf_node_uninit(&lowpass, NULL);
-			lp = false;
-
+			effects["lowpass"] = nullptr;
+			effects.erase("lowpass");
 		}
-		if (notchf) {
+		if (effects.find("notch") != effects.end()) {
 
 			ma_notch_node_uninit(&notch, NULL);
-			notchf = false;
+			effects["notch"] = nullptr;
+			effects.erase("notch");
 		}
-		if (sound_hrtf == true) {
+		if (effects.find("hrtf") != effects.end()) {
 
 			ma_steamaudio_binaural_node_uninit(&m_binauralNode, NULL);
-			sound_hrtf = false;
-
+			effects["hrtf"] = nullptr;
+			effects.erase("hrtf");
 
 		}
-		current_fx = nullptr;
+		effects["Default"] = nullptr;
+		effects.clear();
 		if (decoderInitialized) {
 			ma_decoder_uninit(&decoder);
 			decoderInitialized = false;
@@ -1496,75 +1510,51 @@ public:
 	}
 	void set_fx(const string& fx) {
 		if (!active)return;
+		if (effects.find(fx) != effects.end())return;
 		if (fx == "reverb") {
 			reverbNodeConfig = ma_reverb_node_config_init(engineConfig.channels, engineConfig.sampleRate, 100, 100, 100);
-			if (reverb) {
-				current_fx = ma_engine_get_endpoint(&sound_default_mixer);
-				ma_reverb_node_uninit(&m_reverbNode, NULL);
-				reverb = false;
-			}
 			ma_reverb_node_init(ma_engine_get_node_graph(&sound_default_mixer), &reverbNodeConfig, NULL, &m_reverbNode);
-			ma_node_attach_output_bus(&m_reverbNode, 0, current_fx, 0);
+			auto last = --effects.end();
+
+			ma_node_attach_output_bus(&m_reverbNode, 0, last->second, 0);
 			ma_node_attach_output_bus(handle_, 0, &m_reverbNode, 0);
-			current_fx = &m_reverbNode;
-			reverb = true;
+			effects[fx] = &m_reverbNode;
 		}
 		if (fx == "vocoder") {
 			vocoderNodeConfig = ma_vocoder_node_config_init(engineConfig.channels, engineConfig.sampleRate);
-			if (vocoder) {
-				current_fx = ma_engine_get_endpoint(&sound_default_mixer);
-
-				ma_vocoder_node_uninit(&m_vocoderNode, NULL);
-				vocoder = false;
-			}
 			ma_vocoder_node_init(ma_engine_get_node_graph(&sound_default_mixer), &vocoderNodeConfig, NULL, &m_vocoderNode);
-			ma_node_attach_output_bus(&m_vocoderNode, 0, current_fx, 0);
+			auto last = --effects.end();
+
+			ma_node_attach_output_bus(&m_vocoderNode, 0, last->second, 0);
 			ma_node_attach_output_bus(handle_, 0, &m_vocoderNode, 0);
-			current_fx = &m_vocoderNode;
-			vocoder = true;
+			effects[fx] = &m_vocoderNode;
 		}
 		if (fx == "delay") {
 			delayNodeConfig = ma_delay_node_config_init(engineConfig.channels, engineConfig.sampleRate, (100 * engineConfig.sampleRate) / 1000, 0.5f);
-			if (delayf) {
-				current_fx = ma_engine_get_endpoint(&sound_default_mixer);
-				ma_delay_node_uninit(&m_delayNode, NULL);
-				delayf = false;
-			}
 			ma_delay_node_init(ma_engine_get_node_graph(&sound_default_mixer), &delayNodeConfig, NULL, &m_delayNode);
-			ma_node_attach_output_bus(&m_delayNode, 0, current_fx, 0);
+			auto last = --effects.end();
+
+			ma_node_attach_output_bus(&m_delayNode, 0, last->second, 0);
 			ma_node_attach_output_bus(handle_, 0, &m_delayNode, 0);
-			current_fx = &m_delayNode;
-			delayf = true;
+			effects[fx] = &m_delayNode;
 		}
 		if (fx == "ltrim") {
 			trimNodeConfig = ma_ltrim_node_config_init(engineConfig.channels, 0);
 			trimNodeConfig.threshold = 0.3;
-			if (ltrim) {
-				current_fx = ma_engine_get_endpoint(&sound_default_mixer);
-				ma_ltrim_node_uninit(&m_trimNode, NULL);
-				ltrim = false;
-			}
 			ma_ltrim_node_init(ma_engine_get_node_graph(&sound_default_mixer), &trimNodeConfig, NULL, &m_trimNode);
-			ma_node_attach_output_bus(&m_trimNode, 0, current_fx, 0);
-			ma_node_attach_output_bus(handle_, 0, &m_trimNode, 0);
-			current_fx = &m_trimNode;
+			auto last = --effects.end();
 
-			ltrim = true;
+			ma_node_attach_output_bus(&m_trimNode, 0, last->second, 0);
+			ma_node_attach_output_bus(handle_, 0, &m_trimNode, 0);
+			effects[fx] = &m_trimNode;
+
 		}
 		if (fx == "channelsplit") {
 			combinerNodeConfig = ma_channel_combiner_node_config_init(engineConfig.channels);
-			if (combiner) {
-				ma_channel_combiner_node_uninit(&m_combinerNode, NULL);
-				combiner = false;
-			}
 			ma_channel_combiner_node_init(ma_engine_get_node_graph(&sound_default_mixer), &combinerNodeConfig, NULL, &m_combinerNode);
 			ma_node_attach_output_bus(&m_combinerNode, 0, ma_engine_get_endpoint(&sound_default_mixer), 0);
-			combiner = true;
+			effects["combiner"] = &m_combinerNode;
 			separatorNodeConfig = ma_channel_separator_node_config_init(engineConfig.channels);
-			if (separator) {
-				ma_channel_separator_node_uninit(&m_separatorNode, NULL);
-				separator = false;
-			}
 			ma_channel_separator_node_init(ma_engine_get_node_graph(&sound_default_mixer), &separatorNodeConfig, NULL, &m_separatorNode);
 			MA_ASSERT(ma_node_get_output_bus_count(&m_separatorNode) == ma_node_get_input_bus_count(&m_combinerNode));
 			for (ma_uint32 iChannel = 0; iChannel < ma_node_get_output_bus_count(&m_separatorNode); iChannel += 1) {
@@ -1572,132 +1562,77 @@ public:
 			}
 
 			ma_node_attach_output_bus(handle_, 0, &m_separatorNode, 0);
-			separator = true;
+			effects["separator"] = &m_separatorNode;
+			effects[fx] = &m_separatorNode;
 		}
 		if (fx == "highpass") {
 			highpassConfig = ma_hpf_node_config_init(engineConfig.channels, engineConfig.sampleRate, 600, -10);
-			if (hp) {
-				current_fx = ma_engine_get_endpoint(&sound_default_mixer);
-
-				ma_hpf_node_uninit(&highpass, NULL);
-				hp = false;
-			}
 			ma_hpf_node_init(ma_engine_get_node_graph(&sound_default_mixer), &highpassConfig, NULL, &highpass);
-			ma_node_attach_output_bus(&highpass, 0, current_fx, 0);
-			ma_node_attach_output_bus(handle_, 0, &highpass, 0);
-			current_fx = &highpass;
+			auto last = --effects.end();
 
-			hp = true;
+			ma_node_attach_output_bus(&highpass, 0, last->second, 0);
+			ma_node_attach_output_bus(handle_, 0, &highpass, 0);
+			effects[fx] = &highpass;
+
 		}
 		if (fx == "lowpass") {
 			lowpassConfig = ma_lpf_node_config_init(engineConfig.channels, engineConfig.sampleRate, 600, -10);
-			if (lp) {
-				current_fx = ma_engine_get_endpoint(&sound_default_mixer);
-
-				ma_lpf_node_uninit(&lowpass, NULL);
-				lp = false;
-			}
 			ma_lpf_node_init(ma_engine_get_node_graph(&sound_default_mixer), &lowpassConfig, NULL, &lowpass);
-			ma_node_attach_output_bus(&lowpass, 0, current_fx, 0);
-			ma_node_attach_output_bus(handle_, 0, &lowpass, 0);
-			current_fx = &lowpass;
+			auto last = --effects.end();
 
-			lp = true;
+			ma_node_attach_output_bus(&lowpass, 0, last->second, 0);
+			ma_node_attach_output_bus(handle_, 0, &lowpass, 0);
+			effects[fx] = &lowpass;
+
 		}
 		if (fx == "notch") {
 			notchConfig = ma_notch_node_config_init(engineConfig.channels, engineConfig.sampleRate, 0, 300);
-			if (notchf) {
-				current_fx = ma_engine_get_endpoint(&sound_default_mixer);
-
-				ma_notch_node_uninit(&notch, NULL);
-				notchf = false;
-			}
 			ma_notch_node_init(ma_engine_get_node_graph(&sound_default_mixer), &notchConfig, NULL, &notch);
-			ma_node_attach_output_bus(&notch, 0, current_fx, 0);
-			ma_node_attach_output_bus(handle_, 0, &notch, 0);
-			current_fx = &notch;
+			auto last = --effects.end();
 
-			notchf = true;
+			ma_node_attach_output_bus(&notch, 0, last->second, 0);
+			ma_node_attach_output_bus(handle_, 0, &notch, 0);
+			effects[fx] = &notch;
+
 		}
 	}
 	void delete_fx(const string& fx) {
 		if (!active)return;
+		if (effects.find(fx) == effects.end())return;
+		effects.erase(fx);
 		if (fx == "reverb") {
-			if (reverb) {
-				current_fx = ma_engine_get_endpoint(&sound_default_mixer);
-				ma_reverb_node_uninit(&m_reverbNode, NULL);
-				reverb = false;
-			}
-			ma_node_attach_output_bus(handle_, 0, current_fx, 0);
+			ma_reverb_node_uninit(&m_reverbNode, NULL);
 		}
 		if (fx == "vocoder") {
-			if (vocoder) {
-				current_fx = ma_engine_get_endpoint(&sound_default_mixer);
-
-				ma_vocoder_node_uninit(&m_vocoderNode, NULL);
-				vocoder = false;
-			}
-			ma_node_attach_output_bus(handle_, 0, current_fx, 0);
+			ma_vocoder_node_uninit(&m_vocoderNode, NULL);
 		}
 		if (fx == "delay") {
-			if (delayf) {
-				current_fx = ma_engine_get_endpoint(&sound_default_mixer);
-				ma_delay_node_uninit(&m_delayNode, NULL);
-				delayf = false;
-			}
-			ma_node_attach_output_bus(handle_, 0, current_fx, 0);
+			ma_delay_node_uninit(&m_delayNode, NULL);
 		}
 		if (fx == "ltrim") {
-			if (ltrim) {
-				current_fx = ma_engine_get_endpoint(&sound_default_mixer);
-				ma_ltrim_node_uninit(&m_trimNode, NULL);
-				ltrim = false;
-			}
-			ma_node_attach_output_bus(handle_, 0, current_fx, 0);
+			ma_ltrim_node_uninit(&m_trimNode, NULL);
 		}
 		if (fx == "channelsplit") {
 			combinerNodeConfig = ma_channel_combiner_node_config_init(engineConfig.channels);
-			if (combiner) {
-				ma_channel_combiner_node_uninit(&m_combinerNode, NULL);
-				combiner = false;
-			}
-			if (separator) {
-				ma_channel_separator_node_uninit(&m_separatorNode, NULL);
-				separator = false;
-			}
+			ma_channel_combiner_node_uninit(&m_combinerNode, NULL);
+			ma_channel_separator_node_uninit(&m_separatorNode, NULL);
 		}
 		if (fx == "highpass") {
-			if (hp) {
-				current_fx = ma_engine_get_endpoint(&sound_default_mixer);
-
-				ma_hpf_node_uninit(&highpass, NULL);
-				hp = false;
-			}
-			ma_node_attach_output_bus(handle_, 0, current_fx, 0);
+			ma_hpf_node_uninit(&highpass, NULL);
 
 		}
 		if (fx == "lowpass") {
-			if (lp) {
-				current_fx = ma_engine_get_endpoint(&sound_default_mixer);
-
-				ma_lpf_node_uninit(&lowpass, NULL);
-				lp = false;
-			}
-			ma_node_attach_output_bus(handle_, 0, current_fx, 0);
+			ma_lpf_node_uninit(&lowpass, NULL);
 
 		}
 		if (fx == "notch") {
-			if (notchf) {
-				current_fx = ma_engine_get_endpoint(&sound_default_mixer);
-
-				ma_notch_node_uninit(&notch, NULL);
-				notchf = false;
-			}
-			ma_node_attach_output_bus(handle_, 0, current_fx, 0);
+			ma_notch_node_uninit(&notch, NULL);
 
 		}
-	}
+		auto last = --effects.end();
 
+		ma_node_attach_output_bus(handle_, 0, last->second, 0);
+	}
 	void set_reverb_parameters(float dry, float wet, float room_size, float damping, float mode) {
 		if (!active)return;
 		verblib_set_dry(&m_reverbNode.reverb, dry);
@@ -1801,40 +1736,37 @@ public:
 	void set_hrtf(bool hrtf) {
 		if (!active)return;
 		if (hrtf) {
+			if (effects.find("hrtf") != effects.end())return;
 
 			binauralNodeConfig = ma_steamaudio_binaural_node_config_init(CHANNELS, iplAudioSettings, iplContext, iplHRTF);
-			if (sound_hrtf == true) {
-				current_fx = ma_engine_get_endpoint(&sound_default_mixer);
-
-				ma_steamaudio_binaural_node_uninit(&m_binauralNode, NULL);
-				sound_hrtf = false;
-			}
 
 			m_binauralNode.handle_ = *this->handle_;
 			ma_steamaudio_binaural_node_init(ma_engine_get_node_graph(&sound_default_mixer), &binauralNodeConfig, NULL, &m_binauralNode);
 			/* Connect the output of the delay node to the input of the endpoint. */
-			ma_node_attach_output_bus(&m_binauralNode, 0, current_fx, 0);
+			auto last = --effects.end();
+			ma_node_attach_output_bus(&m_binauralNode, 0, last->second, 0);
 			ma_node_attach_output_bus(handle_, 0, &m_binauralNode, 0);
-			current_fx = &m_binauralNode;
+			effects["hrtf"] = &m_binauralNode;
 			ma_sound_set_directional_attenuation_factor(handle_, 0);
-			sound_hrtf = true;
 		}
 		else {
-			if (sound_hrtf == true) {
+			if (effects.find("hrtf") != effects.end()) {
 
 				ma_steamaudio_binaural_node_uninit(&m_binauralNode, NULL);
-				sound_hrtf = false;
+				effects["hrtf"] = nullptr;
+				effects.erase("hrtf");
 				ma_sound_set_directional_attenuation_factor(handle_, 1);
 
-				current_fx = ma_engine_get_endpoint(&sound_default_mixer);
-				ma_node_attach_output_bus(handle_, 0, current_fx, 0);
+				auto last = --effects.end();
+
+				ma_node_attach_output_bus(handle_, 0, last->second, 0);
 
 			}
 
 		}
 	}
 	bool get_hrtf() {
-		return sound_hrtf;
+		return effects.find("hrtf") != effects.end();
 	}
 	ngtvector* get_listener_position() { return &listener_position; }
 	ngtvector* get_source_position() { return &source_position; }
@@ -1903,15 +1835,6 @@ public:
 		ma_sound_set_pitch(handle_, pitch / 100);
 	}
 	void set_speed(float speed) {
-		if (!speeding) {
-			m_speed_config = ma_playback_speed_node_config_init(engineConfig.channels, engineConfig.sampleRate);
-			ma_playback_speed_node_init(ma_engine_get_node_graph(&sound_default_mixer), &m_speed_config, NULL, &m_playback_speed_node);
-			ma_node_attach_output_bus(&m_playback_speed_node, 0, current_fx, 0);
-			ma_node_attach_output_bus(handle_, 0, &m_playback_speed_node, 0);
-			current_fx = &m_playback_speed_node;
-			speeding = true;
-		}
-		m_speed_config.playbackSpeed = speed / 100;
 	}
 	float get_speed()const {
 		return m_speed_config.playbackSpeed * 100;
