@@ -1,4 +1,3 @@
-#include "hip"
 class sound_pool_item
 {
 	float upper_range;
@@ -7,6 +6,7 @@ class sound_pool_item
 	float right_range;
 	float backward_range;
 	float forward_range;
+	float rotation;
 
 	sound @sound_instance;
 
@@ -25,7 +25,7 @@ class sound_pool_item
 		forward_range = 0;
 		upper_range = 0;
 		lower_range = 0;
-
+		rotation = 0;
 		if (sound_instance.active)
 			sound_instance.close();
 		@sound_instance = null;
@@ -62,8 +62,14 @@ class sound_pool_item
 			true_z = delta_upper;
 
 		sound_instance.set_position(listener_x, listener_y, listener_z, true_x, true_y, true_z, rotation);
+		this.rotation = rotation;
 	}
-
+	void update_position(float x, float y, float z){
+		vector @pos = sound_instance.get_listener_position();
+		if (pos is null)
+			return;
+		sound_instance.set_position(pos.x, pos.y, pos.z, x, y, z, rotation);
+	}
 	float get_total_distance(float listener_x, float listener_y, float listener_z) {
 		vector @source_pos = sound_instance.get_source_position();
 
@@ -270,7 +276,7 @@ class sound_pool
 
 		return i; // Return index
 	}
-	void update(float listener_x, float listener_y, float listener_z, float rotation = 0) {
+	void update_listener_position(float listener_x, float listener_y, float listener_z, float rotation = 0) {
 		for (int i = 0; i < max_sounds; ++i)
 		{
 			if (pool[i].active && pool[i].playing)
@@ -282,6 +288,106 @@ class sound_pool
 				pool[i].reset(); // Free unused sounds
 			}
 		}
+	}
+	void pause_all()
+	{
+		for (int i = 0; i < max_sounds; ++i)
+		{
+			if (pool[i].active && pool[i].playing)
+			{
+				pool[i].sound_instance.pause();
+			}
+		}
+	}
+
+	void resume_all()
+	{
+		for (int i = 0; i < max_sounds; ++i)
+		{
+			if (pool[i].active && !pool[i].playing)
+			{
+				this.resume_sound(i);
+			}
+		}
+	}
+
+	bool sound_active(int slot)
+	{
+		if (slot < 0 || slot >= max_sounds)
+			return false;
+		return pool[slot].active;
+	}
+
+	bool sound_is_playing(int slot)
+	{
+		if (slot < 0 || slot >= max_sounds)
+			return false;
+		return pool[slot].playing;
+	}
+
+	bool pause_sound(int slot)
+	{
+		if (slot < 0 || slot >= max_sounds || !pool[slot].active)
+			return false;
+		pool[slot].sound_instance.pause();
+		return true;
+	}
+
+	void destroy_all()
+	{
+		for (int i = 0; i < max_sounds; ++i)
+		{
+			pool[i].reset();
+		}
+	}
+
+	bool resume_sound(int slot)
+	{
+		if (slot < 0 || slot >= max_sounds || !pool[slot].active)
+			return false;
+		pool[slot].play(pool[slot].sound_instance.looping);
+		return true;
+	}
+
+	bool update_sound_position(int slot, int x = 0, int y = 0, int z = 0)
+	{
+		if (slot < 0 || slot >= max_sounds || !pool[slot].active)
+			return false;
+		pool[slot].update_position(x, y, z);
+		return true;
+	}
+
+	bool update_sound_start_values(int slot, float start_pan, float start_volume, float start_pitch)
+	{
+		if (slot < 0 || slot >= max_sounds || !pool[slot].active)
+			return false;
+
+		pool[slot].sound_instance.set_pan(start_pan);
+		pool[slot].sound_instance.set_volume(start_volume);
+		pool[slot].sound_instance.set_pitch(start_pitch);
+		return true;
+	}
+
+	bool destroy_sound(int slot)
+	{
+		if (slot < 0 || slot >= max_sounds || !pool[slot].active)
+			return false;
+		pool[slot].reset();
+		return true;
+	}
+
+	bool update_sound_range(int slot, int left_range = 0, int right_range = 0, int backward_range = 0, int forward_range = 0, int upper_range = 0, int lower_range = 0)
+	{
+		if (slot < 0 || slot >= max_sounds || !pool[slot].active)
+			return false;
+		pool[slot].left_range = left_range;
+		pool[slot].right_range = right_range;
+		pool[slot].backward_range = backward_range;
+		pool[slot].forward_range = forward_range;
+		pool[slot].lower_range = lower_range;
+		pool[slot].upper_range = upper_range;
+
+		return true;
 	}
 	protected int get_free_sound_id() {
 		int it;
