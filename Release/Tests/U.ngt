@@ -1,9 +1,0 @@
-void main(){
-file f;
-f.open("U.ogg", "r");
-string r = f.read(f.get_size());
-f.close();
-f.open("U.txt", "w");
-f.write(string_base64_encode(r));
-f.close();
-}
