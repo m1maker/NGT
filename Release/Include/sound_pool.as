@@ -128,7 +128,7 @@ class sound_pool
 	protected array<sound_pool_item @> pool;
 	protected int max_sounds;
 	array<effect @> effects;
-
+	protected bool use_hrtf = true;
 	sound_pool(int _max_sounds = 100)
 	{
 		this.max_sounds = _max_sounds;
@@ -159,7 +159,16 @@ class sound_pool
 		}
 		effects.remove_at(index);
 	}
-
+	void set_hrtf(bool enable) property{
+		for (uint i = 0; i < max_sounds; ++i)
+		{
+			pool[i].sound_instance.set_hrtf(enable);
+		}
+		this.use_hrtf = enable;
+	}
+	bool get_hrtf() const property{
+		return this.use_hrtf;
+	}
 	int play_stationary(const string& in filename, bool looping, bool memory = false, bool persistent = false) {
 		return play_3d(filename, looping : looping, memory : memory, persistent : persistent);
 	}
@@ -368,7 +377,7 @@ class sound_pool
 		{
 			pool[i].attach_effect(effects[i2]);
 		}
-
+		pool[i].sound_instance.set_hrtf(this.use_hrtf);
 		pool[i].play(looping);
 		if (offset > 0)
 			pool[i].sound_instance.seek(offset);
