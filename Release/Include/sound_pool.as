@@ -8,7 +8,7 @@ class sound_pool_item
 	float backward_range;
 	float forward_range;
 	float rotation;
-
+	array<effect @> effects;
 	sound @sound_instance;
 
 	sound_pool_item()
@@ -27,6 +27,11 @@ class sound_pool_item
 		upper_range = 0;
 		lower_range = 0;
 		rotation = 0;
+		for (uint i = 0; i < effects.length(); ++i)
+		{
+			detach_effect(i);
+		}
+		effects.resize(0);
 		if (sound_instance.active)
 			sound_instance.close();
 		@sound_instance = null;
@@ -102,6 +107,19 @@ class sound_pool_item
 	bool play(bool loop = false) {
 		return loop ? sound_instance.play_looped() : sound_instance.play();
 	}
+	int attach_effect(effect @e){
+		if (e is null)
+			return -1;
+		effects.insert_last(e);
+		e.attach(sound_instance);
+		return effects.length() - 1;
+	}
+	void detach_effect(int index){
+		if (index < 0 || index > effects.length() - 1)
+			return;
+		effects[index].detach(sound_instance);
+		effects.remove_at(index);
+	}
 };
 
 class sound_pool
@@ -109,6 +127,7 @@ class sound_pool
 	int max_distance;
 	protected array<sound_pool_item @> pool;
 	protected int max_sounds;
+	array<effect @> effects;
 
 	sound_pool(int _max_sounds = 100)
 	{
@@ -121,6 +140,26 @@ class sound_pool
 			@pool[i] = sound_pool_item();
 		}
 	}
+	int add_effect(effect @e){
+		if (e is null)
+			return -1;
+		effects.insert_last(e);
+		for (uint i = 0; i < max_sounds; ++i)
+		{
+			pool[i].attach_effect(e);
+		}
+		return effects.length() - 1;
+	}
+	void remove_effect(int index){
+		if (index < 0 || index > effects.length() - 1)
+			return;
+		for (uint i = 0; i < max_sounds; ++i)
+		{
+			pool[i].detach_effect(index);
+		}
+		effects.remove_at(index);
+	}
+
 	int play_stationary(const string& in filename, bool looping, bool memory = false, bool persistent = false) {
 		return play_3d(filename, looping : looping, memory : memory, persistent : persistent);
 	}
@@ -325,6 +364,10 @@ class sound_pool
 		pool[i].forward_range = forward_range;
 		pool[i].lower_range = lower_range;
 		pool[i].upper_range = upper_range;
+		for (uint i2 = 0; i2 < effects.length(); ++i2)
+		{
+			pool[i].attach_effect(effects[i2]);
+		}
 
 		pool[i].play(looping);
 		if (offset > 0)

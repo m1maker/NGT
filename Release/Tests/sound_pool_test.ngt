@@ -1,6 +1,12 @@
 #include "../include/sound_pool.as"
+#include "../include/effect"
+#include "../include/effect_reverb"
+reverb r;
 void main(){
 sound_pool sp;
+r.set_wet(0.5);
+r.set_dry(1.0);
+sp.add_effect(r);
 show_window("Test");
 //sp.use_hrtf=true;
 update_window_freq=0;

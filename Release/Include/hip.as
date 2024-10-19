@@ -461,6 +461,10 @@ namespace hip
 		}
 		return text;
 	}
+	bool in_range(float value, float min, float max) {
+		return value > max || value < min ? false : true;
+	}
+
 	bool in_range(double x, double y, double z, double minx, double maxx, double miny, double maxy, double minz, double maxz)
 	{
 		if (x >= minx && x <= maxx && y >= miny && y <= maxy && z >= minz && z <= maxz)
