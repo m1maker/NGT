@@ -10,7 +10,6 @@ class sound_pool_item
 	float rotation;
 	array<effect @> effects;
 	sound @sound_instance;
-
 	sound_pool_item()
 	{
 		@sound_instance = sound(); // Create a new sound instance
@@ -137,6 +136,8 @@ class sound_pool
 	protected int max_sounds;
 	array<effect @> effects;
 	protected bool use_hrtf = true;
+	bool in_window = false;
+	protected bool muted = false;
 	sound_pool(int _max_sounds = 100)
 	{
 		this.max_sounds = _max_sounds;
@@ -397,7 +398,7 @@ class sound_pool
 			pool[i].attach_effect(effects[i2]);
 		}
 		pool[i].sound_instance.set_hrtf(this.use_hrtf);
-		pool[i].play(looping);
+		in_window && !window_active ? pause_sound(i) : pool[i].play(looping);
 		if (offset > 0)
 			pool[i].sound_instance.seek(offset);
 		pool[i].update_listener_position(listener_x, listener_y, listener_z, rotation);
@@ -410,7 +411,20 @@ class sound_pool
 		{
 			if (pool[i].active && pool[i].playing)
 			{
+				if (in_window && !window_active && !muted)
+				{
+					pause_sound(i);
+					muted = true;
+				}
 				pool[i].update_listener_position(listener_x, listener_y, listener_z, rotation);
+			}
+			else if (pool[i].active && pool[i].sound_instance.paused)
+			{
+				if (window_active && muted)
+				{
+					resume_sound(i);
+					muted = false;
+				}
 			}
 			else
 			{
@@ -422,7 +436,7 @@ class sound_pool
 	{
 		for (int i = 0; i < max_sounds; ++i)
 		{
-			if (pool[i].active && pool[i].playing)
+			if (pool[i].active)
 			{
 				pool[i].sound_instance.pause();
 			}

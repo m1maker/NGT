@@ -10,7 +10,9 @@ r.set_dry(1.0);
 int e=p.add_effect(r);
 show_window("Test");
 wait(1000);
+p.in_window=true;
 p.play_3d("C:/windows/media/tada.wav",x,y,z,5,5,0,0,true);
+
 while(true)
 {
 wait(5);
