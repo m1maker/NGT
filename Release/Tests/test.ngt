@@ -1,8 +1,13 @@
 #include"../include/sound_pool"
+#include "../include/effect_reverb"
 sound_pool p;
 double x=0,y=0,z=0;
 void main()
 {
+reverb r;
+r.set_wet(0.5);
+r.set_dry(1.0);
+p.add_effect(r);
 show_window("Test");
 wait(1000);
 p.play_3d("C:/windows/media/tada.wav",x,y,z,5,5,0,0,true);

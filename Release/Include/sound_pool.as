@@ -68,6 +68,10 @@ class sound_pool_item
 			true_z = delta_upper;
 
 		sound_instance.set_position(listener_x, listener_y, listener_z, true_x, true_y, true_z, rotation);
+		for (uint i = 0; i < effects.length(); ++i)
+		{
+			effects[i].ranges_monitor();
+		}
 		this.rotation = rotation;
 	}
 	void update_position(float x, float y, float z){

@@ -14,6 +14,7 @@ class map
 	private int height;
 	private int depth;
 	private array<tiletype> voxels;
+	private array<string> tileNames; // Array to store tile names
 
 	// Default constructor (empty)
 	map()
@@ -22,6 +23,7 @@ class map
 		height = 0;
 		depth = 0;
 		voxels.resize(0); // No voxels
+		tileNames.resize(0); // No tile names
 	}
 
 	// Parameterized constructor
@@ -31,6 +33,7 @@ class map
 		height = h;
 		depth = d;
 		voxels.resize(w * h * d);
+		tileNames.resize(w * h * d); // Initialize tile names
 	}
 
 	// Copy constructor
@@ -40,6 +43,7 @@ class map
 		height = other.height;
 		depth = other.depth;
 		voxels = other.voxels; // Use the array's built-in copy mechanism
+		tileNames = other.tileNames; // Copy tile names
 	}
 
 	// Assignment operator
@@ -54,6 +58,7 @@ class map
 		height = other.height;
 		depth = other.depth;
 		voxels = other.voxels; // Use the array's built-in copy mechanism
+		tileNames = other.tileNames; // Copy tile names
 		return this;
 	}
 
@@ -63,6 +68,7 @@ class map
 		height = newHeight;
 		depth = newDepth;
 		voxels.resize(newWidth * newHeight * newDepth); // Default all new voxels to AIR
+		tileNames.resize(newWidth * newHeight * newDepth); // Resize tile names
 	}
 
 	// Set the type of a specific voxel
@@ -73,6 +79,14 @@ class map
 		}
 	}
 
+	// Set the name of a specific tile
+	void set_tile_name(int x, int y, int z, const string&in name) {
+		if (is_in_bounds(x, y, z))
+		{
+			tileNames[z * (width * height) + y * width + x] = name;
+		}
+	}
+
 	// Get the type of a specific voxel
 	tiletype get_tile(int x, int y, int z) {
 		if (is_in_bounds(x, y, z))
@@ -80,6 +94,15 @@ class map
 			return voxels[z * (width * height) + y * width + x];
 		}
 		return tiletype::BLOCKED; // Return BLOCKED if out of bounds
+	}
+
+	// Get the name of a specific tile
+	string get_tile_name(int x, int y, int z) {
+		if (is_in_bounds(x, y, z))
+		{
+			return tileNames[z * (width * height) + y * width + x];
+		}
+		return ""; // Return empty string if out of bounds
 	}
 
 	// Check if coordinates are within the map bounds
@@ -156,6 +179,7 @@ class map
 				for (int x = 0; x < width; x++)
 				{
 					result += int(get_tile(x, y, z)) + ",";		// Add tile type
+					result += get_tile_name(x, y, z) + ","; // Add tile name
 				}
 				result = result.substr(0, result.length() - 1); // Remove the last comma
 				result += ";";									// Separate layers
@@ -179,6 +203,7 @@ class map
 		height = string_to_number(dimensions[1]);
 		depth = string_to_number(dimensions[2]);
 		voxels.resize(width * height * depth);
+		tileNames.resize(width * height * depth); // Resize tile names
 
 		for (int z = 0; z < depth; z++)
 		{
@@ -194,6 +219,7 @@ class map
 					if (index < tiles.length())
 					{
 						voxels[z * (width * height) + index] = tiletype(string_to_number(tiles[index])); // Set tile
+						tileNames[z * (width * height) + index] = tiles[index]; // Set tile name
 					}
 				}
 			}
