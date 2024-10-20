@@ -202,7 +202,7 @@ class sound_pool
 	}
 
 	int play_1d(const string& in filename, float listener_x, float sound_x,
-				int left_range, int right_range,
+				float left_range, float right_range,
 				bool looping,
 				float offset,
 				float start_pan,
@@ -249,10 +249,10 @@ class sound_pool
 				float listener_y,
 				float sound_x,
 				float sound_y,
-				int left_range,
-				int right_range,
-				int backward_range,
-				int forward_range,
+				float left_range,
+				float right_range,
+				float backward_range,
+				float forward_range,
 				bool looping,
 				float offset,
 				float start_pan,
@@ -311,12 +311,12 @@ class sound_pool
 		vector @source,
 
 		float rotation = 0,
-		int left_range = 0,
-		int right_range = 0,
-		int backward_range = 0,
-		int forward_range = 0,
-		int upper_range = 0,
-		int lower_range = 0,
+		float left_range = 0,
+		float right_range = 0,
+		float backward_range = 0,
+		float forward_range = 0,
+		float upper_range = 0,
+		float lower_range = 0,
 		bool looping = false,
 		float offset = 0,
 		float start_pan = 0,
@@ -359,12 +359,12 @@ class sound_pool
 		float sound_y = 0,
 		float sound_z = 0,
 		float rotation = 0,
-		int left_range = 0,
-		int right_range = 0,
-		int backward_range = 0,
-		int forward_range = 0,
-		int upper_range = 0,
-		int lower_range = 0,
+		float left_range = 0,
+		float right_range = 0,
+		float backward_range = 0,
+		float forward_range = 0,
+		float upper_range = 0,
+		float lower_range = 0,
 		bool looping = false,
 		float offset = 0,
 		float start_pan = 0,
@@ -381,18 +381,9 @@ class sound_pool
 		pool[i].sound_instance.set_looping(looping);
 
 		// Set initial properties
-		pool[i].sound_instance.set_pan(start_pan);
-		pool[i].sound_instance.set_volume(start_volume);
-		pool[i].sound_instance.set_pitch(start_pitch);
-
+		update_sound_start_values(i, start_pan, start_volume, start_pitch);
 		// Set position in 3D space
-
-		pool[i].left_range = left_range;
-		pool[i].right_range = right_range;
-		pool[i].backward_range = backward_range;
-		pool[i].forward_range = forward_range;
-		pool[i].lower_range = lower_range;
-		pool[i].upper_range = upper_range;
+		update_sound_range(i, left_range, right_range, backward_range, forward_range, upper_range, lower_range);
 		for (uint i2 = 0; i2 < effects.length(); ++i2)
 		{
 			pool[i].attach_effect(effects[i2]);
@@ -492,7 +483,7 @@ class sound_pool
 		return true;
 	}
 
-	bool update_sound_position(int slot, int x = 0, int y = 0, int z = 0)
+	bool update_sound_position(int slot, float x = 0, float y = 0, float z = 0)
 	{
 		if (slot < 0 || slot >= max_sounds || !pool[slot].active)
 			return false;
@@ -519,7 +510,7 @@ class sound_pool
 		return true;
 	}
 
-	bool update_sound_range(int slot, int left_range = 0, int right_range = 0, int backward_range = 0, int forward_range = 0, int upper_range = 0, int lower_range = 0)
+	bool update_sound_range(int slot, float left_range = 0, float right_range = 0, float backward_range = 0, float forward_range = 0, float upper_range = 0, float lower_range = 0)
 	{
 		if (slot < 0 || slot >= max_sounds || !pool[slot].active)
 			return false;
@@ -533,7 +524,7 @@ class sound_pool
 		return true;
 	}
 	protected int get_free_sound_id() {
-		int it;
+		uint it;
 		bool found = false;
 		for (it = 0; it < pool.length(); it++)
 		{
