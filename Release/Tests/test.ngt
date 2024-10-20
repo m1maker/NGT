@@ -7,7 +7,7 @@ void main()
 reverb r;
 r.set_wet(0.5);
 r.set_dry(1.0);
-p.add_effect(r);
+int e=p.add_effect(r);
 show_window("Test");
 wait(1000);
 p.play_3d("C:/windows/media/tada.wav",x,y,z,5,5,0,0,true);
@@ -24,5 +24,10 @@ else if(key_repeat(KEY_PAGEUP))z+=1;
 if(key_pressed(KEY_F1)){
 p.hrtf=!p.hrtf ? true : false;
 }
+if(key_pressed(KEY_F2)){
+p.remove_effect(e);
+}
+if(key_pressed(KEY_F3))
+e=p.add_effect(r);
 }
 }

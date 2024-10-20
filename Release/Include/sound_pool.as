@@ -115,7 +115,11 @@ class sound_pool_item
 		if (e is null)
 			return -1;
 		effects.insert_last(e);
+		bool hrtf = sound_instance.hrtf;
+		if (hrtf)
+			sound_instance.hrtf = false;
 		e.attach(sound_instance);
+		sound_instance.hrtf = hrtf;
 		return effects.length() - 1;
 	}
 	void detach_effect(int index){
