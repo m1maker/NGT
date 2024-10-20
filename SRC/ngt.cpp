@@ -559,17 +559,9 @@ void exit_engine(int return_number)
 		e_ctx->Release();
 		exit_callback = nullptr;
 	}
-	if (windowRunnable != nullptr)
-		hide_window();
-	soundsystem_free();
-	enet_deinitialize();
-	SDL_Quit();
-	SRAL_Uninitialize(); // Keyboard hooks are automatically uninstalls when uninitialize
-	CContextMgr* ctxmgr = get_context_manager();
-	if (ctxmgr) {
-		ctxmgr->AbortAll();
-	}
-	std::exit(return_number);
+	asGetActiveContext()->Abort();
+	g_shutdown = true;
+	g_retcode = return_number;
 }
 
 CScriptArray* keys_pressed() {
@@ -711,7 +703,7 @@ bool key_pressed(int key_code)
 	{
 		keys[key_code].isPressed = true;
 		return true;
-	}
+}
 	return false;
 }
 bool key_released(int key_code)

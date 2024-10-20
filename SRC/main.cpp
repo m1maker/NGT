@@ -7,6 +7,8 @@
 #include <unistd.h>
 #endif
 #include "obfuscate.h"
+#include "sound.h"
+#include <SRAL.h>
 #include <filesystem>
 #include <angelscript.h>
 #include "contextmgr/contextmgr.h"
@@ -55,7 +57,8 @@ using Poco::Util::HelpFormatter;
 using Poco::Util::AbstractConfiguration;
 using Poco::Util::OptionCallback;
 using Poco::AutoPtr;
-
+bool g_shutdown = false;
+int g_retcode = 0;
 static std::string get_exe_path();
 int IncludeCallback(const char* include, const char* from, CScriptBuilder* builder, void* userParam) {
 	// 1. Resolve the relative path
@@ -488,10 +491,6 @@ public:
 		scriptEngine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
 	}
 	~NGTScripting() {
-		if (m_ctxMgr != 0) {
-			delete m_ctxMgr;
-			m_ctxMgr = nullptr;
-		}
 		if (m_dbg)
 		{
 			delete m_dbg;
@@ -501,8 +500,13 @@ public:
 		for (auto ctx : m_ctxPool)
 			ctx->Release();
 		m_ctxPool.clear();
+		if (m_ctxMgr != 0) {
+			delete m_ctxMgr;
+			m_ctxMgr = nullptr;
+		}
 
 		scriptEngine->ClearMessageCallback();
+		scriptEngine->GarbageCollect();
 		scriptEngine->ShutDownAndRelease();
 	}
 
@@ -565,9 +569,9 @@ public:
 			// Execute the script until completion
 			// The script may create co-routines. These will automatically
 			// be managed by the context manager
-			while (m_ctxMgr->ExecuteScripts());
-
+			while (m_ctxMgr->ExecuteScripts() && !g_shutdown);
 			// Check if the main script finished normally
+			if (scriptContext == nullptr)return r;
 			r = scriptContext->GetState();
 			if (r != asEXECUTION_FINISHED)
 			{
@@ -579,6 +583,8 @@ public:
 				else if (r == asEXECUTION_ABORTED)
 				{
 					r = 0;
+					m_ctxMgr->DoneWithContext(scriptContext);
+					return r;
 				}
 				else
 				{
@@ -598,6 +604,7 @@ public:
 
 			// Return the context after retrieving the return value
 			m_ctxMgr->DoneWithContext(scriptContext);
+
 			return r;
 		}
 		catch (const Poco::Exception& e) {
@@ -693,7 +700,7 @@ public:
 		}
 	}
 protected:
-	void initialize(Application& self)
+	void initialize(Application& self)override
 	{
 #ifdef _WIN32
 		timeBeginPeriod(1);
@@ -716,8 +723,15 @@ protected:
 
 	}
 
-	void uninitialize()
+	void uninitialize()override
 	{
+
+		hide_window();
+		soundsystem_free();
+		enet_deinitialize();
+		SDL_Quit();
+		SRAL_Uninitialize(); // Keyboard hooks are automatically uninstalls when uninitialize
+
 		Application::uninitialize();
 #ifdef _WIN32
 		timeEndPeriod(1);
@@ -818,6 +832,7 @@ protected:
 		init_engine();
 		int result = app->Exec(func);
 		m_retcode = result;
+		module->Discard();
 	}
 
 	void runScript(const std::string& name, const std::string& value) {
@@ -837,7 +852,10 @@ protected:
 		}
 		init_engine();
 		int result = app->Exec(func);
+
 		m_retcode = result;
+		module->Discard();
+
 	}
 	void compileScript(const std::string& name, const std::string& value) {
 		// Compile the script
@@ -880,6 +898,7 @@ protected:
 		buffer_size = buffer.size();
 		file.write(reinterpret_cast<char*>(&buffer_size), sizeof(asUINT));
 		file.close();
+		module->Discard();
 
 	}
 	void executeBytecode() {
@@ -927,6 +946,7 @@ protected:
 		init_engine();
 		result = app->Exec(func);
 		m_retcode = result;
+		module->Discard();
 	}
 
 	int main(const ArgVec& args)override

@@ -137,6 +137,8 @@ int get_MOUSE_Y();
 int get_MOUSE_Z();
 class NGTScripting;
 NGTScripting* get_scripting_instance();
+extern bool g_shutdown;
+extern int g_retcode;
 void exit_engine(int = 0);
 string number_to_words(uint64_t, bool);
 bool clipboard_copy_text(const string&);
