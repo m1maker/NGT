@@ -538,7 +538,35 @@ class sound_pool
 			return it;
 		return -1;
 	}
+	void fade(double time = 0.25, double targetVol = 0, bool destroy = false, sound_pool_fade_callback @cb = null, bool fadeIn = false)
+	{
+		double step = fadeIn ? time : -time;
+		double startVol = fadeIn ? targetVol : 0; // Assuming full volume is 0
+		double endVol = fadeIn ? 0 : targetVol;	  // Target volume for fade out
+
+		for (double current = startVol; (fadeIn ? current < endVol : current > endVol); current += step)
+		{
+			for (uint x = 0; x < pool.length(); x++)
+			{
+				if (pool[x].sound_instance is null)
+					continue;
+				if (!pool[x].sound_instance.playing)
+					continue;
+				pool[x].sound_instance.set_volume(current);
+			}
+
+			if (@cb != null)
+				cb();
+
+			wait(5);
+		}
+
+		if (destroy)
+			this.destroy_all();
+	}
 };
+
+funcdef void sound_pool_fade_callback();
 
 sound_pool @audio_source_mixer = null;
 vector @sources_listener = null;

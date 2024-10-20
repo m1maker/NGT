@@ -44,12 +44,7 @@ namespace hip
 	}
 	double rdm(double minimum, double maximum, bool rounded = false, double number_of_rounding = 0)
 	{
-		double final = -1;
-		if (rounded)
-			final = round(random(minimum, maximum), number_of_rounding);
-		else
-			final = random(minimum, maximum);
-		return final;
+		return rounded ? round(random(minimum, maximum), number_of_rounding) : random(minimum, maximum);
 	}
 
 	float clamp(float value, float min, float max) {
