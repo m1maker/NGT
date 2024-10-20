@@ -148,6 +148,17 @@ class sound_pool
 			@pool[i] = sound_pool_item();
 		}
 	}
+	~sound_pool()
+	{
+		this.destroy_all();
+	}
+	void set_maximum_sounds(int max) property{
+		this.max_sounds = max;
+		pool.resize(max_sounds);
+	}
+	int get_maximum_sounds() property{
+		return this.max_sounds;
+	}
 	int add_effect(effect @e){
 		if (e is null)
 			return -1;
@@ -526,5 +537,80 @@ class sound_pool
 		if (found)
 			return it;
 		return -1;
+	}
+};
+
+sound_pool @audio_source_mixer = null;
+vector @sources_listener = null;
+class audio_source
+{
+	float minimum_x, maximum_x, minimum_y, maximum_y, minimum_z, maximum_z;
+	private int slot;
+	string file_name;
+	audio_source() const
+	{
+		reset();
+	}
+	~audio_source() const
+	{
+		reset();
+	}
+	audio_source(const audio_source&in other)
+	{
+		this.slot = other.slot;
+		this.file_name = other.file_name;
+		this.minimum_x = other.minimum_x;
+		this.maximum_x = other.maximum_x;
+		this.minimum_y = other.minimum_y;
+		this.maximum_y = other.maximum_y;
+		this.minimum_z = other.minimum_z;
+		this.maximum_z = other.maximum_z;
+	}
+	audio_source& opEquals(const audio_source&in other)
+	{
+		this.slot = other.slot;
+		this.file_name = other.file_name;
+		this.minimum_x = other.minimum_x;
+		this.maximum_x = other.maximum_x;
+		this.minimum_y = other.minimum_y;
+		this.maximum_y = other.maximum_y;
+		this.minimum_z = other.minimum_z;
+		this.maximum_z = other.maximum_z;
+		return this;
+	}
+
+	void reset(){
+		this.stop();
+		slot = 0;
+		file_name = "";
+		minimum_x = 0;
+		maximum_x = 0;
+		minimum_y = 0;
+		maximum_y = 0;
+		minimum_z = 0;
+		maximum_z = 0;
+		audio_source_mixer.hrtf = false;
+	}
+	bool update(){
+		if (@sources_listener == null or @audio_source_mixer == null)
+			return false;
+		audio_source_mixer.update_listener_position(sources_listener.x, sources_listener.y, sources_listener.z);
+		return audio_source_mixer.update_sound_range(slot, (sources_listener.x - this.minimum_x), (this.maximum_x - this.minimum_x), (sources_listener.y - this.minimum_y), (this.maximum_y - this.minimum_y), (sources_listener.z - this.minimum_z), (this.maximum_z - this.minimum_z));
+	}
+	bool play(void){
+		if (@sources_listener == null or @audio_source_mixer == null)
+			return false;
+		slot = audio_source_mixer.play_3d(file_name, sources_listener.x, sources_listener.y, sources_listener.z, minimum_x, minimum_y, minimum_z, 0, true);
+		return slot != 0;
+	}
+	bool stop(void){
+		try
+		{
+			return audio_source_mixer.destroy_sound(slot);
+		}
+		catch
+		{
+			return false;
+		}
 	}
 };
