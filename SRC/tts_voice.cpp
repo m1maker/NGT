@@ -45,6 +45,11 @@ bool TTSVoice::speak_interrupt_wait(const std::string& text)
 	return SRAL_SpeakEx(engine, text.c_str(), true);
 }
 
+std::string TTSVoice::speak_to_memory(const std::string& text, uint64_t& size) {
+	char* pcm = (char*)SRAL_SpeakToMemoryEx(engine, text.c_str(), &size);
+	return std::string(pcm, size);
+}
+
 std::vector<std::string> TTSVoice::get_voice_names()
 {
 	std::vector<std::string> names;

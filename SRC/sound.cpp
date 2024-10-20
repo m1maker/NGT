@@ -20,8 +20,8 @@ using namespace std;
 #include "phonon.h" /* Steam Audio */
 #include "pack.h"
 #define FORMAT      ma_format_f32   /* Must be floating point. */
-#define CHANNELS    2               /* Must be stereo for this example. */
-#define SAMPLE_RATE 44100
+int SAMPLE_RATE = 44100;
+int CHANNELS = 2;
 #include "fx/freeverb.h"
 #define VERBLIB_IMPLEMENTATION
 #include <map>
@@ -1011,16 +1011,16 @@ bool soundsystem_init() {
 }
 void soundsystem_free() {
 	if (g_SoundInitialized == false)return;
-	ma_device_uninit(&sound_mixer_device);
-	ma_engine_uninit(&sound_default_mixer);
 	iplHRTFRelease(&iplHRTF);
 	iplContextRelease(&iplContext);
+	ma_device_uninit(&sound_mixer_device);
+	ma_engine_uninit(&sound_default_mixer);
 	g_SoundInitialized = false;
 }
-void mixer_reinit();
+void mixer_reinit(int channels, int sample_rate);
 void set_audio_period_size(asUINT size) {
 	period_size = size;
-	if (g_SoundInitialized)mixer_reinit();
+	if (g_SoundInitialized)mixer_reinit(CHANNELS, SAMPLE_RATE);
 }
 string sound_path;
 pack* sound_pack = nullptr;
@@ -1075,8 +1075,10 @@ bool mixer_play_sound(const string& filename) {
 		return  false;
 	return true;
 }
-void mixer_reinit() {
-	soundsystem_free();
+void mixer_reinit(int channels = 2, int sample_rate = 44100) {
+	CHANNELS = channels;
+	SAMPLE_RATE = sample_rate;
+	if (g_SoundInitialized)soundsystem_free();
 	soundsystem_init();
 }
 bool sound_global_hrtf = false;
@@ -1258,6 +1260,8 @@ public:
 	ma_playback_speed_node_config m_speed_config;
 	ma_steamaudio_binaural_node_config binauralNodeConfig;
 	std::map<std::string, ma_node*> effects;
+	ma_audio_buffer m_buffer;
+	bool buffer_initialized = false;
 	mutable int ref = 0;
 	string file;
 	ngtvector* source_position = nullptr;
@@ -1341,6 +1345,38 @@ public:
 			this->set_hrtf(true);
 
 		return active;
+	}
+	bool load_pcm(string data, size_t size, int channels, int sample_rate) {
+		if (active)this->close();
+		handle_ = new ma_sound;
+		if (buffer_initialized) {
+			ma_audio_buffer_uninit(&m_buffer);
+			buffer_initialized = false;
+		}
+		ma_audio_buffer_config bufferConfig = ma_audio_buffer_config_init(ma_format_s16, channels, size / 2, (const void*)data.c_str(), nullptr);
+		bufferConfig.sampleRate = sample_rate;
+		bufferConfig.channels = channels;
+		ma_result result = ma_audio_buffer_init(&bufferConfig, &m_buffer);
+		if (result != MA_SUCCESS)return false;
+		buffer_initialized = true;
+		ma_result loading_result = ma_sound_init_from_data_source(&sound_default_mixer, &m_buffer, 0, 0, handle_);
+		if (loading_result != MA_SUCCESS) {
+			delete handle_;
+			active = false;
+			return false;
+		}
+		active = true;
+		buffer_initialized = true;
+		auto last = --effects.end();
+
+		ma_node_attach_output_bus(handle_, 0, last->second, 0);
+
+		if (sound_global_hrtf)
+			this->set_hrtf(true);
+
+		return active;
+
+
 	}
 	bool stream(const string& filename, bool set3d) {
 		string result;
@@ -1509,6 +1545,11 @@ public:
 			ma_decoder_uninit(&decoder);
 			decoderInitialized = false;
 		}
+		if (buffer_initialized) {
+			ma_audio_buffer_uninit(&m_buffer);
+			buffer_initialized = false;
+		}
+
 		if (handle_ != nullptr) {
 			ma_sound_uninit(handle_);
 			delete handle_;
@@ -2066,7 +2107,7 @@ void register_sound(asIScriptEngine* engine) {
 	engine->RegisterGlobalFunction("void mixer_start()", asFUNCTION(mixer_start), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void mixer_stop()", asFUNCTION(mixer_stop), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool mixer_play_sound(const string &in sound_path)", asFUNCTION(mixer_play_sound), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void mixer_reinit()", asFUNCTION(mixer_reinit), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void mixer_reinit(int channels = 2, int sample_rate = 44100)", asFUNCTION(mixer_reinit), asCALL_CDECL);
 	engine->RegisterGlobalFunction("array<string>@ get_output_audio_devices()", asFUNCTION(get_output_audio_devices), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool set_output_audio_device(uint index)", asFUNCTION(set_output_audio_device), asCALL_CDECL);
 	engine->RegisterObjectType("mixer", sizeof(mixer), asOBJ_REF | asOBJ_NOCOUNT);
@@ -2077,6 +2118,8 @@ void register_sound(asIScriptEngine* engine) {
 	engine->RegisterObjectBehaviour("sound", asBEHAVE_RELEASE, "void f()", asMETHOD(sound, release), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("sound"), "bool load(const string &in filename, bool deprecated = false, sound_end_callback@=null)const", asMETHOD(sound, load), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("sound"), "bool load_from_memory(string memory, size_t memory_size = 0, bool=false)const", asMETHOD(sound, load_from_memory), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "bool load_pcm(string memory, size_t memory_size = 0, int channels = 0, int sample_rate = 0)const", asMETHOD(sound, load_pcm), asCALL_THISCALL);
+
 	engine->RegisterObjectMethod(_O("sound"), "bool stream(const string &in filename, bool deprecated = false)const", asMETHOD(sound, stream), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("sound"), "bool load_url(const string &in url, bool deprecated = false)const", asMETHOD(sound, load_url), asCALL_THISCALL);
 

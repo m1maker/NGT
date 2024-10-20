@@ -3,7 +3,7 @@ class c_type
 {
 	c_type()
 	{}
-	scripting::typeid get_type_id() const property
+	scripting::typeid get_type_id() const
 	{
 		return scripting::typeid ::VOID;
 	}
@@ -11,7 +11,7 @@ class c_type
 
 class c_void_p : c_type
 {
-	scripting::typeid get_type_id() const property
+	scripting::typeid get_type_id() const
 	{
 		return scripting::typeid ::UINT64;
 	}

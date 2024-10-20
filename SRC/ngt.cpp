@@ -141,12 +141,10 @@ public:
 			win = nullptr;
 			window_is_focused = false;
 		}
-		SDL_Quit();
 	}
 	void monitor() {
 		if (window_event_show) {
 			window_event_show = false;
-			SDL_Init(SDL_INIT_VIDEO);
 			SDL_WindowFlags flags = 0;
 			if (SRAL_GetCurrentEngine() == ENGINE_JAWS) {
 				SDL_SetHint(SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED, "1");
@@ -270,6 +268,7 @@ long get_update_window_freq() {
 	return update_window_freq;
 }
 void init_engine() {
+	SDL_Init(SDL_INIT_VIDEO);
 	SRAL_Initialize(0);
 #ifdef _WIN32
 	// SRAL keyboard hooks is stopping all the events on Linux
@@ -564,6 +563,7 @@ void exit_engine(int return_number)
 		hide_window();
 	soundsystem_free();
 	enet_deinitialize();
+	SDL_Quit();
 	SRAL_Uninitialize(); // Keyboard hooks are automatically uninstalls when uninitialize
 	CContextMgr* ctxmgr = get_context_manager();
 	if (ctxmgr) {
