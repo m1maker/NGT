@@ -378,6 +378,8 @@ class sound_pool
 		if (i == -1)
 			return -1;
 		pool[i].sound_instance.load(filename);
+		if (!pool[i].active)
+			return -2;
 		pool[i].sound_instance.set_looping(looping);
 
 		// Set initial properties
