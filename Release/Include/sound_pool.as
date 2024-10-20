@@ -382,6 +382,7 @@ class sound_pool
 		if (offset > 0)
 			pool[i].sound_instance.seek(offset);
 		pool[i].update_listener_position(listener_x, listener_y, listener_z, rotation);
+		pool[i].update_position(sound_x, sound_y, sound_z);
 
 		return i; // Return index
 	}
