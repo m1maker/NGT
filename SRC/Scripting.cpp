@@ -248,5 +248,10 @@ void RegisterScripting(asIScriptEngine* engine) {
 	engine->RegisterObjectMethod("module", "int unbind_imported_function(uint)const", asMETHOD(asIScriptModule, UnbindImportedFunction), asCALL_THISCALL);
 
 
+	engine->RegisterGlobalFunction("void acquire_exclusive_lock()", asFUNCTION(asAcquireExclusiveLock), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void release_exclusive_lock()", asFUNCTION(asReleaseExclusiveLock), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void acquire_shared_lock()", asFUNCTION(asAcquireSharedLock), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void release_shared_lock()", asFUNCTION(asReleaseSharedLock), asCALL_CDECL);
+
 
 }
