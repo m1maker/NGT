@@ -4,5 +4,9 @@ size_t size;
 string pcm=v.speak_to_memory("Test", size);
 sound s;
 s.load_pcm(pcm, size, 1, 16000);
-s.play_wait();
+show_window("");
+while(true){
+wait_event();
+if(key_pressed(KEY_SPACE))s.play();
+}
 }

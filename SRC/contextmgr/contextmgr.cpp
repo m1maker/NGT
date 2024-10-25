@@ -177,7 +177,7 @@ int CContextMgr::ExecuteScripts()
 					engine->ReturnContext(thread->coRoutines[currentCoRoutine]);
 				thread->coRoutines[currentCoRoutine] = 0;
 
-				if (thread->currentCoRoutine < thread->coRoutines.size()) {
+				if (thread->currentCoRoutine >= thread->coRoutines.size()) {
 					thread->coRoutines.erase(thread->coRoutines.begin() + thread->currentCoRoutine);
 				}
 				if (thread->currentCoRoutine >= thread->coRoutines.size())

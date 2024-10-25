@@ -664,7 +664,7 @@ public:
 		// Execute the script until completion
 		// The script may create co-routines. These will automatically
 		// be managed by the context manager
-		while (m_ctxMgr->ExecuteScripts());
+		while (m_ctxMgr->ExecuteScripts() && !g_shutdown);
 		// Check if the main script finished normally
 		if (scriptContext == nullptr)return r;
 		r = scriptContext->GetState();
