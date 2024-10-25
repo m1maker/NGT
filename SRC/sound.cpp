@@ -2000,8 +2000,15 @@ public:
 	MemoryStream stream;
 	ma_encoder_config encoderConfig;
 	ma_encoder encoder;
-
-	audio_encoder() : stream(0) {
+	void AddRef()const {
+		ref += 1;
+	}
+	void Release() {
+		if (--ref < 1) {
+			delete this;
+		}
+	}
+	audio_encoder() : stream(0), ref(1) {
 		encoderConfig = ma_encoder_config_init(ma_encoding_format_wav, ma_format_s16, 2, 44100);
 		ma_encoder_init(ma_encoder_write_callback, ma_encoder_seek_callback, &stream, &encoderConfig, &encoder);
 	}
@@ -2019,7 +2026,8 @@ public:
 		return std::string(buffer.data(), dataSize);
 	}
 
-
+private:
+	mutable int ref = 0;
 };
 
 void audio_recorder_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount) {

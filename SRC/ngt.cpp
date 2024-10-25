@@ -677,21 +677,26 @@ string input_box(const string& title, const string& text, const string& default_
 			break;
 		}
 	}
-	gui::delete_control(edit);
-	gui::delete_control(ok);
-	gui::delete_control(cancel);
-	gui::hide_window(main_window);
 
 	if (user_pressed == 1) {
 		std::string result;
 		std::wstring Wtext = gui::get_text(edit);
 		Poco::UnicodeConverter::convert(Wtext, result);
+		goto destroy;
 		return result;
 	}
 	else if (user_pressed == 2) {
+		goto destroy;
 		return "";
 	}
+	goto destroy;
 	return "";
+destroy:
+	gui::delete_control(edit);
+	gui::delete_control(ok);
+	gui::delete_control(cancel);
+	gui::hide_window(main_window);
+
 #else 
 	std::cout << title << ": " << text << std::endl << default_text;
 	std::string result;

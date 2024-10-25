@@ -338,6 +338,8 @@ if(WIN32)
   target_link_libraries(${PROJECT_NAME} imm32.lib)
   target_link_libraries(${PROJECT_NAME}W winmm.lib)
   target_link_libraries(${PROJECT_NAME}W imm32.lib)
+  target_link_libraries(${PROJECT_NAME} dbghelp.lib)
+  target_link_libraries(${PROJECT_NAME}W dbghelp.lib)
 
   target_link_libraries(${PROJECT_NAME} msvcrt.lib)
   target_link_libraries(${PROJECT_NAME}W msvcrt.lib)

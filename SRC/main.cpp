@@ -48,7 +48,83 @@
 #include <Poco/Exception.h>
 #define SDL_MAIN_HANDLED
 
-#define NGT_BYTECODE_ENCRYPTION_KEY "0Z1Eif2JShwWsaAfgw1EfiOwudDAnNg6WdsIuwyTgsJAiw(us)wjHdc87&6w()"
+#define NGT_BYTECODE_ENCRYPTION_KEY "0Z1Eif2JShwWsaAfgw1EfiOwudDAnNg6WdsIuwyTgsJAiw(us)wjHdc87&6w()ErreOiduY"
+
+#if defined(_MSC_VER)
+#include <crtdbg.h>   // MSVC debugging routines
+
+// This class should be declared as a global singleton so the leak detection is initiated as soon as possible
+class MemoryLeakDetector
+{
+public:
+	MemoryLeakDetector()
+	{
+		_CrtSetDbgFlag(_CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF);
+		_CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE);
+		_CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDERR);
+
+		// Use _CrtSetBreakAlloc(n) to find a specific memory leak
+		// Remember to "Enable Windows Debug Heap Allocator" in the debug options on MSVC2015. Without it
+		// enabled the memory allocation numbers shifts randomly from one execution to another making it
+		// impossible to predict the correct number for a specific allocation.
+		//_CrtSetBreakAlloc(124);
+	}
+} g_leakDetector;
+#endif
+
+#ifdef _WIN32
+#include <dbghelp.h>
+
+LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS* exceptionInfo) {
+	std::stringstream ss;
+	ss << "Caught an access violation (segmentation fault)." << std::endl;
+
+	// Get the address where the exception occurred
+	ULONG_PTR faultingAddress = exceptionInfo->ExceptionRecord->ExceptionInformation[1];
+	ss << "Faulting address: " << faultingAddress << std::endl;
+
+	// Capture the stack trace
+	void* stack[100];
+	unsigned short frames;
+	SYMBOL_INFO* symbol;
+	HANDLE process = GetCurrentProcess();
+
+	SymInitialize(process, NULL, TRUE);
+	frames = CaptureStackBackTrace(0, 100, stack, NULL);
+
+	symbol = (SYMBOL_INFO*)calloc(sizeof(SYMBOL_INFO) + 256 * sizeof(char), 1);
+	symbol->MaxNameLen = 255;
+	symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+
+	for (unsigned short i = 0; i < frames; i++) {
+		SymFromAddr(process, (DWORD64)(stack[i]), 0, symbol);
+		ss << i << ": " << symbol->Name << " - 0x" << number_to_hex_string(symbol->Address) << std::endl;
+	}
+
+	free(symbol);
+	alert("NGTRuntimeError", ss.str());
+	exit(1);
+}
+#else
+#include <csignal>
+#include <execinfo.h>
+void signalHandler(int signal, siginfo_t* info, void* context) {
+	std::cout << "Caught SIGSEGV (Segmentation fault)." << std::endl;
+
+	if (info) {
+		std::cout << "Faulting address: " << info->si_addr << std::endl;
+	}
+
+	void* array[10];
+	size_t size;
+
+	size = backtrace(array, 10);
+	backtrace_symbols_fd(array, size, STDERR_FILENO);
+
+	exit(1);
+}
+
+#endif
 
 using Poco::Util::Application;
 using Poco::Util::Option;
@@ -242,6 +318,10 @@ static std::vector<unsigned char> vector_decrypt(const std::vector<unsigned char
 
 	vector_unpad(the_vector);
 	return the_vector;
+}
+
+void ScriptAssert(bool expr, const std::string& fail_text = "") {
+	if (!expr) throw Poco::AssertionViolationException(fail_text);
 }
 
 
@@ -475,11 +555,23 @@ asIScriptContext* RequestContextCallback(asIScriptEngine* engine, void* param);
 void              ReturnContextCallback(asIScriptEngine* engine, asIScriptContext* ctx, void* param);
 
 
+void TranslateException(asIScriptContext* ctx, void* /*userParam*/) {
+	try {
+		throw;
+	}
+	catch (Poco::Exception& e) {
+		ctx->SetException(e.displayText().c_str());
+	}
+	catch (std::exception& e) {
+		ctx->SetException(e.what());
+	}
+	catch (...) {}
+}
 
 class NGTScripting {
 public:
-	asIScriptEngine* scriptEngine;
-	asIScriptContext* scriptContext;
+	asIScriptEngine* scriptEngine = nullptr;
+	asIScriptContext* scriptContext = nullptr;
 	CContextMgr* m_ctxMgr = 0;
 	std::vector<asIScriptContext*> m_ctxPool;
 	CDebugger* m_dbg = 0;
@@ -489,6 +581,10 @@ public:
 			std::cout << "Failed to create the script engine." << std::endl;
 		}
 		scriptEngine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
+		scriptEngine->SetTranslateAppExceptionCallback(asFUNCTION(TranslateException), 0, asCALL_CDECL);
+		scriptEngine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, true);
+		scriptEngine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
+
 	}
 	~NGTScripting() {
 		if (m_dbg)
@@ -550,6 +646,8 @@ public:
 		scriptEngine->RegisterGlobalProperty("const bool SCRIPT_COMPILED", (void*)&SCRIPT_COMPILED);
 		scriptEngine->RegisterGlobalFunction("string get_SCRIPT_EXECUTABLE()property", asFUNCTION(get_exe), asCALL_CDECL);
 		scriptEngine->RegisterGlobalFunction("string get_SCRIPT_EXECUTABLE_PATH()property", asFUNCTION(get_exe_path), asCALL_CDECL);
+		scriptEngine->RegisterGlobalFunction("void assert(bool expr, const string&in fail_text = \"\")", asFUNCTION(ScriptAssert), asCALL_CDECL);
+
 		m_ctxMgr = new CContextMgr();
 		m_ctxMgr->RegisterCoRoutineSupport(scriptEngine);
 
@@ -812,6 +910,10 @@ protected:
 			m_retcode = 1;
 			return;
 		}
+		if (module->ResetGlobalVars(0) < 0) {
+			show_message(true, true, true);
+		}
+
 		app->InitializeDebugger();
 		init_engine();
 		int result = app->Exec(func);
@@ -834,6 +936,10 @@ protected:
 			m_retcode = 1;
 			return;
 		}
+		if (module->ResetGlobalVars(0) < 0) {
+			show_message(true, true, true);
+		}
+
 		init_engine();
 		int result = app->Exec(func);
 
@@ -848,6 +954,10 @@ protected:
 			m_retcode = -1;
 			return;
 		}
+		if (module->ResetGlobalVars(0) < 0) {
+			show_message(true, true, true);
+		}
+
 		// Call compiler to create executable file
 		std::string main_exe = get_exe();
 		std::vector<std::string> name_split = string_split(".", value);
@@ -949,6 +1059,15 @@ protected:
 
 
 int main(int argc, char** argv) {
+#ifdef _WIN32
+	SetUnhandledExceptionFilter(ExceptionHandler);
+#else
+	struct sigaction action;
+	action.sa_sigaction = signalHandler;
+	action.sa_flags = SA_SIGINFO;
+
+	sigaction(SIGSEGV, &action, nullptr);
+#endif
 	g_argc = argc - (scriptArg + 1);
 	g_argv = argv + (scriptArg + 1);
 	AutoPtr<Application> a = new NGTEntry();
