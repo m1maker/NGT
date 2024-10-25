@@ -621,7 +621,7 @@ public:
 
 		// Allow the user to initialize the debugging before moving on
 		cout << "Debugging, waiting for commands. Type 'h' for help." << endl;
-		m_dbg->TakeCommands(0);
+		m_dbg->TakeCommands(scriptContext);
 	}
 
 
@@ -648,24 +648,21 @@ public:
 		scriptEngine->RegisterGlobalFunction("string get_SCRIPT_EXECUTABLE_PATH()property", asFUNCTION(get_exe_path), asCALL_CDECL);
 		scriptEngine->RegisterGlobalFunction("void assert(bool expr, const string&in fail_text = \"\")", asFUNCTION(ScriptAssert), asCALL_CDECL);
 
-		m_ctxMgr = new CContextMgr();
-		m_ctxMgr->RegisterCoRoutineSupport(scriptEngine);
+		//		m_ctxMgr = new CContextMgr();
+		//		m_ctxMgr->RegisterCoRoutineSupport(scriptEngine);
 
-		// Tell the engine to use our context pool. This will also 
-		// allow us to debug internal script calls made by the engine
+				// Tell the engine to use our context pool. This will also 
+				// allow us to debug internal script calls made by the engine
 		scriptEngine->SetContextCallbacks(RequestContextCallback, ReturnContextCallback, this);
 
 	}
 	int Exec(asIScriptFunction* func) {
 		if (func == nullptr)return -1;
 		int r = 0;
-		scriptContext = m_ctxMgr->AddContext(scriptEngine, func, true);
-
+		scriptContext = scriptEngine->RequestContext();
+		scriptContext->Prepare(func);
 		// Execute the script until completion
-		// The script may create co-routines. These will automatically
-		// be managed by the context manager
-		while (m_ctxMgr->ExecuteScripts() && !g_shutdown);
-		// Check if the main script finished normally
+		r = scriptContext->Execute();
 		if (scriptContext == nullptr)return r;
 		r = scriptContext->GetState();
 		if (r != asEXECUTION_FINISHED)
@@ -694,10 +691,7 @@ public:
 			else
 				r = 0;
 		}
-
-		// Return the context after retrieving the return value
-		m_ctxMgr->DoneWithContext(scriptContext);
-
+		scriptEngine->ReturnContext(scriptContext);
 		return r;
 	};
 };

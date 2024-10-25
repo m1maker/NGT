@@ -177,9 +177,7 @@ int CContextMgr::ExecuteScripts()
 					engine->ReturnContext(thread->coRoutines[currentCoRoutine]);
 				thread->coRoutines[currentCoRoutine] = 0;
 
-				if (thread->currentCoRoutine >= thread->coRoutines.size()) {
-					thread->coRoutines.erase(thread->coRoutines.begin() + thread->currentCoRoutine);
-				}
+				// thread->coRoutines.erase(thread->coRoutines.begin() + thread->currentCoRoutine);
 				if (thread->currentCoRoutine >= thread->coRoutines.size())
 					thread->currentCoRoutine = 0;
 
@@ -187,9 +185,7 @@ int CContextMgr::ExecuteScripts()
 				if (thread->coRoutines.size() == 0)
 				{
 					m_freeThreads.push_back(thread);
-					if (m_threads.size() > m_currentThread) {
-						m_threads.erase(m_threads.begin() + m_currentThread);
-					}
+					m_threads.erase(m_threads.begin() + m_currentThread);
 					m_currentThread--;
 				}
 			}

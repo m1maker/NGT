@@ -273,7 +273,7 @@ void init_engine() {
 	SRAL_Initialize(0);
 #ifdef _WIN32
 	// SRAL keyboard hooks is stopping all the events on Linux
-	SRAL_RegisterKeyboardHooks();
+//	SRAL_RegisterKeyboardHooks();
 #endif
 	enet_initialize();
 	g_engineInitialized = true;
@@ -563,9 +563,8 @@ void exit_engine(int return_number)
 	}
 	g_shutdown = true;
 	g_retcode = return_number;
-	CContextMgr* mgr = get_context_manager();
-	if (mgr) {
-		mgr->AbortAll();
+	if (ctx) {
+		ctx->Abort();
 	}
 }
 
