@@ -8,7 +8,7 @@ r.set_wet(0.5);
 r.set_dry(1.0);
 sp.add_effect(r);
 show_window("Test");
-//sp.use_hrtf=true;
+sp.hrtf=true;
 update_window_freq=0;
 while(true){
 wait_event();

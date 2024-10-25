@@ -672,7 +672,7 @@ private:
 	asIScriptModule* module;
 public:
 	int m_retcode;
-	NGTEntry() : _helpRequested(false)
+	NGTEntry() : _helpRequested(false), bytecodeExecute(false)
 	{
 		setUnixOptions(true);
 		app = new NGTScripting;
