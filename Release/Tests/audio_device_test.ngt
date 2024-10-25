@@ -1,5 +1,4 @@
 void main(){
-mixer_reinit(1, 16000);
 sound s;
 
 screen_reader::interrupt = true;

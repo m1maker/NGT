@@ -711,7 +711,6 @@ protected:
 	void uninitialize()override
 	{
 		if (g_engineInitialized) {
-			hide_window();
 			soundsystem_free();
 			enet_deinitialize();
 			SDL_Quit();
@@ -863,7 +862,7 @@ protected:
 
 		if (g_Platform == "Windows") {
 			bundle += ".exe";
-	}
+		}
 		std::filesystem::copy_file(main_exe.c_str(), bundle);
 		std::fstream file(bundle, std::ios::app | std::ios::binary);
 		if (!file.is_open()) {
@@ -885,7 +884,7 @@ protected:
 		file.close();
 		module->Discard();
 
-}
+	}
 	void executeBytecode() {
 		SCRIPT_COMPILED = true;
 		// Execute the script
