@@ -118,36 +118,24 @@ CContextMgr::CContextMgr()
 
 CContextMgr::~CContextMgr()
 {
-	asUINT n;
-
 	// Free the memory
-	for (n = 0; n < m_threads.size(); n++)
+	for (auto& thread : m_threads)
 	{
-		if (m_threads[n])
+		if (thread)
 		{
-			for (asUINT c = 0; c < m_threads[n]->coRoutines.size(); c++)
+			for (auto& ctx : thread->coRoutines)
 			{
-				asIScriptContext* ctx = m_threads[n]->coRoutines[c];
 				if (ctx)
 				{
-					// Return the context to the engine (and possible context pool configured in it)
+					// Return the context to the engine
 					ctx->GetEngine()->ReturnContext(ctx);
 				}
 			}
-
-			delete m_threads[n];
+			delete thread; // Ensure thread is deleted only once
 		}
 	}
+	m_freeThreads.clear();
 
-	for (n = 0; n < m_freeThreads.size(); n++)
-	{
-		if (m_freeThreads[n])
-		{
-			assert(m_freeThreads[n]->coRoutines.size() == 0);
-
-			delete m_freeThreads[n];
-		}
-	}
 }
 
 int CContextMgr::ExecuteScripts()
@@ -189,7 +177,9 @@ int CContextMgr::ExecuteScripts()
 					engine->ReturnContext(thread->coRoutines[currentCoRoutine]);
 				thread->coRoutines[currentCoRoutine] = 0;
 
-				thread->coRoutines.erase(thread->coRoutines.begin() + thread->currentCoRoutine);
+				if (thread->currentCoRoutine < thread->coRoutines.size()) {
+					thread->coRoutines.erase(thread->coRoutines.begin() + thread->currentCoRoutine);
+				}
 				if (thread->currentCoRoutine >= thread->coRoutines.size())
 					thread->currentCoRoutine = 0;
 
@@ -197,7 +187,9 @@ int CContextMgr::ExecuteScripts()
 				if (thread->coRoutines.size() == 0)
 				{
 					m_freeThreads.push_back(thread);
-					m_threads.erase(m_threads.begin() + m_currentThread);
+					if (m_threads.size() > m_currentThread) {
+						m_threads.erase(m_threads.begin() + m_currentThread);
+					}
 					m_currentThread--;
 				}
 			}
@@ -372,6 +364,7 @@ void CContextMgr::RegisterThreadSupport(asIScriptEngine* engine)
 	// Register the sleep function
 	r = engine->RegisterGlobalFunction("void sleep(uint)", asFUNCTION(ScriptSleep), asCALL_CDECL); assert(r >= 0);
 
+	// TODO: Add support for spawning new threads, waiting for signals, etc
 }
 
 void CContextMgr::RegisterCoRoutineSupport(asIScriptEngine* engine)
@@ -384,11 +377,11 @@ void CContextMgr::RegisterCoRoutineSupport(asIScriptEngine* engine)
 #ifndef AS_MAX_PORTABILITY
 	r = engine->RegisterGlobalFunction("void yield()", asFUNCTION(ScriptYield), asCALL_CDECL); assert(r >= 0);
 	r = engine->RegisterFuncdef("void coroutine(dictionary@)");
-	r = engine->RegisterGlobalFunction("void create_coroutine(coroutine @+, dictionary @+)", asFUNCTION(ScriptCreateCoRoutine), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterGlobalFunction("void createCoRoutine(coroutine @+, dictionary @+)", asFUNCTION(ScriptCreateCoRoutine), asCALL_CDECL); assert(r >= 0);
 #else
 	r = engine->RegisterGlobalFunction("void yield()", asFUNCTION(ScriptYield_generic), asCALL_GENERIC); assert(r >= 0);
 	r = engine->RegisterFuncdef("void coroutine(dictionary@)");
-	r = engine->RegisterGlobalFunction("void create_coroutine(coroutine @+, dictionary @+)", asFUNCTION(ScriptCreateCoRoutine_generic), asCALL_GENERIC); assert(r >= 0);
+	r = engine->RegisterGlobalFunction("void createCoRoutine(coroutine @+, dictionary @+)", asFUNCTION(ScriptCreateCoRoutine_generic), asCALL_GENERIC); assert(r >= 0);
 #endif
 }
 

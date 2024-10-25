@@ -80,6 +80,7 @@ using Poco::Net::StringPartSource;
 #include <vector>
 #include "scriptdictionary/scriptdictionary.h"
 using namespace std;
+extern bool g_engineInitialized;
 class ngtvector : public as_class {
 public:
 	float x, y, z;

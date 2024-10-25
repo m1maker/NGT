@@ -497,8 +497,6 @@ public:
 			m_dbg = 0;
 		}
 
-		for (auto ctx : m_ctxPool)
-			ctx->Release();
 		m_ctxPool.clear();
 		if (m_ctxMgr != 0) {
 			delete m_ctxMgr;
@@ -562,60 +560,47 @@ public:
 	}
 	int Exec(asIScriptFunction* func) {
 		if (func == nullptr)return -1;
-		int r;
-		try {
-			scriptContext = m_ctxMgr->AddContext(scriptEngine, func, true);
+		int r = 0;
+		scriptContext = m_ctxMgr->AddContext(scriptEngine, func, true);
 
-			// Execute the script until completion
-			// The script may create co-routines. These will automatically
-			// be managed by the context manager
-			while (m_ctxMgr->ExecuteScripts() && !g_shutdown);
-			// Check if the main script finished normally
-			if (scriptContext == nullptr)return r;
-			r = scriptContext->GetState();
-			if (r != asEXECUTION_FINISHED)
+		// Execute the script until completion
+		// The script may create co-routines. These will automatically
+		// be managed by the context manager
+		while (m_ctxMgr->ExecuteScripts());
+		// Check if the main script finished normally
+		if (scriptContext == nullptr)return r;
+		r = scriptContext->GetState();
+		if (r != asEXECUTION_FINISHED)
+		{
+			if (r == asEXECUTION_EXCEPTION)
 			{
-				if (r == asEXECUTION_EXCEPTION)
-				{
-					alert("NGTRuntimeError", GetExceptionInfo(scriptContext, true));
-					r = -1;
-				}
-				else if (r == asEXECUTION_ABORTED)
-				{
-					r = 0;
-					m_ctxMgr->DoneWithContext(scriptContext);
-					return r;
-				}
-				else
-				{
-					r = -1;
-				}
+				alert("NGTRuntimeError", GetExceptionInfo(scriptContext, true));
+				r = -1;
+			}
+			else if (r == asEXECUTION_ABORTED)
+			{
+				r = g_retcode;
 			}
 			else
 			{
-				// Get the return value from the script
-				if (func->GetReturnTypeId() == asTYPEID_INT32)
-				{
-					r = *(int*)scriptContext->GetAddressOfReturnValue();
-				}
-				else
-					r = 0;
+				r = -1;
 			}
+		}
+		else
+		{
+			// Get the return value from the script
+			if (func->GetReturnTypeId() == asTYPEID_INT32)
+			{
+				r = *(int*)scriptContext->GetAddressOfReturnValue();
+			}
+			else
+				r = 0;
+		}
 
-			// Return the context after retrieving the return value
-			m_ctxMgr->DoneWithContext(scriptContext);
+		// Return the context after retrieving the return value
+		m_ctxMgr->DoneWithContext(scriptContext);
 
-			return r;
-		}
-		catch (const Poco::Exception& e) {
-			alert("NGTRuntimeError", e.displayText());
-			return -1;
-		}
-		catch (...) {
-			alert("NGTRuntimeError", "Unknown exception.");
-			return -1;
-		}
-		return 0;
+		return r;
 	};
 };
 
@@ -725,13 +710,13 @@ protected:
 
 	void uninitialize()override
 	{
-
-		hide_window();
-		soundsystem_free();
-		enet_deinitialize();
-		SDL_Quit();
-		SRAL_Uninitialize(); // Keyboard hooks are automatically uninstalls when uninitialize
-
+		if (g_engineInitialized) {
+			hide_window();
+			soundsystem_free();
+			enet_deinitialize();
+			SDL_Quit();
+			SRAL_Uninitialize(); // Keyboard hooks are automatically uninstalls when uninitialize
+		}
 		Application::uninitialize();
 #ifdef _WIN32
 		timeEndPeriod(1);
@@ -878,7 +863,7 @@ protected:
 
 		if (g_Platform == "Windows") {
 			bundle += ".exe";
-		}
+	}
 		std::filesystem::copy_file(main_exe.c_str(), bundle);
 		std::fstream file(bundle, std::ios::app | std::ios::binary);
 		if (!file.is_open()) {
@@ -900,7 +885,7 @@ protected:
 		file.close();
 		module->Discard();
 
-	}
+}
 	void executeBytecode() {
 		SCRIPT_COMPILED = true;
 		// Execute the script
@@ -957,8 +942,8 @@ protected:
 		}
 		return m_retcode;
 	}
-
 };
+
 #undef SDL_MAIN_HANDLED
 #undef SDL_main_h_
 #include <SDL3/SDL_main.h>

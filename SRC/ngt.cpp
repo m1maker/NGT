@@ -52,6 +52,7 @@ asIScriptFunction* exit_callback = nullptr;
 using namespace string_literals;
 using namespace std;
 int mouse_x = 0, mouse_y = 0, mouse_z = 0;
+bool g_engineInitialized = false;
 SDL_Event e;
 Poco::Event g_windowEvent;
 bool window_is_focused = false;
@@ -272,9 +273,10 @@ void init_engine() {
 	SRAL_Initialize(0);
 #ifdef _WIN32
 	// SRAL keyboard hooks is stopping all the events on Linux
-	SRAL_RegisterKeyboardHooks();
+//	SRAL_RegisterKeyboardHooks();
 #endif
 	enet_initialize();
+	g_engineInitialized = true;
 }
 void set_library_path(const string& path) {
 	SRAL_Uninitialize();
@@ -559,9 +561,12 @@ void exit_engine(int return_number)
 		e_ctx->Release();
 		exit_callback = nullptr;
 	}
-	asGetActiveContext()->Abort();
 	g_shutdown = true;
 	g_retcode = return_number;
+	CContextMgr* mgr = get_context_manager();
+	if (mgr) {
+		mgr->AbortAll();
+	}
 }
 
 CScriptArray* keys_pressed() {
@@ -703,7 +708,7 @@ bool key_pressed(int key_code)
 	{
 		keys[key_code].isPressed = true;
 		return true;
-}
+	}
 	return false;
 }
 bool key_released(int key_code)
