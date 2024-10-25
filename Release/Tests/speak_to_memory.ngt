@@ -5,7 +5,7 @@ string pcm=v.speak_to_memory("Test", size);
 sound s;
 s.load_pcm(pcm, size, 1, 16000);
 show_window("");
-while(true){
+while(!quit_requested){
 wait_event();
 if(key_pressed(KEY_SPACE))s.play();
 }

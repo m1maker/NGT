@@ -14,7 +14,7 @@ wait(500);
 screen_reader::speak("Select audio device by pressing arrow keys. To switch to the selected device, press Enter");
 int device_id=0;
 update_window_freq=0;
-while(window_handle!=0){
+while(!quit_requested){
 wait_event();
 if(key_repeat(KEY_DOWN) and device_id<devices.length()-1){
 device_id+=1;

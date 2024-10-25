@@ -1,5 +1,4 @@
 void main() {
-    show_console();
     memory_stream stream(0);
 
     // Writing to the stream
@@ -23,6 +22,5 @@ void main() {
     printf("Size of stream: " + size);
     stream.clear();
     exec("pause");
-    hide_console();
 }
 

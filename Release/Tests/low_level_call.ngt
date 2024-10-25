@@ -1,16 +1,14 @@
-#include "../include/hip"
 void main(){
 library kernel32;
 kernel32.load("kernel32");
 uint64 beep=kernel32.get_function_pointer("Beep");
 int func_id=scripting::register_function("int beep_proc(int, int)", beep, scripting::STDCALL);
 scripting::function function(func_id);
-scripting::context@ ctx = scripting::context();
-show_window("Spacebar", closable:false);
+scripting::context ctx;
+show_window("Spacebar");
 update_window_freq=0;
-while(true){
+while(!quit_requested){
 wait_event();
-if(alt_down && key_pressed(KEY_F4))break;
 if(key_pressed(KEY_SPACE)){
 ctx.prepare(function);
 ctx.set_arg_dword(0, 1000);
@@ -19,5 +17,4 @@ ctx.execute();
 ctx.unprepare();
 }
 }
-@ctx=null;
 }

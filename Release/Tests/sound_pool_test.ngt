@@ -10,7 +10,7 @@ sp.add_effect(r);
 show_window("Test");
 sp.hrtf=true;
 update_window_freq=0;
-while(true){
+while(!quit_requested){
 wait_event();
 if(key_repeat(KEY_SPACE)){
 sp.play_1d("c:/windows/media/Windows Default.wav", 0, 20, false);

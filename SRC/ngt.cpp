@@ -67,7 +67,6 @@ long update_window_freq = 5;
 const char* window_title = nullptr;
 int window_w, window_h;
 bool window_thread_event_shutdown = false;
-bool window_closable = true;
 bool default_screen_reader_interrupt = false;
 bool window_event_present = false;
 bool window_has_renderer = false;// We can't create window in other thread, if we need graphics
@@ -123,6 +122,7 @@ static size_t cmp_write_bytes(cmp_ctx_t* ctx, const void* input, size_t len) {
 	return len;
 }
 bool wait_event_requested = false;
+bool g_quitRequested = false;
 class WindowThread : public Poco::Runnable {
 private:
 	Poco::Thread thread;
@@ -203,8 +203,8 @@ public:
 				window_event_keyboard_reset = false;
 				SDL_ResetKeyboard();
 			}
-			if (e.type == SDL_EVENT_QUIT and window_closable == true) {
-				exit_engine();
+			if (e.type == SDL_EVENT_QUIT) {
+				g_quitRequested = true;
 			}
 			if (e.type == SDL_EVENT_TEXT_INPUT)
 			{
@@ -347,7 +347,7 @@ string screen_reader_detect() {
 	}
 	return "None";
 }
-bool show_window(const string& title, int width, int height, bool closable, bool enable_render)
+bool show_window(const string& title, int width, int height, bool enable_render)
 {
 	if (windowRunnable != nullptr) {
 		set_window_title(title);
@@ -359,7 +359,6 @@ bool show_window(const string& title, int width, int height, bool closable, bool
 	window_title = title.c_str();
 	window_w = width;
 	window_h = height;
-	window_closable = closable;
 	// Starting window
 	window_event_show = true;
 	// Initialize mouse and keyboard state.
@@ -430,9 +429,6 @@ void set_window_title(const string& new_title) {
 	window_title = new_title.c_str();
 	window_event_set_title = true;
 	if (window_has_renderer)windowRunnable->monitor();
-}
-void set_window_closable(bool set_closable) {
-	window_closable = set_closable;
 }
 SDL_Renderer* get_window_renderer() {
 	if (windowRunnable != nullptr)return windowRunnable->renderer;
@@ -563,9 +559,8 @@ void exit_engine(int return_number)
 	}
 	g_shutdown = true;
 	g_retcode = return_number;
-	if (ctx) {
+	if (ctx)
 		ctx->Abort();
-	}
 }
 
 CScriptArray* keys_pressed() {
@@ -754,6 +749,13 @@ void reset_keyboard() {
 		keys[i].isDown = false;
 	}
 	window_event_keyboard_reset = true;
+}
+bool quit_requested() {
+	if (g_quitRequested) {
+		g_quitRequested = false;
+		return true;
+	}
+	return false;
 }
 void string_pad(std::string& text) {
 	int padding_size = 16 - (text.length() % 16);

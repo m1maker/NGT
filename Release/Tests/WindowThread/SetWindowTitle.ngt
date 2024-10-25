@@ -2,7 +2,7 @@ timer random_timer;
 void main(){
 show_window("Test");
 update_window_freq=0;
-while(true){
+while(!quit_requested){
 wait(5);
 if(random_timer.elapsed_millis>1000){
 set_window_title("Random number "+random(0, 1000));

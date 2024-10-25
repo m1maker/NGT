@@ -1,6 +1,6 @@
 void main(){
 show_window("Mouse test");
-while(true){
+while(!quit_requested){
 wait(5);
 if(mouse_pressed(1))screen_reader::speak("Left pressed");
 if(mouse_released(3))screen_reader::speak("Right released");

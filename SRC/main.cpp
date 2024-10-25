@@ -775,6 +775,13 @@ public:
 			delete app;
 			app = nullptr;
 		}
+		if (g_engineInitialized) {
+			soundsystem_free();
+			enet_deinitialize();
+			SDL_Quit();
+			SRAL_Uninitialize(); // Keyboard hooks are automatically uninstalls when uninitialize
+		}
+
 	}
 protected:
 	void initialize(Application& self)override
@@ -802,12 +809,6 @@ protected:
 
 	void uninitialize()override
 	{
-		if (g_engineInitialized) {
-			soundsystem_free();
-			enet_deinitialize();
-			SDL_Quit();
-			SRAL_Uninitialize(); // Keyboard hooks are automatically uninstalls when uninitialize
-		}
 		Application::uninitialize();
 #ifdef _WIN32
 		timeEndPeriod(1);

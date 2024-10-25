@@ -2,7 +2,7 @@ long number=0;
 void main(){
 show_window("Test");
 update_window_freq=0;
-while(true){
+while(!quit_requested){
 wait_event();
 if(key_pressed(KEY_SPACE)){
 number+=1;

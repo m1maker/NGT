@@ -118,11 +118,10 @@ bool braille(const string& text);
 
 void stop_speech();
 string screen_reader_detect();
-bool show_window(const string& title, int width = 640, int height = 480, bool closable = true, bool enable_renderer = false);
+bool show_window(const string& title, int width = 640, int height = 480, bool enable_renderer = false);
 void* get_window_handle();
 void hide_window();
 void set_window_title(const string&);
-void set_window_closable(bool);
 bool get_window_active();
 void set_window_fullscreen(bool);
 SDL_Renderer* get_window_renderer();
@@ -153,7 +152,7 @@ bool key_repeat(int);
 bool force_key_down(SDL_Scancode);
 bool force_key_up(SDL_Scancode);
 void reset_keyboard();
-
+bool quit_requested();
 CScriptArray* keys_pressed();
 CScriptArray* keys_released();
 CScriptArray* keys_down();

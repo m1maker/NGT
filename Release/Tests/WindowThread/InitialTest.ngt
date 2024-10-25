@@ -5,11 +5,10 @@ screen_reader::interrupt=true;
 screen_reader::speak("Opening window");
 wait(500);
 show_window("Window test", enable_renderer:true);
-while(get_window_handle()==0){}
 update_window_freq=0;
 wait(500);
 screen_reader::speak("Press and release any key", false);
-while(true){
+while(!quit_requested){
 wait(5);
 if(key_pressed(KEY_SPACE))screen_reader::speak("Test");
 pressed=keys_pressed();
