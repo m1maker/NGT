@@ -1,4 +1,4 @@
-!define softver "3.0.1"
+!define softver "3.0.3"
 !define publisher "M1Maker"
 !define sname "NGT"
 !define lname "New Game Toolkit"

@@ -1,7 +1,7 @@
 # CMakeList.txt : CMake project for NGT
 # project specific logic here.
 #
-cmake_minimum_required (VERSION 3.28.3)
+cmake_minimum_required (VERSION 3.29.5)
 set(CMAKE_CXX_STANDARD 20)
 
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -36,6 +36,12 @@ add_definitions(-DENABLE_XML=OFF)
 add_definitions(-DENABLE_JSON=OFF)
 add_definitions(-DENABLE_MONGODB=OFF)
 add_definitions(-DENABLE_PROMETHEUS=OFF)
+
+if(WIN32)
+  set(POCO_NETSSL Poco::NetSSLWin)
+else()
+  set(POCO_NETSSL Poco::NetSSL)
+endif()
 
 # OpenSSL configuration
 set(OPENSSL_USE_STATIC_LIBS ON)
@@ -125,15 +131,6 @@ ExternalProject_Add(SDL3
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/external/installed -DSDL_STATIC=ON -DMSVC_RUNTIME_LIBRARY=MultiThreaded -DFORCE_STATIC_VCRT=ON
     )
 
-#    ExternalProject_Add(TTF
-#    PREFIX "${CMAKE_BINARY_DIR}/external"
-#    GIT_REPOSITORY    "https://github.com/libsdl-org/SDL_ttf"
-#    GIT_TAG           "5986e158279dbb0fe6de70e841c16bc1e9702d9f"
-#    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/external/installed -DSDL_STATIC=ON -DMSVC_RUNTIME_LIBRARY=MultiThreaded -DFORCE_STATIC_VCRT=ON
-#    )
-
-
-
 
 ExternalProject_Add(
     phonon
@@ -156,6 +153,7 @@ FetchContent_MakeAvailable(SRAL)
 
 
 set(ENABLE_NETSSL ON CACHE BOOL "Enable NetSSL")
+set(ENABLE_NETSSL_WIN ON CACHE BOOL "Enable NetSSL_WIN")
 set(ENABLE_CRYPTO ON CACHE BOOL "Enable Crypto")
 set(POCO_MT ON)
 set(BUILD_SHARED_LIBS OFF)
@@ -167,6 +165,7 @@ FetchContent_Declare(Poco
     -DOPENSSL_ROOT_DIR=${OPENSSL_ROOT_DIR}
     -DOPENSSL_USE_STATIC_LIBS=${OPENSSL_USE_STATIC_LIBS}
     -DENABLE_NETSSL=${ENABLE_NETSSL}
+    -DENABLE_NETSSL_WIN=${ENABLE_NETSSL_WIN}
     -DENABLE_CRYPTO=${ENABLE_CRYPTO}
     -DPOCO_STATIC=${POCO_STATIC}
     -DENABLE_DATA_MYSQL=${ENABLE_DATA_MYSQL}
@@ -187,22 +186,24 @@ FetchContent_MakeAvailable(enet)
 
 include_directories(
   ${angelscript_SOURCE_DIR}/sdk/angelscript/include
-  ${OPENSSL_INCLUDE_DIR}
   ${Poco_SOURCE_DIR}/Net/include
-  ${poco_SOURCE_DIR}/NetSSL_OpenSSL/include
   ${poco_SOURCE_DIR}/Crypto/include
   ${Poco_SOURCE_DIR}/Foundation/include
-
   ${enet_SOURCE_DIR}/include
-
   ${SRAL_SOURCE_DIR}/Include
   ${CMAKE_BINARY_DIR}/external/installed/include
   ${CMAKE_BINARY_DIR}/phonon-src/include
-
-
-
 )
-
+if(WIN32)
+  include_directories(
+    ${Poco_SOURCE_DIR}/NetSSL_Win/include
+  )
+else()
+  include_directories(
+    ${OPENSSL_INCLUDE_DIR}
+    ${Poco_SOURCE_DIR}/NetSSL_OpenSSL/include
+  )
+endif()
 
 set(NGT_SOURCES
   "SRC/ngt.cpp" 
@@ -309,15 +310,10 @@ else()
   target_link_libraries(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/external/installed/lib/libSDL3.a)
   find_package(X11 REQUIRED)
   target_link_libraries(${PROJECT_NAME} ${X11_LIBRARIES})
-  find_package(PkgConfig REQUIRED)
-  pkg_check_modules(SpeechD REQUIRED speech-dispatcher)
-
-  target_link_libraries(${PROJECT_NAME} ${SpeechD_LIBRARIES})
-
 endif()
 target_link_libraries(${PROJECT_NAME} Poco::Foundation)
 target_link_libraries(${PROJECT_NAME} Poco::Net)
-target_link_libraries(${PROJECT_NAME} Poco::NetSSL)
+target_link_libraries(${PROJECT_NAME} ${POCO_NETSSL})
 target_link_libraries(${PROJECT_NAME} Poco::Util)
 
 target_link_libraries(${PROJECT_NAME} enet)
@@ -325,21 +321,17 @@ target_link_libraries(${PROJECT_NAME} ${PHONON_LIBRARIES})
 if(WIN32)
   target_link_libraries(${PROJECT_NAME}W SRAL_static)
   target_link_libraries(${PROJECT_NAME}W angelscript)
-  target_link_libraries(${PROJECT_NAME}W ${OPENSSL_LIBRARIES})
   target_link_libraries(${PROJECT_NAME}W ${CMAKE_BINARY_DIR}/external/installed/lib/SDL3-static.lib)
   target_link_libraries(${PROJECT_NAME}W Poco::Foundation)
   target_link_libraries(${PROJECT_NAME}W Poco::Net)
-  target_link_libraries(${PROJECT_NAME}W Poco::NetSSL)
-
+  target_link_libraries(${PROJECT_NAME}W ${POCO_NETSSL})
   target_link_libraries(${PROJECT_NAME}W Poco::Util)
   target_link_libraries(${PROJECT_NAME}W enet)
   target_link_libraries(${PROJECT_NAME}W ${PHONON_LIBRARIES})
-  target_link_libraries(${PROJECT_NAME} winmm.lib)
+  target_link_libraries(${PROJECT_NAME} winmm.lib dbghelp.lib)
   target_link_libraries(${PROJECT_NAME} imm32.lib)
-  target_link_libraries(${PROJECT_NAME}W winmm.lib)
+  target_link_libraries(${PROJECT_NAME}W winmm.lib dbghelp.lib)
   target_link_libraries(${PROJECT_NAME}W imm32.lib)
-  target_link_libraries(${PROJECT_NAME} dbghelp.lib)
-  target_link_libraries(${PROJECT_NAME}W dbghelp.lib)
 
   target_link_libraries(${PROJECT_NAME} msvcrt.lib)
   target_link_libraries(${PROJECT_NAME}W msvcrt.lib)

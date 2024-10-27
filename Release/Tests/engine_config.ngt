@@ -1,0 +1,3 @@
+void main(){
+clipboard_copy_text(scripting::engine_config);
+}

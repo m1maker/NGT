@@ -1,0 +1,15 @@
+#include "../include/menu"
+void first_option(){
+screen_reader::speak("Hello", true);
+}
+void main(){
+show_window("Menu Test");
+wait(500);
+menu m("Hello");
+m.add_item("First", first_option);
+m.add_item("Last", null);
+while(!quit_requested){
+wait(5);
+m.monitor();
+}
+}

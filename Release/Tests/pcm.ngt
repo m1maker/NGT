@@ -1,0 +1,10 @@
+void main(){
+sound s;
+file f;
+f.open("C:/windows/media/tada.wav", "r");
+string pcm = f.read(f.get_size());
+f.close();
+s.load_from_memory(pcm, pcm.length());
+s.play_wait();
+s.close();
+}

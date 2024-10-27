@@ -17,6 +17,12 @@ Currently, NGT is positioned as a game engine for users with visual impairments,
 
 The following sections will help you build the engine from source or contribute to the engine's development.
 
+Run these commands
+```
+cmake . -B build
+cmake --build build --config Release
+```
+
 
 
 # Additional Resources
