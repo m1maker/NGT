@@ -1,6 +1,0 @@
-void main(){
-file f;
-f.open("EngineConfig.txt", "w");
-f.write(scripting::engine_config);
-f.close();
-}

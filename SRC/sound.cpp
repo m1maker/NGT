@@ -1266,13 +1266,13 @@ public:
 	string file;
 	ngtvector* source_position = nullptr;
 	ngtvector* listener_position = nullptr;
-	sound(const string& filename = "", bool set3d = false) {
+	sound(const string& filename = "") {
 		ref = 1;
 		if (!g_SoundInitialized) {
 			g_SoundInitialized = soundsystem_init();
 		}
 		if (filename != "")
-			this->load(filename, set3d);
+			this->load(filename);
 		effects["Default"] = ma_engine_get_endpoint(&sound_default_mixer);
 		listener_position = new ngtvector;
 		source_position = new ngtvector;
@@ -1292,7 +1292,7 @@ public:
 			delete this;
 		}
 	}
-	bool load(const string& filename, bool set3d) {
+	bool load(const string& filename) {
 		string result;
 		if (sound_path != "") {
 			result = sound_path + "/" + filename.c_str();
@@ -1304,7 +1304,7 @@ public:
 		if (sound_pack != nullptr and sound_pack->active()) {
 			string file = sound_pack->get_file(filename);
 			size_t size = sound_pack->get_file_size(filename);
-			return this->load_from_memory(file, size, set3d);
+			return this->load_from_memory(file, size);
 		}
 		handle_ = new ma_sound;
 		ma_result loading_result = ma_sound_init_from_file(&sound_default_mixer, result.c_str(), 0, NULL, NULL, handle_);
@@ -1324,7 +1324,7 @@ public:
 		ma_sound_set_rolloff(handle_, 2);
 		return true;
 	}
-	bool load_from_memory(string data, size_t stream_size, bool set3d) {
+	bool load_from_memory(string data, size_t stream_size) {
 		if (active)this->close();
 		handle_ = new ma_sound;
 		ma_result r = ma_decoder_init_memory(data.c_str(), stream_size, NULL, &decoder);
@@ -1378,7 +1378,7 @@ public:
 
 
 	}
-	bool stream(const string& filename, bool set3d) {
+	bool stream(const string& filename) {
 		string result;
 		if (sound_path != "") {
 			result = sound_path + "/" + filename.c_str();
@@ -1404,10 +1404,9 @@ public:
 
 		return true;
 	}
-	bool load_url(const string& url, bool set3d) {
+	bool load_url(const string& url) {
 		handle_ = new ma_sound;
 		vector<char> audio = load_audio_from_url(url.c_str());
-		alert("W", std::to_string(audio.size()));
 		ma_result init_result = ma_decoder_init_memory(audio.data(), audio.size(), NULL, &decoder);
 		if (init_result != MA_SUCCESS) {
 			return false;
@@ -2096,7 +2095,7 @@ public:
 };
 
 
-sound* fsound(const string& filename, bool set3d) { return new sound(filename, set3d); }
+sound* fsound(const string& filename) { return new sound(filename); }
 mixer* fmixer() { return new mixer; }
 audio_recorder* faudio_recorder() { return new audio_recorder; }
 audio_encoder* faudio_encoder() { return new audio_encoder; }
@@ -2121,15 +2120,15 @@ void register_sound(asIScriptEngine* engine) {
 	engine->RegisterObjectType("mixer", sizeof(mixer), asOBJ_REF | asOBJ_NOCOUNT);
 	engine->RegisterObjectBehaviour("mixer", asBEHAVE_FACTORY, "mixer @m()", asFUNCTION(fmixer), asCALL_CDECL);
 	engine->RegisterObjectType("sound", sizeof(sound), asOBJ_REF);
-	engine->RegisterObjectBehaviour("sound", asBEHAVE_FACTORY, "sound@ s(const string &in filename = \"\", bool deprecated = false)", asFUNCTION(fsound), asCALL_CDECL);
+	engine->RegisterObjectBehaviour("sound", asBEHAVE_FACTORY, "sound@ s(const string &in filename = \"\")", asFUNCTION(fsound), asCALL_CDECL);
 	engine->RegisterObjectBehaviour("sound", asBEHAVE_ADDREF, "void f()", asMETHOD(sound, add), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("sound", asBEHAVE_RELEASE, "void f()", asMETHOD(sound, release), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "bool load(const string &in filename, bool deprecated = false, sound_end_callback@=null)const", asMETHOD(sound, load), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "bool load_from_memory(string memory, size_t memory_size = 0, bool=false)const", asMETHOD(sound, load_from_memory), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "bool load(const string &in filename)const", asMETHOD(sound, load), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "bool load_from_memory(string memory, size_t memory_size = 0)const", asMETHOD(sound, load_from_memory), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("sound"), "bool load_pcm(string memory, size_t memory_size = 0, int channels = 0, int sample_rate = 0)const", asMETHOD(sound, load_pcm), asCALL_THISCALL);
 
-	engine->RegisterObjectMethod(_O("sound"), "bool stream(const string &in filename, bool deprecated = false)const", asMETHOD(sound, stream), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "bool load_url(const string &in url, bool deprecated = false)const", asMETHOD(sound, load_url), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "bool stream(const string &in filename)const", asMETHOD(sound, stream), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "bool load_url(const string &in url)const", asMETHOD(sound, load_url), asCALL_THISCALL);
 
 	engine->RegisterObjectMethod(_O("sound"), "uint64 push_memory()const", asMETHOD(sound, push_memory), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("sound"), "string get_file_path()const property", asMETHOD(sound, get_file_path), asCALL_THISCALL);

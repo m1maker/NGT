@@ -273,7 +273,7 @@ void init_engine() {
 	SRAL_Initialize(0);
 #ifdef _WIN32
 	// SRAL keyboard hooks is stopping all the events on Linux
-//	SRAL_RegisterKeyboardHooks();
+	SRAL_RegisterKeyboardHooks();
 #endif
 	enet_initialize();
 	g_engineInitialized = true;
