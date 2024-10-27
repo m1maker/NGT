@@ -310,6 +310,12 @@ else()
   target_link_libraries(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/external/installed/lib/libSDL3.a)
   find_package(X11 REQUIRED)
   target_link_libraries(${PROJECT_NAME} ${X11_LIBRARIES})
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(SpeechD REQUIRED speech-dispatcher)
+
+  target_link_libraries(${PROJECT_NAME} ${SpeechD_LIBRARIES})
+
+
 endif()
 target_link_libraries(${PROJECT_NAME} Poco::Foundation)
 target_link_libraries(${PROJECT_NAME} Poco::Net)

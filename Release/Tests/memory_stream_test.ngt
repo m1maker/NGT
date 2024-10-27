@@ -1,4 +1,4 @@
-void main() {
+shared void main() {
     memory_stream stream(0);
 
     // Writing to the stream
@@ -7,7 +7,7 @@ void main() {
     stream.write(str.c_str(), str.length());
     // Getting current position
     int pos = stream.tell();
-    printf("Current Position: " + pos);
+    println("Current Position: " + pos);
 
     // Seeking back to the start
     stream.seek(0);
@@ -15,12 +15,11 @@ void main() {
     // Reading from the stream
     string data;
     stream.read(data, stream.size); // Read 13 bytes
-    printf("Data read from stream: " + data);
+    println("Data read from stream: ", data);
 
     // Checking the size of the stream
     size_t size = stream.size;
-    printf("Size of stream: " + size);
+    println("Size of stream: ", size);
     stream.clear();
-    exec("pause");
 }
 
