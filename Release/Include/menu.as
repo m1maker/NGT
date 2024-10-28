@@ -156,6 +156,24 @@ class menu
 				sp.play_stationary(open_sound, false);
 			title_spoken = true;
 		}
+		string user_input = get_input();
+		if (user_input != "")
+		{
+			for (uint i = 0; i < items.length(); ++i)
+			{
+				string ch = get_char_after_ampersand(items[i].title);
+				if (ch == "")
+					continue;
+				ch = ch.upper();
+				user_input = user_input.upper();
+				if (ch == user_input)
+				{
+					selected_index = 0;
+					this.navigate(i);
+					this.select();
+				}
+			}
+		}
 		if (key_repeat(KEY_DOWN) || (enable_tab_order && !shift_down && key_repeat(KEY_TAB)))
 		{
 			this.navigate(1);
@@ -188,6 +206,12 @@ class menu
 		{
 			announcement += " Submenu"; // Append " Submenu" if it has a submenu
 		}
+		if (get_char_after_ampersand(items[selected_index].title) != "")
+		{
+			int pos = 0;
+			announcement += ", " + get_char_after_ampersand(items[selected_index].title, pos).upper();
+			announcement.erase(pos, 1);
+		}
 		// If speak_index is true, append the index information
 		if (this.speak_index)
 		{
@@ -204,5 +228,22 @@ class menu
 
 	int get_item_count() const property{
 		return items.length();
+	}
+
+	protected string get_char_after_ampersand(const string&in inputStr, int&out pos = void)
+	{
+		// Find the position of the first ampersand
+		int ampersandPos = inputStr.find_first("&", 0);
+
+		// Check if the ampersand was found and is not the last character
+		if (ampersandPos != -1 && ampersandPos < inputStr.length() - 1)
+		{
+			// Return the character after the ampersand
+			pos = ampersandPos;
+			return inputStr.substr(ampersandPos + 1, 1);
+		}
+
+		// Return an empty string if no ampersand is found or it's the last character
+		return "";
 	}
 };

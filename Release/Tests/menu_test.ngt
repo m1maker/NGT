@@ -2,6 +2,9 @@
 void first_option(){
 screen_reader::speak("Hello", true);
 }
+void last_option(){
+screen_reader::speak("Test");
+}
 void main(){
 show_window("Menu Test");
 wait(500);
@@ -11,9 +14,9 @@ m.speak_index = true;
 menu sub("Test");
 sub.add_item("Submenu item", null);
 sub.add_item("Test", null);
-m.add_item("First", first_option);
-m.add_item("Last", null);
-m.add_submenu("Additional", sub);
+m.add_item("Fi&rst", first_option);
+m.add_item("&Last", last_option);
+m.add_submenu("&Additional", sub);
 while(!quit_requested){
 wait(5);
 m.monitor();
