@@ -1,3 +1,4 @@
+#include "hip"
 funcdef void menu_item_callback();
 funcdef void menu_on_click_callback();
 
@@ -34,6 +35,7 @@ class menu
 	menu_on_click_callback @on_click_callback = null;
 	bool in_submenu = false;
 	bool speak_index = false;
+	bool enable_tab_order = true;
 
 	menu(const string&in title, bool is_submenu = false)
 	{
@@ -56,6 +58,7 @@ class menu
 		wrapp = false;
 		@on_click_callback = null;
 		speak_index = false;
+		enable_tab_order = true;
 	}
 
 	int add_item(const string&in item_title, menu_item_callback @callback) {
@@ -109,6 +112,7 @@ class menu
 	}
 
 	void monitor() {
+		if(items.is_empty())return;
 		if (items[selected_index].submenu !is null && items[selected_index].submenu.in_submenu)
 		{
 			items[selected_index].submenu.speak_index = this.speak_index;
@@ -123,13 +127,22 @@ class menu
 			speak_item(false);
 			title_spoken = true;
 		}
-		if (key_repeat(KEY_DOWN))
+		if (key_repeat(KEY_DOWN) || (enable_tab_order && !shift_down && key_repeat(KEY_TAB)))
 		{
 			this.navigate(1);
 		}
-		else if (key_repeat(KEY_UP)){
+		else if (key_repeat(KEY_UP) || (enable_tab_order && shift_down && key_repeat(KEY_TAB))){
 			this.navigate(-1);
 		}
+		else if (key_pressed(KEY_HOME)){
+			selected_index = 0;
+			speak_item();
+		}
+		else if (key_pressed(KEY_END)){
+			selected_index = items.length() - 1;
+			speak_item();
+		}
+
 		else if (key_repeat(KEY_RETURN) || key_repeat(KEY_SPACE) || (key_repeat(KEY_RIGHT) && items[selected_index].submenu !is null))this.select();
 		else if (this.in_submenu && (key_repeat(KEY_ESCAPE) || key_repeat(KEY_BACK) || key_repeat(KEY_LEFT))){
 			this.in_submenu = false;
