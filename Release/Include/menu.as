@@ -1,4 +1,6 @@
 #include "hip"
+#include "sound_pool"
+
 funcdef void menu_item_callback();
 funcdef void menu_on_click_callback();
 
@@ -36,6 +38,8 @@ class menu
 	bool in_submenu = false;
 	bool speak_index = false;
 	bool enable_tab_order = true;
+	sound_pool sp;
+	string open_sound, close_sound, move_sound, click_sound, border_sound, wrapp_sound;
 
 	menu(const string&in title, bool is_submenu = false)
 	{
@@ -59,6 +63,12 @@ class menu
 		@on_click_callback = null;
 		speak_index = false;
 		enable_tab_order = true;
+		open_sound = "";
+		close_sound = "";
+		move_sound = "";
+		click_sound = "";
+		border_sound = "";
+		wrapp_sound = "";
 	}
 
 	int add_item(const string&in item_title, menu_item_callback @callback) {
@@ -80,22 +90,38 @@ class menu
 		return items.length() - 1;
 	}
 
+	void remove_item(int index)
+	{
+		if (index >= 0 && index < items.length())
+			items.remove_at(index);
+	}
+
 	void navigate(int direction) {
 		selected_index += direction;
 		if (selected_index < 0)
 		{
 			selected_index = !wrapp ? 0 : items.length() - 1; // Prevent going above the first item
+			if (wrapp && wrapp_sound != "")
+				sp.play_stationary(wrapp_sound, false);
+			else if (border_sound != "")sp.play_stationary(border_sound, false);
 		}
 		else if (selected_index >= items.length())
 		{
 			selected_index = !wrapp ? items.length() - 1 : 0; // Prevent going below the last item
+			if (wrapp && wrapp_sound != "")
+				sp.play_stationary(wrapp_sound, false);
+			else if (border_sound != "")sp.play_stationary(border_sound, false);
 		}
+		if (move_sound != "")
+			sp.play_stationary(move_sound, false);
 		speak_item();
 	}
 
 	void select() {
 		if (selected_index >= 0 && selected_index < items.length())
 		{
+			if (click_sound != "")
+				sp.play_stationary(click_sound, false);
 			if (on_click_callback !is null)
 				on_click_callback();
 			if (items[selected_index].submenu !is null)
@@ -112,7 +138,8 @@ class menu
 	}
 
 	void monitor() {
-		if(items.is_empty())return;
+		if (items.is_empty())
+			return;
 		if (items[selected_index].submenu !is null && items[selected_index].submenu.in_submenu)
 		{
 			items[selected_index].submenu.speak_index = this.speak_index;
@@ -125,6 +152,8 @@ class menu
 		{
 			screen_reader::speak(title, false);
 			speak_item(false);
+			if (open_sound != "")
+				sp.play_stationary(open_sound, false);
 			title_spoken = true;
 		}
 		if (key_repeat(KEY_DOWN) || (enable_tab_order && !shift_down && key_repeat(KEY_TAB)))
@@ -135,16 +164,16 @@ class menu
 			this.navigate(-1);
 		}
 		else if (key_pressed(KEY_HOME)){
-			selected_index = 0;
-			speak_item();
+			this.navigate(-items.length() - 1);
 		}
 		else if (key_pressed(KEY_END)){
-			selected_index = items.length() - 1;
-			speak_item();
+			this.navigate(items.length() - 1);
 		}
 
 		else if (key_repeat(KEY_RETURN) || key_repeat(KEY_SPACE) || (key_repeat(KEY_RIGHT) && items[selected_index].submenu !is null))this.select();
 		else if (this.in_submenu && (key_repeat(KEY_ESCAPE) || key_repeat(KEY_BACK) || key_repeat(KEY_LEFT))){
+			if (close_sound != "")
+				sp.play_stationary(close_sound, false);
 			this.in_submenu = false;
 		}
 	}

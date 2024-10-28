@@ -7,6 +7,7 @@ show_window("Menu Test");
 wait(500);
 menu m("Hello");
 m.speak_index = true;
+
 menu sub("Test");
 sub.add_item("Submenu item", null);
 sub.add_item("Test", null);
