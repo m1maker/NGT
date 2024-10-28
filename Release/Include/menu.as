@@ -32,6 +32,9 @@ class menu
 	protected bool title_spoken = false;
 	bool wrapp = false;
 	menu_on_click_callback @on_click_callback = null;
+	bool in_submenu = false;
+	bool speak_index = false;
+
 	menu(const string&in title, bool is_submenu = false)
 	{
 		this.title = title;
@@ -48,14 +51,17 @@ class menu
 		title = "";
 		selected_index = 0;
 		is_submenu = false;
+		in_submenu = false;
 		title_spoken = false;
 		wrapp = false;
 		@on_click_callback = null;
+		speak_index = false;
 	}
 
-	void add_item(const string&in item_title, menu_item_callback @callback) {
+	int add_item(const string&in item_title, menu_item_callback @callback) {
 		menu_item @item = menu_item(item_title, callback);
 		items.insert_last(item);
+		return items.length() - 1;
 	}
 
 	void add_items(array<string> @items){
@@ -64,9 +70,11 @@ class menu
 			add_item(items[i], null);
 		}
 	}
-	void add_submenu(const string&in item_title, menu @submenu) {
+
+	int add_submenu(const string&in item_title, menu @submenu) {
 		menu_item @item = menu_item(item_title, submenu);
 		items.insert_last(item);
+		return items.length() - 1;
 	}
 
 	void navigate(int direction) {
@@ -90,7 +98,8 @@ class menu
 			if (items[selected_index].submenu !is null)
 			{
 				items[selected_index].submenu.selected_index = 0; // Reset the submenu selection
-																  // Show the submenu
+				items[selected_index].submenu.title_spoken = false;
+				items[selected_index].submenu.in_submenu = true;
 			}
 			else if (items[selected_index].callback !is null)
 			{
@@ -100,6 +109,14 @@ class menu
 	}
 
 	void monitor() {
+		if (items[selected_index].submenu !is null && items[selected_index].submenu.in_submenu)
+		{
+			items[selected_index].submenu.speak_index = this.speak_index;
+			items[selected_index].submenu.monitor();
+			if (title_spoken)
+				this.title_spoken = false;
+			return;
+		}
 		if (!title_spoken)
 		{
 			screen_reader::speak(title, false);
@@ -113,17 +130,37 @@ class menu
 		else if (key_repeat(KEY_UP)){
 			this.navigate(-1);
 		}
-		else if (key_repeat(KEY_RETURN) || key_repeat(KEY_SPACE))this.select();
+		else if (key_repeat(KEY_RETURN) || key_repeat(KEY_SPACE) || (key_repeat(KEY_RIGHT) && items[selected_index].submenu !is null))this.select();
+		else if (this.in_submenu && (key_repeat(KEY_ESCAPE) || key_repeat(KEY_BACK) || key_repeat(KEY_LEFT))){
+			this.in_submenu = false;
+		}
 	}
 
 	protected void speak_item(bool interrupt = true)
 	{
-		screen_reader::speak(
-			items[selected_index].title +
-				(items[selected_index].submenu !is null ? " Submenu" : ""),
-			interrupt);
+		// Start with the title of the selected item
+		string announcement = items[selected_index].title;
+
+		// Check if the item has a submenu
+		if (items[selected_index].submenu != null)
+		{
+			announcement += " Submenu"; // Append " Submenu" if it has a submenu
+		}
+		// If speak_index is true, append the index information
+		if (this.speak_index)
+		{
+			announcement += " " + (selected_index + 1) + " of " + items.length();
+		}
+
+		// Call the screen reader to speak the announcement
+		screen_reader::speak(announcement, interrupt);
 	}
+
 	int get_selected_item() const property{
 		return selected_index;
+	}
+
+	int get_item_count() const property{
+		return items.length();
 	}
 };

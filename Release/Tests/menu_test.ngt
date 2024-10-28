@@ -6,8 +6,13 @@ void main(){
 show_window("Menu Test");
 wait(500);
 menu m("Hello");
+m.speak_index = true;
+menu sub("Test");
+sub.add_item("Submenu item", null);
+sub.add_item("Test", null);
 m.add_item("First", first_option);
 m.add_item("Last", null);
+m.add_submenu("Additional", sub);
 while(!quit_requested){
 wait(5);
 m.monitor();
