@@ -315,6 +315,12 @@ else()
 
   target_link_libraries(${PROJECT_NAME} ${SpeechD_LIBRARIES})
 
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    INSTALL_RPATH "$ORIGIN"
+    BUILD_WITH_INSTALL_RPATH TRUE
+)
+
+
 
 endif()
 target_link_libraries(${PROJECT_NAME} Poco::Foundation)

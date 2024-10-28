@@ -1,5 +1,4 @@
-array<char> a;
-int main(){
-a[5000];
-return 0;
+void main(){
+char[] c;
+c[0];
 }

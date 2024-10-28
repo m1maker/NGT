@@ -38,7 +38,7 @@ class menu
 	bool in_submenu = false;
 	bool speak_index = false;
 	bool enable_tab_order = true;
-	sound_pool sp;
+	sound_pool sp(6);
 	string open_sound, close_sound, move_sound, click_sound, border_sound, wrapp_sound;
 
 	menu(const string&in title, bool is_submenu = false)
