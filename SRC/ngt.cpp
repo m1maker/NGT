@@ -51,6 +51,62 @@ extern "C"
 asIScriptFunction* exit_callback = nullptr;
 using namespace string_literals;
 using namespace std;
+
+class CObject {
+public:
+	bool initialized;
+	CObject() { initialized = false; }
+	~CObject() {}
+	virtual void init() = 0;
+};
+
+class CSDLObject : public CObject {
+public:
+	CSDLObject() { initialized = false; }
+	void init() {
+		if (initialized)return;
+		SDL_Init(SDL_INIT_VIDEO);
+		initialized = true;
+	}
+	~CSDLObject() {
+		if (!initialized)SDL_Quit();
+	}
+};
+
+class CSRALObject : public CObject {
+public:
+	CSRALObject() { initialized = false; }
+	void init() {
+		if (initialized)return;
+		SRAL_Initialize(0);
+#ifdef _WIN32
+		SRAL_RegisterKeyboardHooks(); // Linux is blocking all window events when keyboard hooks are installed
+#endif
+		initialized = true;
+	}
+	~CSRALObject() {
+		if (!initialized)SRAL_Uninitialize();
+	}
+};
+
+class CEnetObject : public CObject {
+public:
+	CEnetObject() { initialized = false; }
+	void init() {
+		if (initialized)return;
+		enet_initialize();
+		initialized = true;
+	}
+	~CEnetObject() {
+		if (!initialized)enet_deinitialize();
+	}
+};
+
+
+CSDLObject SDL;
+CSRALObject SRAL;
+CEnetObject enet;
+
 int mouse_x = 0, mouse_y = 0, mouse_z = 0;
 bool g_engineInitialized = false;
 SDL_Event e;
@@ -123,6 +179,7 @@ static size_t cmp_write_bytes(cmp_ctx_t* ctx, const void* input, size_t len) {
 }
 bool wait_event_requested = false;
 bool g_quitRequested = false;
+
 class WindowThread : public Poco::Runnable {
 private:
 	Poco::Thread thread;
@@ -268,27 +325,6 @@ void set_update_window_freq(long freq) {
 long get_update_window_freq() {
 	return update_window_freq;
 }
-void init_engine() {
-	SDL_Init(SDL_INIT_VIDEO);
-	SRAL_Initialize(0);
-#ifdef _WIN32
-	// SRAL keyboard hooks is stopping all the events on Linux
-	SRAL_RegisterKeyboardHooks();
-#endif
-	enet_initialize();
-	g_engineInitialized = true;
-}
-void set_library_path(const string& path) {
-	SRAL_Uninitialize();
-	filesystem::path current_dir = filesystem::current_path();
-	filesystem::path new_dir = filesystem::current_path() / path;
-
-	filesystem::current_path(new_dir);
-	SRAL_Initialize(0);
-	soundsystem_free();
-	soundsystem_init();
-	filesystem::current_path(current_dir);
-}
 
 random_device rd;
 mt19937 gen(rd());
@@ -318,16 +354,20 @@ bool get_screen_reader_interrupt() {
 	return default_screen_reader_interrupt;
 }
 bool speak(const string& text, bool stop) {
+	SRAL.init();
 	return SRAL_Speak(text.c_str(), stop);
 }
 bool braille(const string& text) {
+	SRAL.init();
 	return SRAL_Braille(text.c_str());
 }
 
 void stop_speech() {
+	SRAL.init();
 	SRAL_StopSpeech();
 }
 string screen_reader_detect() {
+	SRAL.init();
 	int reader = SRAL_GetCurrentEngine();
 	switch (reader) {
 	case ENGINE_NONE:
@@ -349,6 +389,7 @@ string screen_reader_detect() {
 }
 bool show_window(const string& title, int width, int height, bool enable_render)
 {
+	SDL.init();
 	if (windowRunnable != nullptr) {
 		set_window_title(title);
 		return true;
@@ -619,21 +660,25 @@ string number_to_words(uint64_t num, bool include_and)
 	return string(buf.data());
 }
 string read_environment_variable(const string& path) {
+	SDL.init();
 	SDL_Environment* env = SDL_GetEnvironment();
 	const char* value;
 	value = SDL_GetEnvironmentVariable(env, path.c_str());
 	return string(value);
 }
 bool write_environment_variable(const string& path, const string& value) {
+	SDL.init();
 	SDL_Environment* env = SDL_GetEnvironment();
 	int result = SDL_SetEnvironmentVariable(env, path.c_str(), value.c_str(), 1);
 	return result == 0;
 }
 bool clipboard_copy_text(const string& text) {
+	SDL.init();
 	SDL_SetClipboardText(text.c_str());
 	return true;
 }
 string clipboard_read_text() {
+	SDL.init();
 	return SDL_GetClipboardText();
 }
 string get_input() {
@@ -690,7 +735,7 @@ destroy:
 	gui::delete_control(ok);
 	gui::delete_control(cancel);
 	gui::hide_window(main_window);
-
+	return"";
 #else 
 	std::cout << title << ": " << text << std::endl << default_text;
 	std::string result;
@@ -958,6 +1003,7 @@ string string_to_hex(string the_string) {
 	return oss.str();
 }
 int message_box(const std::string& title, const std::string& text, const std::vector<std::string>& buttons, unsigned int mb_flags) {
+	SDL.init();
 	std::vector<SDL_MessageBoxButtonData> sdlbuttons;
 
 	for (size_t i = 0; i < buttons.size(); ++i) {
@@ -1428,6 +1474,7 @@ CScriptArray* deserialize_array(const string& data) {
 
 
 bool urlopen(const string& url) {
+	SDL.init();
 	return SDL_OpenURL(url.c_str()) == 0;
 }
 std::string c_str_to_string(const char* ptr, size_t length) {
@@ -1710,6 +1757,7 @@ bool network::set_bandwidth_limits(double incomingBandwidth, double outgoingBand
 }
 
 bool network::setup_client(int channels, asQWORD maxPeers) {
+	enet.init();
 	address.host = ENET_HOST_ANY;
 	address.port = 0; // Let the system choose a port
 
@@ -1725,6 +1773,7 @@ bool network::setup_client(int channels, asQWORD maxPeers) {
 }
 
 bool network::setup_server(int listeningPort, int channels, asQWORD maxPeers) {
+	enet.init();
 	address.host = ENET_HOST_ANY;
 	address.port = listeningPort;
 
@@ -1757,6 +1806,7 @@ bool network::is_active() const {
 	return m_active;
 }
 bool library::load(const string& libname) {
+	SDL.init();
 	if (lib != nullptr)this->unload();
 	lib = SDL_LoadObject(libname.c_str());
 	return lib != NULL;

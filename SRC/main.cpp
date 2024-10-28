@@ -775,14 +775,9 @@ public:
 			delete app;
 			app = nullptr;
 		}
-		if (g_engineInitialized) {
-			soundsystem_free();
-			enet_deinitialize();
-			SDL_Quit();
-			SRAL_Uninitialize(); // Keyboard hooks are automatically uninstalls when uninitialize
-		}
-
+		soundsystem_free();
 	}
+
 protected:
 	void initialize(Application& self)override
 	{
@@ -910,7 +905,6 @@ protected:
 		}
 
 		app->InitializeDebugger();
-		init_engine();
 		int result = app->Exec(func);
 		m_retcode = result;
 		module->Discard();
@@ -935,7 +929,6 @@ protected:
 			show_message(true, true, true);
 		}
 
-		init_engine();
 		int result = app->Exec(func);
 
 		m_retcode = result;
@@ -1032,7 +1025,6 @@ protected:
 			m_retcode = 1;
 			return;
 		}
-		init_engine();
 		result = app->Exec(func);
 		m_retcode = result;
 		module->Discard();

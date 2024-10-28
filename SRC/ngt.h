@@ -104,8 +104,6 @@ string get_platform();
 void set_exit_callback(asIScriptFunction* callback = nullptr);
 void set_update_window_freq(long);
 long get_update_window_freq();
-void init_engine();
-void set_library_path(const string& path);
 int64_t random(int64_t min, int64_t max);
 double randomDouble(double min, double max);
 bool random_bool();

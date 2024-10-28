@@ -13,14 +13,16 @@ void TTSVoice::release() {
 TTSVoice::TTSVoice()
 {
 	ref = 1;
-	if (!SRAL_IsInitialized())SRAL_Initialize(0);
+	if (!SRAL_IsInitialized()) {
+		SRAL_Initialize(0);
 #ifdef _WIN32
-	engine = ENGINE_SAPI;
+		engine = ENGINE_SAPI;
+		SRAL_RegisterKeyboardHooks(); // Linux is blocking all window events when keyboard hooks are installed
 #else
-	engine = ENGINE_SPEECH_DISPATCHER;
+		engine = ENGINE_SPEECH_DISPATCHER;
 #endif
+	}
 }
-
 TTSVoice::~TTSVoice()
 {
 }

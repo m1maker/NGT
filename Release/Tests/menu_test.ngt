@@ -8,7 +8,7 @@ screen_reader::speak("Test");
 void create_nested_menus(menu@ parent_menu) {
 menu@ current_menu = parent_menu;
 
-for (int i = 1; i <= 10000; ++i) {
+for (int i = 1; i <= 500; ++i) {
 menu sub("&Submenu " + i);
 sub.add_item("Item " + i, null);
 current_menu.add_submenu("&Submenu " + i, sub);

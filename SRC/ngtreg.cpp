@@ -295,7 +295,6 @@ void RegisterFunctions(asIScriptEngine* engine)
 	AS_END(engine);
 	engine->RegisterGlobalFunction("uint64 get_time_stamp_millis()property", asFUNCTION(get_time_stamp_millis), asCALL_CDECL);
 	engine->RegisterGlobalFunction("uint64 get_time_stamp_seconds()property", asFUNCTION(get_time_stamp_seconds), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void set_library_path(const string &in path)", asFUNCTION(set_library_path), asCALL_CDECL);
 
 	engine->RegisterGlobalFunction("long random(long min, long max)", asFUNCTIONPR(random, (int64_t, int64_t), int64_t), asCALL_CDECL);
 	engine->RegisterGlobalFunction("double random(double min, double max)", asFUNCTIONPR(randomDouble, (double, double), double), asCALL_CDECL);
