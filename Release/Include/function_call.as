@@ -200,3 +200,15 @@ class c_uchar : c_type
 		return scripting::typeid ::UINT8;
 	}
 }
+
+class c_caller{
+protected dictionary functions;
+protected scripting::context call_ctx;
+void clear(){
+functions.delete_all();
+}
+
+scripting::typid call(array<c_type>@ arguments, scripting::callconv call_conv = scripting::CDECL){
+
+}
+};
