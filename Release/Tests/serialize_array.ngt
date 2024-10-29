@@ -1,0 +1,15 @@
+array<string> items;
+void main(){
+items.insert_last("Hello");
+items.insert_last("Test");
+string data = serialize_array(items);
+file f;
+f.open("Test.txt", "w");
+f.write(data);
+f.close();
+array<string>@ items_des = array<string>();
+deserialize_array(data, items_des);
+for (uint i = 0; i < items_des.length(); ++i){
+alert("Value", items_des[i]);
+}
+}

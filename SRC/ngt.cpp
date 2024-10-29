@@ -1288,8 +1288,9 @@ CScriptDictionary* deserialize(const string& data) {
 	}
 	return dict;
 }
-string serialize_array(CScriptArray* data) {
-	if (data == nullptr) return "";
+
+void serialize_array(asIScriptGeneric* gen) {
+	CScriptArray* data = (CScriptArray*)gen->GetArgAddress(0);
 	asIScriptContext* context = asGetActiveContext();
 	asIScriptEngine* engine = context->GetEngine();
 	std::string serialized;
@@ -1383,18 +1384,18 @@ string serialize_array(CScriptArray* data) {
 			break;
 		}
 	}
-	return serialized;
+	gen->SetReturnObject(&serialized);
 }
 
-CScriptArray* deserialize_array(const string& data) {
+void deserialize_array(asIScriptGeneric* gen) {
+	std::string data = *(std::string*)gen->GetArgAddress(0);
+	CScriptArray* array = (CScriptArray*)gen->GetArgAddress(1);
 	asIScriptContext* context = asGetActiveContext();
 	asIScriptEngine* engine = context->GetEngine();
 	int32_t array_tid;
 	cmp_buffer buf = { (string*)&data, 0 };
 	cmp_ctx_t sctx = { 0, &buf, cmp_read_bytes, cmp_skip_bytes, cmp_write_bytes };
 	cmp_read_s32(&sctx, &array_tid);
-	asITypeInfo* arrayType = engine->GetTypeInfoById(array_tid);
-	CScriptArray* array = CScriptArray::Create(arrayType);
 	uint64_t size;
 	cmp_read_u64(&sctx, &size);
 	array->Reserve(size);
@@ -1469,7 +1470,7 @@ CScriptArray* deserialize_array(const string& data) {
 			array->InsertAt(i, &val);
 		}
 	}
-	return array;
+	gen->SetReturnDWord(1);
 }
 
 

@@ -403,6 +403,9 @@ void RegisterFunctions(asIScriptEngine* engine)
 
 	engine->RegisterGlobalFunction("string serialize(dictionary@ handle = null)", asFUNCTION(serialize), asCALL_CDECL);
 	engine->RegisterGlobalFunction("dictionary@ deserialize(const string &in the_serialized_dictionary)", asFUNCTION(deserialize), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string serialize_array(?&in array)", asFUNCTION(serialize_array), asCALL_GENERIC);
+	engine->RegisterGlobalFunction("bool deserialize_array(const string &in the_serialized_array, ?&out array)", asFUNCTION(deserialize_array), asCALL_GENERIC);
+
 	engine->RegisterGlobalFunction("bool urlopen(const string &in url)", asFUNCTION(urlopen), asCALL_CDECL);
 	engine->RegisterGlobalFunction("uint64 malloc(size_t alloc_size)", asFUNCTION(malloc), asCALL_CDECL);
 	engine->RegisterGlobalFunction("uint64 calloc(uint64, uint64)", asFUNCTION(calloc), asCALL_CDECL);
