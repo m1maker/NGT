@@ -1,0 +1,18 @@
+#include "../include/function_call"
+c_caller c;
+library user32;
+void main(){
+user32.load("user32");
+uint64 message_box = user32.get_function_pointer("MessageBoxA");
+string text = "World";
+string title = "Hello";
+array<c_type> arguments = {
+c_uint64(0),
+c_uint64(text.c_str()),
+c_uint64(title.c_str()),
+c_int(0)
+};
+c.call(message_box, scripting::typeid::INT32, arguments, scripting::callconv::STDCALL);
+c.reset();
+user32.unload();
+}

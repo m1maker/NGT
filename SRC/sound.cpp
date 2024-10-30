@@ -729,6 +729,15 @@ MA_API ma_steamaudio_binaural_node_config ma_steamaudio_binaural_node_config_ini
 	return config;
 }
 
+float spatial_blend_max_distance = 2.0f;
+void set_spatial_blend_max_distance(float distance) {
+	spatial_blend_max_distance = distance;
+}
+
+float get_spatial_blend_max_distance() {
+	return spatial_blend_max_distance;
+}
+
 static void ma_steamaudio_binaural_node_process_pcm_frames(ma_node* pNode, const float** ppFramesIn, ma_uint32* pFrameCountIn, float** ppFramesOut, ma_uint32* pFrameCountOut)
 {
 	ma_steamaudio_binaural_node* pBinauralNode = (ma_steamaudio_binaural_node*)pNode;
@@ -744,7 +753,6 @@ static void ma_steamaudio_binaural_node_process_pcm_frames(ma_node* pNode, const
 	float distance = sqrt((listener.x + binauralParams.direction.x) * (listener.x + binauralParams.direction.x) +
 		(listener.y + binauralParams.direction.y) * (listener.y + binauralParams.direction.y) +
 		(listener.z - binauralParams.direction.z) * (listener.z - binauralParams.direction.z));
-	float maxDistance = 2.0f;
 	if (listener.x == binauralParams.direction.x && listener.y == binauralParams.direction.y && listener.z == binauralParams.direction.z) {
 		binauralParams.interpolation = IPL_HRTFINTERPOLATION_NEAREST;
 
@@ -754,7 +762,7 @@ static void ma_steamaudio_binaural_node_process_pcm_frames(ma_node* pNode, const
 
 	}
 
-	float normalizedDistance = distance / maxDistance;
+	float normalizedDistance = distance / spatial_blend_max_distance;
 	binauralParams.spatialBlend = min(0.0f + normalizedDistance, 1.0f);
 	if (binauralParams.spatialBlend > 1.0f)
 		binauralParams.spatialBlend = 1.0f;
@@ -1241,7 +1249,7 @@ public:
 			return this->load_from_memory(file, size);
 		}
 		handle_ = new ma_sound;
-		ma_result loading_result = ma_sound_init_from_file(&sound_default_mixer, result.c_str(), MA_SOUND_FLAG_NO_SPATIALIZATION, NULL, NULL, handle_);
+		ma_result loading_result = ma_sound_init_from_file(&sound_default_mixer, result.c_str(), 0, NULL, NULL, handle_);
 		if (loading_result != MA_SUCCESS) {
 			delete handle_;
 			active = false;
@@ -1263,7 +1271,7 @@ public:
 		handle_ = new ma_sound;
 		ma_result r = ma_decoder_init_memory(data.c_str(), stream_size, NULL, &decoder);
 		if (r != MA_SUCCESS)return false;
-		ma_result loading_result = ma_sound_init_from_data_source(&sound_default_mixer, &decoder, MA_SOUND_FLAG_NO_SPATIALIZATION, 0, handle_);
+		ma_result loading_result = ma_sound_init_from_data_source(&sound_default_mixer, &decoder, 0, 0, handle_);
 		if (loading_result != MA_SUCCESS) {
 			delete handle_;
 			active = false;
@@ -1293,7 +1301,7 @@ public:
 		ma_result result = ma_audio_buffer_init(&bufferConfig, &m_buffer);
 		if (result != MA_SUCCESS)return false;
 		buffer_initialized = true;
-		ma_result loading_result = ma_sound_init_from_data_source(&sound_default_mixer, &m_buffer, MA_SOUND_FLAG_NO_SPATIALIZATION, 0, handle_);
+		ma_result loading_result = ma_sound_init_from_data_source(&sound_default_mixer, &m_buffer, 0, 0, handle_);
 		if (loading_result != MA_SUCCESS) {
 			delete handle_;
 			active = false;
@@ -1321,7 +1329,7 @@ public:
 			result = filename;
 		}
 		handle_ = new ma_sound;
-		ma_result loading_result = ma_sound_init_from_file(&sound_default_mixer, result.c_str(), MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_STREAM, NULL, NULL, handle_);
+		ma_result loading_result = ma_sound_init_from_file(&sound_default_mixer, result.c_str(), MA_SOUND_FLAG_STREAM, NULL, NULL, handle_);
 		if (loading_result != MA_SUCCESS) {
 			delete handle_;
 			active = false;
@@ -2102,4 +2110,7 @@ void register_sound(asIScriptEngine* engine) {
 	engine->RegisterObjectMethod(_O("sound"), "float get_sample_rate() const property", asMETHOD(sound, get_sample_rate), asCALL_THISCALL);
 	engine->RegisterGlobalFunction("void set_sound_global_hrtf(bool)property", asFUNCTION(set_sound_global_hrtf), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool get_sound_global_hrtf()property", asFUNCTION(get_sound_global_hrtf), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void set_spatial_blend_max_distance(float)property", asFUNCTION(set_spatial_blend_max_distance), asCALL_CDECL);
+	engine->RegisterGlobalFunction("float get_spatial_blend_max_distance()property", asFUNCTION(get_spatial_blend_max_distance), asCALL_CDECL);
+
 }
