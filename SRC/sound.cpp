@@ -591,11 +591,11 @@ MA_API void ma_channel_separator_node_uninit(ma_channel_separator_node* pSeparat
 	ma_node_uninit(pSeparatorNode, pAllocationCallbacks);
 }
 
-IPLAudioSettings iplAudioSettings;
-IPLContextSettings iplContextSettings;
-IPLContext iplContext;
-IPLHRTFSettings iplHRTFSettings;
-IPLHRTF iplHRTF;
+static IPLAudioSettings iplAudioSettings;
+static IPLContextSettings iplContextSettings;
+static IPLContext iplContext;
+static IPLHRTFSettings iplHRTFSettings;
+static IPLHRTF iplHRTF;
 bool g_SoundInitialized = false;
 ma_engine sound_default_mixer;
 ma_device sound_mixer_device;
@@ -703,7 +703,6 @@ typedef struct
 	IPLContext iplContext;
 	IPLHRTF iplHRTF;
 	IPLBinauralEffect iplEffect;
-	IPLDirectEffect effect;
 	ma_vec3f direction;
 	float* ppBuffersIn[2];      /* Each buffer is an offset of _pHeap. */
 	float* ppBuffersOut[2];     /* Each buffer is an offset of _pHeap. */
@@ -729,14 +728,11 @@ MA_API ma_steamaudio_binaural_node_config ma_steamaudio_binaural_node_config_ini
 
 	return config;
 }
-IPLSimulationOutputs outputs{};
 
 static void ma_steamaudio_binaural_node_process_pcm_frames(ma_node* pNode, const float** ppFramesIn, ma_uint32* pFrameCountIn, float** ppFramesOut, ma_uint32* pFrameCountOut)
 {
 	ma_steamaudio_binaural_node* pBinauralNode = (ma_steamaudio_binaural_node*)pNode;
 	IPLBinauralEffectParams binauralParams;
-	IPLDirectEffectParams params;
-	params.flags = IPLDirectEffectFlags(IPL_DIRECTEFFECTFLAGS_APPLYDISTANCEATTENUATION | IPL_DIRECTEFFECTFLAGS_APPLYAIRABSORPTION | IPL_DIRECTEFFECTFLAGS_APPLYOCCLUSION);
 	IPLAudioBuffer inputBufferDesc;
 	IPLAudioBuffer outputBufferDesc;
 	ma_uint32 totalFramesToProcess = *pFrameCountOut;
@@ -804,8 +800,6 @@ static ma_node_vtable g_ma_steamaudio_binaural_node_vtable =
 1    ,  /* 1 output channel. */
 	0
 };
-IPLCoordinateSpace3 listenerCoordinates; // the world-space position and orientation of the listener
-IPLCoordinateSpace3 sourceCoordinates; // the world-space position and orientation of the source;
 
 MA_API ma_result ma_steamaudio_binaural_node_init(ma_node_graph* pNodeGraph, const ma_steamaudio_binaural_node_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_steamaudio_binaural_node* pBinauralNode)
 {
@@ -856,41 +850,6 @@ MA_API ma_result ma_steamaudio_binaural_node_init(ma_node_graph* pNodeGraph, con
 		ma_node_uninit(&pBinauralNode->baseNode, pAllocationCallbacks);
 		return result;
 	}
-	MA_ZERO_OBJECT(&effectSettings);
-	effectSettings.numChannels = 1; // input and output buffers will have 1 channel
-	result = ma_result_from_IPLerror(iplDirectEffectCreate(pBinauralNode->iplContext, &pBinauralNode->iplAudioSettings, &effectSettings, &pBinauralNode->effect));
-	if (result != MA_SUCCESS) {
-		ma_node_uninit(&pBinauralNode->baseNode, pAllocationCallbacks);
-		return result;
-	}
-
-	IPLSimulationSettings simulationSettings{};
-	simulationSettings.flags = IPL_SIMULATIONFLAGS_DIRECT; // this enables occlusion/transmission simulation
-	simulationSettings.sceneType = IPL_SCENETYPE_DEFAULT;
-
-	IPLSimulator simulator = nullptr;
-	iplSimulatorCreate(pBinauralNode->iplContext, &simulationSettings, &simulator);
-	IPLSourceSettings sourceSettings;
-	sourceSettings.flags = IPL_SIMULATIONFLAGS_DIRECT; // this enables occlusion/transmission simulator 
-	IPLSource source = nullptr;
-	iplSourceCreate(simulator, &sourceSettings, &source);
-	iplSourceAdd(source, simulator);
-	iplSimulatorCommit(simulator);
-
-	IPLSimulationInputs inputs;
-	inputs.flags = IPL_SIMULATIONFLAGS_DIRECT;
-	inputs.directFlags = static_cast<IPLDirectSimulationFlags>(IPL_DIRECTSIMULATIONFLAGS_OCCLUSION | IPL_DIRECTSIMULATIONFLAGS_TRANSMISSION);
-	inputs.source = sourceCoordinates;
-	inputs.occlusionType = IPL_OCCLUSIONTYPE_RAYCAST;
-
-	iplSourceSetInputs(source, IPL_SIMULATIONFLAGS_DIRECT, &inputs);
-	IPLSimulationSharedInputs sharedInputs{};
-	sharedInputs.listener = listenerCoordinates;
-
-	iplSimulatorSetSharedInputs(simulator, IPL_SIMULATIONFLAGS_DIRECT, &sharedInputs);
-	iplSourceGetOutputs(source, IPL_SIMULATIONFLAGS_DIRECT, &outputs);
-
-	IPLDirectEffectParams params = outputs.direct; // this can be passed to a direct effect
 	heapSizeInBytes = 0;
 
 	/*
@@ -950,9 +909,7 @@ MA_API ma_result ma_steamaudio_binaural_node_set_direction(ma_steamaudio_binaura
 
 	return MA_SUCCESS;
 }
-IPLScene scene;
-IPLSimulator simulator;
-IPLSimulationSharedInputs simulator_inputs;
+
 bool soundsystem_init() {
 	if (g_SoundInitialized == true)return true;
 	engineConfig = ma_engine_config_init();
@@ -984,29 +941,6 @@ bool soundsystem_init() {
 	iplHRTFSettings.type = IPL_HRTFTYPE_DEFAULT;
 	iplHRTFSettings.volume = 1.0f;
 	ma_result_from_IPLerror(iplHRTFCreate(iplContext, &iplAudioSettings, &iplHRTFSettings, &iplHRTF));
-	IPLSimulationSettings simulation_settings{};
-	simulation_settings.flags = IPLSimulationFlags(IPL_SIMULATIONFLAGS_DIRECT | IPL_SIMULATIONFLAGS_REFLECTIONS);
-	simulation_settings.sceneType = IPL_SCENETYPE_DEFAULT;
-	simulation_settings.reflectionType = IPL_REFLECTIONEFFECTTYPE_CONVOLUTION;
-	simulation_settings.maxNumRays = 2048;
-	simulation_settings.numDiffuseSamples = 128;
-	simulation_settings.maxDuration = 2.0f;
-	simulation_settings.maxOrder = 2;
-	simulation_settings.maxNumSources = 64;
-	simulation_settings.numThreads = 16;
-	simulation_settings.samplingRate = engineConfig.sampleRate;
-	simulation_settings.frameSize = engineConfig.periodSizeInFrames;
-	iplSimulatorCreate(iplContext, &simulation_settings, &simulator);
-	IPLSceneSettings scene_settings{};
-	scene_settings.type = IPL_SCENETYPE_DEFAULT;
-	iplSceneCreate(iplContext, &scene_settings, &scene);
-	simulator_inputs.numRays = 2048;
-	simulator_inputs.numBounces = 32;
-	simulator_inputs.duration = 2.0f;
-	simulator_inputs.order = 2;
-	simulator_inputs.irradianceMinDistance = 1.0f;
-	iplSimulatorSetScene(simulator, scene);
-	iplSimulatorCommit(simulator);
 	return true;
 }
 void soundsystem_free() {
@@ -1223,13 +1157,6 @@ MA_API void ma_playback_speed_node_uninit(ma_playback_speed_node* pPlaybackSpeed
 
 
 
-class  mixer {
-public:
-	ma_engine engine;
-};
-void at_stop(ma_node* fx, ma_sound* hndl) {
-	//    ma_node_detach_output_bus(fx, 0);
-}
 class MINIAUDIO_IMPLEMENTATION sound {
 public:
 	bool is_3d_;
@@ -1531,13 +1458,7 @@ public:
 			effects["notch"] = nullptr;
 			effects.erase("notch");
 		}
-		if (effects.find("hrtf") != effects.end()) {
-
-			ma_steamaudio_binaural_node_uninit(&m_binauralNode, NULL);
-			effects["hrtf"] = nullptr;
-			effects.erase("hrtf");
-
-		}
+		this->set_hrtf(false);
 		effects["Default"] = nullptr;
 		effects.clear();
 		if (decoderInitialized) {
@@ -2096,7 +2017,6 @@ public:
 
 
 sound* fsound(const string& filename) { return new sound(filename); }
-mixer* fmixer() { return new mixer; }
 audio_recorder* faudio_recorder() { return new audio_recorder; }
 audio_encoder* faudio_encoder() { return new audio_encoder; }
 
@@ -2117,8 +2037,7 @@ void register_sound(asIScriptEngine* engine) {
 	engine->RegisterGlobalFunction("void mixer_reinit(int channels = 2, int sample_rate = 44100)", asFUNCTION(mixer_reinit), asCALL_CDECL);
 	engine->RegisterGlobalFunction("array<string>@ get_output_audio_devices()", asFUNCTION(get_output_audio_devices), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool set_output_audio_device(uint index)", asFUNCTION(set_output_audio_device), asCALL_CDECL);
-	engine->RegisterObjectType("mixer", sizeof(mixer), asOBJ_REF | asOBJ_NOCOUNT);
-	engine->RegisterObjectBehaviour("mixer", asBEHAVE_FACTORY, "mixer @m()", asFUNCTION(fmixer), asCALL_CDECL);
+
 	engine->RegisterObjectType("sound", sizeof(sound), asOBJ_REF);
 	engine->RegisterObjectBehaviour("sound", asBEHAVE_FACTORY, "sound@ s(const string &in filename = \"\")", asFUNCTION(fsound), asCALL_CDECL);
 	engine->RegisterObjectBehaviour("sound", asBEHAVE_ADDREF, "void f()", asMETHOD(sound, add), asCALL_THISCALL);
