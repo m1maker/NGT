@@ -612,11 +612,11 @@ public:
 			const auto e = scriptEngine->GetEnumByIndex(i);
 			if (not e) continue;
 			const std::string_view ns = e->GetNamespace();
-			if (not ns.empty()) ss << std::format("namespace {} {{\n", ns);
-			ss << std::format("enum {} {{\n", e->GetName());
+			if (not ns.empty()) ss << Poco::format("namespace {} {{\n", ns);
+			ss << Poco::format("enum {} {{\n", e->GetName());
 			for (int j = 0; j < e->GetEnumValueCount(); ++j)
 			{
-				ss << std::format("\t{}", e->GetEnumValueByIndex(j, nullptr));
+				ss << Poco::format("\t{}", e->GetEnumValueByIndex(j, nullptr));
 				if (j < e->GetEnumValueCount() - 1) ss << ",";
 				ss << "\n";
 			}
@@ -635,9 +635,9 @@ public:
 			if (not t) continue;
 
 			const std::string_view ns = t->GetNamespace();
-			if (not ns.empty()) ss << std::format("namespace {} {{\n", ns);
+			if (not ns.empty()) ss << Poco::format("namespace {} {{\n", ns);
 
-			ss << std::format("class {}", t->GetName());
+			ss << Poco::format("class {}", t->GetName());
 			if (t->GetSubTypeCount() > 0)
 			{
 				ss << "<";
@@ -659,21 +659,21 @@ public:
 				if (behaviours == asBEHAVE_CONSTRUCT
 					|| behaviours == asBEHAVE_DESTRUCT)
 				{
-					ss << std::format("\t{};\n", f->GetDeclaration(false, true, true));
+					ss << Poco::format("\t{};\n", f->GetDeclaration(false, true, true));
 				}
 			}
 			for (int j = 0; j < t->GetMethodCount(); ++j)
 			{
 				const auto m = t->GetMethodByIndex(j);
-				ss << std::format("\t{};\n", m->GetDeclaration(false, true, true));
+				ss << Poco::format("\t{};\n", m->GetDeclaration(false, true, true));
 			}
 			for (int j = 0; j < t->GetPropertyCount(); ++j)
 			{
-				ss << std::format("\t{};\n", t->GetPropertyDeclaration(j, true));
+				ss << Poco::format("\t{};\n", t->GetPropertyDeclaration(j, true));
 			}
 			for (int j = 0; j < t->GetChildFuncdefCount(); ++j)
 			{
-				ss << std::format("\tfuncdef {};\n", t->GetChildFuncdef(j)->GetFuncdefSignature()->GetDeclaration(false));
+				ss << Poco::format("\tfuncdef {};\n", t->GetChildFuncdef(j)->GetFuncdefSignature()->GetDeclaration(false));
 			}
 			ss << "}\n";
 			if (not ns.empty()) ss << "}\n";
@@ -689,8 +689,8 @@ public:
 			const auto f = scriptEngine->GetGlobalFunctionByIndex(i);
 			if (not f) continue;
 			const std::string_view ns = f->GetNamespace();
-			if (not ns.empty()) ss << std::format("namespace {} {{ ", ns);
-			ss << std::format("{};", f->GetDeclaration(false, false, true));
+			if (not ns.empty()) ss << Poco::format("namespace {} {{ ", ns);
+			ss << Poco::format("{};", f->GetDeclaration(false, false, true));
 			if (not ns.empty()) ss << " }";
 			ss << "\n";
 		}
@@ -712,9 +712,9 @@ public:
 			if (t.empty()) continue;
 
 			std::string_view ns = ns0;
-			if (not ns.empty()) ss << std::format("namespace {} {{ ", ns);
+			if (not ns.empty()) ss << Poco::format("namespace {} {{ ", ns);
 
-			ss << std::format("{} {};", t, name);
+			ss << Poco::format("{} {};", t, name);
 			if (not ns.empty()) ss << " }";
 			ss << "\n";
 		}
@@ -730,8 +730,8 @@ public:
 			const auto type = scriptEngine->GetTypedefByIndex(i);
 			if (not type) continue;
 			const std::string_view ns = type->GetNamespace();
-			if (not ns.empty()) ss << std::format("namespace {} {{\n", ns);
-			ss << std::format(
+			if (not ns.empty()) ss << Poco::format("namespace {} {{\n", ns);
+			ss << Poco::format(
 				"typedef {} {};\n", scriptEngine->GetTypeDeclaration(type->GetTypedefTypeId()), type->GetName());
 			if (not ns.empty()) ss << "}\n";
 		}

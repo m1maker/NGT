@@ -1241,7 +1241,7 @@ public:
 			return this->load_from_memory(file, size);
 		}
 		handle_ = new ma_sound;
-		ma_result loading_result = ma_sound_init_from_file(&sound_default_mixer, result.c_str(), 0, NULL, NULL, handle_);
+		ma_result loading_result = ma_sound_init_from_file(&sound_default_mixer, result.c_str(), MA_SOUND_FLAG_NO_SPATIALIZATION, NULL, NULL, handle_);
 		if (loading_result != MA_SUCCESS) {
 			delete handle_;
 			active = false;
@@ -1263,7 +1263,7 @@ public:
 		handle_ = new ma_sound;
 		ma_result r = ma_decoder_init_memory(data.c_str(), stream_size, NULL, &decoder);
 		if (r != MA_SUCCESS)return false;
-		ma_result loading_result = ma_sound_init_from_data_source(&sound_default_mixer, &decoder, 0, 0, handle_);
+		ma_result loading_result = ma_sound_init_from_data_source(&sound_default_mixer, &decoder, MA_SOUND_FLAG_NO_SPATIALIZATION, 0, handle_);
 		if (loading_result != MA_SUCCESS) {
 			delete handle_;
 			active = false;
@@ -1287,13 +1287,13 @@ public:
 			ma_audio_buffer_uninit(&m_buffer);
 			buffer_initialized = false;
 		}
-		ma_audio_buffer_config bufferConfig = ma_audio_buffer_config_init(ma_format_s16, channels, size / 2, (const void*)data.c_str(), nullptr);
+		ma_audio_buffer_config bufferConfig = ma_audio_buffer_config_init(FORMAT, channels, size / 2, (const void*)data.c_str(), nullptr);
 		bufferConfig.sampleRate = sample_rate;
 		bufferConfig.channels = channels;
 		ma_result result = ma_audio_buffer_init(&bufferConfig, &m_buffer);
 		if (result != MA_SUCCESS)return false;
 		buffer_initialized = true;
-		ma_result loading_result = ma_sound_init_from_data_source(&sound_default_mixer, &m_buffer, 0, 0, handle_);
+		ma_result loading_result = ma_sound_init_from_data_source(&sound_default_mixer, &m_buffer, MA_SOUND_FLAG_NO_SPATIALIZATION, 0, handle_);
 		if (loading_result != MA_SUCCESS) {
 			delete handle_;
 			active = false;
@@ -1700,7 +1700,7 @@ public:
 		}
 		// Now we set the properties on the sound, provided that they are not already correct.
 		ma_steamaudio_binaural_node_set_direction(&m_binauralNode, source_x - listener_x, source_y - listener_y, source_z - listener_z);
-		if (this->get_pan() != final_pan)
+		if (this->get_pan() != final_pan && !this->get_hrtf())
 			this->set_pan(final_pan);
 		if (this->get_volume() != final_volume)
 			this->set_volume(final_volume);
@@ -2072,8 +2072,8 @@ void register_sound(asIScriptEngine* engine) {
 	engine->RegisterObjectMethod(_O("sound"), "void set_reverb_parameters(float dry, float wet, float room_size, float damping, float mode)const", asMETHOD(sound, set_reverb_parameters), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("sound"), "void set_delay_parameters(float dry, float wet, float dcay)const", asMETHOD(sound, set_delay_parameters), asCALL_THISCALL);
 
-	engine->RegisterObjectMethod(_O("sound"), "void set_position(float listener_x, float listener_y, float listener_z, float source_x, float source_y, float source_z, double theta = 0.0, float pan_step = 5, float volume_step = 0.6, float behind_pitch_decrease = 0.0, float start_pan = 0, float start_volume = 0, float start_pitch = 0)const", asMETHODPR(sound, set_position, (float listener_x, float listener_y, float listener_z, float source_x, float source_y, float source_z, double theta, float pan_step, float volume_step, float behind_pitch_decrease, float start_pan, float start_volume, float start_pitch), void), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "void set_position(const vector@ listener = null, const vector@ source = null, double theta = 0.0, float pan_step = 5, float volume_step = 0.6, float behind_pitch_decrease = 0.0, float start_pan = 0, float start_volume = 0, float start_pitch = 0)const", asMETHODPR(sound, set_position, (const ngtvector*, const ngtvector*, double theta, float pan_step, float volume_step, float behind_pitch_decrease, float start_pan, float start_volume, float start_pitch), void), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "void set_position(float listener_x, float listener_y, float listener_z, float source_x, float source_y, float source_z, double theta = 0.0, float pan_step = 5, float volume_step = 0.5, float behind_pitch_decrease = 0.0, float start_pan = 0, float start_volume = 0, float start_pitch = 0)const", asMETHODPR(sound, set_position, (float listener_x, float listener_y, float listener_z, float source_x, float source_y, float source_z, double theta, float pan_step, float volume_step, float behind_pitch_decrease, float start_pan, float start_volume, float start_pitch), void), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "void set_position(const vector@ listener = null, const vector@ source = null, double theta = 0.0, float pan_step = 5, float volume_step = 0.5, float behind_pitch_decrease = 0.0, float start_pan = 0, float start_volume = 0, float start_pitch = 0)const", asMETHODPR(sound, set_position, (const ngtvector*, const ngtvector*, double theta, float pan_step, float volume_step, float behind_pitch_decrease, float start_pan, float start_volume, float start_pitch), void), asCALL_THISCALL);
 
 	engine->RegisterObjectMethod(_O("sound"), "void set_hrtf(bool hrtf = true)const property", asMETHOD(sound, set_hrtf), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("sound"), "bool get_hrtf()const property", asMETHOD(sound, get_hrtf), asCALL_THISCALL);
