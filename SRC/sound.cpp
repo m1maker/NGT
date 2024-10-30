@@ -740,12 +740,19 @@ static void ma_steamaudio_binaural_node_process_pcm_frames(ma_node* pNode, const
 	binauralParams.direction.x = pBinauralNode->direction.x;
 	binauralParams.direction.y = pBinauralNode->direction.z;
 	binauralParams.direction.z = pBinauralNode->direction.y;
-	binauralParams.interpolation = IPL_HRTFINTERPOLATION_NEAREST;
 	ma_vec3f listener = ma_engine_listener_get_position(&sound_default_mixer, ma_sound_get_listener_index(&pBinauralNode->handle_));
 	float distance = sqrt((listener.x + binauralParams.direction.x) * (listener.x + binauralParams.direction.x) +
 		(listener.y + binauralParams.direction.y) * (listener.y + binauralParams.direction.y) +
 		(listener.z - binauralParams.direction.z) * (listener.z - binauralParams.direction.z));
 	float maxDistance = 2.0f;
+	if (listener.x == binauralParams.direction.x && listener.y == binauralParams.direction.y && listener.z == binauralParams.direction.z) {
+		binauralParams.interpolation = IPL_HRTFINTERPOLATION_NEAREST;
+
+	}
+	else {
+		binauralParams.interpolation = IPL_HRTFINTERPOLATION_BILINEAR;
+
+	}
 
 	float normalizedDistance = distance / maxDistance;
 	binauralParams.spatialBlend = min(0.0f + normalizedDistance, 1.0f);
