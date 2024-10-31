@@ -936,6 +936,7 @@ bool soundsystem_init() {
 	devConfig.periodSizeInFrames = period_size;
 	devConfig.playback.channels = CHANNELS;
 	devConfig.sampleRate = SAMPLE_RATE;
+	devConfig.playback.format = FORMAT;
 	devConfig.dataCallback = sound_mixer_device_callback;
 	if (ma_device_init(nullptr, &devConfig, &sound_mixer_device) != MA_SUCCESS)return false;
 	mixer_start();

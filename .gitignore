@@ -11,3 +11,4 @@ GUI/
 build/
 out/
 buildlinux/
+.vscode/

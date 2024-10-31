@@ -1,4 +1,3 @@
-#include "stb_vorbis.h"
 /*
 Audio playback and capture library. Choice of public domain or MIT-0. See license statements at the end of this file.
 miniaudio - v0.11.22 - TBD
@@ -7021,6 +7020,8 @@ typedef union
     int nullbackend;                /* The null backend uses an integer for device IDs. */
 } ma_device_id;
 
+MA_API ma_bool32 ma_device_id_equal(const ma_device_id* pA, const ma_device_id* pB);
+
 
 typedef struct ma_context_config    ma_context_config;
 typedef struct ma_device_config     ma_device_config;
@@ -7108,6 +7109,7 @@ struct ma_device_config
     {
         const char* pStreamNamePlayback;
         const char* pStreamNameCapture;
+        int channelMap;
     } pulse;
     struct
     {
@@ -8755,6 +8757,9 @@ then be set directly on the structure. Below are the members of the `ma_device_c
 
     pulse.pStreamNameCapture
         PulseAudio only. Sets the stream name for capture.
+
+    pulse.channelMap
+        PulseAudio only. Sets the channel map that is requested from PulseAudio. See MA_PA_CHANNEL_MAP_* constants. Defaults to MA_PA_CHANNEL_MAP_AIFF.
 
     coreaudio.allowNominalSampleRateChange
         Core Audio only. Desktop only. When enabled, allows the sample rate of the device to be changed at the operating system level. This
@@ -14875,14 +14880,18 @@ typedef int ma_atomic_memory_order;
         __atomic_compare_exchange_n(dst, &expected, desired, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
         return expected;
     }
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Watomic-alignment"
+    #if defined(__clang__)
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Watomic-alignment"
+    #endif
     static MA_INLINE ma_uint64 ma_atomic_compare_and_swap_64(volatile ma_uint64* dst, ma_uint64 expected, ma_uint64 desired)
     {
         __atomic_compare_exchange_n(dst, &expected, desired, 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
         return expected;
     }
-    #pragma clang diagnostic pop
+    #if defined(__clang__)
+        #pragma clang diagnostic pop
+    #endif
     typedef ma_uint8 ma_atomic_flag;
     #define ma_atomic_flag_test_and_set_explicit(dst, order)        (ma_bool32)__atomic_test_and_set(dst, order)
     #define ma_atomic_flag_clear_explicit(dst, order)               __atomic_clear(dst, order)
@@ -16138,7 +16147,7 @@ static ma_result ma_thread_create__posix(ma_thread* pThread, ma_thread_priority 
     int result;
     pthread_attr_t* pAttr = NULL;
 
-#if !defined(__EMSCRIPTEN__)
+#if !defined(__EMSCRIPTEN__) && !defined(__3DS__)
     /* Try setting the thread priority. It's not critical if anything fails here. */
     pthread_attr_t attr;
     if (pthread_attr_init(&attr) == 0) {
@@ -30488,7 +30497,7 @@ static ma_result ma_device_init__pulse(ma_device* pDevice, const ma_device_confi
         }
 
         /* Use a default channel map. */
-        ((ma_pa_channel_map_init_extend_proc)pDevice->pContext->pulse.pa_channel_map_init_extend)(&cmap, ss.channels, MA_PA_CHANNEL_MAP_DEFAULT);
+        ((ma_pa_channel_map_init_extend_proc)pDevice->pContext->pulse.pa_channel_map_init_extend)(&cmap, ss.channels, pConfig->pulse.channelMap);
 
         /* Use the requested sample rate if one was specified. */
         if (pDescriptorCapture->sampleRate != 0) {
@@ -30640,7 +30649,7 @@ static ma_result ma_device_init__pulse(ma_device* pDevice, const ma_device_confi
         }
 
         /* Use a default channel map. */
-        ((ma_pa_channel_map_init_extend_proc)pDevice->pContext->pulse.pa_channel_map_init_extend)(&cmap, ss.channels, MA_PA_CHANNEL_MAP_DEFAULT);
+        ((ma_pa_channel_map_init_extend_proc)pDevice->pContext->pulse.pa_channel_map_init_extend)(&cmap, ss.channels, pConfig->pulse.channelMap);
 
 
         /* Use the requested sample rate if one was specified. */
@@ -32924,7 +32933,7 @@ static ma_result ma_find_best_format__coreaudio(ma_context* pContext, AudioObjec
 
     desiredSampleRate = sampleRate;
     if (desiredSampleRate == 0) {
-        desiredSampleRate = pOrigFormat->mSampleRate;
+        desiredSampleRate = (ma_uint32)pOrigFormat->mSampleRate;
     }
 
     desiredChannelCount = channels;
@@ -34445,7 +34454,7 @@ static ma_result ma_device_init_internal__coreaudio(ma_context* pContext, ma_dev
         }
 
         pData->channelsOut   = bestFormat.mChannelsPerFrame;
-        pData->sampleRateOut = bestFormat.mSampleRate;
+        pData->sampleRateOut = (ma_uint32)bestFormat.mSampleRate;
     }
 
     /* Clamp the channel count for safety. */
@@ -35626,7 +35635,7 @@ static ma_result ma_device_uninit__sndio(ma_device* pDevice)
         ((ma_sio_close_proc)pDevice->pContext->sndio.sio_close)((struct ma_sio_hdl*)pDevice->sndio.handleCapture);
     }
 
-    if (pDevice->type == ma_device_type_capture || pDevice->type == ma_device_type_duplex) {
+    if (pDevice->type == ma_device_type_playback || pDevice->type == ma_device_type_duplex) {
         ((ma_sio_close_proc)pDevice->pContext->sndio.sio_close)((struct ma_sio_hdl*)pDevice->sndio.handlePlayback);
     }
 
@@ -35999,6 +36008,10 @@ audio(4) Backend
 #include <sys/ioctl.h>
 #include <sys/audioio.h>
 
+#ifdef __NetBSD__
+#include <sys/param.h>
+#endif
+
 #if defined(__OpenBSD__)
     #include <sys/param.h>
     #if defined(OpenBSD) && OpenBSD >= 201709
@@ -36218,9 +36231,15 @@ static ma_result ma_context_get_device_info_from_fd__audio4(ma_context* pContext
         ma_uint32 channels;
         ma_uint32 sampleRate;
 
+#if defined(__NetBSD__) && (__NetBSD_Version__ >= 900000000)
+        if (ioctl(fd, AUDIO_GETFORMAT, &fdInfo) < 0) {
+            return MA_ERROR;
+        }
+#else
         if (ioctl(fd, AUDIO_GETINFO, &fdInfo) < 0) {
             return MA_ERROR;
         }
+#endif
 
         if (deviceType == ma_device_type_playback) {
             channels   = fdInfo.play.channels;
@@ -36498,7 +36517,11 @@ static ma_result ma_device_init_fd__audio4(ma_device* pDevice, const ma_device_c
             /* We're using a default device. Get the info from the /dev/audioctl file instead of /dev/audio. */
             int fdctl = open(pDefaultDeviceCtlNames[iDefaultDevice], fdFlags, 0);
             if (fdctl != -1) {
+#if defined(__NetBSD__) && (__NetBSD_Version__ >= 900000000)
+                fdInfoResult = ioctl(fdctl, AUDIO_GETFORMAT, &fdInfo);
+#else
                 fdInfoResult = ioctl(fdctl, AUDIO_GETINFO, &fdInfo);
+#endif
                 close(fdctl);
             }
         }
@@ -39931,6 +39954,8 @@ static ma_result ma_device_uninit__webaudio(ma_device* pDevice)
                 device.streamNode.disconnect();
                 device.streamNode = undefined;
             }
+
+            device.pDevice = undefined;
         }, pDevice->webaudio.deviceIndex);
 
         emscripten_destroy_web_audio_node(pDevice->webaudio.audioWorklet);
@@ -40321,9 +40346,10 @@ static ma_result ma_device_init__webaudio(ma_device* pDevice, const ma_device_co
         pDevice->webaudio.deviceIndex = EM_ASM_INT({
             return window.miniaudio.track_device({
                 webaudio: emscriptenGetAudioObject($0),
-                state:    1 /* 1 = ma_device_state_stopped */
+                state:    1, /* 1 = ma_device_state_stopped */
+                pDevice: $1
             });
-        }, pDevice->webaudio.audioContext);
+        }, pDevice->webaudio.audioContext, pDevice);
 
         return MA_SUCCESS;
     }
@@ -41349,6 +41375,24 @@ MA_API ma_result ma_device_job_thread_next(ma_device_job_thread* pJobThread, ma_
     }
 
     return ma_job_queue_next(&pJobThread->jobQueue, pJob);
+}
+
+
+MA_API ma_bool32 ma_device_id_equal(const ma_device_id* pA, const ma_device_id* pB)
+{
+    size_t i;
+
+    if (pA == NULL || pB == NULL) {
+        return MA_FALSE;
+    }
+
+    for (i = 0; i < sizeof(ma_device_id); i += 1) {
+        if (((const char*)pA)[i] != ((const char*)pB)[i]) {
+            return MA_FALSE;
+        }
+    }
+
+    return MA_TRUE;
 }
 
 
@@ -75116,7 +75160,7 @@ MA_API ma_result ma_engine_node_init_preallocated(const ma_engine_node_config* p
 
 
     /*
-    Spatialization comes next. We spatialize based ont he node's output channel count. It's up the caller to
+    Spatialization comes next. We spatialize based on the node's output channel count. It's up the caller to
     ensure channels counts link up correctly in the node graph.
     */
     spatializerConfig = ma_engine_node_spatializer_config_init(&baseNodeConfig);
@@ -75306,6 +75350,21 @@ static void ma_engine_data_callback_internal(ma_device* pDevice, void* pFramesOu
 
     ma_engine_read_pcm_frames(pEngine, pFramesOut, frameCount, NULL);
 }
+
+static ma_uint32 ma_device__get_processing_size_in_frames(ma_device* pDevice)
+{
+    /*
+    The processing size is the period size. The device can have a fixed sized processing size, or
+    it can be decided by the backend in which case it can be variable.
+    */
+    if (pDevice->playback.intermediaryBufferCap > 0) {
+        /* Using a fixed sized processing callback. */
+        return pDevice->playback.intermediaryBufferCap;
+    } else {
+        /* Not using a fixed sized processing callback. Need to estimate the processing size based on the backend. */
+        return pDevice->playback.internalPeriodSizeInFrames;
+    }
+}
 #endif
 
 MA_API ma_result ma_engine_init(const ma_engine_config* pConfig, ma_engine* pEngine)
@@ -75399,6 +75458,14 @@ MA_API ma_result ma_engine_init(const ma_engine_config* pConfig, ma_engine* pEng
         if (pEngine->pDevice != NULL) {
             engineConfig.channels   = pEngine->pDevice->playback.channels;
             engineConfig.sampleRate = pEngine->pDevice->sampleRate;
+
+            /*
+            The processing size used by the engine is determined by engineConfig.periodSizeInFrames. We want
+            to make this equal to what the device is using for it's period size. If we don't do that, it's
+            possible that the node graph will split it's processing into multiple passes which can introduce
+            glitching.
+            */
+            engineConfig.periodSizeInFrames = ma_device__get_processing_size_in_frames(pEngine->pDevice);
         }
     }
     #endif
