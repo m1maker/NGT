@@ -13,7 +13,7 @@
 #include <Poco/Unicode.h>
 #include <Poco/UnicodeConverter.h>
 #include <Poco/Util/Application.h>
-#include<sdl3/SDL.h>
+#include<SDL3/SDL.h>
 extern "C" {
 #define SRAL_STATIC
 #include <SRAL.h>
@@ -35,7 +35,7 @@ extern "C"
 #include "uni_algo.h"
 #include<algorithm>
 #include <stdio.h>
-#include "NGT.H"
+#include "ngt.h"
 #include "scriptfile/scriptfilesystem.h"
 #include <locale>
 #include <codecvt>

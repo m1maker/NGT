@@ -21,7 +21,7 @@
 #include <Poco/AutoPtr.h>
 
 #include "debugger/debugger.h"
-#include "aes/aes.hpp"
+#include "AES/aes.hpp"
 #include "datetime/datetime.h"
 #include "docgen.h"
 #include "ngt.h"

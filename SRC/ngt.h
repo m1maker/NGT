@@ -29,7 +29,7 @@
 #include <Poco/HexBinaryDecoder.h>
 #include <Poco/HexBinaryEncoder.h>
 #include <Poco/Net/AcceptCertificateHandler.h>
-#include <poco/Net/Context.h>
+#include <Poco/Net/Context.h>
 #include <Poco/Net/FTPStreamFactory.h>
 #include <Poco/Net/HTTPClientSession.h>
 #include <Poco/Net/HTTPSClientSession.h>

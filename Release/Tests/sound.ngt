@@ -1,0 +1,6 @@
+void main(){
+sound s;
+s.load("/usr/share/sounds/sound-icons/guitar-13.wav");
+s.play_wait();
+s.close();
+}
