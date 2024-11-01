@@ -104,7 +104,9 @@ LONG WINAPI ExceptionHandler(EXCEPTION_POINTERS* exceptionInfo) {
 	free(symbol);
 	alert("NGTRuntimeError", ss.str());
 	exit(1);
+	return 0;
 }
+
 #else
 #include <csignal>
 #include <execinfo.h>
