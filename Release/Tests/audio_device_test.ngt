@@ -8,7 +8,7 @@ sound s;
 
 screen_reader::interrupt = true;
 show_window("Audio device test");
-s.load("C:/windows/media/ring01.wav");
+s.load("D:/sounds/redspot - unreleased beta/achievement.ogg");
 s.play_looped();
 array<string>@ devices=get_output_audio_devices();
 if(devices.length()==0){
