@@ -819,11 +819,13 @@ void string_unpad(std::string& text) {
 
 
 
-std::string string_encrypt(const string& str, std::string& encryption_key) {
+std::string string_encrypt(const string& str, std::string encryption_key) {
 	string the_string = str;
 	Poco::SHA2Engine hash;
 	hash.update(encryption_key);
 	const unsigned char* key_hash = hash.digest().data();
+	encryption_key.clear();
+	encryption_key.shrink_to_fit();
 
 	unsigned char iv[16];
 	for (int i = 0; i < 16; ++i) {
@@ -842,7 +844,7 @@ std::string string_encrypt(const string& str, std::string& encryption_key) {
 	return the_string;
 }
 
-std::string string_decrypt(const string& str, string& encryption_key) {
+std::string string_decrypt(const string& str, string encryption_key) {
 	if (str.size() % 16 != 0) return "";
 	string the_string = str;
 	Poco::SHA2Engine hash;
@@ -853,6 +855,9 @@ std::string string_decrypt(const string& str, string& encryption_key) {
 	for (int i = 0; i < 16; ++i) {
 		iv[i] = key_hash[i * 2] ^ (4 * i + 1);
 	}
+
+	encryption_key.clear();
+	encryption_key.shrink_to_fit();
 
 	AES_ctx crypt;
 	AES_init_ctx_iv(&crypt, key_hash, iv);
@@ -865,6 +870,7 @@ std::string string_decrypt(const string& str, string& encryption_key) {
 	string_unpad(the_string);
 	return the_string;
 }
+
 string url_decode(const string& url) {
 	URI uri(url);
 	return uri.getPathEtc();
@@ -936,7 +942,7 @@ string ascii_to_character(int the_ascii_code) {
 	return string(1, static_cast<char>(the_ascii_code));
 }
 
-int character_to_ascii(string the_character) {
+int character_to_ascii(const string& the_character) {
 	if (the_character.length() == 1) {
 		return static_cast<int>(the_character[0]);
 	}
@@ -946,7 +952,7 @@ int character_to_ascii(string the_character) {
 	return -1;
 }
 
-string hex_to_string(string the_hexadecimal_sequence) {
+string hex_to_string(const string& the_hexadecimal_sequence) {
 	string decoded;
 	istringstream iss(the_hexadecimal_sequence);
 	ostringstream oss;
@@ -960,7 +966,7 @@ string number_to_hex_string(asINT64 the_number) {
 	return Poco::NumberFormatter::formatHex(the_number);
 }
 
-string string_base64_decode(string base64_string) {
+string string_base64_decode(const string& base64_string) {
 	istringstream iss(base64_string);
 	ostringstream oss;
 	Poco::Base64Decoder decoder(iss);
@@ -969,7 +975,7 @@ string string_base64_decode(string base64_string) {
 }
 
 
-string string_base64_encode(string the_string) {
+string string_base64_encode(const string& the_string) {
 	istringstream iss(the_string);
 	ostringstream oss;
 	Poco::Base64Encoder encoder(oss);
@@ -977,7 +983,8 @@ string string_base64_encode(string the_string) {
 	encoder.close();
 	return oss.str();
 }
-string string_base32_decode(string base32_string) {
+
+string string_base32_decode(const string& base32_string) {
 	istringstream iss(base32_string);
 	ostringstream oss;
 	Poco::Base32Decoder decoder(iss);
@@ -986,7 +993,7 @@ string string_base32_decode(string base32_string) {
 }
 
 
-string string_base32_encode(string the_string) {
+string string_base32_encode(const string& the_string) {
 	istringstream iss(the_string);
 	ostringstream oss;
 	Poco::Base32Encoder encoder(oss);
@@ -995,13 +1002,14 @@ string string_base32_encode(string the_string) {
 	return oss.str();
 }
 
-string string_to_hex(string the_string) {
+string string_to_hex(const string& the_string) {
 	ostringstream oss;
 	Poco::HexBinaryEncoder encoder(oss);
 	encoder << the_string;
 	encoder.close();
 	return oss.str();
 }
+
 int message_box(const std::string& title, const std::string& text, const std::vector<std::string>& buttons, unsigned int mb_flags) {
 	SDL.init();
 	std::vector<SDL_MessageBoxButtonData> sdlbuttons;

@@ -400,8 +400,8 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("bool force_key_up(keycode)", asFUNCTION(force_key_up), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void reset_keyboard()", asFUNCTION(reset_keyboard), asCALL_CDECL);
 
-	engine->RegisterGlobalFunction("string string_encrypt(const string &in the_string, string &in key)", asFUNCTION(string_encrypt), asCALL_CDECL);
-	engine->RegisterGlobalFunction("string string_decrypt(const string &in the_string, string &in key)", asFUNCTION(string_decrypt), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string string_encrypt(const string&in the_string, string key)", asFUNCTION(string_encrypt), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string string_decrypt(const string&in the_string, string key)", asFUNCTION(string_decrypt), asCALL_CDECL);
 	AS_BEGIN(engine, "internet");
 	engine->RegisterGlobalFunction("string url_decode(const string &in url)", asFUNCTION(url_decode), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string url_encode(const string &in url)", asFUNCTION(url_encode), asCALL_CDECL);
@@ -410,13 +410,13 @@ void RegisterFunctions(asIScriptEngine* engine)
 	AS_END(engine);
 	engine->RegisterGlobalFunction("string ascii_to_character(int ascii)", asFUNCTION(ascii_to_character), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int character_to_ascii(const string      &in character)", asFUNCTION(character_to_ascii), asCALL_CDECL);
-	engine->RegisterGlobalFunction("string hex_to_string(const string& in the_hexadecimal_sequence)", asFUNCTION(hex_to_string), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string hex_to_string(const string&in the_hexadecimal_sequence)", asFUNCTION(hex_to_string), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string number_to_hex_string(int64 the_number)", asFUNCTION(number_to_hex_string), asCALL_CDECL);
-	engine->RegisterGlobalFunction("string string_base64_decode(const string &in base64_encoded_string)", asFUNCTION(string_base64_decode), asCALL_CDECL);
-	engine->RegisterGlobalFunction("string string_base64_encode(const string &in the_string)", asFUNCTION(string_base64_encode), asCALL_CDECL);
-	engine->RegisterGlobalFunction("string string_base32_decode(const string &in base32_encoded_string)", asFUNCTION(string_base32_decode), asCALL_CDECL);
-	engine->RegisterGlobalFunction("string string_base32_encode(const string &in the_string)", asFUNCTION(string_base32_encode), asCALL_CDECL);
-	engine->RegisterGlobalFunction("string string_to_hex(const string &in the_string)", asFUNCTION(string_to_hex), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string string_base64_decode(const string&in base64_encoded_string)", asFUNCTION(string_base64_decode), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string string_base64_encode(const string&in the_string)", asFUNCTION(string_base64_encode), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string string_base32_decode(const string&in base32_encoded_string)", asFUNCTION(string_base32_decode), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string string_base32_encode(const string&in the_string)", asFUNCTION(string_base32_encode), asCALL_CDECL);
+	engine->RegisterGlobalFunction("string string_to_hex(const string&in the_string)", asFUNCTION(string_to_hex), asCALL_CDECL);
 	engine->RegisterEnum(_O("message_box_flags"));
 	engine->RegisterEnumValue(_O("message_box_flags"), _O("MESSAGE_BOX_ERROR"), SDL_MESSAGEBOX_ERROR);
 	engine->RegisterEnumValue(_O("message_box_flags"), _O("MESSAGE_BOX_WARNING"), SDL_MESSAGEBOX_WARNING);
