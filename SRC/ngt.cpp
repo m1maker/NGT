@@ -2038,7 +2038,7 @@ void* library::get_function_pointer(const std::string& name) {
 void library::clear_functions() {
 	functions.clear();
 }
-script_thread::script_thread(asIScriptFunction* func) {
+script_thread::script_thread(asIScriptFunction* func, CScriptDictionary* args) {
 	function = func;
 	asIScriptContext* current_context = asGetActiveContext();
 	if (function == 0) {
@@ -2047,21 +2047,25 @@ script_thread::script_thread(asIScriptFunction* func) {
 	asIScriptEngine* current_engine = current_context->GetEngine();
 	context = current_engine->RequestContext();
 	context->Prepare(function);
+	context->SetArgObject(0, args);
 }
+
 void script_thread::detach() {
 	thread t([this]() {
 		this->context->Execute();
+		this->context->Unprepare();
 		});
 	t.detach();
 }
 void script_thread::join() {
 	thread t([this]() {
 		this->context->Execute();
+		this->context->Unprepare();
 		});
 	t.join();
 }
 void script_thread::destroy() {
-	this->context->Release();
+	this->context->Abort();
 }
 
 user_idle::user_idle() {}

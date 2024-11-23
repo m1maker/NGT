@@ -238,7 +238,8 @@ user_idle* fuser_idle() { return new user_idle; }
 library* flibrary() { return new library; }
 void fscript_thread(asIScriptGeneric* gen) {
 	asIScriptFunction* func = (asIScriptFunction*)gen->GetArgAddress(0);
-	script_thread* th = new script_thread(func);
+	CScriptDictionary* args = (CScriptDictionary*)gen->GetArgAddress(1);
+	script_thread* th = new script_thread(func, args);
 	gen->SetReturnObject(th);
 }
 
@@ -523,9 +524,9 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterObjectMethod("library", "uint64 get_function_pointer(const string &in function_name)const", asMETHOD(library, get_function_pointer), asCALL_THISCALL);
 	engine->RegisterObjectMethod("library", "void clear_functions()const", asMETHOD(library, clear_functions), asCALL_THISCALL);
 
-	engine->RegisterFuncdef("void thread_func()");
+	engine->RegisterFuncdef("void thread_func(dictionary@ args = null)");
 	engine->RegisterObjectType("thread", sizeof(script_thread), asOBJ_REF);
-	engine->RegisterObjectBehaviour("thread", asBEHAVE_FACTORY, "thread@ t(thread_func@)", asFUNCTION(fscript_thread), asCALL_GENERIC);
+	engine->RegisterObjectBehaviour("thread", asBEHAVE_FACTORY, "thread@ t(thread_func@ factory, dictionary@ args = null)", asFUNCTION(fscript_thread), asCALL_GENERIC);
 	engine->RegisterObjectBehaviour("thread", asBEHAVE_ADDREF, "void f()", asMETHOD(script_thread, add_ref), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("thread", asBEHAVE_RELEASE, "void f()", asMETHOD(script_thread, release), asCALL_THISCALL);
 

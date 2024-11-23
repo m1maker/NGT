@@ -309,7 +309,7 @@ private:
 	asIScriptFunction* function;
 	thread* th;
 public:
-	script_thread(asIScriptFunction* func);
+	script_thread(asIScriptFunction* func, CScriptDictionary* args = nullptr);
 	void join();
 	void detach();
 	void destroy();
