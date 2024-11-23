@@ -2056,14 +2056,6 @@ void script_thread::destroy() {
 	this->context->Release();
 }
 
-bool instance::is_running() {
-	if (mutex->tryLock() == true) {
-		mutex->unlock();
-		return false;
-	}
-	return true;
-}
-
 user_idle::user_idle() {}
 uint64_t user_idle::elapsed_millis() {
 	return get_idle_time();
@@ -2157,6 +2149,7 @@ int ngtsqlite3::close() { return sqlite3_close(db); }
 int ngtsqlite3::open(const string& filename, int flags) { return sqlite3_open_v2(filename.c_str(), &db, flags, nullptr); }
 sqlite3statement* ngtsqlite3::prepare(const string& name, int& out) {
 	sqlite3statement* statement = new sqlite3statement();
+	statement->add_ref();
 	if (sqlite3_prepare_v2(db, name.c_str(), -1, &statement->stmt, 0) != SQLITE_OK)
 	{
 		out = sqlite3_errcode(db);

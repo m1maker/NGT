@@ -231,7 +231,7 @@ public:
 		return m_peerId;
 	}
 
-	unsigned    int get_channel() const {
+	unsigned	int get_channel() const {
 		return m_channel;
 	}
 
@@ -315,24 +315,9 @@ public:
 	void destroy();
 };
 
-class instance : public as_class {
-private:
-	Poco::NamedMutex* mutex = nullptr;
-public:
-	instance(const string& application_name) {
-		try {
-			mutex = new Poco::NamedMutex(application_name);
-			mutex->tryLock();
-		}
-		catch (std::exception& e) {}
-	}
-	bool is_running();
-	~instance() {
-		mutex->unlock();
-		delete mutex;
-		mutex = nullptr;
-	}
-};
+
+
+
 class user_idle : public as_class {
 public:
 	user_idle();
@@ -409,4 +394,38 @@ struct DeviceButton
 	bool isPressed = false;
 	bool isReleased = false;
 };
+
+struct RefObject {
+	int refcount;
+	int magic;
+};
+
+template <class T> inline void* ObgectCreate() {
+	RefObject* rc = (RefObject*) malloc(sizeof(RefObject) + sizeof(T)); // We don't use the new operator here because we don't want the constructor of the containing object to fire until the user's factory function.
+	rc->refcount = 1;
+	rc->magic = 0x1234abcd;
+	return (char*)rc + sizeof(RefObject);
+}
+
+inline RefObject* RefObjectGet(void* obj) {
+	RefObject* rc = reinterpret_cast<RefObject*>((char*)obj - sizeof(RefObject));
+	if (rc->magic != 0x1234abcd) return NULL; // This pointer didn't originate from our factory.
+	return rc;
+}
+
+
+template<class T>
+void ObjectAddRef(T* ptr);
+template <class T>
+void ObjectRelease(T* ptr);
+template <class T>
+inline void RegisterObject(asIScriptEngine* engine, const char* type) {
+	engine->RegisterObjectType(type, 0, asOBJ_REF);
+	engine->RegisterObjectBehaviour(type, asBEHAVE_ADDREF, "void f()", asFUNCTION(ObjectAddRef<T>), asCALL_CDECL_OBJFIRST);
+	engine->RegisterObjectBehaviour(type, asBEHAVE_RELEASE, "void f()", asFUNCTION(ObjectRelease<T>), asCALL_CDECL_OBJFIRST);
+}
+
+template <class T, typename... A> T* ObjectFactory(A... args);
+
+
 #endif

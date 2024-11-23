@@ -1291,9 +1291,9 @@ public:
 		{
 			g_SoundInitialized = soundsystem_init();
 		}
+		effects["Default"] = ma_engine_get_endpoint(&sound_default_mixer);
 		if (filename != "")
 			this->load(filename);
-		effects["Default"] = ma_engine_get_endpoint(&sound_default_mixer);
 		listener_position = new ngtvector;
 		source_position = new ngtvector;
 		listener_position->reset();
@@ -1349,8 +1349,8 @@ public:
 		active = true;
 		file = result;
 		auto last = --effects.end();
-
-		ma_node_attach_output_bus(handle_, 0, last->second, 0);
+		if (last->second != nullptr)
+			ma_node_attach_output_bus(handle_, 0, last->second, 0);
 
 		if (sound_global_hrtf)
 			this->set_hrtf(true);

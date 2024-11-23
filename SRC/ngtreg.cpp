@@ -27,6 +27,26 @@ HWND hwnd;
 HWND buttonc;
 WNDPROC originalEditProc;
 #endif
+
+template <class T>
+void ObjectAddRef(T* ptr) {
+	RefObject* o = RefObjectGet(ptr);
+	if (o) asAtomicInc(o->refcount);
+}
+
+template <class T>
+void ObjectRelease(T* ptr) {
+	RefObject* o = RefObjectGet(ptr);
+	if (!o)return;
+	asAtomicDec(o->refcount);
+	if (o->refcount < 1) {
+		ptr->~T();
+		free(o);
+	}
+}
+
+template <class T, typename... A> T* ObjectFactory(A... args) { return new (ObgectCreate<T>()) T(args...); }
+
 const int EVENT_NONE = ENET_EVENT_TYPE_NONE;
 const int EVENT_CONNECT = ENET_EVENT_TYPE_CONNECT;
 const int EVENT_RECEIVE = ENET_EVENT_TYPE_RECEIVE;
@@ -221,13 +241,26 @@ void fscript_thread(asIScriptGeneric* gen) {
 	script_thread* th = new script_thread(func);
 	gen->SetReturnObject(th);
 }
+
 TTSVoice* ftts_voice() { return new TTSVoice(); }
-instance* finstance(std::string app) { return new instance(app); }
 network_event* fnetwork_event() { return new network_event; }
 ngtvector* fngtvector() { return new ngtvector; }
 sqlite3statement* fsqlite3statement() { return new sqlite3statement; }
 ngtsqlite3* fngtsqlite3() { return new ngtsqlite3; }
 network* fnetwork() { return new network; }
+
+template <class T> void RegisterMutex(asIScriptEngine* engine, const std::string& type) {
+	RegisterObject<T>(engine, type.c_str());
+	if constexpr (!std::is_same<T, NamedMutex>::value) {
+		engine->RegisterObjectMethod(type.c_str(), _O("void lock(int)"), asMETHODPR(T, lock, (long), void), asCALL_THISCALL);
+		engine->RegisterObjectMethod(type.c_str(), _O("bool try_lock(int)"), asMETHODPR(T, tryLock, (long), bool), asCALL_THISCALL);
+	}
+	engine->RegisterObjectMethod(type.c_str(), _O("void lock()"), asMETHODPR(T, lock, (), void), asCALL_THISCALL);
+	engine->RegisterObjectMethod(type.c_str(), _O("bool try_lock()"), asMETHODPR(T, tryLock, (), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod(type.c_str(), _O("void unlock()"), asMETHOD(T, unlock), asCALL_THISCALL);
+}
+
+
 
 
 std::string g_ScriptMessagesInfo;
@@ -499,12 +532,6 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterObjectMethod("thread", "void detach()const", asMETHOD(script_thread, detach), asCALL_THISCALL);
 	engine->RegisterObjectMethod("thread", "void join()const", asMETHOD(script_thread, join), asCALL_THISCALL);
 	engine->RegisterObjectMethod("thread", "void destroy()const", asMETHOD(script_thread, destroy), asCALL_THISCALL);
-	engine->RegisterObjectType("instance", sizeof(instance), asOBJ_REF);
-	engine->RegisterObjectBehaviour("instance", asBEHAVE_FACTORY, "instance@ i(const string&in application_name)", asFUNCTION(finstance), asCALL_CDECL);
-	engine->RegisterObjectBehaviour("instance", asBEHAVE_ADDREF, "void f()", asMETHOD(instance, add_ref), asCALL_THISCALL);
-	engine->RegisterObjectBehaviour("instance", asBEHAVE_RELEASE, "void f()", asMETHOD(instance, release), asCALL_THISCALL);
-	engine->RegisterObjectMethod("instance", "bool is_running()", asMETHOD(instance, is_running), asCALL_THISCALL);
-
 
 	engine->RegisterGlobalProperty("const int EVENT_NONE", (void*)&EVENT_NONE);
 	engine->RegisterGlobalProperty("const int EVENT_CONNECT", (void*)&EVENT_CONNECT);
@@ -595,6 +622,14 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterObjectMethod("string", "uint64 c_str()", asMETHOD(std::string, c_str), asCALL_THISCALL);
 	engine->RegisterObjectMethod("wstring", "uint64 c_str()", asMETHOD(std::wstring, c_str), asCALL_THISCALL);
 	engine->RegisterGlobalFunction("size_t sizeof(const ?&in = null)", asFUNCTION(as_sizeof), asCALL_GENERIC);
+	RegisterMutex<Poco::FastMutex>(engine, "fast_mutex");
+	RegisterMutex<Poco::Mutex>(engine, "mutex");
+	RegisterMutex<Poco::NamedMutex>(engine, "named_mutex");
+	engine->RegisterObjectBehaviour("mutex", asBEHAVE_FACTORY, "mutex@ m()", asFUNCTION(ObjectFactory<Poco::Mutex>), asCALL_CDECL);
+	engine->RegisterObjectBehaviour("fast_mutex", asBEHAVE_FACTORY, "fast_mutex@ m()", asFUNCTION(ObjectFactory<Poco::FastMutex>), asCALL_CDECL);
+	engine->RegisterObjectBehaviour("named_mutex", asBEHAVE_FACTORY, "named_mutex@ m(const string&in name)", asFUNCTION((ObjectFactory<Poco::NamedMutex, const std::string&>)), asCALL_CDECL);
+
+
 	engine->RegisterEnumValue(_O("keycode"), "KEY_UNKNOWN", SDL_SCANCODE_UNKNOWN);
 	engine->RegisterEnumValue(_O("keycode"), "KEY_A", SDL_SCANCODE_A);
 	engine->RegisterEnumValue(_O("keycode"), "KEY_B", SDL_SCANCODE_B);
