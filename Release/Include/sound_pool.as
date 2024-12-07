@@ -1,4 +1,5 @@
-#include "effect"
+#include "effect.as"
+
 class sound_pool_item
 {
 	float upper_range;
@@ -10,6 +11,7 @@ class sound_pool_item
 	float rotation;
 	array<effect @> effects;
 	sound @sound_instance;
+	bool position_locked = false;
 	sound_pool_item()
 	{
 		@sound_instance = sound(); // Create a new sound instance
@@ -35,9 +37,11 @@ class sound_pool_item
 			sound_instance.close();
 		@sound_instance = null;
 		@sound_instance = sound();
+		position_locked = false;
 	}
 
 	void update_listener_position(float listener_x, float listener_y, float listener_z, float rotation) {
+		if (position_locked)return;
 		vector @pos = sound_instance.get_source_position();
 		if (pos is null)
 			return;
@@ -73,13 +77,16 @@ class sound_pool_item
 		}
 		this.rotation = rotation;
 	}
+
 	void update_position(float x, float y, float z){
+		if (position_locked)return;
 		vector @pos = sound_instance.get_listener_position();
 		if (pos is null)
 			return;
 		sound_instance.set_position(pos.x, pos.y, pos.z, x, y, z, rotation);
 	}
 	float get_total_distance(float listener_x, float listener_y, float listener_z) {
+		if (position_locked)return 0.0f;
 		vector @source_pos = sound_instance.get_source_position();
 
 		float delta_left = source_pos.x - left_range;
@@ -189,16 +196,16 @@ class sound_pool
 	bool get_hrtf() const property{
 		return this.use_hrtf;
 	}
-	int play_stationary(const string& in filename, bool looping, bool memory = false, bool persistent = false) {
-		return play_3d(filename, looping : looping, memory : memory, persistent : persistent);
+	int play_stationary(const string& in filename, bool looping, bool memory = false, bool persistent = false, sound@ handle = null) {
+		return play_3d(filename, looping : looping, memory : memory, persistent : persistent, position_locked : true, handle : handle);
 	}
 
-	int play_stationary(const string& in filename, bool looping, float offset, float start_pan, float start_volume, float start_pitch, bool memory = false, bool persistent = false) {
-		return play_3d(filename, looping : looping, offset : offset, start_pan : start_pan, start_volume : start_volume, start_pitch : start_pitch, memory : memory, persistent : persistent);
+	int play_stationary(const string& in filename, bool looping, float offset, float start_pan, float start_volume, float start_pitch, bool memory = false, bool persistent = false, sound@ handle = null) {
+		return play_3d(filename, looping : looping, offset : offset, start_pan : start_pan, start_volume : start_volume, start_pitch : start_pitch, memory : memory, persistent : persistent, position_locked : true, handle : handle);
 	}
 
-	int play_1d(const string& in filename, float listener_x, float sound_x, bool looping, bool memory = false, bool persistent = false) {
-		return play_3d(filename, listener_x : listener_x, sound_x : sound_x, looping : looping, memory : memory, persistent : persistent);
+	int play_1d(const string& in filename, float listener_x, float sound_x, bool looping, bool memory = false, bool persistent = false, sound@ handle = null) {
+		return play_3d(filename, listener_x : listener_x, sound_x : sound_x, looping : looping, memory : memory, persistent : persistent, handle : handle);
 	}
 
 	int play_1d(const string& in filename, float listener_x, float sound_x,
@@ -209,7 +216,7 @@ class sound_pool
 				float start_volume,
 				float start_pitch,
 				bool memory = false,
-				bool persistent = false)
+				bool persistent = false, sound@ handle = null)
 	{
 		return play_3d(filename,
 					   listener_x : listener_x,
@@ -222,7 +229,7 @@ class sound_pool
 																										start_volume : start_volume,
 																													   start_pitch : start_pitch,
 																																	 memory : memory,
-																																			  persistent : persistent);
+																																			  persistent : persistent, handle : handle);
 	}
 
 	int play_2d(const string& in filename,
@@ -232,7 +239,7 @@ class sound_pool
 				float sound_y,
 				bool looping,
 				bool memory = false,
-				bool persistent = false)
+				bool persistent = false, sound@ handle = null)
 	{
 		return play_3d(filename,
 					   listener_x : listener_x,
@@ -241,7 +248,7 @@ class sound_pool
 														   sound_y : sound_y,
 																	 looping : looping,
 																			   memory : memory,
-																						persistent : persistent);
+																						persistent : persistent, handle : handle);
 	}
 
 	int play_2d(const string& in filename,
@@ -259,7 +266,7 @@ class sound_pool
 				float start_volume,
 				float start_pitch,
 				bool memory = false,
-				bool persistent = false)
+				bool persistent = false, sound@ handle = null)
 	{
 		return play_3d(filename,
 					   listener_x : listener_x,
@@ -276,7 +283,7 @@ class sound_pool
 																																								start_volume : start_volume,
 																																											   start_pitch : start_pitch,
 																																															 memory : memory,
-																																																	  persistent : persistent);
+																																																	  persistent : persistent, handle : handle);
 	}
 
 	int play_3d(const string& in filename,
@@ -289,9 +296,9 @@ class sound_pool
 				float rotation,
 				bool looping,
 				bool memory = false,
-				bool persistent = false)
+				bool persistent = false, sound@ handle = null)
 	{
-		return play_3d(filename, listener_x, listener_y, listener_z, sound_x, sound_y, sound_z, rotation, 0, 0, 0, 0, 0, 0, looping, 0, 0, 0, 100, memory, persistent);
+		return play_3d(filename, listener_x, listener_y, listener_z, sound_x, sound_y, sound_z, rotation, 0, 0, 0, 0, 0, 0, looping, 0, 0, 0, 100, memory, persistent, handle : handle);
 	}
 
 	int play_3d(const string& in filename,
@@ -300,9 +307,9 @@ class sound_pool
 				float rotation,
 				bool looping,
 				bool memory = false,
-				bool persistent = false)
+				bool persistent = false, sound@ handle = null)
 	{
-		return play_3d(filename, listener.x, listener.y, listener.z, source.x, source.y, source.z, rotation, 0, 0, 0, 0, 0, 0, looping, 0, 0, 0, 100, memory, persistent);
+		return play_3d(filename, listener.x, listener.y, listener.z, source.x, source.y, source.z, rotation, 0, 0, 0, 0, 0, 0, looping, 0, 0, 0, 100, memory, persistent, handle : handle);
 	}
 
 	int play_3d(
@@ -323,7 +330,7 @@ class sound_pool
 		float start_volume = 0,
 		float start_pitch = 0,
 		bool memory = false,
-		bool persistent = false)
+		bool persistent = false, sound@ handle = null)
 	{
 		return play_3d(
 			filename,
@@ -347,7 +354,7 @@ class sound_pool
 			start_volume,
 			start_pitch,
 			memory,
-			persistent);
+			persistent, handle : handle);
 	}
 
 	int play_3d(
@@ -371,7 +378,8 @@ class sound_pool
 		float start_volume = 0,
 		float start_pitch = 0,
 		bool memory = false,
-		bool persistent = false)
+		bool persistent = false,
+		bool position_locked = false, sound@ handle = null)
 	{
 
 		int i = get_free_sound_id();
@@ -381,7 +389,7 @@ class sound_pool
 		if (!pool[i].active)
 			return -2;
 		pool[i].sound_instance.set_looping(looping);
-
+		pool[i].position_locked = position_locked;
 		// Set initial properties
 		update_sound_start_values(i, start_pan, start_volume, start_pitch);
 		// Set position in 3D space
@@ -396,7 +404,7 @@ class sound_pool
 			pool[i].sound_instance.seek(offset);
 		pool[i].update_listener_position(listener_x, listener_y, listener_z, rotation);
 		pool[i].update_position(sound_x, sound_y, sound_z);
-
+		@handle = pool[i].sound_instance;
 		return i; // Return index
 	}
 	void update_listener_position(float listener_x, float listener_y, float listener_z, float rotation = 0) {
@@ -406,7 +414,7 @@ class sound_pool
 			{
 				if (in_window && !window_active && !muted)
 				{
-					pause_sound(i);
+					pause_all();
 					muted = true;
 				}
 				pool[i].update_listener_position(listener_x, listener_y, listener_z, rotation);
@@ -415,7 +423,7 @@ class sound_pool
 			{
 				if (window_active && muted)
 				{
-					resume_sound(i);
+					resume_all();
 					muted = false;
 				}
 			}
@@ -485,6 +493,14 @@ class sound_pool
 		return true;
 	}
 
+	bool set_sound_position_locked(int slot, bool locked)
+	{
+		if (slot < 0 || slot >= max_sounds || !pool[slot].active)
+			return false;
+		pool[slot].position_locked = locked;
+		return true;
+	}
+
 	bool update_sound_position(int slot, float x = 0, float y = 0, float z = 0)
 	{
 		if (slot < 0 || slot >= max_sounds || !pool[slot].active)
@@ -502,6 +518,57 @@ class sound_pool
 		pool[slot].sound_instance.set_volume(start_volume);
 		pool[slot].sound_instance.set_pitch(start_pitch);
 		return true;
+	}
+
+	bool set_sound_volume(int slot, float volume)
+	{
+		if (slot < 0 || slot >= max_sounds || !pool[slot].active)
+			return false;
+
+		pool[slot].sound_instance.set_volume(volume);
+		return true;
+	}
+
+	bool set_sound_pan(int slot, float pan)
+	{
+		if (slot < 0 || slot >= max_sounds || !pool[slot].active)
+			return false;
+
+		pool[slot].sound_instance.set_pan(pan);
+		return true;
+	}
+
+	bool set_sound_pitch(int slot, float pitch)
+	{
+		if (slot < 0 || slot >= max_sounds || !pool[slot].active)
+			return false;
+
+		pool[slot].sound_instance.set_pitch(pitch);
+		return true;
+	}
+
+	float get_sound_volume(int slot)
+	{
+		if (slot < 0 || slot >= max_sounds || !pool[slot].active)
+			return 0.0f;
+
+		return pool[slot].sound_instance.get_volume();
+	}
+
+	float get_sound_pan(int slot)
+	{
+		if (slot < 0 || slot >= max_sounds || !pool[slot].active)
+			return 0.0f;
+
+		return pool[slot].sound_instance.get_pan();
+	}
+
+	float get_sound_pitch(int slot)
+	{
+		if (slot < 0 || slot >= max_sounds || !pool[slot].active)
+			return 0.0f;
+
+		return pool[slot].sound_instance.get_pitch();
 	}
 
 	bool destroy_sound(int slot)
@@ -525,6 +592,14 @@ class sound_pool
 
 		return true;
 	}
+
+	sound@ const get_sound(int slot)
+	{
+		if (slot < 0 || slot >= max_sounds || !pool[slot].active)
+			return sound();
+		return pool[slot].sound_instance;
+	}
+
 	protected int get_free_sound_id() {
 		uint it;
 		bool found = false;
@@ -575,77 +650,3 @@ class sound_pool
 
 funcdef void sound_pool_fade_callback();
 
-sound_pool @audio_source_mixer = null;
-vector @sources_listener = null;
-class audio_source
-{
-	float minimum_x, maximum_x, minimum_y, maximum_y, minimum_z, maximum_z;
-	private int slot;
-	string file_name;
-	audio_source() const
-	{
-		reset();
-	}
-	~audio_source() const
-	{
-		reset();
-	}
-	audio_source(const audio_source&in other)
-	{
-		this.slot = other.slot;
-		this.file_name = other.file_name;
-		this.minimum_x = other.minimum_x;
-		this.maximum_x = other.maximum_x;
-		this.minimum_y = other.minimum_y;
-		this.maximum_y = other.maximum_y;
-		this.minimum_z = other.minimum_z;
-		this.maximum_z = other.maximum_z;
-	}
-	audio_source& opEquals(const audio_source&in other)
-	{
-		this.slot = other.slot;
-		this.file_name = other.file_name;
-		this.minimum_x = other.minimum_x;
-		this.maximum_x = other.maximum_x;
-		this.minimum_y = other.minimum_y;
-		this.maximum_y = other.maximum_y;
-		this.minimum_z = other.minimum_z;
-		this.maximum_z = other.maximum_z;
-		return this;
-	}
-
-	void reset(){
-		this.stop();
-		slot = 0;
-		file_name = "";
-		minimum_x = 0;
-		maximum_x = 0;
-		minimum_y = 0;
-		maximum_y = 0;
-		minimum_z = 0;
-		maximum_z = 0;
-		audio_source_mixer.hrtf = false;
-	}
-	bool update(){
-		if (@sources_listener == null or @audio_source_mixer == null)
-			return false;
-		audio_source_mixer.update_listener_position(sources_listener.x, sources_listener.y, sources_listener.z);
-		return audio_source_mixer.update_sound_range(slot, (sources_listener.x - this.minimum_x), (this.maximum_x - this.minimum_x), (sources_listener.y - this.minimum_y), (this.maximum_y - this.minimum_y), (sources_listener.z - this.minimum_z), (this.maximum_z - this.minimum_z));
-	}
-	bool play(void){
-		if (@sources_listener == null or @audio_source_mixer == null)
-			return false;
-		slot = audio_source_mixer.play_3d(file_name, sources_listener.x, sources_listener.y, sources_listener.z, minimum_x, minimum_y, minimum_z, 0, true);
-		return slot != 0;
-	}
-	bool stop(void){
-		try
-		{
-			return audio_source_mixer.destroy_sound(slot);
-		}
-		catch
-		{
-			return false;
-		}
-	}
-};

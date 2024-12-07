@@ -379,6 +379,8 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("void mail_send(smtp_login_method, uint port, const string&in username, const string&in password, const string&in mailhost, const string&in sender, const string&in recipient, const string&in subject, const string&in content, const string&in attachment = \"\")", WRAP_FN(mail_send), asCALL_GENERIC);
 	AS_END(engine);
 	engine->RegisterGlobalFunction("void exit(int retcode = 0)", asFUNCTION(exit_engine), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void abort()", asFUNCTION(std::abort), asCALL_CDECL);
+
 	engine->RegisterGlobalFunction("string number_to_words(uint64 number, bool include_and)", asFUNCTION(number_to_words), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool clipboard_copy_text(const string &in text)", asFUNCTION(clipboard_copy_text), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string clipboard_read_text()", asFUNCTION(clipboard_read_text), asCALL_CDECL);
@@ -536,7 +538,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterObjectMethod("thread", "void destroy()const", asMETHOD(script_thread, destroy), asCALL_THISCALL);
 	AS_BEGIN(engine, "this_thread");
 	engine->RegisterGlobalFunction("void yield()", asFUNCTION(std::this_thread::yield), asCALL_CDECL);
-	engine->RegisterGlobalFunction("int get_id() property", asFUNCTION(std::this_thread::get_id), asCALL_CDECL);
+	engine->RegisterGlobalFunction("int get_id() property", asFUNCTION(Poco::Thread::currentOsTid), asCALL_CDECL);
 	AS_END(engine);
 
 	AS_BEGIN(engine, "filesystem");

@@ -1,4 +1,4 @@
-void function(){
+void function(dictionary@ args){
 while(true){
 screen_reader::speak(""+random(0, 100), true);
 wait(1000);

@@ -1,0 +1,7 @@
+#include "../include/linear_regression.as"
+void main()
+{
+	linear_regression lr;
+	lr.fit({1, 2, 3, 4, 5}, {11, 22, 33, 44, 55});
+	alert("Test", lr.predict(6));
+}

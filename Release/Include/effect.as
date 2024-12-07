@@ -2,7 +2,7 @@
 Updated by M_maker || M1Maker
 */
 
-#include "hip" // in_range
+#include "hip.as" // in_range
 
 class effect
 {
@@ -115,5 +115,124 @@ class effect
 				}
 			}
 		}
+	}
+};
+//Effects
+
+class delay_node : effect
+{
+	float dry, wet, decay;
+	delay_node(float dry, float wet, float decay)
+	{
+		super("delay");
+		this.dry = dry;
+		this.wet = wet;
+		this.decay = decay;
+	}
+	delay_node()
+	{
+		super("delay");
+		this.dry = 0.1;
+		this.wet = 0.1;
+		this.decay = 0.1;
+	}
+	bool set_dry(float value) {
+		if (in_range(value, 0.1, 1.0))
+		{
+			this.dry = value;
+			return true;
+		}
+		return false;
+	}
+	bool set_wet(float value) {
+		if (in_range(value, 0.1, 1.0))
+		{
+			this.wet = value;
+			return true;
+		}
+		return false;
+	}
+	bool set_decay(float value) {
+		if (in_range(value, 0.1, 1.0))
+		{
+			this.decay = value;
+			return true;
+		}
+		return false;
+	}
+	bool configure_effect(sound @handle) override {
+		handle.set_delay_parameters(this.dry, this.wet, this.decay);
+		return true;
+	}
+};
+
+class lowpass : effect
+{
+	lowpass()
+	{
+		super("lowpass");
+	}
+};
+
+
+class reverb : effect
+{
+	float dry, wet, room_size, damping, mode;
+	reverb(float dry, float wet, float room_size, float damping, float mode)
+	{
+		super("reverb");
+		this.dry = dry;
+		this.wet = wet;
+		this.room_size = room_size;
+		this.damping = damping;
+		this.mode = mode;
+	}
+	reverb()
+	{
+		super("reverb");
+	}
+	bool set_dry(float value) {
+		if (in_range(value, 0.1, 1.0))
+		{
+			this.dry = value;
+			return true;
+		}
+		return false;
+	}
+	bool set_wet(float value) {
+		if (in_range(value, 0.1, 1.0))
+		{
+			this.wet = value;
+			return true;
+		}
+		return false;
+	}
+	bool set_room_size(float value) {
+		if (in_range(value, 0.1, 1.0))
+		{
+			this.room_size = value;
+			return true;
+		}
+		return false;
+	}
+	bool set_damping(float value) {
+		if (in_range(value, 0.1, 1.0))
+		{
+			this.damping = value;
+			return true;
+		}
+		return false;
+	}
+	bool set_mode(float value) {
+		if (in_range(value, 0.1, 1.0))
+		{
+			this.mode = value;
+			return true;
+		}
+		return false;
+	}
+	bool configure_effect(sound @handle) {
+		handle.set_reverb_parameters(this.dry, this.wet, this.room_size, this.damping, this.mode);
+		return true;
 	}
 };

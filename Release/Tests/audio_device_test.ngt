@@ -1,9 +1,9 @@
 #include "../include/menu"
-menu m("Audio Device Test");
-void on_click(){
-set_output_audio_device(m.selected_item);
+void on_click(menu@ handle){
+set_output_audio_device(handle.selected_item);
 }
 void main(){
+menu m("Audio Device Test");
 sound s;
 
 screen_reader::interrupt = true;

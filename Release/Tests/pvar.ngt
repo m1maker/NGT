@@ -1,0 +1,20 @@
+#include "../include/pvar.as"
+void main() {
+	pvar myVariable;
+
+	myVariable = 100.0;
+
+	++myVariable;
+
+	alert("Current value is", myVariable);
+
+	myVariable += 50.0;
+	alert("After adding 50", myVariable);
+
+	if (myVariable == 151.0) {
+		alert("Success", "CMP success!");
+	} else {
+		alert("Failure", "CMP failure!");
+	}
+}
+
