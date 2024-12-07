@@ -36,7 +36,6 @@ extern "C"
 #include<algorithm>
 #include <stdio.h>
 #include "ngt.h"
-#include "scriptfile/scriptfilesystem.h"
 #include <locale>
 #include <codecvt>
 #include<fstream>
@@ -186,6 +185,7 @@ private:
 public:
 	SDL_Window* win = nullptr;
 	SDL_Renderer* renderer = nullptr;
+	int thread_id = 0;
 	void start() {
 		thread.start(*this);
 	}
@@ -308,6 +308,7 @@ public:
 
 
 	void run() {
+		this->thread_id = Thread::currentOsTid();
 		while (!window_thread_event_shutdown) {
 			thread.sleep(update_window_freq + 1);
 			this->monitor();
@@ -1505,85 +1506,90 @@ std::wstring wc_str_to_wstring(const wchar_t* ptr, size_t length) {
 
 
 uint64_t timer::elapsed_seconds() {
-	return pausedNanos != 0 ? chrono::duration_cast<chrono::seconds>(chrono::nanoseconds(pausedNanos)).count()
-		: chrono::duration_cast<chrono::seconds>(
-			chrono::steady_clock::now() - inittime).count();
+	return pausedNanos != 0 ? pausedNanos / 1'000'000'000
+		: std::chrono::duration_cast<std::chrono::seconds>(
+			std::chrono::high_resolution_clock::now() - inittime).count();
 }
+
 uint64_t timer::elapsed_minutes() {
-	return pausedNanos != 0 ? chrono::duration_cast<chrono::minutes>(chrono::nanoseconds(pausedNanos)).count()
-		: chrono::duration_cast<chrono::minutes>(
-			chrono::steady_clock::now() - inittime).count();
+	return elapsed_seconds() / 60;
 }
+
 uint64_t timer::elapsed_hours() {
-	return pausedNanos != 0 ? chrono::duration_cast<chrono::hours>(chrono::nanoseconds(pausedNanos)).count()
-		: chrono::duration_cast<chrono::hours>(
-			chrono::steady_clock::now() - inittime).count();
+	return elapsed_minutes() / 60;
 }
+
 uint64_t timer::elapsed_millis() {
-	return pausedNanos != 0 ? chrono::duration_cast<chrono::milliseconds>(chrono::nanoseconds(pausedNanos)).count()
-		: chrono::duration_cast<chrono::milliseconds>(
-			chrono::steady_clock::now() - inittime).count();
+	return pausedNanos != 0 ? pausedNanos / 1'000'000
+		: std::chrono::duration_cast<std::chrono::milliseconds>(
+			std::chrono::high_resolution_clock::now() - inittime).count();
 }
 
 uint64_t timer::elapsed_micros() {
-	return pausedNanos != 0 ? chrono::duration_cast<chrono::microseconds>(chrono::nanoseconds(pausedNanos)).count()
-		: chrono::duration_cast<chrono::microseconds>(
-			chrono::steady_clock::now() - inittime).count();
+	return pausedNanos != 0 ? pausedNanos / 1'000
+		: std::chrono::duration_cast<std::chrono::microseconds>(
+			std::chrono::high_resolution_clock::now() - inittime).count();
 }
+
 uint64_t timer::elapsed_nanos() {
 	return pausedNanos != 0 ? pausedNanos
-		: chrono::duration_cast<chrono::nanoseconds>(
-			chrono::steady_clock::now() - inittime).count();
+		: std::chrono::duration_cast<std::chrono::nanoseconds>(
+			std::chrono::high_resolution_clock::now() - inittime).count();
 }
+
 void timer::force_seconds(uint64_t seconds) {
-	inittime = chrono::steady_clock::now() - chrono::seconds(seconds);
+	inittime = std::chrono::high_resolution_clock::now() - std::chrono::seconds(seconds);
 	pausedNanos = 0;
 }
+
 void timer::force_minutes(uint64_t minutes) {
-	inittime = chrono::steady_clock::now() - chrono::minutes(minutes);
+	inittime = std::chrono::high_resolution_clock::now() - std::chrono::minutes(minutes);
 	pausedNanos = 0;
 }
+
 void timer::force_hours(uint64_t hours) {
-	inittime = chrono::steady_clock::now() - chrono::hours(hours);
+	inittime = std::chrono::high_resolution_clock::now() - std::chrono::hours(hours);
 	pausedNanos = 0;
 }
+
 void timer::force_millis(uint64_t millis) {
-	inittime = chrono::steady_clock::now() - chrono::milliseconds(millis);
+	inittime = std::chrono::high_resolution_clock::now() - std::chrono::milliseconds(millis);
 	pausedNanos = 0;
 }
 
-// Force the timer to a specific time in microseconds
 void timer::force_micros(uint64_t micros) {
-	inittime = chrono::steady_clock::now() - chrono::microseconds(micros);
+	inittime = std::chrono::high_resolution_clock::now() - std::chrono::microseconds(micros);
 	pausedNanos = 0;
 }
 
-// Force the timer to a specific time in nanoseconds
 void timer::force_nanos(uint64_t nanos) {
-	inittime = chrono::steady_clock::now() - chrono::nanoseconds(nanos);
+	inittime = std::chrono::high_resolution_clock::now() - std::chrono::nanoseconds(nanos);
 	pausedNanos = 0;
 }
 
 void timer::restart() {
-	inittime = chrono::steady_clock::now();
+	inittime = std::chrono::high_resolution_clock::now();
 	pausedNanos = 0;
 }
+
 void timer::pause() {
 	if (pausedNanos == 0) {
-		pausedNanos = chrono::duration_cast<chrono::nanoseconds>(
-			chrono::steady_clock::now() - inittime).count();
+		pausedNanos = elapsed_nanos(); // Save the elapsed time in nanoseconds
 	}
 }
+
 bool timer::is_running() {
 	return pausedNanos == 0;
 }
 
 void timer::resume() {
 	if (pausedNanos != 0) {
-		inittime = chrono::steady_clock::now() - chrono::nanoseconds(pausedNanos);
+		inittime = std::chrono::high_resolution_clock::now() - std::chrono::nanoseconds(pausedNanos);
 		pausedNanos = 0;
 	}
 }
+
+
 network_event& network_event::operator=(const network_event new_event) {
 	this->m_peerId = new_event.m_peerId;
 	this->m_type = new_event.m_type;

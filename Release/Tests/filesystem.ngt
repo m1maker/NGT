@@ -1,0 +1,8 @@
+void main()
+{
+	alert("Current path", filesystem::current_path);
+	array<string> files;
+	array<string> folders;
+	filesystem::list_directory(filesystem::current_path, files, folders, "*.wav");
+	alert("First", files[0]);
+}

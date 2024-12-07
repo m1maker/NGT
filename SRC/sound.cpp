@@ -1007,6 +1007,7 @@ bool soundsystem_init()
 	ma_result_from_IPLerror(iplHRTFCreate(iplContext, &iplAudioSettings, &iplHRTFSettings, &iplHRTF));
 	return true;
 }
+
 void soundsystem_free()
 {
 	if (g_SoundInitialized == false)
@@ -1017,6 +1018,7 @@ void soundsystem_free()
 	ma_engine_uninit(&sound_default_mixer);
 	g_SoundInitialized = false;
 }
+
 void mixer_reinit(int channels, int sample_rate);
 void set_audio_period_size(asUINT size)
 {
@@ -1280,10 +1282,10 @@ public:
 	std::map<std::string, ma_node*> effects;
 	ma_audio_buffer m_buffer;
 	bool buffer_initialized = false;
-	mutable int ref = 0;
 	string file;
 	ngtvector* source_position = nullptr;
 	ngtvector* listener_position = nullptr;
+	mutable int ref = 0;
 	sound(const string& filename = "")
 	{
 		ref = 1;
@@ -1301,24 +1303,26 @@ public:
 	}
 	~sound()
 	{
+		if (active)
+			this->close();
+		if (listener_position)
+			delete listener_position;
+		if (source_position)
+			delete source_position;
+
 	}
-	void add()
+	void AddRef() const
 	{
 		ref += 1;
 	}
-	void release()
+	void Release() const
 	{
 		if (--ref < 1)
 		{
-			if (active)
-				this->close();
-			if (listener_position)
-				delete listener_position;
-			if (source_position)
-				delete source_position;
 			delete this;
 		}
 	}
+
 	bool load(const string& filename)
 	{
 		string result;
@@ -1599,8 +1603,6 @@ public:
 			effects.erase("notch");
 		}
 		this->set_hrtf(false);
-		effects["Default"] = nullptr;
-		effects.clear();
 		if (decoderInitialized)
 		{
 			ma_decoder_uninit(&decoder);
@@ -1625,6 +1627,7 @@ public:
 		active = false;
 		return true;
 	}
+
 	void set_fx(const string& fx)
 	{
 		if (!active)
@@ -2282,8 +2285,8 @@ void register_sound(asIScriptEngine* engine)
 
 	engine->RegisterObjectType("sound", sizeof(sound), asOBJ_REF);
 	engine->RegisterObjectBehaviour("sound", asBEHAVE_FACTORY, "sound@ s(const string &in filename = \"\")", asFUNCTION(fsound), asCALL_CDECL);
-	engine->RegisterObjectBehaviour("sound", asBEHAVE_ADDREF, "void f()", asMETHOD(sound, add), asCALL_THISCALL);
-	engine->RegisterObjectBehaviour("sound", asBEHAVE_RELEASE, "void f()", asMETHOD(sound, release), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("sound", asBEHAVE_ADDREF, "void f()", asMETHOD(sound, AddRef), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("sound", asBEHAVE_RELEASE, "void f()", asMETHOD(sound, Release), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("sound"), "bool load(const string &in filename)const", asMETHOD(sound, load), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("sound"), "bool load_from_memory(string memory, size_t memory_size = 0)const", asMETHOD(sound, load_from_memory), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("sound"), "bool load_pcm(string memory, size_t memory_size = 0, int channels = 0, int sample_rate = 0)const", asMETHOD(sound, load_pcm), asCALL_THISCALL);
@@ -2339,4 +2342,5 @@ void register_sound(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("bool get_sound_global_hrtf()property", asFUNCTION(get_sound_global_hrtf), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void set_spatial_blend_max_distance(float)property", asFUNCTION(set_spatial_blend_max_distance), asCALL_CDECL);
 	engine->RegisterGlobalFunction("float get_spatial_blend_max_distance()property", asFUNCTION(get_spatial_blend_max_distance), asCALL_CDECL);
+	std::this_thread::yield();
 }

@@ -235,7 +235,7 @@ set(NGT_SOURCES
   "SRC/scriptbuilder/scriptbuilder.cpp"
   "SRC/scriptdictionary/scriptdictionary.cpp"
   "SRC/scriptfile/scriptfile.cpp"
-  "SRC/scriptfile/scriptfilesystem.cpp"
+  "SRC/filesystem.cpp"
   "SRC/scriptgrid/scriptgrid.cpp"
   "SRC/scripthandle/scripthandle.cpp"
   "SRC/scripthelper/scripthelper.cpp"

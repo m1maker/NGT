@@ -32,7 +32,6 @@
 #include "scriptbuilder/scriptbuilder.h"
 #include "scriptdictionary/scriptdictionary.h"
 #include "scriptfile/scriptfile.h"
-#include "scriptfile/scriptfilesystem.h"
 #include "scripthandle/scripthandle.h"
 #include "scripthelper/scripthelper.h"
 #include "scriptmath/scriptmath.h"
@@ -788,7 +787,6 @@ public:
 		RegisterScriptDictionary(scriptEngine);
 		RegisterScriptDateTime(scriptEngine);
 		RegisterScriptFile(scriptEngine);
-		RegisterScriptFileSystem(scriptEngine);
 		RegisterExceptionRoutines(scriptEngine);
 		RegisterScriptMath(scriptEngine);
 		RegisterScriptMathComplex(scriptEngine);

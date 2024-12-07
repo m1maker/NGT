@@ -1,4 +1,5 @@
 ﻿#include "autowrapper/aswrappedcall.h"
+#include "filesystem.h"
 #include "Graphics.h"
 #include "IOStreams.h"
 #include "MemoryStream.h"
@@ -533,7 +534,14 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterObjectMethod("thread", "void detach()const", asMETHOD(script_thread, detach), asCALL_THISCALL);
 	engine->RegisterObjectMethod("thread", "void join()const", asMETHOD(script_thread, join), asCALL_THISCALL);
 	engine->RegisterObjectMethod("thread", "void destroy()const", asMETHOD(script_thread, destroy), asCALL_THISCALL);
+	AS_BEGIN(engine, "this_thread");
+	engine->RegisterGlobalFunction("void yield()", asFUNCTION(std::this_thread::yield), asCALL_CDECL);
+	engine->RegisterGlobalFunction("int get_id() property", asFUNCTION(std::this_thread::get_id), asCALL_CDECL);
+	AS_END(engine);
 
+	AS_BEGIN(engine, "filesystem");
+	RegisterScriptFileSystem(engine);
+	AS_END(engine);
 	engine->RegisterGlobalProperty("const int EVENT_NONE", (void*)&EVENT_NONE);
 	engine->RegisterGlobalProperty("const int EVENT_CONNECT", (void*)&EVENT_CONNECT);
 	engine->RegisterGlobalProperty("const int EVENT_RECEIVE", (void*)&EVENT_RECEIVE);

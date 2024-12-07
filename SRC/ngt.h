@@ -13,7 +13,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
-
+#include <time.h>
 #endif
 #define FFI_BUILDING
 #include "ffi.h"
@@ -191,32 +191,35 @@ void deserialize_array(asIScriptGeneric* gen);
 bool urlopen(const string& url);
 std::string c_str_to_string(const char* ptr, size_t length = 0);
 std::wstring wc_str_to_wstring(const wchar_t* ptr, size_t length = 0);
+
 class timer : public as_class {
 public:
-	chrono::time_point<chrono::steady_clock> inittime;
-	uint64_t pausedNanos = 0;
+    std::chrono::high_resolution_clock::time_point inittime;
+    uint64_t pausedNanos = 0;
 
-	timer() {
-		inittime = chrono::steady_clock::now();
-		pausedNanos = 0;
-	}
-	uint64_t elapsed_seconds();
-	uint64_t elapsed_minutes();
-	uint64_t elapsed_hours();
-	uint64_t elapsed_millis();
-	uint64_t elapsed_micros();
-	uint64_t elapsed_nanos();
-	void force_seconds(uint64_t);
-	void force_minutes(uint64_t);
-	void force_hours(uint64_t);
-	void force_millis(uint64_t);
-	void force_micros(uint64_t);
-	void force_nanos(uint64_t);
-	void restart();
-	void pause();
-	void resume();
-	bool is_running();
+    timer() {
+        inittime = std::chrono::high_resolution_clock::now();
+        pausedNanos = 0;
+    }
+
+    uint64_t elapsed_seconds();
+    uint64_t elapsed_minutes();
+    uint64_t elapsed_hours();
+    uint64_t elapsed_millis();
+    uint64_t elapsed_micros();
+    uint64_t elapsed_nanos();
+    void force_seconds(uint64_t);
+    void force_minutes(uint64_t);
+    void force_hours(uint64_t);
+    void force_millis(uint64_t);
+    void force_micros(uint64_t);
+    void force_nanos(uint64_t);
+    void restart();
+    void pause();
+    void resume();
+    bool is_running();
 };
+
 class network_event : public as_class {
 public:
 	const int EVENT_NONE = ENET_EVENT_TYPE_NONE;
