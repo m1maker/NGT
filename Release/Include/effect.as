@@ -93,7 +93,7 @@ class effect
 				if (!is_safe(attached_handles[i]))
 					continue;
 
-				vector @pos = attached_handles[i].get_listener_position();
+				vector pos = attached_handles[i].get_listener_position();
 
 				// Check ranges without using in_range function
 				bool in_x_range = (pos.x >= -left_range && pos.x <= right_range);

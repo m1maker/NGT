@@ -241,6 +241,7 @@ set(NGT_SOURCES
   "SRC/scripthelper/scripthelper.cpp"
   "SRC/scriptmath/scriptmath.cpp"
   "SRC/scriptmath/scriptmathcomplex.cpp"
+  "SRC/scriptmath/scriptmath3d.cpp"
   "SRC/scriptstdstring/scriptstdstring.cpp"
   "SRC/scriptstdstring/scriptstdstring_utils.cpp"
   "SRC/scriptstdstring/scriptstdwstring.cpp"

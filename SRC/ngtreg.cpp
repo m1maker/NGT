@@ -8,6 +8,7 @@
 #include "print_func/print_func.h"
 #include "scriptbuilder/scriptbuilder.h"
 #include "Scripting.h"
+#include "scriptmath/scriptmath3d.h"
 #include "scriptstdstring/scriptstdstring.h"
 #include <cstdlib>
 #include <fstream>
@@ -246,7 +247,6 @@ void fscript_thread(asIScriptGeneric* gen) {
 
 TTSVoice* ftts_voice() { return new TTSVoice(); }
 network_event* fnetwork_event() { return new network_event; }
-ngtvector* fngtvector() { return new ngtvector; }
 sqlite3statement* fsqlite3statement() { return new sqlite3statement; }
 ngtsqlite3* fngtsqlite3() { return new ngtsqlite3; }
 network* fnetwork() { return new network; }
@@ -312,17 +312,8 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterTypedef("ushort", "uint16");
 	engine->RegisterTypedef("size_t", "uint64");
 	engine->RegisterFuncdef("int exit_callback()");
-	engine->RegisterObjectType("vector", sizeof(ngtvector), asOBJ_REF);
-	engine->RegisterObjectBehaviour("vector", asBEHAVE_FACTORY, "vector@ v()", asFUNCTION(fngtvector), asCALL_CDECL);
-	engine->RegisterObjectBehaviour("vector", asBEHAVE_ADDREF, "void f()", asMETHOD(ngtvector, add_ref), asCALL_THISCALL);
-	engine->RegisterObjectBehaviour("vector", asBEHAVE_RELEASE, "void f()", asMETHOD(ngtvector, release), asCALL_THISCALL);
-	engine->RegisterObjectProperty(_O("vector"), "float x", asOFFSET(ngtvector, x));
-	engine->RegisterObjectProperty(_O("vector"), "float y", asOFFSET(ngtvector, y));
-	engine->RegisterObjectProperty(_O("vector"), "float z", asOFFSET(ngtvector, z));
-	engine->RegisterObjectMethod(_O("vector"), "float get_length()const property", asMETHOD(ngtvector, get_length), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("vector"), "vector &opAssign(const vector&in)", asMETHOD(ngtvector, operator=), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("vector"), "void reset()const", asMETHOD(ngtvector, reset), asCALL_THISCALL);
 	Print::asRegister(engine, true);
+	RegisterScriptMath3D(engine);
 	AS_BEGIN(engine, "os");
 	engine->RegisterGlobalFunction("int get_cpu_count()property", asFUNCTION(get_cpu_count), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int get_system_ram()property", asFUNCTION(get_system_ram), asCALL_CDECL);

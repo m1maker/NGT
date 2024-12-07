@@ -2116,24 +2116,7 @@ uint64_t get_time_stamp_seconds() {
 	auto seconds = chrono::duration_cast<chrono::seconds>(duration).count();
 	return seconds;
 }
-float ngtvector::get_length()const {
-	return sqrt(x * x + y * y + z * z);
-}
-ngtvector& ngtvector::operator=(const ngtvector new_vector) {
-	this->x = new_vector.x;
-	this->y = new_vector.y;
-	this->z = new_vector.z;
 
-	return *this;
-}
-void ngtvector::reset() {
-	x = 0;
-	y = 0;
-	z = 0;
-}
-ngtvector::ngtvector() {
-	this->reset();
-}
 int sqlite3statement::step() { return sqlite3_step(stmt); }
 int sqlite3statement::reset() { return sqlite3_reset(stmt); }
 string sqlite3statement::get_expanded_sql_statement() const { return sqlite3_expanded_sql(stmt); }

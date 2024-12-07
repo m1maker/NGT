@@ -81,14 +81,6 @@ using Poco::Net::StringPartSource;
 #include "scriptdictionary/scriptdictionary.h"
 using namespace std;
 extern bool g_engineInitialized;
-class ngtvector : public as_class {
-public:
-	float x, y, z;
-	float get_length()const;
-	ngtvector& operator=(const ngtvector);
-	void reset();
-	ngtvector();
-};
 
 #ifdef _WIN32
 wstring wstr(const string& utf8String);

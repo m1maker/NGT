@@ -1,4 +1,5 @@
 // NGTAUDIO
+#include "scriptmath/scriptmath3d.h"
 #define NOMINMAX
 #include "MemoryStream.h"
 #include "ngt.h"
@@ -1283,8 +1284,8 @@ public:
 	ma_audio_buffer m_buffer;
 	bool buffer_initialized = false;
 	string file;
-	ngtvector* source_position = nullptr;
-	ngtvector* listener_position = nullptr;
+	Vector3 source_position;
+	Vector3 listener_position;
 	mutable int ref = 0;
 	sound(const string& filename = "")
 	{
@@ -1296,20 +1297,11 @@ public:
 		effects["Default"] = ma_engine_get_endpoint(&sound_default_mixer);
 		if (filename != "")
 			this->load(filename);
-		listener_position = new ngtvector;
-		source_position = new ngtvector;
-		listener_position->reset();
-		source_position->reset();
 	}
 	~sound()
 	{
 		if (active)
 			this->close();
-		if (listener_position)
-			delete listener_position;
-		if (source_position)
-			delete source_position;
-
 	}
 	void AddRef() const
 	{
@@ -1621,8 +1613,10 @@ public:
 		}
 		if (!file.empty())
 			file.clear();
-		listener_position->reset();
-		source_position->reset();
+		source_position.x = 0;
+		source_position.y = 0;
+		source_position.z = 0;
+		listener_position = source_position;
 		handle_ = nullptr;
 		active = false;
 		return true;
@@ -1869,20 +1863,18 @@ public:
 			this->set_volume(final_volume);
 		if (this->get_pitch() != final_pitch)
 			this->set_pitch(final_pitch);
-		listener_position->x = listener_x;
-		listener_position->y = listener_y;
-		listener_position->z = listener_z;
-		source_position->x = source_x;
-		source_position->y = source_y;
-		source_position->z = source_z;
+		listener_position.x = listener_x;
+		listener_position.y = listener_y;
+		listener_position.z = listener_z;
+		source_position.x = source_x;
+		source_position.y = source_y;
+		source_position.z = source_z;
 	}
-	void set_position(const ngtvector* listener, const ngtvector* source, double theta, float pan_step, float volume_step, float behind_pitch_decrease, float start_pan, float start_volume, float start_pitch)
+	void set_position(Vector3& listener, Vector3& source, double theta, float pan_step, float volume_step, float behind_pitch_decrease, float start_pan, float start_volume, float start_pitch)
 	{
 		if (!active)
 			return;
-		if (source == nullptr || listener == nullptr)
-			return;
-		this->set_position(listener->x, listener->y, listener->z, source->x, source->y, source->z, theta, pan_step, volume_step, behind_pitch_decrease, start_pan, start_volume, start_pitch);
+		this->set_position(listener.x, listener.y, listener.z, source.x, source.y, source.z, theta, pan_step, volume_step, behind_pitch_decrease, start_pan, start_volume, start_pitch);
 	}
 	void set_hrtf(bool hrtf)
 	{
@@ -1924,14 +1916,12 @@ public:
 	{
 		return effects.find("hrtf") != effects.end();
 	}
-	ngtvector* get_listener_position()
+	Vector3 get_listener_position()
 	{
-		listener_position->add_ref();
 		return listener_position;
 	}
-	ngtvector* get_source_position()
+	Vector3 get_source_position()
 	{
-		source_position->add_ref();
 		return source_position;
 	}
 	void set_volume_step(float volume_step)
@@ -2311,12 +2301,12 @@ void register_sound(asIScriptEngine* engine)
 	engine->RegisterObjectMethod(_O("sound"), "void set_delay_parameters(float dry, float wet, float dcay)const", asMETHOD(sound, set_delay_parameters), asCALL_THISCALL);
 
 	engine->RegisterObjectMethod(_O("sound"), "void set_position(float listener_x, float listener_y, float listener_z, float source_x, float source_y, float source_z, double theta = 0.0, float pan_step = 5, float volume_step = 0.5, float behind_pitch_decrease = 0.0, float start_pan = 0, float start_volume = 0, float start_pitch = 0)const", asMETHODPR(sound, set_position, (float listener_x, float listener_y, float listener_z, float source_x, float source_y, float source_z, double theta, float pan_step, float volume_step, float behind_pitch_decrease, float start_pan, float start_volume, float start_pitch), void), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "void set_position(const vector@ listener = null, const vector@ source = null, double theta = 0.0, float pan_step = 5, float volume_step = 0.5, float behind_pitch_decrease = 0.0, float start_pan = 0, float start_volume = 0, float start_pitch = 0)const", asMETHODPR(sound, set_position, (const ngtvector*, const ngtvector*, double theta, float pan_step, float volume_step, float behind_pitch_decrease, float start_pan, float start_volume, float start_pitch), void), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "void set_position(vector&in listener, vector&in source, double theta = 0.0, float pan_step = 5, float volume_step = 0.5, float behind_pitch_decrease = 0.0, float start_pan = 0, float start_volume = 0, float start_pitch = 0)const", asMETHODPR(sound, set_position, (Vector3&, Vector3&, double theta, float pan_step, float volume_step, float behind_pitch_decrease, float start_pan, float start_volume, float start_pitch), void), asCALL_THISCALL);
 
 	engine->RegisterObjectMethod(_O("sound"), "void set_hrtf(bool hrtf = true)const property", asMETHOD(sound, set_hrtf), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("sound"), "bool get_hrtf()const property", asMETHOD(sound, get_hrtf), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "vector@ get_listener_position()const property", asMETHOD(sound, get_listener_position), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "vector@ get_source_position()const property", asMETHOD(sound, get_source_position), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "vector get_listener_position()const property", asMETHOD(sound, get_listener_position), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "vector get_source_position()const property", asMETHOD(sound, get_source_position), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("sound"), "bool seek(float pos)const", asMETHOD(sound, seek), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("sound"), "bool get_looping() const property", asMETHOD(sound, get_looping), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("sound"), "void set_looping(bool)const property", asMETHOD(sound, set_looping), asCALL_THISCALL);

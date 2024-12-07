@@ -42,9 +42,7 @@ class sound_pool_item
 
 	void update_listener_position(float listener_x, float listener_y, float listener_z, float rotation) {
 		if (position_locked)return;
-		vector @pos = sound_instance.get_source_position();
-		if (pos is null)
-			return;
+		vector pos = sound_instance.get_source_position();
 		// Calculate boundaries
 		float delta_left = pos.x - left_range;
 		float delta_right = pos.x + right_range;
@@ -80,14 +78,12 @@ class sound_pool_item
 
 	void update_position(float x, float y, float z){
 		if (position_locked)return;
-		vector @pos = sound_instance.get_listener_position();
-		if (pos is null)
-			return;
+		vector pos = sound_instance.get_listener_position();
 		sound_instance.set_position(pos.x, pos.y, pos.z, x, y, z, rotation);
 	}
 	float get_total_distance(float listener_x, float listener_y, float listener_z) {
 		if (position_locked)return 0.0f;
-		vector @source_pos = sound_instance.get_source_position();
+		vector source_pos = sound_instance.get_source_position();
 
 		float delta_left = source_pos.x - left_range;
 		float delta_right = source_pos.x + right_range;
@@ -302,8 +298,8 @@ class sound_pool
 	}
 
 	int play_3d(const string& in filename,
-				vector @listener,
-				vector @source,
+				vector listener,
+				vector source,
 				float rotation,
 				bool looping,
 				bool memory = false,
@@ -314,8 +310,8 @@ class sound_pool
 
 	int play_3d(
 		const string&in filename,
-		vector @listener,
-		vector @source,
+		vector listener,
+		vector source,
 
 		float rotation = 0,
 		float left_range = 0,
@@ -407,6 +403,7 @@ class sound_pool
 		@handle = pool[i].sound_instance;
 		return i; // Return index
 	}
+
 	void update_listener_position(float listener_x, float listener_y, float listener_z, float rotation = 0) {
 		for (int i = 0; i < max_sounds; ++i)
 		{

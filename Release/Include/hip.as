@@ -466,7 +466,7 @@ namespace hip
 			return true;
 		return false;
 	}
-	bool in_range(double x, double y, double z, vector @min, vector @max)
+	bool in_range(double x, double y, double z, vector min, vector max)
 	{
 		try
 		{
@@ -477,7 +477,7 @@ namespace hip
 			return false;
 		}
 	}
-	bool in_range(vector @current, vector @min, vector @max)
+	bool in_range(vector current, vector min, vector max)
 	{
 		try
 		{
