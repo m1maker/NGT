@@ -420,7 +420,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterEnumValue(_O("message_box_flags"), _O("MESSAGE_BOX_BUTTONS_RIGHT_TO_LEFT"), SDL_MESSAGEBOX_BUTTONS_RIGHT_TO_LEFT);
 	engine->RegisterGlobalFunction("int message_box(const string& in title, const string& in text, array<string>@ buttons, uint flags = 0)", asFUNCTION(message_box_script), asCALL_CDECL);
 
-	engine->RegisterGlobalFunction("bool alert(const string &in title, const string &in text, const string &in button_name = \"OK\")", asFUNCTION(alert), asCALL_CDECL);
+	engine->RegisterGlobalFunction("bool alert(const string &in title, const string &in text, const string &in button_name = \"`OK\")", asFUNCTION(alert), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int question(const string &in title, const string &in text)", asFUNCTION(question), asCALL_CDECL);
 
 	engine->RegisterGlobalFunction("void wait(uint64 ms)", asFUNCTION(wait), asCALL_CDECL);

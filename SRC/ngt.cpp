@@ -108,22 +108,30 @@ CEnetObject enet;
 
 int mouse_x = 0, mouse_y = 0, mouse_z = 0;
 bool g_engineInitialized = false;
-SDL_Event e;
+SDL_Event evt;
 Poco::Event g_windowEvent;
+
+enum WindowEvent : asQWORD {
+	NONE = 0,
+	SHOW = 1 << 0,
+	HIDE = 1 << 1,
+	SET_TITLE = 1 << 2,
+	FULLSCREEN = 1 << 3,
+	KEYBOARD_RESET = 1 << 4,
+	PRESENT = 1 << 5,
+	PUSH = 1 << 6
+};
+
+asQWORD g_windowEventState = NONE;
+
+
 bool window_is_focused = false;
-bool window_event_show = false;
-bool window_event_hide = false;
-bool window_event_set_title = false;
-bool window_event_push = false;
-bool window_event_keyboard_reset = false;
-bool window_event_fullscreen = false;
 bool window_fullscreen = false;
 long update_window_freq = 5;
 const char* window_title = nullptr;
 int window_w, window_h;
 bool window_thread_event_shutdown = false;
 bool default_screen_reader_interrupt = false;
-bool window_event_present = false;
 bool window_has_renderer = false;// We can't create window in other thread, if we need graphics
 #ifdef _WIN32
 wstring wstr(const string& utf8String)
@@ -136,7 +144,7 @@ wstring wstr(const string& utf8String)
 std::array<DeviceButton, 512> keys;
 std::array<DeviceButton, 8>buttons;
 bool keyhook = false;
-string inputtext;
+string g_inputText;
 int get_cpu_count() {
 	return SDL_GetNumLogicalCPUCores();
 }
@@ -180,12 +188,10 @@ bool wait_event_requested = false;
 bool g_quitRequested = false;
 
 class WindowThread : public Poco::Runnable {
-private:
-	Poco::Thread thread;
 public:
+	Poco::Thread thread;
 	SDL_Window* win = nullptr;
 	SDL_Renderer* renderer = nullptr;
-	int thread_id = 0;
 	void start() {
 		thread.start(*this);
 	}
@@ -201,8 +207,8 @@ public:
 		}
 	}
 	void monitor() {
-		if (window_event_show) {
-			window_event_show = false;
+		if (g_windowEventState & WindowEvent::SHOW) {
+			g_windowEventState &= ~WindowEvent::SHOW;
 			SDL_WindowFlags flags = 0;
 			if (SRAL_GetCurrentEngine() == ENGINE_JAWS) {
 				SDL_SetHint(SDL_HINT_ALLOW_ALT_TAB_WHILE_GRABBED, "1");
@@ -218,19 +224,19 @@ public:
 				renderer = SDL_CreateRenderer(win, nullptr);
 			}
 		}
-		if (window_event_hide) {
-			window_event_hide = false;
+		if (g_windowEventState & WindowEvent::HIDE) {
+			g_windowEventState &= ~WindowEvent::HIDE;
 			SDL_DestroyRenderer(renderer);
 			SDL_DestroyWindow(win);
 			win = nullptr;
 		}
-		if (window_event_set_title) {
-			window_event_set_title = false;
+		if (g_windowEventState & WindowEvent::SET_TITLE) {
+			g_windowEventState &= ~WindowEvent::SET_TITLE;
 			if (win == nullptr)return;
 			SDL_SetWindowTitle(win, window_title);
 		}
-		if (window_event_fullscreen) {
-			window_event_fullscreen = false;
+		if (g_windowEventState & WindowEvent::FULLSCREEN) {
+			g_windowEventState &= ~WindowEvent::FULLSCREEN;
 			if (win == nullptr)return;
 			SDL_SetWindowFullscreen(win, window_fullscreen);
 		}
@@ -239,67 +245,68 @@ public:
 			bool result;
 			if (window_has_renderer && wait_event_requested) {
 				wait_event_requested = false;
-				result = SDL_WaitEvent(&e);
+				result = SDL_WaitEvent(&evt);
 			}
 			else
-				result = SDL_PollEvent(&e);
+				result = SDL_PollEvent(&evt);
 			if (result == true) {
 				if (!window_has_renderer) {
 					g_windowEvent.set();
 				}
 			}
-			if (window_event_push) {
-				window_event_push = false;
-				SDL_PushEvent(&e);
+			if (g_windowEventState & WindowEvent::PUSH) {
+				g_windowEventState &= ~WindowEvent::PUSH;
+				SDL_PushEvent(&evt);
 			}
-			if (window_event_present) {
-				window_event_present = false;
+			if (g_windowEventState & WindowEvent::PRESENT) {
+				g_windowEventState &= ~WindowEvent::PRESENT;
 				SDL_RenderPresent(renderer);
 			}
-			if (window_event_keyboard_reset) {
-				window_event_keyboard_reset = false;
+			if (g_windowEventState & WindowEvent::KEYBOARD_RESET) {
+				g_windowEventState &= ~WindowEvent::KEYBOARD_RESET;
 				SDL_ResetKeyboard();
 			}
-			if (e.type == SDL_EVENT_QUIT) {
+			switch (evt.type) {
+			case SDL_EVENT_QUIT:
 				g_quitRequested = true;
-			}
-			if (e.type == SDL_EVENT_TEXT_INPUT)
-			{
-				inputtext += e.text.text;
-			}
+				break;
+			case SDL_EVENT_TEXT_INPUT:
+				g_inputText += evt.text.text;
+				break;
+			case SDL_EVENT_KEY_DOWN:
+				keys[evt.key.scancode].isDown = true;
+				keys[evt.key.scancode].isReleased = false;
+				break;
+			case SDL_EVENT_KEY_UP:
+				keys[evt.key.scancode].isDown = false;
+				keys[evt.key.scancode].isPressed = false;
+				break;
+			case SDL_EVENT_MOUSE_BUTTON_DOWN:
+				buttons[evt.button.button].isDown = true;
+				buttons[evt.button.button].isReleased = false;
+				break;
+			case SDL_EVENT_MOUSE_BUTTON_UP:
+				buttons[evt.button.button].isDown = false;
+				buttons[evt.button.button].isPressed = false;
+				break;
 
-			if (e.type == SDL_EVENT_KEY_DOWN)
-			{
-				keys[e.key.scancode].isDown = true;
-				keys[e.key.scancode].isReleased = false;
-			}
-			if (e.type == SDL_EVENT_KEY_UP)
-			{
-				keys[e.key.scancode].isDown = false;
-				keys[e.key.scancode].isPressed = false;
-			}
-			if (e.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
-				buttons[e.button.button].isDown = true;
-				buttons[e.button.button].isReleased = false;
-			}
-			if (e.type == SDL_EVENT_MOUSE_BUTTON_UP) {
-				buttons[e.button.button].isDown = false;
-				buttons[e.button.button].isPressed = false;
-			}
-
-
-			if (e.type == SDL_EVENT_MOUSE_MOTION) {
-				mouse_x = e.motion.x;
-				mouse_y = e.motion.y;
-			}
-			if (e.type == SDL_EVENT_MOUSE_WHEEL) {
-				mouse_z += e.wheel.y;
-			}
-			if (e.type == SDL_EVENT_WINDOW_FOCUS_GAINED)
+			case SDL_EVENT_MOUSE_MOTION:
+				mouse_x = evt.motion.x;
+				mouse_y = evt.motion.y;
+				break;
+			case SDL_EVENT_MOUSE_WHEEL:
+				mouse_z += evt.wheel.y;
+				break;
+			case SDL_EVENT_WINDOW_FOCUS_GAINED:
 				window_is_focused = true;
-			if (e.type == SDL_EVENT_WINDOW_FOCUS_LOST) {
-				window_event_keyboard_reset = true;
+				break;
+			case SDL_EVENT_WINDOW_FOCUS_LOST:
+
+				g_windowEventState |= WindowEvent::KEYBOARD_RESET;
 				window_is_focused = false;
+				break;
+			default:
+				break;
 			}
 			SDL_UpdateWindowSurface(win);
 
@@ -308,7 +315,6 @@ public:
 
 
 	void run() {
-		this->thread_id = Thread::currentOsTid();
 		while (!window_thread_event_shutdown) {
 			thread.sleep(update_window_freq + 1);
 			this->monitor();
@@ -402,13 +408,12 @@ bool show_window(const string& title, int width, int height, bool enable_render)
 	window_w = width;
 	window_h = height;
 	// Starting window
-	window_event_show = true;
+	g_windowEventState |= WindowEvent::SHOW;
 	// Initialize mouse and keyboard state.
 	keys_released();
 	for (int i = 0; i < 8; i++) {
 		mouse_released(i);
 	}
-	window_event_keyboard_reset = true;
 	if (enable_render)windowRunnable->monitor();
 	else {
 		while (windowRunnable->win == nullptr);
@@ -458,7 +463,7 @@ void* get_window_handle() {
 	return nullptr;
 }
 void hide_window() {
-	window_event_hide = true;
+	g_windowEventState |= WindowEvent::HIDE;
 	window_thread_event_shutdown = true;
 	wait(20);
 	windowRunnable->stop();
@@ -469,7 +474,7 @@ void hide_window() {
 }
 void set_window_title(const string& new_title) {
 	window_title = new_title.c_str();
-	window_event_set_title = true;
+	g_windowEventState |= WindowEvent::SET_TITLE;
 	if (window_has_renderer)windowRunnable->monitor();
 }
 SDL_Renderer* get_window_renderer() {
@@ -477,20 +482,13 @@ SDL_Renderer* get_window_renderer() {
 	return nullptr;
 }
 void window_present() {
-	window_event_present = true;
+	g_windowEventState |= WindowEvent::PRESENT;
 	if (window_has_renderer)windowRunnable->monitor();
 }
 void garbage_collect() {
 	asIScriptContext* ctx = asGetActiveContext();
 	asIScriptEngine* engine = ctx->GetEngine();
 	engine->GarbageCollect(1 | 2, 1);
-}
-SDL_Surface* get_window_surface() {
-	if (windowRunnable == nullptr || windowRunnable->win == nullptr)return NULL;
-	return SDL_GetWindowSurface(windowRunnable->win);
-}
-SDL_Surface* load_bmp(const string& file) {
-	return SDL_LoadBMP(file.c_str());
 }
 string key_to_string(SDL_Scancode key) {
 	return string(SDL_GetScancodeName(key));
@@ -503,7 +501,7 @@ bool get_window_active() {
 }
 void set_window_fullscreen(bool fullscreen) {
 	window_fullscreen = fullscreen;
-	window_event_fullscreen = true;
+	g_windowEventState |= WindowEvent::FULLSCREEN;
 	if (window_has_renderer)windowRunnable->monitor();
 }
 bool mouse_pressed(unsigned char button)
@@ -683,8 +681,8 @@ string clipboard_read_text() {
 	return SDL_GetClipboardText();
 }
 string get_input() {
-	string temp = inputtext;
-	inputtext = "";
+	string temp = g_inputText;
+	g_inputText = "";
 	return temp;
 }
 string input_box(const string& title, const string& text, const string& default_text, bool secure, bool multiline) {
@@ -730,13 +728,13 @@ string input_box(const string& title, const string& text, const string& default_
 		return "";
 	}
 	goto destroy;
-	return "";
-destroy:
+destroy: {
 	gui::delete_control(edit);
 	gui::delete_control(ok);
 	gui::delete_control(cancel);
 	gui::hide_window(main_window);
-	return"";
+	}
+return"";
 #else 
 	std::cout << title << ": " << text << std::endl << default_text;
 	std::string result;
@@ -771,30 +769,33 @@ bool key_down(int key_code)
 }
 bool key_repeat(int key_code)
 {
-	if (key_pressed(key_code) || (e.key.scancode == key_code && e.key.repeat == true)) {
+	if (key_pressed(key_code) || (evt.key.scancode == key_code && evt.key.repeat == true)) {
 		return true;
 	}
 	return false;
 }
 bool force_key_down(SDL_Scancode keycode) {
-	e.type = SDL_EVENT_KEY_DOWN;
-	e.key.scancode = keycode;
-	keys[e.key.scancode].isDown = true;
-	window_event_push = true;
+	evt.type = SDL_EVENT_KEY_DOWN;
+	evt.key.scancode = keycode;
+	keys[evt.key.scancode].isDown = true;
+	g_windowEventState |= WindowEvent::PUSH;
+	if (!window_has_renderer && windowRunnable != nullptr)windowRunnable->monitor();
 	return key_down(keycode);
 }
 bool force_key_up(SDL_Scancode keycode) {
-	e.type = SDL_EVENT_KEY_UP;
-	e.key.scancode = keycode;
-	keys[e.key.scancode].isDown = false;
-	window_event_push = true;
+	evt.type = SDL_EVENT_KEY_UP;
+	evt.key.scancode = keycode;
+	keys[evt.key.scancode].isDown = false;
+	g_windowEventState |= WindowEvent::PUSH;
+	if (!window_has_renderer && windowRunnable != nullptr)windowRunnable->monitor();
 	return !key_down(keycode);
 }
 void reset_keyboard() {
 	for (int i = 0; i < 512; i++) {
 		keys[i].isDown = false;
 	}
-	window_event_keyboard_reset = true;
+	g_windowEventState |= WindowEvent::PUSH;
+	if (!window_has_renderer && windowRunnable != nullptr)windowRunnable->monitor();
 }
 bool quit_requested() {
 	if (g_quitRequested) {
@@ -1077,22 +1078,23 @@ int message_box_script(const std::string& title, const std::string& text, CScrip
 
 bool alert(const string& title, const string& text, const string& button_name)
 {
-	return message_box(title, text, { "`OK" }, 0) == 0;
+	return message_box(title, text, { button_name }, 0) == 0;
 }
 int question(const string& title, const string& text) {
 	return message_box(title, text, { "`Yes", "~No" }, 0);
 }
 
+
 timer g_windowUpdater;
 void wait(uint64_t time) {
-	if (!window_has_renderer) {
-		std::this_thread::sleep_for(std::chrono::milliseconds(time));
+	if (windowRunnable == nullptr || !window_has_renderer || windowRunnable->thread.currentOsTid() != Poco::Thread::currentOsTid()) {
+		Poco::Thread::sleep(time);
 		return;
 	}
 	timer t;
 	for (int64_t i = 0; i < time; ++i) {
 		if (t.elapsed_millis() > time)break;
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+		Poco::Thread::sleep(1);
 		if (windowRunnable != nullptr && g_windowUpdater.elapsed_millis() > update_window_freq) {
 			windowRunnable->monitor();
 			g_windowUpdater.restart();

@@ -13,6 +13,7 @@ if(wait_time.elapsed_millis>= 8000)
 {
 wait_time.pause();
 alert("Thanks", "Thanks for waiting for me. You typed the following characters within 8 seconds: " + get_input() + ". Goodbye.");
+break;
 }
 }
 }
