@@ -22,5 +22,9 @@ void main() {
     s.load_pcm(packedData, samples, 2, sampleRate, 32);
     s.play_wait();
     s.close();
+    file f;
+    f.open("Test.wav", "w");
+    f.write(create_wav_header(2, sampleRate, 32, samples) + packedData);
+    f.close();
 }
 

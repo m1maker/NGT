@@ -156,3 +156,5 @@ array<float>@ apply_envelope(const array<float>@ audio, float attack, float deca
 
 	return envelopedAudio;
 }
+
+// WAV file header fields

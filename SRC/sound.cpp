@@ -2198,27 +2198,32 @@ private:
 
 void audio_recorder_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount)
 {
-	audio_encoder* encoder = static_cast<audio_encoder*>(pDevice->pUserData);
-	ma_encoder_write_pcm_frames(&encoder->encoder, pInput, frameCount, nullptr);
+	std::vector<float>* data = static_cast<std::vector<float>*>(pDevice->pUserData);
+	const float* in = (const float*)pInput; // Use const float* for input data
 
-	(void)pOutput;
+	// Process stereo input (2 channels)
+	for (ma_uint32 i = 0; i < frameCount * 2; ++i) {
+		data->push_back(in[i]);
+	}
+
+	(void)pOutput; // Suppress unused variable warning
 }
 
 class MINIAUDIO_IMPLEMENTATION audio_recorder
 {
 public:
-	audio_encoder encoder;
+	std::vector<float> data;
 	ma_device_config deviceConfig;
 	ma_device recording_device;
 
 	void start()
 	{
 		deviceConfig = ma_device_config_init(ma_device_type_capture);
-		deviceConfig.capture.format = ma_format_s16;
+		deviceConfig.capture.format = ma_format_f32;
 		deviceConfig.capture.channels = 2;
 		deviceConfig.sampleRate = 44100;
 		deviceConfig.dataCallback = audio_recorder_callback;
-		deviceConfig.pUserData = &encoder;
+		deviceConfig.pUserData = &data;
 
 		ma_device_init(nullptr, &deviceConfig, &recording_device);
 		ma_device_start(&recording_device);
@@ -2226,15 +2231,30 @@ public:
 
 	void stop()
 	{
-		ma_encoder_uninit(&encoder.encoder);
 		ma_device_uninit(&recording_device);
 	}
 
-	std::string get_data()
+	std::string get_data(size_t& size)
 	{
-		return encoder.get_data();
+		size = data.size();
+		std::string result(size * sizeof(float), '\0'); // Resize to hold all bytes
+
+		// Copy float data to string as bytes
+		std::memcpy(&result[0], data.data(), size * sizeof(float));
+
+		return result;
+	}
+
+	void clear() {
+		data.clear();
 	}
 };
+
+static void audio_recorder_construct(audio_recorder* self)
+{
+	new(self) audio_recorder();
+}
+
 
 ma_result audio_stream_callback(ma_decoder* pDecoder, void* buffer, size_t bytesToRead, size_t* pBytesRead)
 {
@@ -2269,7 +2289,6 @@ public:
 };
 
 sound* fsound(const string& filename) { return new sound(filename); }
-audio_recorder* faudio_recorder() { return new audio_recorder; }
 audio_encoder* faudio_encoder() { return new audio_encoder; }
 
 void register_sound(asIScriptEngine* engine)
@@ -2350,5 +2369,13 @@ void register_sound(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("bool get_sound_global_hrtf()property", asFUNCTION(get_sound_global_hrtf), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void set_spatial_blend_max_distance(float)property", asFUNCTION(set_spatial_blend_max_distance), asCALL_CDECL);
 	engine->RegisterGlobalFunction("float get_spatial_blend_max_distance()property", asFUNCTION(get_spatial_blend_max_distance), asCALL_CDECL);
+
+	engine->RegisterObjectType("audio_recorder", sizeof(audio_recorder), asOBJ_VALUE | asOBJ_POD);
+	engine->RegisterObjectBehaviour("audio_recorder", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(audio_recorder_construct), asCALL_CDECL_OBJLAST);
+
+	engine->RegisterObjectMethod(_O("audio_recorder"), "void start()const", asMETHOD(audio_recorder, start), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("audio_recorder"), "void stop()const", asMETHOD(audio_recorder, stop), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("audio_recorder"), "string get_data(size_t&out size = void)const", asMETHOD(audio_recorder, get_data), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("audio_recorder"), "void clear()const", asMETHOD(audio_recorder, clear), asCALL_THISCALL);
 
 }

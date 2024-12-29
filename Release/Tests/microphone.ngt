@@ -1,0 +1,14 @@
+void main(){
+audio_recorder ar;
+ar.start();
+sound s;
+show_window("Test");
+while(!quit_requested){
+wait(500);
+size_t size;
+string data = ar.get_data(size);
+s.load_pcm(data, size, 2, 44100, 32);
+s.play();
+ar.clear();
+}
+}
