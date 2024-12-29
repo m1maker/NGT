@@ -147,6 +147,11 @@ CScriptArray* keys_pressed();
 CScriptArray* keys_released();
 CScriptArray* keys_down();
 CScriptArray* keys_repeat();
+std::string float_to_bytes(float f);
+float bytes_to_float(const std::string& s);
+std::string double_to_bytes(double d);
+double bytes_to_double(const std::string& s);
+
 string string_encrypt(const string& str, string encryption_key);
 string string_decrypt(const string& str, string encryption_key);
 string url_decode(const string& url);

@@ -403,6 +403,11 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("string url_get(const string &in url)", asFUNCTION(url_get), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string url_post(const string &in url, const string &in parameters)", asFUNCTION(url_post), asCALL_CDECL);
 	AS_END(engine);
+	engine->RegisterGlobalFunction(_O("string float_to_bytes(float number)"), asFUNCTION(float_to_bytes), asCALL_CDECL);
+	engine->RegisterGlobalFunction(_O("float bytes_to_float(const string&in data)"), asFUNCTION(bytes_to_float), asCALL_CDECL);
+	engine->RegisterGlobalFunction(_O("string double_to_bytes(double number)"), asFUNCTION(double_to_bytes), asCALL_CDECL);
+	engine->RegisterGlobalFunction(_O("double bytes_to_double(const string&in data)"), asFUNCTION(bytes_to_double), asCALL_CDECL);
+
 	engine->RegisterGlobalFunction("string ascii_to_character(int ascii)", asFUNCTION(ascii_to_character), asCALL_CDECL);
 	engine->RegisterGlobalFunction("int character_to_ascii(const string      &in character)", asFUNCTION(character_to_ascii), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string hex_to_string(const string&in the_hexadecimal_sequence)", asFUNCTION(hex_to_string), asCALL_CDECL);

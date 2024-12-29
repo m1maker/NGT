@@ -2,13 +2,17 @@ void main(){
 sound s;
 tts_voice v;
 size_t size;
-string pcm = v.speak_to_memory("Test", size);
+string pcm = v.speak_to_memory("S", size);
 show_window("Test");
+v.speak("Are you ready?");
+wait(1500);
+v.speak_interrupt("Let's go");
+wait(500);
 thread_func@ func = function(dictionary@ args){
 tts_voice@ v = cast<tts_voice@>(args[0]);
 while (!quit_requested){
+v.speak(random_bool() ? "Bla" : "Meh");
 wait(1000);
-v.speak("Bla");
 }
 };
 dictionary args;
@@ -20,12 +24,12 @@ s.load_pcm(pcm, size/2, 1, 16000, 16);
 bool result = random_bool();
 if (result){
 s.pitch = random(90, 100);
-s.set_fx("reverb");
+s.set_fx(random_bool() ? "reverb" : "delay");
 s.set_reverb_parameters(1.0f, 0.5f, 1.0f, 0, 0);
 }
 s.hrtf = true;
 s.set_position(0, 0, 0, random(-10, 10), random(-10, 10), 00);
-s.play();
+s.play_looped();
 wait(result ? 500 : 250);
 s.close();
 }

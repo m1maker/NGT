@@ -649,6 +649,23 @@ CScriptArray* keys_repeat() {
 	}
 	return array;
 }
+// Sam Tupy NVGT's functions
+std::string float_to_bytes(float f) {
+	return std::string((char*)&f, 4);
+}
+float bytes_to_float(const std::string& s) {
+	if (s.size() != 4) return 0;
+	return *((float*)&s[0]);
+}
+std::string double_to_bytes(double d) {
+	return std::string((char*)&d, 8);
+}
+double bytes_to_double(const std::string& s) {
+	if (s.size() != 8) return 0;
+	return *((double*)&s[0]);
+}
+
+
 string number_to_words(uint64_t num, bool include_and)
 {
 	vector<char> buf(1024);
@@ -746,7 +763,7 @@ return"";
 	}
 	return result;
 #endif
-}
+	}
 bool key_pressed(int key_code)
 {
 	if (keys[key_code].isDown == true and keys[key_code].isPressed == false)
