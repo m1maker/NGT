@@ -1353,7 +1353,7 @@ public:
 		ma_sound_set_rolloff(handle_, 2);
 		return true;
 	}
-	bool load_from_memory(string data, size_t stream_size)
+	bool load_from_memory(const string& data, size_t stream_size)
 	{
 		if (active)
 			this->close();
@@ -1379,7 +1379,7 @@ public:
 
 		return active;
 	}
-	bool load_pcm(string data, size_t size, int channels, int sample_rate)
+	bool load_pcm(const string& data, size_t size, int channels, int sample_rate, int bits_per_sample)
 	{
 		if (active)
 			this->close();
@@ -1389,9 +1389,27 @@ public:
 			ma_audio_buffer_uninit(&m_buffer);
 			buffer_initialized = false;
 		}
-		ma_audio_buffer_config bufferConfig = ma_audio_buffer_config_init(FORMAT, channels, size / 2, (const void*)data.c_str(), nullptr);
+		ma_audio_buffer_config bufferConfig = ma_audio_buffer_config_init(FORMAT, channels, size, (const void*)data.c_str(), nullptr);
 		bufferConfig.sampleRate = sample_rate;
 		bufferConfig.channels = channels;
+		ma_format format = ma_format_unknown;
+		switch (bits_per_sample) {
+		case 8:
+			format = ma_format_u8;
+			break;
+		case 16:
+			format = ma_format_s16;
+			break;
+		case 24:
+			format = ma_format_s24;
+			break;
+		case 32:
+			format = ma_format_f32;
+			break;
+		default:
+			break;
+		}
+		bufferConfig.format = format;
 		ma_result result = ma_audio_buffer_init(&bufferConfig, &m_buffer);
 		if (result != MA_SUCCESS)
 			return false;
@@ -2278,8 +2296,8 @@ void register_sound(asIScriptEngine* engine)
 	engine->RegisterObjectBehaviour("sound", asBEHAVE_ADDREF, "void f()", asMETHOD(sound, AddRef), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("sound", asBEHAVE_RELEASE, "void f()", asMETHOD(sound, Release), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("sound"), "bool load(const string &in filename)const", asMETHOD(sound, load), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "bool load_from_memory(string memory, size_t memory_size = 0)const", asMETHOD(sound, load_from_memory), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "bool load_pcm(string memory, size_t memory_size = 0, int channels = 0, int sample_rate = 0)const", asMETHOD(sound, load_pcm), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "bool load_from_memory(const string&in memory, size_t memory_size = 0)const", asMETHOD(sound, load_from_memory), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "bool load_pcm(const string&in memory, size_t memory_size = 0, int channels = 0, int sample_rate = 0, int bits_per_sample = 0)const", asMETHOD(sound, load_pcm), asCALL_THISCALL);
 
 	engine->RegisterObjectMethod(_O("sound"), "bool stream(const string &in filename)const", asMETHOD(sound, stream), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("sound"), "bool load_url(const string &in url)const", asMETHOD(sound, load_url), asCALL_THISCALL);
@@ -2332,5 +2350,5 @@ void register_sound(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("bool get_sound_global_hrtf()property", asFUNCTION(get_sound_global_hrtf), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void set_spatial_blend_max_distance(float)property", asFUNCTION(set_spatial_blend_max_distance), asCALL_CDECL);
 	engine->RegisterGlobalFunction("float get_spatial_blend_max_distance()property", asFUNCTION(get_spatial_blend_max_distance), asCALL_CDECL);
-	std::this_thread::yield();
+
 }

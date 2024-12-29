@@ -1,10 +1,32 @@
 void main(){
 sound s;
-file f;
-f.open("C:/windows/media/tada.wav", "r");
-string pcm = f.read(f.get_size());
-f.close();
-s.load_from_memory(pcm, pcm.length());
-s.play_wait();
+tts_voice v;
+size_t size;
+string pcm = v.speak_to_memory("Test", size);
+show_window("Test");
+thread_func@ func = function(dictionary@ args){
+tts_voice@ v = cast<tts_voice@>(args[0]);
+while (!quit_requested){
+wait(1000);
+v.speak("Bla");
+}
+};
+dictionary args;
+@args[0] = v;
+thread t(func, args);
+t.detach();
+while (!quit_requested){
+s.load_pcm(pcm, size/2, 1, 16000, 16);
+bool result = random_bool();
+if (result){
+s.pitch = random(90, 100);
+s.set_fx("reverb");
+s.set_reverb_parameters(1.0f, 0.5f, 1.0f, 0, 0);
+}
+s.hrtf = true;
+s.set_position(0, 0, 0, random(-10, 10), random(-10, 10), 00);
+s.play();
+wait(result ? 500 : 250);
 s.close();
+}
 }

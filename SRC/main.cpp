@@ -586,7 +586,7 @@ public:
 		scriptEngine->SetTranslateAppExceptionCallback(asFUNCTION(TranslateException), 0, asCALL_CDECL);
 		scriptEngine->SetEngineProperty(asEP_ALLOW_UNSAFE_REFERENCES, true);
 		scriptEngine->SetEngineProperty(asEP_INIT_GLOBAL_VARS_AFTER_BUILD, false);
-
+		scriptEngine->SetEngineProperty(asEP_ALLOW_IMPLICIT_HANDLE_TYPES, true);
 	}
 	~NGTScripting() {
 		if (m_dbg)
@@ -810,7 +810,18 @@ public:
 	}
 	int Exec(asIScriptFunction* func) {
 		if (func == nullptr)return -1;
+		asIScriptModule* mod = func->GetModule();
+		if (!mod)return -1;
+
 		int r = 0;
+		r = mod->ResetGlobalVars(0);
+		if (r < 0)
+		{
+			scriptEngine->WriteMessage(mod->GetName(), 0, 0, asMSGTYPE_ERROR, "Failed while initializing global variables");
+			return -1;
+		}
+
+
 		scriptContext = scriptEngine->RequestContext();
 		scriptContext->Prepare(func);
 		// Execute the script until completion
@@ -1061,10 +1072,6 @@ protected:
 			m_retcode = 1;
 			return;
 		}
-		if (module->ResetGlobalVars(0) < 0) {
-			show_message(true, true, true);
-		}
-
 		app->InitializeDebugger();
 		int result = app->Exec(func);
 		m_retcode = result;
@@ -1086,10 +1093,6 @@ protected:
 			m_retcode = 1;
 			return;
 		}
-		if (module->ResetGlobalVars(0) < 0) {
-			show_message(true, true, true);
-		}
-
 		int result = app->Exec(func);
 
 		m_retcode = result;
@@ -1103,10 +1106,6 @@ protected:
 			m_retcode = -1;
 			return;
 		}
-		if (module->ResetGlobalVars(0) < 0) {
-			show_message(true, true, true);
-		}
-
 		// Call compiler to create executable file
 		std::string main_exe = get_exe();
 		std::vector<std::string> name_split = string_split(".", value);

@@ -591,16 +591,18 @@ void exit_engine(int return_number)
 		e_ctx->Execute();
 		int result = e_ctx->GetReturnDWord();
 		if (result == 1) {
-			e_ctx->Release();
+			engine->ReturnContext(e_ctx);
 			return;
 		}
-		e_ctx->Release();
+		engine->ReturnContext(e_ctx);
 		exit_callback = nullptr;
 	}
 	g_shutdown = true;
 	g_retcode = return_number;
-	if (ctx)
+	if (ctx) {
 		ctx->Abort();
+		ctx->GetEngine()->ReturnContext(ctx);
+	}
 }
 
 CScriptArray* keys_pressed() {
@@ -2061,19 +2063,20 @@ script_thread::script_thread(asIScriptFunction* func, CScriptDictionary* args) {
 void script_thread::detach() {
 	thread t([this]() {
 		this->context->Execute();
-		this->context->Unprepare();
+		this->context->GetEngine()->ReturnContext(this->context);
 		});
 	t.detach();
 }
 void script_thread::join() {
 	thread t([this]() {
 		this->context->Execute();
-		this->context->Unprepare();
+		this->context->GetEngine()->ReturnContext(this->context);
 		});
 	t.join();
 }
 void script_thread::destroy() {
 	this->context->Abort();
+	this->context->GetEngine()->ReturnContext(this->context);
 }
 
 user_idle::user_idle() {}
