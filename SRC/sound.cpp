@@ -1250,6 +1250,77 @@ MA_API void ma_playback_speed_node_uninit(ma_playback_speed_node* pPlaybackSpeed
 	ma_node_uninit(pPlaybackSpeedNode, pAllocationCallbacks);
 }
 
+class pcm_ring_buffer {
+public:
+	ma_pcm_rb rb;
+	pcm_ring_buffer(ma_uint32 channels = 2, ma_uint32 sample_rate = SAMPLE_RATE, ma_uint32 bufferSizeInFrames = 1024)
+		: ref_count(1) {
+		if (ma_pcm_rb_init(ma_format_f32, channels, bufferSizeInFrames, nullptr, nullptr, &rb) != MA_SUCCESS) {
+			throw std::runtime_error("Failed to initialize PCM ring buffer");
+		}
+		ma_pcm_rb_set_sample_rate(&rb, sample_rate);
+	}
+
+	~pcm_ring_buffer() {
+		ma_pcm_rb_uninit(&rb);
+	}
+
+	void write(const std::string& data) {
+		if (data.empty()) return;
+
+		// Calculate the number of frames based on the size of the input data
+		ma_uint32 sizeInFrames = static_cast<ma_uint32>(data.size() / (sizeof(float) * rb.channels)); // Assuming float samples
+		void* bufferOut = nullptr;
+
+		// Acquire space in the ring buffer
+		if (ma_pcm_rb_acquire_write(&rb, &sizeInFrames, &bufferOut) != MA_SUCCESS) {
+			return;
+		}
+
+		// Copy data into the ring buffer
+		std::memcpy(bufferOut, data.data(), sizeInFrames * sizeof(float) * rb.channels);
+		ma_pcm_rb_commit_write(&rb, sizeInFrames);
+	}
+
+	std::string read(size_t size) {
+		void* bufferOut = nullptr;
+		ma_uint32 sizeInFrames = static_cast<ma_uint32>(size / (sizeof(float) * rb.channels)); // Assuming float samples
+
+		// Acquire space in the ring buffer for reading
+		if (ma_pcm_rb_acquire_read(&rb, &sizeInFrames, &bufferOut) != MA_SUCCESS) {
+			return "";
+		}
+
+		// Create a string to hold the read data
+		std::string result(static_cast<char*>(bufferOut), sizeInFrames * sizeof(float) * rb.channels);
+		ma_pcm_rb_commit_read(&rb, sizeInFrames);
+
+		return result;
+	}
+
+	void reset() {
+		ma_pcm_rb_reset(&rb);
+	}
+
+	// Reference counting methods
+	void add_ref() {
+		ref_count++;
+	}
+
+	void release() {
+		if (--ref_count == 0) {
+			delete this;
+		}
+	}
+
+private:
+	std::atomic<int> ref_count; // Atomic for thread safety
+};
+
+
+
+
+
 class MINIAUDIO_IMPLEMENTATION sound
 {
 public:
@@ -1432,6 +1503,30 @@ public:
 
 		return active;
 	}
+
+	bool load_pcm_buffer(pcm_ring_buffer* buffer)
+	{
+		if (active)
+			this->close();
+		handle_ = new ma_sound;
+		ma_result loading_result = ma_sound_init_from_data_source(&sound_default_mixer, &buffer->rb, 0, 0, handle_);
+		if (loading_result != MA_SUCCESS)
+		{
+			delete handle_;
+			active = false;
+			return false;
+		}
+		active = true;
+		auto last = --effects.end();
+
+		ma_node_attach_output_bus(handle_, 0, last->second, 0);
+
+		if (sound_global_hrtf)
+			this->set_hrtf(true);
+
+		return active;
+	}
+
 	bool stream(const string& filename)
 	{
 		string result;
@@ -2111,90 +2206,7 @@ bool get_sound_global_hrtf()
 {
 	return sound_global_hrtf;
 }
-ma_result ma_encoder_write_callback(ma_encoder* encoder, const void* buffer, size_t bytesToWrite, size_t* pBytesWritten)
-{
-	if (encoder == nullptr)
-	{
-		return MA_INVALID_ARGS;
-	}
 
-	MemoryStream* stream = reinterpret_cast<MemoryStream*>(encoder->pUserData);
-	if (buffer == nullptr || stream == nullptr)
-		return MA_INVALID_ARGS;
-	stream->write((const char*)buffer, bytesToWrite);
-	return MA_SUCCESS;
-}
-
-ma_result ma_encoder_seek_callback(ma_encoder* pEncoder, ma_int64 offset, ma_seek_origin origin)
-{
-	MemoryStream* stream = reinterpret_cast<MemoryStream*>(pEncoder->pUserData);
-	seek_origin so;
-	switch (origin)
-	{
-	case ma_seek_origin_start:
-	{
-		so = seek_origin_start;
-		break;
-	}
-	case ma_seek_origin_current:
-	{
-		so = seek_origin_current;
-		break;
-	}
-	case ma_seek_origin_end:
-	{
-		so = seek_origin_end;
-		break;
-	}
-	default:
-		return MA_ERROR;
-	}
-	stream->seek(so, offset);
-	return MA_SUCCESS;
-}
-
-class MINIAUDIO_IMPLEMENTATION audio_encoder
-{
-public:
-	MemoryStream stream;
-	ma_encoder_config encoderConfig;
-	ma_encoder encoder;
-	void AddRef() const
-	{
-		ref += 1;
-	}
-	void Release()
-	{
-		if (--ref < 1)
-		{
-			delete this;
-		}
-	}
-	audio_encoder() : stream(0), ref(1)
-	{
-		encoderConfig = ma_encoder_config_init(ma_encoding_format_wav, ma_format_s16, 2, 44100);
-		ma_encoder_init(ma_encoder_write_callback, ma_encoder_seek_callback, &stream, &encoderConfig, &encoder);
-	}
-	~audio_encoder()
-	{
-		ma_encoder_uninit(&encoder);
-	}
-	void encode(const std::string& audio_data)
-	{
-		ma_encoder_write_pcm_frames(&encoder, audio_data.c_str(), audio_data.size(), nullptr);
-	}
-	std::string get_data()
-	{
-		stream.seek(0);
-		size_t dataSize = stream.size();
-		std::vector<char> buffer(dataSize);
-		stream.read(buffer.data(), dataSize);
-		return std::string(buffer.data(), dataSize);
-	}
-
-private:
-	mutable int ref = 0;
-};
 
 void audio_recorder_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount)
 {
@@ -2255,41 +2267,8 @@ static void audio_recorder_construct(audio_recorder* self)
 	new(self) audio_recorder();
 }
 
-
-ma_result audio_stream_callback(ma_decoder* pDecoder, void* buffer, size_t bytesToRead, size_t* pBytesRead)
-{
-	string temp((char*)buffer, bytesToRead);
-	temp.resize(bytesToRead);
-	string* data = (string*)pDecoder->pUserData;
-	*data = temp;
-	return MA_SUCCESS;
-}
-ma_result audio_stream_seek_callback(ma_decoder* pDecoder, ma_int64 byteOffset, ma_seek_origin origin)
-{
-	return MA_SUCCESS;
-}
-
-class audio_stream
-{
-public:
-	ma_device_config deviceConfig;
-	ma_device device;
-	ma_decoder decoder;
-	audio_stream()
-	{
-		deviceConfig = ma_device_config_init(ma_device_type_playback);
-		deviceConfig.playback.format = ma_format_f32;
-		deviceConfig.playback.channels = 2;
-		deviceConfig.sampleRate = 44100;
-		//		deviceConfig.dataCallback = audio_recorder_callback;
-		deviceConfig.pUserData = &decoder;
-
-		//		ma_device_init(NULL, &deviceConfig, &recording_device);
-	}
-};
-
 sound* fsound(const string& filename) { return new sound(filename); }
-audio_encoder* faudio_encoder() { return new audio_encoder; }
+pcm_ring_buffer* fbuffer(ma_uint32 channels, ma_uint32 sample_rate, ma_uint32 buffer_size = 1024) { return new pcm_ring_buffer(channels, sample_rate, buffer_size); }
 
 void register_sound(asIScriptEngine* engine)
 {
@@ -2310,6 +2289,16 @@ void register_sound(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("array<string>@ get_output_audio_devices()", asFUNCTION(get_output_audio_devices), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool set_output_audio_device(uint index)", asFUNCTION(set_output_audio_device), asCALL_CDECL);
 
+	engine->RegisterObjectType("pcm_ring_buffer", sizeof(pcm_ring_buffer), asOBJ_REF);
+	engine->RegisterObjectBehaviour("pcm_ring_buffer", asBEHAVE_FACTORY, "pcm_ring_buffer@ buff(uint32 channels = 2, uint32 sample_rate = 44100, uint32 size = 1024)", asFUNCTION(fbuffer), asCALL_CDECL);
+	engine->RegisterObjectBehaviour("pcm_ring_buffer", asBEHAVE_ADDREF, "void f()", asMETHOD(pcm_ring_buffer, add_ref), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("pcm_ring_buffer", asBEHAVE_RELEASE, "void f()", asMETHOD(pcm_ring_buffer, release), asCALL_THISCALL);
+	engine->RegisterObjectMethod("pcm_ring_buffer", "void write(const string &in data)", asMETHOD(pcm_ring_buffer, write), asCALL_THISCALL);
+	engine->RegisterObjectMethod("pcm_ring_buffer", "string read(size_t size)", asMETHOD(pcm_ring_buffer, read), asCALL_THISCALL);
+	engine->RegisterObjectMethod("pcm_ring_buffer", "void reset()", asMETHOD(pcm_ring_buffer, reset), asCALL_THISCALL);
+
+
+
 	engine->RegisterObjectType("sound", sizeof(sound), asOBJ_REF);
 	engine->RegisterObjectBehaviour("sound", asBEHAVE_FACTORY, "sound@ s(const string &in filename = \"\")", asFUNCTION(fsound), asCALL_CDECL);
 	engine->RegisterObjectBehaviour("sound", asBEHAVE_ADDREF, "void f()", asMETHOD(sound, AddRef), asCALL_THISCALL);
@@ -2317,6 +2306,7 @@ void register_sound(asIScriptEngine* engine)
 	engine->RegisterObjectMethod(_O("sound"), "bool load(const string &in filename)const", asMETHOD(sound, load), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("sound"), "bool load_from_memory(const string&in memory, size_t memory_size = 0)const", asMETHOD(sound, load_from_memory), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("sound"), "bool load_pcm(const string&in memory, size_t memory_size = 0, int channels = 0, int sample_rate = 0, int bits_per_sample = 0)const", asMETHOD(sound, load_pcm), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("sound"), "bool load_pcm_buffer(pcm_ring_buffer@ buffer)const", asMETHOD(sound, load_pcm_buffer), asCALL_THISCALL);
 
 	engine->RegisterObjectMethod(_O("sound"), "bool stream(const string &in filename)const", asMETHOD(sound, stream), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("sound"), "bool load_url(const string &in url)const", asMETHOD(sound, load_url), asCALL_THISCALL);

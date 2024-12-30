@@ -17,14 +17,11 @@ void main() {
 
     // Pack the final audio data for output
     string packedData = pack_audio(finalAudio);
-
+    pcm_ring_buffer buffer(size : samples);
     sound s;
-    s.load_pcm(packedData, samples, 2, sampleRate, 32);
+    s.load_pcm_buffer(buffer);
+    buffer.write(packedData);
     s.play_wait();
     s.close();
-    file f;
-    f.open("Test.wav", "w");
-    f.write(create_wav_header(2, sampleRate, 32, samples) + packedData);
-    f.close();
 }
 

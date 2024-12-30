@@ -1,14 +1,18 @@
 void main(){
 audio_recorder ar;
 ar.start();
-sound s;
+pcm_ring_buffer buffer(2, 44100, 1000000);
 show_window("Test");
+sound s;
+s.load_pcm_buffer(buffer);
+s.play_looped();
+s.set_fx("reverb");
+s.set_reverb_parameters(1.0f, 0.5f, 0.5f, 0.0f, 0.0f);
 while(!quit_requested){
-wait(500);
+wait(5);
 size_t size;
 string data = ar.get_data(size);
-s.load_pcm(data, size, 2, 44100, 32);
-s.play();
+buffer.write(data);
 ar.clear();
 }
 }
