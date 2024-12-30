@@ -7,9 +7,21 @@ sound s;
 s.load_pcm_buffer(buffer);
 s.play_looped();
 s.set_fx("reverb");
-s.set_reverb_parameters(1.0f, 0.5f, 0.5f, 0.0f, 0.0f);
+s.set_reverb_parameters(1.9f, 0.5f, 0.5f, 0.0f, 0.0f);
+s.hrtf = true;
+float x = 0.0f;
+float y = 0.0f;
+float z = 0.0f;
 while(!quit_requested){
 wait(5);
+s.set_position(x, y, z, 0, 0, 0);
+if (key_repeat(KEY_RIGHT))x++;
+else if (key_repeat(KEY_LEFT))x--;
+else if (key_repeat(KEY_UP))y++;
+else if (key_repeat(KEY_DOWN))y--;
+else if (key_repeat(KEY_PAGEDOWN))z--;
+else if (key_repeat(KEY_PAGEUP))z++;
+
 size_t size;
 string data = ar.get_data(size);
 buffer.write(data);

@@ -660,7 +660,34 @@ static std::vector<AudioDevice> GetOutputAudioDevices()
 	ma_context_uninit(&context);
 	return audioDevices;
 }
-std::vector<AudioDevice> devs;
+static std::vector<AudioDevice> GetInputAudioDevices()
+{
+	std::vector<AudioDevice> audioDevices;
+	ma_result result;
+	ma_context context;
+	ma_device_info* pCaptureDeviceInfos;
+	ma_uint32 captureDeviceCount;
+	ma_uint32 iCaptureDevice;
+	if (ma_context_init(NULL, 0, NULL, &context) != MA_SUCCESS) {
+		return audioDevices;;
+	}
+
+	result = ma_context_get_devices(&context, nullptr, nullptr, &pCaptureDeviceInfos, &captureDeviceCount);
+	if (result != MA_SUCCESS) {
+		return audioDevices;
+	}
+	for (iCaptureDevice = 0; iCaptureDevice < captureDeviceCount; ++iCaptureDevice) {
+		const char* name = pCaptureDeviceInfos[iCaptureDevice].name;
+		AudioDevice ad;
+		ad.id = pCaptureDeviceInfos[iCaptureDevice].id;
+		ad.name = name;
+		audioDevices.push_back(ad);
+	}
+	ma_context_uninit(&context);
+	return audioDevices;
+}
+
+std::vector<AudioDevice> output_devs;
 CScriptArray* get_output_audio_devices()
 {
 	if (!g_SoundInitialized)
@@ -669,29 +696,52 @@ CScriptArray* get_output_audio_devices()
 	asIScriptEngine* engine = ctx->GetEngine();
 	asITypeInfo* arrayType = engine->GetTypeInfoById(engine->GetTypeIdByDecl("array<string>"));
 	CScriptArray* array = CScriptArray::Create(arrayType, (asUINT)0);
-	devs = GetOutputAudioDevices();
-	if (devs.size() == 0)
+	output_devs = GetOutputAudioDevices();
+	if (output_devs.size() == 0)
 		return array;
-	array->Reserve(devs.size());
-	for (asUINT i = 0; i < devs.size(); i++)
+	array->Reserve(output_devs.size());
+	for (asUINT i = 0; i < output_devs.size(); ++i)
 	{
-		array->InsertLast(&devs[i].name);
+		array->InsertLast(&output_devs[i].name);
 	}
 	return array;
 }
+
+std::vector<AudioDevice> input_devs;
+CScriptArray* get_input_audio_devices()
+{
+	if (!g_SoundInitialized)
+		soundsystem_init();
+	asIScriptContext* ctx = asGetActiveContext();
+	asIScriptEngine* engine = ctx->GetEngine();
+	asITypeInfo* arrayType = engine->GetTypeInfoById(engine->GetTypeIdByDecl("array<string>"));
+	CScriptArray* array = CScriptArray::Create(arrayType, (asUINT)0);
+	input_devs = GetInputAudioDevices();
+	if (input_devs.size() == 0)
+		return array;
+	array->Reserve(input_devs.size());
+	for (asUINT i = 0; i < input_devs.size(); ++i)
+	{
+		array->InsertLast(&input_devs[i].name);
+	}
+	return array;
+}
+
+
 void mixer_start();
 void mixer_stop();
+static ma_device_id* g_InputDevice = nullptr;
 bool set_output_audio_device(asUINT id)
 {
 	if (!g_SoundInitialized)
 		soundsystem_init();
-	if (devs.size() == 0)
-		devs = GetOutputAudioDevices();
+	if (output_devs.size() == 0)
+		output_devs = GetOutputAudioDevices();
 	mixer_stop(); // Need to reset and uninitialize audio_device
 	ma_device_uninit(&sound_mixer_device);
 	ma_device_config devConfig = ma_device_config_init(ma_device_type_playback);
 	;
-	devConfig.playback.pDeviceID = &devs[id].id;
+	devConfig.playback.pDeviceID = &output_devs[id].id;
 	devConfig.periodSizeInFrames = period_size;
 	devConfig.playback.channels = CHANNELS;
 	devConfig.playback.format = FORMAT;
@@ -703,6 +753,18 @@ bool set_output_audio_device(asUINT id)
 	mixer_start();
 	return true;
 }
+
+
+bool set_input_audio_device(asUINT id)
+{
+	if (!g_SoundInitialized)
+		soundsystem_init();
+	if (input_devs.size() == 0)
+		input_devs = GetInputAudioDevices();
+	g_InputDevice = &input_devs[id].id;
+	return true;
+}
+
 static ma_result ma_result_from_IPLerror(IPLerror error)
 {
 	switch (error)
@@ -2227,22 +2289,31 @@ public:
 	std::vector<float> data;
 	ma_device_config deviceConfig;
 	ma_device recording_device;
+	bool m_Started = false;
 
 	void start()
 	{
+		if (m_Started)this->stop();
 		deviceConfig = ma_device_config_init(ma_device_type_capture);
+		if (g_InputDevice != nullptr) {
+			deviceConfig.capture.pDeviceID = g_InputDevice;
+		}
 		deviceConfig.capture.format = ma_format_f32;
 		deviceConfig.capture.channels = 2;
 		deviceConfig.sampleRate = 44100;
 		deviceConfig.dataCallback = audio_recorder_callback;
 		deviceConfig.pUserData = &data;
 
-		ma_device_init(nullptr, &deviceConfig, &recording_device);
+		if (ma_device_init(nullptr, &deviceConfig, &recording_device) != MA_SUCCESS) {
+			m_Started = false;
+			return;
+		}
 		ma_device_start(&recording_device);
 	}
 
 	void stop()
 	{
+		if (!m_Started)return;
 		ma_device_uninit(&recording_device);
 	}
 
@@ -2288,6 +2359,9 @@ void register_sound(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("void mixer_reinit(int channels = 2, int sample_rate = 44100)", asFUNCTION(mixer_reinit), asCALL_CDECL);
 	engine->RegisterGlobalFunction("array<string>@ get_output_audio_devices()", asFUNCTION(get_output_audio_devices), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool set_output_audio_device(uint index)", asFUNCTION(set_output_audio_device), asCALL_CDECL);
+
+	engine->RegisterGlobalFunction("array<string>@ get_input_audio_devices()", asFUNCTION(get_input_audio_devices), asCALL_CDECL);
+	engine->RegisterGlobalFunction("bool set_input_audio_device(uint index)", asFUNCTION(set_input_audio_device), asCALL_CDECL);
 
 	engine->RegisterObjectType("pcm_ring_buffer", sizeof(pcm_ring_buffer), asOBJ_REF);
 	engine->RegisterObjectBehaviour("pcm_ring_buffer", asBEHAVE_FACTORY, "pcm_ring_buffer@ buff(uint32 channels = 2, uint32 sample_rate = 44100, uint32 size = 1024)", asFUNCTION(fbuffer), asCALL_CDECL);

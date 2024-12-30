@@ -1,27 +1,16 @@
 #include "../include/audio.as"
-void main() {
-    int sampleRate = 44100;
-    int samples = 44100; // 1 second of audio
-
-    // Generate a sine wave
-    array<float>@ sineWave = generate_sine(440, 2, sampleRate, samples);
-
-    // Generate noise
-    array<float>@ noiseWave = generate_noise(2, samples);
-
-    // Mix the sine wave and noise
-    array<float>@ mixedAudio = mix_audio(sineWave, noiseWave);
-
-    // Apply an envelope to the mixed audio
-    array<float>@ finalAudio = apply_envelope(mixedAudio, 0.1f, 0.1f, 0.7f, 0.2f, sampleRate);
-
-    // Pack the final audio data for output
-    string packedData = pack_audio(finalAudio);
-    pcm_ring_buffer buffer(size : samples);
-    sound s;
-    s.load_pcm_buffer(buffer);
-    buffer.write(packedData);
-    s.play_wait();
-    s.close();
+void main(){
+sound s;
+pcm_ring_buffer buffer(size: 44100);
+s.load_pcm_buffer(buffer);
+s.play_looped();
+show_window("Test");
+while (!quit_requested){
+wait(5);
+if (key_down(KEY_SPACE)){
+array<float> sine = generate_sine(440, 2, 44100, 44100);
+string result = pack_audio(sine);
+buffer.write(result);
 }
-
+}
+}
