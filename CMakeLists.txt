@@ -239,6 +239,7 @@ set(NGT_SOURCES
   "SRC/scriptgrid/scriptgrid.cpp"
   "SRC/scripthandle/scripthandle.cpp"
   "SRC/scripthelper/scripthelper.cpp"
+  "SRC/joystick.cpp"
   "SRC/scriptmath/scriptmath.cpp"
   "SRC/scriptmath/scriptmathcomplex.cpp"
   "SRC/scriptmath/scriptmath3d.cpp"

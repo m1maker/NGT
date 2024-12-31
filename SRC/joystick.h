@@ -1,5 +1,5 @@
 #ifndef JOYSTICK_H
 #define JOYSTICK_H
 class asIScriptEngine;
-void register_joystick(asIScriptEngine* engine);
+void RegisterJoystick(asIScriptEngine* engine);
 #endif

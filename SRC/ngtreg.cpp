@@ -470,7 +470,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterObjectMethod(_O("tts_voice"), "void speak_wait(const string& in text)const", asMETHOD(TTSVoice, speak_wait), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("tts_voice"), "void speak_interrupt(const string& in text)const", asMETHOD(TTSVoice, speak_interrupt), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("tts_voice"), "void speak_interrupt_wait(const string& in text)const", asMETHOD(TTSVoice, speak_interrupt_wait), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("tts_voice"), "string speak_to_memory(const string& in text, size_t&out buffer_size)const", asMETHOD(TTSVoice, speak_to_memory), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("tts_voice"), "string speak_to_memory(const string& in text, size_t&out buffer_size, int&out channels, inyt&out sample_rate, int&out bits_per_sample)const", asMETHOD(TTSVoice, speak_to_memory), asCALL_THISCALL);
 
 	engine->RegisterObjectMethod(_O("tts_voice"), "int get_rate()const property", asMETHOD(TTSVoice, get_rate), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("tts_voice"), "void set_rate(int)property", asMETHOD(TTSVoice, set_rate), asCALL_THISCALL);

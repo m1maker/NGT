@@ -1,16 +1,26 @@
 #include "../include/audio.as"
 void main(){
-sound s;
-pcm_ring_buffer buffer(size: 44100);
+    int sampleRate = 44100;
+    int freq = 440; // Frequency for sine wave
+    int channels = 1;
+    int samples = sampleRate; // 1 second of audio
+
+    // Generate a sine wave
+    array<float>@ sineWave = generate_sine(freq, channels, sampleRate, samples);
+
+    // Invert the phase of the sine wave
+    array<float>@ invertedSineWave = invert_phase(sineWave);
+
+    // Create an example impulse response (e.g., a simple reverb)
+array<float>@ impulseResponse = generate_sine(1000, channels, 44100, 50);
+    // Apply impulse response to the sine wave
+    array<float>@ convolvedAudio = apply_limiter(apply_impulse_response(sineWave, impulseResponse));
+    sound s;
+pcm_ring_buffer buffer(size: convolvedAudio.length());
 s.load_pcm_buffer(buffer);
-s.play_looped();
-show_window("Test");
-while (!quit_requested){
-wait(5);
-if (key_down(KEY_SPACE)){
-array<float> sine = generate_sine(440, 2, 44100, 44100);
-string result = pack_audio(sine);
-buffer.write(result);
+buffer.write(pack_audio(convolvedAudio));
+	s.play_wait();
+	s.close();
 }
-}
-}
+
+

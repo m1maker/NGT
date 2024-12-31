@@ -157,4 +157,20 @@ array<float>@ apply_envelope(const array<float>@ audio, float attack, float deca
 	return envelopedAudio;
 }
 
-// WAV file header fields
+array<float>@ invert_phase(const array<float>@ audio) {
+	array<float> @invertedAudio = array<float>(audio.length());
+	
+	for (uint i = 0; i < audio.length(); ++i) {
+		invertedAudio[i] = -audio[i];
+	}
+	
+	return invertedAudio;
+}
+
+array<float>@ apply_limiter(array<float>@ audio) {
+	for (uint i = 0; i < audio.length(); ++i) {
+		if (audio[i] > 1.0f) audio[i] = 1.0f;
+		else if (audio[i] < -1.0f) audio[i] = -1.0f;
+	}
+	return audio;
+}

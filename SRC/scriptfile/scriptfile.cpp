@@ -34,7 +34,7 @@ void RegisterScriptFile_Native(asIScriptEngine* engine)
 	r = engine->RegisterObjectMethod("file", "int close()", asMETHOD(CScriptFile, Close), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("file", "int get_size() const property", asMETHOD(CScriptFile, GetSize), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("file", "bool is_end_of_file() const", asMETHOD(CScriptFile, IsEOF), asCALL_THISCALL); assert(r >= 0);
-	r = engine->RegisterObjectMethod("file", "string read(uint)", asMETHOD(CScriptFile, ReadString), asCALL_THISCALL); assert(r >= 0);
+	r = engine->RegisterObjectMethod("file", "string read(uint = get_size())", asMETHOD(CScriptFile, ReadString), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("file", "string read_line()", asMETHOD(CScriptFile, ReadLine), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("file", "int64 read_int(uint)", asMETHOD(CScriptFile, ReadInt), asCALL_THISCALL); assert(r >= 0);
 	r = engine->RegisterObjectMethod("file", "uint64 read_uint(uint)", asMETHOD(CScriptFile, ReadUInt), asCALL_THISCALL); assert(r >= 0);

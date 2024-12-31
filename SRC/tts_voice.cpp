@@ -47,8 +47,8 @@ bool TTSVoice::speak_interrupt_wait(const std::string& text)
 	return SRAL_SpeakEx(engine, text.c_str(), true);
 }
 
-std::string TTSVoice::speak_to_memory(const std::string& text, uint64_t& size) {
-	char* pcm = (char*)SRAL_SpeakToMemoryEx(engine, text.c_str(), &size);
+std::string TTSVoice::speak_to_memory(const std::string& text, uint64_t& size, int& channels, int& sample_rate, int& bits_per_sample) {
+	char* pcm = (char*)SRAL_SpeakToMemoryEx(engine, text.c_str(), &size, &channels, &sample_rate, &bits_per_sample);
 	return std::string(pcm, size);
 }
 

@@ -242,6 +242,7 @@ public:
 		}
 		if (win != nullptr) {
 			SDL_PumpEvents();
+			SDL_UpdateJoysticks();
 			bool result;
 			if (window_has_renderer && wait_event_requested) {
 				wait_event_requested = false;
@@ -763,7 +764,7 @@ return"";
 	}
 	return result;
 #endif
-	}
+}
 bool key_pressed(int key_code)
 {
 	if (keys[key_code].isDown == true and keys[key_code].isPressed == false)
