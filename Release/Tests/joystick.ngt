@@ -1,0 +1,44 @@
+void main() {
+    // Check if any joystick is connected
+    file f;
+    f.open("JoystickLog.txt", "w");
+    if (has_joystick) {
+        // Get the list of connected joysticks
+        array<uint> @joystickList = joystick_list;
+        
+        // Iterate through each joystick
+        for (uint i = 0; i < joystickList.length(); ++i) {
+            // Create a joystick instance using its ID
+            joystick@ js = joystick(joystickList[i]);
+            
+            // Check if the joystick is valid
+            if (js.valid) {
+                // Output some information about the joystick
+                f.write("Joystick Name: " + js.get_name());
+                f.write("Joystick Path: " + js.get_path());
+                f.write("Number of Axes: " + js.get_num_axes());
+                f.write("Number of Buttons: " + js.get_num_buttons());
+
+                // Example of getting axis values
+                for (int axis = 0; axis < js.get_num_axes(); axis++) {
+                    int16 axisValue = js.get_axis(axis);
+                    f.write("Axis " + axis + ": " + axisValue);
+                }
+
+                // Example of checking button states
+                for (int button = 0; button < js.get_num_buttons(); button++) {
+                    if (js.get_button(button)) {
+                        f.write("Button " + button + " is pressed.");
+                    }
+                }
+
+                // Example of rumbling the joystick
+                js.rumble(1000, 2000, 500); // Low and high frequency rumble for 500ms
+            }
+        }
+    } else {
+        screen_reader::speak("No joystick connected.");
+    f.close();
+    }
+}
+

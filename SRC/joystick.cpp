@@ -1,4 +1,5 @@
 #include "joystick.h"
+#include "scriptarray/scriptarray.h"
 #include <angelscript.h>
 #include <atomic>
 #include <mutex>
@@ -19,6 +20,19 @@ std::vector<SDL_JoystickID> GetJoystickList() {
 	return joysticks;
 }
 
+
+CScriptArray* GetJoystickListScript() {
+	asIScriptContext* ctx = asGetActiveContext();
+	asIScriptEngine* engine = ctx->GetEngine();
+	asITypeInfo* arrayType = engine->GetTypeInfoById(engine->GetTypeIdByDecl("array<uint32>"));
+	CScriptArray* array = CScriptArray::Create(arrayType, (asUINT)0);
+	std::vector<SDL_JoystickID> joysticks = GetJoystickList();
+	if (joysticks.empty())return array;
+	for (size_t i = 0; i < joysticks.size(); ++i) {
+		array->InsertLast(&joysticks[i]);
+	}
+	return array;
+}
 
 class Joystick {
 public:
@@ -179,6 +193,9 @@ private:
 	SDL_Joystick* m_joystick;
 };
 
+Joystick* JoystickFactory(SDL_JoystickID instance) {
+	return new Joystick(instance);
+}
 
 void RegisterJoystick(asIScriptEngine* engine) {
 	engine->RegisterEnum("joysticktype");
@@ -194,4 +211,43 @@ void RegisterJoystick(asIScriptEngine* engine) {
 	engine->RegisterEnumValue("joysticktype", "JOYSTICK_TYPE_ARCADE_PAD", SDL_JOYSTICK_TYPE_ARCADE_PAD);
 	engine->RegisterEnumValue("joysticktype", "JOYSTICK_TYPE_THROTTLE", SDL_JOYSTICK_TYPE_THROTTLE);
 	engine->RegisterEnumValue("joysticktype", "JOYSTICK_TYPE_COUNT", SDL_JOYSTICK_TYPE_COUNT);
+
+	engine->RegisterGlobalFunction("bool get_has_joystick() property", asFUNCTION(SDL_HasJoystick), asCALL_CDECL);
+	engine->RegisterGlobalFunction("array<uint32>@ get_joystick_list() property", asFUNCTION(GetJoystickListScript), asCALL_CDECL);
+
+	engine->RegisterObjectType("joystick", sizeof(Joystick), asOBJ_REF);
+	engine->RegisterObjectBehaviour("joystick", asBEHAVE_FACTORY, "joystick@ joy(uint32 id)", asFUNCTION(JoystickFactory), asCALL_CDECL);
+	engine->RegisterObjectBehaviour("joystick", asBEHAVE_ADDREF, "void f()", asMETHOD(Joystick, AddRef), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("joystick", asBEHAVE_RELEASE, "void f()", asMETHOD(Joystick, Release), asCALL_THISCALL);
+	engine->RegisterObjectMethod("joystick", "bool get_valid() const property", asMETHOD(Joystick, IsValid), asCALL_THISCALL);
+	engine->RegisterObjectMethod("joystick", "string get_name() const property", asMETHOD(Joystick, GetName), asCALL_THISCALL);
+	engine->RegisterObjectMethod("joystick", "string get_path() const property", asMETHOD(Joystick, GetPath), asCALL_THISCALL);
+	engine->RegisterObjectMethod("joystick", "string get_serial() const property", asMETHOD(Joystick, GetSerial), asCALL_THISCALL);
+	engine->RegisterObjectMethod("joystick", "int get_num_axes() const property", asMETHOD(Joystick, GetNumAxes), asCALL_THISCALL);
+	engine->RegisterObjectMethod("joystick", "int get_num_balls() const property", asMETHOD(Joystick, GetNumBalls), asCALL_THISCALL);
+	engine->RegisterObjectMethod("joystick", "int get_num_hats() const property", asMETHOD(Joystick, GetNumHats), asCALL_THISCALL);
+	engine->RegisterObjectMethod("joystick", "int get_num_buttons() const property", asMETHOD(Joystick, GetNumButtons), asCALL_THISCALL);
+	engine->RegisterObjectMethod("joystick", "int16 get_axis(int axis) const", asMETHOD(Joystick, GetAxis), asCALL_THISCALL);
+	engine->RegisterObjectMethod("joystick", "bool get_button(int button) const", asMETHOD(Joystick, GetButton), asCALL_THISCALL);
+	engine->RegisterObjectMethod("joystick", "joysticktype get_type() const property", asMETHOD(Joystick, GetType), asCALL_THISCALL);
+	engine->RegisterObjectMethod("joystick", "bool get_connected() const property", asMETHOD(Joystick, Connected), asCALL_THISCALL);
+	engine->RegisterObjectMethod("joystick", "void set_events_enabled(bool enabled) property", asMETHOD(Joystick, SetEventsEnabled), asCALL_THISCALL);
+	engine->RegisterObjectMethod("joystick", "bool get_events_enabled() const property", asMETHOD(Joystick, EventsEnabled), asCALL_THISCALL);
+	engine->RegisterObjectMethod("joystick", "bool rumble(uint16 low_frequency_rumble, uint16 high_frequency_rumble, uint32 duration_ms) const",
+		asMETHOD(Joystick, Rumble), asCALL_THISCALL);
+	engine->RegisterObjectMethod("joystick", "bool rumble_triggers(uint16 left_rumble, uint16 right_rumble, uint32 duration_ms) const",
+		asMETHOD(Joystick, RumbleTriggers), asCALL_THISCALL);
+	engine->RegisterObjectMethod("joystick", "bool get_axis_initial_state(int axis, int16 &out state) const",
+		asMETHOD(Joystick, GetAxisInitialState), asCALL_THISCALL);
+	engine->RegisterObjectMethod("joystick", "bool get_ball(int ball, int &out dx, int &out dy) const",
+		asMETHOD(Joystick, GetBall), asCALL_THISCALL);
+	engine->RegisterObjectMethod("joystick", "uint8 get_hat(int hat) const",
+		asMETHOD(Joystick, GetHat), asCALL_THISCALL);
+
+	engine->RegisterObjectMethod("joystick", "bool set_led(uint8 red, uint8 green, uint8 blue) const",
+		asMETHOD(Joystick, SetLED), asCALL_THISCALL);
+	engine->RegisterObjectMethod("joystick", "int get_power_info(int &out percent) const",
+		asMETHOD(Joystick, GetPowerInfo), asCALL_THISCALL);
+
+
 }

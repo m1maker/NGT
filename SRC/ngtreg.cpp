@@ -2,6 +2,7 @@
 #include "filesystem.h"
 #include "Graphics.h"
 #include "IOStreams.h"
+#include "joystick.h"
 #include "MemoryStream.h"
 #include "ngtreg.h"
 #include "obfuscate.h"
@@ -455,6 +456,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 	register_pack(engine);
 	register_sound(engine);
 	RegisterScriptGraphics(engine);
+	RegisterJoystick(engine);
 	RegisterScriptIOStreams(engine);
 	RegisterMemstream(engine);
 	AS_BEGIN(engine, "scripting");
@@ -470,7 +472,7 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterObjectMethod(_O("tts_voice"), "void speak_wait(const string& in text)const", asMETHOD(TTSVoice, speak_wait), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("tts_voice"), "void speak_interrupt(const string& in text)const", asMETHOD(TTSVoice, speak_interrupt), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("tts_voice"), "void speak_interrupt_wait(const string& in text)const", asMETHOD(TTSVoice, speak_interrupt_wait), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("tts_voice"), "string speak_to_memory(const string& in text, size_t&out buffer_size, int&out channels, inyt&out sample_rate, int&out bits_per_sample)const", asMETHOD(TTSVoice, speak_to_memory), asCALL_THISCALL);
+	engine->RegisterObjectMethod(_O("tts_voice"), "string speak_to_memory(const string& in text, size_t&out buffer_size, int&out channels, int&out sample_rate, int&out bits_per_sample)const", asMETHOD(TTSVoice, speak_to_memory), asCALL_THISCALL);
 
 	engine->RegisterObjectMethod(_O("tts_voice"), "int get_rate()const property", asMETHOD(TTSVoice, get_rate), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("tts_voice"), "void set_rate(int)property", asMETHOD(TTSVoice, set_rate), asCALL_THISCALL);
@@ -871,6 +873,15 @@ void RegisterFunctions(asIScriptEngine* engine)
 	engine->RegisterEnumValue(_O("keycode"), "KEY_SOFTRIGHT", SDL_SCANCODE_SOFTRIGHT);
 	engine->RegisterEnumValue(_O("keycode"), "KEY_CALL", SDL_SCANCODE_CALL);
 	engine->RegisterEnumValue(_O("keycode"), "KEY_ENDCALL", SDL_SCANCODE_ENDCALL);
-
+	engine->RegisterEnum("powerstate");
+	engine->RegisterEnumValue("powerstate", "POWER_STATE_ERROR", SDL_POWERSTATE_ERROR);
+	engine->RegisterEnumValue("powerstate", "POWER_STATE_UNKNOWN", SDL_POWERSTATE_UNKNOWN);
+	engine->RegisterEnumValue("powerstate", "POWER_STATE_ON_BATTERY", SDL_POWERSTATE_ON_BATTERY);
+	engine->RegisterEnumValue("powerstate", "POWER_STATE_NO_BATTERY", SDL_POWERSTATE_NO_BATTERY);
+	engine->RegisterEnumValue("powerstate", "POWER_STATE_CHARGING", SDL_POWERSTATE_CHARGING);
+	engine->RegisterEnumValue("powerstate", "POWER_STATE_CHARGED", SDL_POWERSTATE_CHARGED);
+	engine->RegisterGlobalFunction("powerstate system_power_info(int&out seconds = void, int&out percent = void)", asFUNCTION(SDL_GetPowerInfo), asCALL_CDECL);
 }
+
+
 

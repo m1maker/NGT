@@ -64,11 +64,11 @@ public:
 	CSDLObject() { initialized = false; }
 	void init() {
 		if (initialized)return;
-		SDL_Init(SDL_INIT_VIDEO);
+		SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
 		initialized = true;
 	}
 	~CSDLObject() {
-		if (!initialized)SDL_Quit();
+		if (initialized)SDL_Quit();
 	}
 };
 
@@ -84,7 +84,7 @@ public:
 		initialized = true;
 	}
 	~CSRALObject() {
-		if (!initialized)SRAL_Uninitialize();
+		if (initialized)SRAL_Uninitialize();
 	}
 };
 
@@ -97,7 +97,7 @@ public:
 		initialized = true;
 	}
 	~CEnetObject() {
-		if (!initialized)enet_deinitialize();
+		if (initialized)enet_deinitialize();
 	}
 };
 
