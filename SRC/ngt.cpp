@@ -1,6 +1,5 @@
 ﻿#define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS 
 #include "cmp.h"
-
 #include "ngtreg.h"
 #include "sound.h"
 #include <Poco/BinaryReader.h>
@@ -14,6 +13,7 @@
 #include <Poco/UnicodeConverter.h>
 #include <Poco/Util/Application.h>
 #include<SDL3/SDL.h>
+#include <SDL3_ttf/SDL_ttf.h>
 extern "C" {
 #define SRAL_STATIC
 #include <SRAL.h>
@@ -65,10 +65,14 @@ public:
 	void init() {
 		if (initialized)return;
 		SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
+		TTF_Init();
 		initialized = true;
 	}
 	~CSDLObject() {
-		if (initialized)SDL_Quit();
+		if (initialized) {
+			TTF_Quit();
+			SDL_Quit();
+		}
 	}
 };
 

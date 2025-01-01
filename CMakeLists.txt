@@ -347,6 +347,8 @@ if(WIN32)
   target_link_libraries(${PROJECT_NAME}W SRAL_static)
   target_link_libraries(${PROJECT_NAME}W angelscript)
   target_link_libraries(${PROJECT_NAME}W ${CMAKE_BINARY_DIR}/external/installed/lib/SDL3-static.lib)
+  target_link_libraries(${PROJECT_NAME}W ${CMAKE_BINARY_DIR}/external/installed/lib/SDL3_ttf-static.lib)
+  
   target_link_libraries(${PROJECT_NAME}W Poco::Foundation)
   target_link_libraries(${PROJECT_NAME}W Poco::Net)
   target_link_libraries(${PROJECT_NAME}W ${POCO_NETSSL})

@@ -2,6 +2,7 @@
 #include "ngt.h"
 #include <angelscript.h>
 #include <SDL3/SDL.h>
+#include <SDL3_ttf/SDL_ttf.h>
 #include <string>
 
 using namespace std;
@@ -92,6 +93,7 @@ public:
 			delete this;
 		}
 	}
+	CScriptSurface() : ref(1) {}
 	CScriptSurface(int width, int height, SDL_PixelFormat format) :ref(1) {
 		surface = SDL_CreateSurface(width, height, format);
 	}
@@ -374,6 +376,213 @@ public:
 private:
 	mutable int ref = 0;
 };
+
+
+class CScriptFont {
+public:
+	TTF_Font* font;
+	void AddRef()const {
+		ref += 1;
+	}
+
+	void Release()const {
+		if (--ref < 1) {
+			TTF_CloseFont(font);
+			delete this;
+		}
+	}
+
+
+
+
+	CScriptFont(const std::string& filename, float ptsize) : ref(1) {
+		font = TTF_OpenFont(filename.c_str(), ptsize);
+	}
+	uint32_t get_generation() const {
+		return TTF_GetFontGeneration(font);
+	}
+	bool set_font_size(float ptsize) {
+		return TTF_SetFontSize(font, ptsize);
+	}
+
+	bool set_size(float ptsize, int hdpi, int vdpi) {
+		return TTF_SetFontSizeDPI(font, ptsize, hdpi, vdpi);
+	}
+	float get_size()const {
+		return TTF_GetFontSize(font);
+	}
+	bool get_dpi(int& hdpi, int& vdpi) {
+		return TTF_GetFontDPI(font, &hdpi, &vdpi);
+	}
+	void set_style(uint32_t style) {
+		TTF_SetFontStyle(font, style);
+	}
+	uint32_t get_style()const {
+		return TTF_GetFontStyle(font);
+	}
+	bool set_outline(int outline) {
+		return TTF_SetFontOutline(font, outline);
+	}
+	int get_outline()const {
+		return TTF_GetFontOutline(font);
+	}
+	void set_hinting(TTF_HintingFlags hinting) {
+		return TTF_SetFontHinting(font, hinting);
+	}
+	TTF_HintingFlags get_hinting()const {
+		return TTF_GetFontHinting(font);
+	}
+	void set_sdf(bool enable) {
+		TTF_SetFontSDF(font, enable);
+	}
+	bool get_sdf()const {
+		return TTF_GetFontSDF(font);
+	}
+
+	void set_wrap_alignment(TTF_HorizontalAlignment align) {
+		TTF_SetFontWrapAlignment(font, align);
+	}
+
+	TTF_HorizontalAlignment get_wrap_alignment() const {
+		return TTF_GetFontWrapAlignment(font);
+	}
+
+	int get_height() const {
+		return TTF_GetFontHeight(font);
+	}
+
+	int get_ascent() const {
+		return TTF_GetFontAscent(font);
+	}
+
+	int get_descent() const {
+		return TTF_GetFontDescent(font);
+	}
+
+	void set_line_skip(int lineskip) {
+		TTF_SetFontLineSkip(font, lineskip);
+	}
+
+	int get_line_skip() const {
+		return TTF_GetFontLineSkip(font);
+	}
+
+	void enable_kerning(bool enabled) {
+		TTF_SetFontKerning(font, enabled);
+	}
+
+	bool is_kerning_enabled() const {
+		return TTF_GetFontKerning(font);
+	}
+
+	bool is_fixed_width() const {
+		return TTF_FontIsFixedWidth(font);
+	}
+
+	bool is_scalable() const {
+		return TTF_FontIsScalable(font);
+	}
+
+	std::string get_family_name() const {
+		return TTF_GetFontFamilyName(font);
+	}
+
+	std::string get_style_name() const {
+		return TTF_GetFontStyleName(font);
+	}
+
+	void set_direction(TTF_Direction dir) {
+		TTF_SetFontDirection(font, dir);
+	}
+
+	TTF_Direction get_direction()const {
+		return TTF_GetFontDirection(font);
+	}
+	void set_script(const std::string& script) {
+		TTF_SetFontScript(font, script.c_str());
+	}
+	void set_language(const std::string& lan) {
+		TTF_SetFontLanguage(font, lan.c_str());
+	}
+
+private:
+	mutable int ref = 0;
+};
+
+
+
+CScriptSurface* render_text_solid(CScriptFont* font, const std::string& text, SDL_Color fg) {
+	SDL_Surface* s = TTF_RenderText_Solid(font->font, text.c_str(), text.size(), fg);
+	CScriptSurface* surf = new CScriptSurface;
+	surf->surface = s;
+	return surf;
+}
+
+
+CScriptSurface* render_text_solid(CScriptFont* font, const std::string& text, SDL_Color fg, int wrap_length) {
+	SDL_Surface* s = TTF_RenderText_Solid_Wrapped(font->font, text.c_str(), text.size(), fg, wrap_length);
+	CScriptSurface* surf = new CScriptSurface;
+	surf->surface = s;
+	return surf;
+}
+
+
+CScriptSurface* render_text_shaded(CScriptFont* font, const std::string& text, SDL_Color fg, SDL_Color bg) {
+	SDL_Surface* s = TTF_RenderText_Shaded(font->font, text.c_str(), text.size(), fg, bg);
+	CScriptSurface* surf = new CScriptSurface;
+	surf->surface = s;
+	return surf;
+}
+
+
+CScriptSurface* render_text_shaded(CScriptFont* font, const std::string& text, SDL_Color fg, SDL_Color bg, int wrap_width) {
+	SDL_Surface* s = TTF_RenderText_Shaded_Wrapped(font->font, text.c_str(), text.size(), fg, bg, wrap_width);
+	CScriptSurface* surf = new CScriptSurface;
+	surf->surface = s;
+	return surf;
+}
+
+
+CScriptSurface* render_text_blended(CScriptFont* font, const std::string& text, SDL_Color fg) {
+	SDL_Surface* s = TTF_RenderText_Blended(font->font, text.c_str(), text.size(), fg);
+	CScriptSurface* surf = new CScriptSurface;
+	surf->surface = s;
+	return surf;
+}
+
+
+CScriptSurface* render_text_blended(CScriptFont* font, const std::string& text, SDL_Color fg, int wrap_width) {
+	SDL_Surface* s = TTF_RenderText_Blended_Wrapped(font->font, text.c_str(), text.size(), fg, wrap_width);
+	CScriptSurface* surf = new CScriptSurface;
+	surf->surface = s;
+	return surf;
+}
+
+
+CScriptSurface* render_text_lcd(CScriptFont* font, const std::string& text, SDL_Color fg, SDL_Color bg) {
+	SDL_Surface* s = TTF_RenderText_LCD(font->font, text.c_str(), text.size(), fg, bg);
+	CScriptSurface* surf = new CScriptSurface;
+	surf->surface = s;
+	return surf;
+}
+
+
+CScriptSurface* render_text_lcd(CScriptFont* font, const std::string& text, SDL_Color fg, SDL_Color bg, int wrap_width) {
+	SDL_Surface* s = TTF_RenderText_LCD_Wrapped(font->font, text.c_str(), text.size(), fg, bg, wrap_width);
+	CScriptSurface* surf = new CScriptSurface;
+	surf->surface = s;
+	return surf;
+}
+
+
+
+CScriptSurface* render_glyph(CScriptFont* font, uint32_t ch, SDL_Color fg) {
+	SDL_Surface* s = TTF_RenderGlyph_Solid(font->font, ch, fg);
+	CScriptSurface* surf = new CScriptSurface;
+	surf->surface = s;
+	return surf;
+}
+
 
 CScriptRenderer* CScriptTexture::get_renderer() {
 	CScriptRenderer* r = new CScriptRenderer;
