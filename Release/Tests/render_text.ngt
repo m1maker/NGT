@@ -1,0 +1,19 @@
+void main(){
+show_window("Test");
+wait(500);
+renderer@ r = request_renderer();
+r.flush();
+font f("C:/windows/Fonts/Arial.ttf", 50);
+surface@ s = render_text_solid(f, "Hello, World!", 0xffffff);
+texture@ t = r.create_texture(s);
+frect frc;
+frc.x = 10;
+frc.y = 10;
+frc.h = 16;
+frc.w = 90;
+r.render_texture(t, null, frc);
+window_present();
+while(!quit_requested){
+wait(5);
+}
+}

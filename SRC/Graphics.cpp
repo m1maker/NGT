@@ -401,7 +401,7 @@ public:
 	uint32_t get_generation() const {
 		return TTF_GetFontGeneration(font);
 	}
-	bool set_font_size(float ptsize) {
+	bool set_size(float ptsize) {
 		return TTF_SetFontSize(font, ptsize);
 	}
 
@@ -420,8 +420,8 @@ public:
 	uint32_t get_style()const {
 		return TTF_GetFontStyle(font);
 	}
-	bool set_outline(int outline) {
-		return TTF_SetFontOutline(font, outline);
+	void set_outline(int outline) {
+		TTF_SetFontOutline(font, outline);
 	}
 	int get_outline()const {
 		return TTF_GetFontOutline(font);
@@ -467,11 +467,11 @@ public:
 		return TTF_GetFontLineSkip(font);
 	}
 
-	void enable_kerning(bool enabled) {
+	void set_enable_kerning(bool enabled) {
 		TTF_SetFontKerning(font, enabled);
 	}
 
-	bool is_kerning_enabled() const {
+	bool get_enable_kerning() const {
 		return TTF_GetFontKerning(font);
 	}
 
@@ -576,13 +576,6 @@ CScriptSurface* render_text_lcd(CScriptFont* font, const std::string& text, SDL_
 
 
 
-CScriptSurface* render_glyph(CScriptFont* font, uint32_t ch, SDL_Color fg) {
-	SDL_Surface* s = TTF_RenderGlyph_Solid(font->font, ch, fg);
-	CScriptSurface* surf = new CScriptSurface;
-	surf->surface = s;
-	return surf;
-}
-
 
 CScriptRenderer* CScriptTexture::get_renderer() {
 	CScriptRenderer* r = new CScriptRenderer;
@@ -627,6 +620,11 @@ CScriptSurface* SurfaceFactory(int width, int height, SDL_PixelFormat format, vo
 }
 CScriptSurface* SurfaceFactory(const std::string& filename) {
 	return new CScriptSurface(filename);
+}
+
+
+CScriptFont* FontFactory(const std::string& file, float ptsize) {
+	return new CScriptFont(file, ptsize);
 }
 
 void RegisterScriptGraphics(asIScriptEngine* engine) {
@@ -980,6 +978,87 @@ void RegisterScriptGraphics(asIScriptEngine* engine) {
 	engine->RegisterObjectMethod("renderer", "bool get_render_clip_enabled() const property", asMETHOD(CScriptRenderer, render_clip_enabled), asCALL_THISCALL);
 
 
+
+
+	engine->RegisterObjectType("font", sizeof(CScriptFont), asOBJ_REF);
+
+	engine->RegisterObjectBehaviour("font", asBEHAVE_FACTORY, "font@ g(const string&in filename, float ptsize)", asFUNCTION(FontFactory), asCALL_CDECL);
+
+	engine->RegisterObjectBehaviour("font", asBEHAVE_ADDREF, "void f()", asMETHOD(CScriptFont, AddRef), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("font", asBEHAVE_RELEASE, "void f()", asMETHOD(CScriptFont, Release), asCALL_THISCALL);
+
+	engine->RegisterObjectMethod("font", "uint32 get_generation() const property", asMETHOD(CScriptFont, get_generation), asCALL_THISCALL);
+	engine->RegisterObjectMethod("font", "bool set_size(float ptsize)", asMETHODPR(CScriptFont, set_size, (float), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod("font", "bool set_size(float ptsize, int hdpi, int vdpi)", asMETHODPR(CScriptFont, set_size, (float, int, int), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod("font", "float get_size() const", asMETHOD(CScriptFont, get_size), asCALL_THISCALL);
+
+	engine->RegisterObjectMethod("font", "bool get_dpi(int&out hdpi, int&out vdpi)", asMETHOD(CScriptFont, get_dpi), asCALL_THISCALL);
+	engine->RegisterObjectMethod("font", "void set_style(uint32 style) property", asMETHOD(CScriptFont, set_style), asCALL_THISCALL);
+	engine->RegisterObjectMethod("font", "uint32 get_style() const property", asMETHOD(CScriptFont, get_style), asCALL_THISCALL);
+
+	engine->RegisterObjectMethod("font", "void set_outline(int outline) property", asMETHOD(CScriptFont, set_outline), asCALL_THISCALL);
+	engine->RegisterObjectMethod("font", "int get_outline() const property", asMETHOD(CScriptFont, get_outline), asCALL_THISCALL);
+
+	engine->RegisterObjectMethod("font", "void set_hinting(int hinting) property", asMETHOD(CScriptFont, set_hinting), asCALL_THISCALL);
+	engine->RegisterObjectMethod("font", "int get_hinting() const property", asMETHOD(CScriptFont, get_hinting), asCALL_THISCALL);
+
+	engine->RegisterObjectMethod("font", "void set_sdf(bool enable) property", asMETHOD(CScriptFont, set_sdf), asCALL_THISCALL);
+	engine->RegisterObjectMethod("font", "bool get_sdf() const property", asMETHOD(CScriptFont, get_sdf), asCALL_THISCALL);
+
+	engine->RegisterObjectMethod("font", "void set_wrap_alignment(int align) property", asMETHOD(CScriptFont, set_wrap_alignment), asCALL_THISCALL);
+	engine->RegisterObjectMethod("font", "int get_wrap_alignment() const property", asMETHOD(CScriptFont, get_wrap_alignment), asCALL_THISCALL);
+
+	engine->RegisterObjectMethod("font", "int get_height() const property", asMETHOD(CScriptFont, get_height), asCALL_THISCALL);
+
+	engine->RegisterObjectMethod("font", "int get_ascent() const property", asMETHOD(CScriptFont, get_ascent), asCALL_THISCALL);
+
+	engine->RegisterObjectMethod("font", "int get_descent() const property", asMETHOD(CScriptFont, get_descent), asCALL_THISCALL);
+
+	engine->RegisterObjectMethod("font", "void set_line_skip(int lineskip) property", asMETHOD(CScriptFont, set_line_skip), asCALL_THISCALL);
+	engine->RegisterObjectMethod("font", "int get_line_skip() const property", asMETHOD(CScriptFont, get_line_skip), asCALL_THISCALL);
+
+	engine->RegisterObjectMethod("font", "void set_enable_kerning(bool enabled) property", asMETHOD(CScriptFont, set_enable_kerning), asCALL_THISCALL);
+	engine->RegisterObjectMethod("font", "bool get_enable_kerning() const property", asMETHOD(CScriptFont, get_enable_kerning), asCALL_THISCALL);
+
+	engine->RegisterObjectMethod("font", "bool get_fixed_width() const property", asMETHOD(CScriptFont, is_fixed_width), asCALL_THISCALL);
+
+	engine->RegisterObjectMethod("font", "bool get_scalable() const property", asMETHOD(CScriptFont, is_scalable), asCALL_THISCALL);
+
+	engine->RegisterObjectMethod("font", "string get_family_name() const property", asMETHOD(CScriptFont, get_family_name), asCALL_THISCALL);
+
+	engine->RegisterObjectMethod("font", "string get_style_name() const property", asMETHOD(CScriptFont, get_style_name), asCALL_THISCALL);
+
+	engine->RegisterObjectMethod("font", "void set_direction(int dir) property", asMETHOD(CScriptFont, set_direction), asCALL_THISCALL);
+	engine->RegisterObjectMethod("font", "int get_direction() const property", asMETHOD(CScriptFont, get_direction), asCALL_THISCALL);
+
+	engine->RegisterObjectMethod("font", "void set_script(const string &in script) property", asMETHOD(CScriptFont, set_script), asCALL_THISCALL);
+
+	engine->RegisterObjectMethod("font", "void set_language(const string &in lan) property", asMETHOD(CScriptFont, set_language), asCALL_THISCALL);
+
+
+	engine->RegisterGlobalFunction("surface@ render_text_solid(font@ font, const string &in text, int color)",
+		asFUNCTIONPR(render_text_solid, (CScriptFont*, const std::string&, SDL_Color), CScriptSurface*), asCALL_CDECL);
+
+	engine->RegisterGlobalFunction("surface@ render_text_solid(font@ font, const string &in text, int color, int wrapLength)",
+		asFUNCTIONPR(render_text_solid, (CScriptFont*, const std::string&, SDL_Color, int), CScriptSurface*), asCALL_CDECL);
+
+	engine->RegisterGlobalFunction("surface@ render_text_shaded(font@ font, const string &in text, int fgColor, int bgColor)",
+		asFUNCTIONPR(render_text_shaded, (CScriptFont*, const std::string&, SDL_Color, SDL_Color), CScriptSurface*), asCALL_CDECL);
+
+	engine->RegisterGlobalFunction("surface@ render_text_shaded(font@ font, const string &in text, int fgColor, int bgColor, int wrapWidth)",
+		asFUNCTIONPR(render_text_shaded, (CScriptFont*, const std::string&, SDL_Color, SDL_Color, int), CScriptSurface*), asCALL_CDECL);
+
+	engine->RegisterGlobalFunction("surface@ render_text_blended(font@ font, const string &in text, int color)",
+		asFUNCTIONPR(render_text_blended, (CScriptFont*, const std::string&, SDL_Color), CScriptSurface*), asCALL_CDECL);
+
+	engine->RegisterGlobalFunction("surface@ render_text_blended(font@ font, const string &in text, int color, int wrapWidth)",
+		asFUNCTIONPR(render_text_blended, (CScriptFont*, const std::string&, SDL_Color, int), CScriptSurface*), asCALL_CDECL);
+
+	engine->RegisterGlobalFunction("surface@ render_text_lcd(font@ font, const string &in text, int fgColor, int bgColor)",
+		asFUNCTIONPR(render_text_lcd, (CScriptFont*, const std::string&, SDL_Color, SDL_Color), CScriptSurface*), asCALL_CDECL);
+
+	engine->RegisterGlobalFunction("surface@ render_text_lcd(font@ font, const string &in text, int fgColor, int bgColor, int wrapWidth)",
+		asFUNCTIONPR(render_text_lcd, (CScriptFont*, const std::string&, SDL_Color, SDL_Color, int), CScriptSurface*), asCALL_CDECL);
 
 
 
