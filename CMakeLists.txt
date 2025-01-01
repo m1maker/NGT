@@ -127,9 +127,18 @@ include(ExternalProject)
 ExternalProject_Add(SDL3
     PREFIX "${CMAKE_BINARY_DIR}/external"
     GIT_REPOSITORY    "https://github.com/libsdl-org/SDL"
-    GIT_TAG           "6771a6020da5052e22930c36cb1070a4c048ba3c"
+    GIT_TAG           "3197e27b59416442b2051b8d0dc1d4eb2a7732a0"
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/external/installed -DSDL_STATIC=ON -DMSVC_RUNTIME_LIBRARY=MultiThreaded -DFORCE_STATIC_VCRT=ON
     )
+
+ExternalProject_Add(TTF
+    PREFIX "${CMAKE_BINARY_DIR}/external"
+    GIT_REPOSITORY    "https://github.com/libsdl-org/SDL_ttf"
+    GIT_TAG           "a473c587effcd93ff88e25039cbe0d5bf1f1d3db"
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/external/installed -DSDL_STATIC=ON -DMSVC_RUNTIME_LIBRARY=MultiThreaded -DFORCE_STATIC_VCRT=ON -DSDLTTF_BUILD_SHARED_LIBS=OFF -DBUILD_SHARED_LIBS=OFF
+    )
+set(SDLTTF_BUILD_SHARED_LIBS OFF)
+
 
 
 ExternalProject_Add(
@@ -215,7 +224,6 @@ set(NGT_SOURCES
   "SRC/sqlite3.c"
   "SRC/stb_vorbis.c"
   "SRC/as_class.cpp"
-  "SRC/dlibrary.cpp"
   "SRC/docgen.cpp"
   "SRC/http.cpp"
   "SRC/MemoryStream.cpp"
@@ -308,8 +316,11 @@ target_link_libraries(${PROJECT_NAME} ${OPENSSL_LIBRARIES})
 
 if(WIN32)
   target_link_libraries(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/external/installed/lib/SDL3-static.lib)
+  target_link_libraries(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/external/installed/lib/SDL3_ttf-static.lib)
 else()
   target_link_libraries(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/external/installed/lib/libSDL3.a)
+  target_link_libraries(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/external/installed/lib/libSDL3_ttf.a)
+
   find_package(X11 REQUIRED)
   target_link_libraries(${PROJECT_NAME} ${X11_LIBRARIES})
   find_package(PkgConfig REQUIRED)

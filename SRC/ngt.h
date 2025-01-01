@@ -294,7 +294,7 @@ typedef struct {
 }LibraryFunction;
 class library : public as_class {
 public:
-	void* lib;
+	SDL_SharedObject* lib;
 	std::map<std::string, LibraryFunction> functions;
 	bool active()const;
 	bool load(const string&);

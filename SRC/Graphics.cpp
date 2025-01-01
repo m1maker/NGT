@@ -273,11 +273,11 @@ public:
 		t->AddRef();
 		return t;
 	}
-	bool set_logical_presentation(int w, int h, SDL_RendererLogicalPresentation mode, SDL_ScaleMode scale_mode) {
-		return SDL_SetRenderLogicalPresentation(renderer, w, h, mode, scale_mode);
+	bool set_logical_presentation(int w, int h, SDL_RendererLogicalPresentation mode) {
+		return SDL_SetRenderLogicalPresentation(renderer, w, h, mode);
 	}
-	bool get_logical_presentation(int& w, int& h, SDL_RendererLogicalPresentation& mode, SDL_ScaleMode& scale_mode) {
-		return SDL_GetRenderLogicalPresentation(renderer, &w, &h, &mode, &scale_mode);
+	bool get_logical_presentation(int& w, int& h, SDL_RendererLogicalPresentation& mode) {
+		return SDL_GetRenderLogicalPresentation(renderer, &w, &h, &mode);
 	}
 	bool set_render_scale(float x, float y) {
 		return SDL_SetRenderScale(renderer, x, y);
@@ -742,8 +742,8 @@ void RegisterScriptGraphics(asIScriptEngine* engine) {
 
 	engine->RegisterObjectMethod("renderer", "void set_target(texture@ target) const property", asMETHOD(CScriptRenderer, set_target), asCALL_THISCALL);
 	engine->RegisterObjectMethod("renderer", "texture@ get_target() const property", asMETHOD(CScriptRenderer, get_target), asCALL_THISCALL);
-	engine->RegisterObjectMethod("renderer", "bool set_logical_presentation(int w, int h, rendererlogicalpresentation mode, scalemode scale_mode)", asMETHOD(CScriptRenderer, set_logical_presentation), asCALL_THISCALL);
-	engine->RegisterObjectMethod("renderer", "bool get_logical_presentation(int&out w, int&out h, rendererlogicalpresentation&out mode, scalemode&out scale_mode)", asMETHOD(CScriptRenderer, get_logical_presentation), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "bool set_logical_presentation(int w, int h, rendererlogicalpresentation mode)", asMETHOD(CScriptRenderer, set_logical_presentation), asCALL_THISCALL);
+	engine->RegisterObjectMethod("renderer", "bool get_logical_presentation(int&out w, int&out h, rendererlogicalpresentation&out mode)", asMETHOD(CScriptRenderer, get_logical_presentation), asCALL_THISCALL);
 	engine->RegisterObjectMethod("renderer", "bool set_render_scale(float x, float y)", asMETHOD(CScriptRenderer, set_render_scale), asCALL_THISCALL);
 	engine->RegisterObjectMethod("renderer", "bool get_render_scale(float&out x, float&out y)", asMETHOD(CScriptRenderer, get_render_scale), asCALL_THISCALL);
 	engine->RegisterObjectMethod("renderer", "bool set_draw_color(uchar r, uchar g, uchar b, uchar a)", asMETHODPR(CScriptRenderer, set_draw_color, (unsigned char, unsigned char, unsigned char, unsigned char), bool), asCALL_THISCALL);
