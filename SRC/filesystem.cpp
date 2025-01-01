@@ -1,5 +1,6 @@
 #include "datetime/datetime.h"
 #include "filesystem.h"
+#include "obfuscate.h"
 #include "scriptarray/scriptarray.h"
 #include <angelscript.h>
 #include <chrono>
@@ -7,6 +8,106 @@
 #include <regex>
 #include <string>
 #include <vector>
+
+#include <condition_variable>
+#include <mutex>
+#include <SDL3/SDL.h>
+
+std::mutex dialog_mutex;
+std::condition_variable dialog_cv;
+bool dialog_done = false;
+std::vector<std::string> selected_files;
+
+void file_open_callback(void* userdata, const char* const* filelist, int filter) {
+	std::lock_guard<std::mutex> lock(dialog_mutex);
+	dialog_done = true;
+
+	if (filelist != nullptr) {
+		for (int i = 0; filelist[i] != nullptr; ++i) {
+			selected_files.push_back(filelist[i]);
+		}
+	}
+	dialog_cv.notify_one();
+}
+
+std::string simple_file_open_dialog(const std::string& filters = "All files:*", const std::string& default_location = "") {
+	selected_files.clear();
+	dialog_done = false;
+
+	// Parse filters
+	SDL_DialogFileFilter filter_array[1]; // Assuming only one filter for simplicity
+	filter_array[0].name = filters.c_str();
+	filter_array[0].pattern = filters.c_str();
+
+	SDL_ShowOpenFileDialog(file_open_callback, nullptr, SDL_GetKeyboardFocus(), filter_array, 1, default_location.c_str(), false);
+
+	// Wait for the dialog to finish
+	while (!dialog_done) {
+		SDL_PumpEvents();  // Process pending events
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	}
+
+	// Return the first selected file or an empty string if none were selected
+	return selected_files.empty() ? "" : selected_files.front();
+}
+
+void file_save_callback(void* userdata, const char* const* filelist, int filter) {
+	std::lock_guard<std::mutex> lock(dialog_mutex);
+	dialog_done = true;
+
+	if (filelist != nullptr && filelist[0] != nullptr) {
+		selected_files.push_back(filelist[0]);
+	}
+	dialog_cv.notify_one();
+}
+
+std::string simple_file_save_dialog(const std::string& filters, const std::string& default_location) {
+	selected_files.clear();
+	dialog_done = false;
+
+	// Parse filters
+	SDL_DialogFileFilter filter_array[1]; // Assuming only one filter for simplicity
+	filter_array[0].name = filters.c_str();
+	filter_array[0].pattern = filters.c_str();
+
+	SDL_ShowSaveFileDialog(file_save_callback, nullptr, SDL_GetKeyboardFocus(), filter_array, 1, default_location.c_str());
+
+	// Wait for the dialog to finish
+	while (!dialog_done) {
+		SDL_PumpEvents();  // Process pending events
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	}
+
+	// Return the selected file or an empty string if none was selected
+	return selected_files.empty() ? "" : selected_files.front();
+}
+
+void folder_select_callback(void* userdata, const char* const* filelist, int filter) {
+	std::lock_guard<std::mutex> lock(dialog_mutex);
+	dialog_done = true;
+
+	if (filelist != nullptr && filelist[0] != nullptr) {
+		selected_files.push_back(filelist[0]);
+	}
+	dialog_cv.notify_one();
+}
+
+std::string simple_folder_select_dialog(const std::string& default_location) {
+	selected_files.clear();
+	dialog_done = false;
+
+	SDL_ShowOpenFolderDialog(folder_select_callback, nullptr, SDL_GetKeyboardFocus(), default_location.c_str(), false);
+
+	// Wait for the dialog to finish
+	while (!dialog_done) {
+		SDL_PumpEvents();  // Process pending events
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	}
+
+	// Return the selected folder or an empty string if none was selected
+	return selected_files.empty() ? "" : selected_files.front();
+}
+
 
 namespace fs = std::filesystem;
 
@@ -172,6 +273,14 @@ CDateTime get_last_modified_time(const std::string& path) {
 
 
 void RegisterScriptFileSystem(asIScriptEngine* engine) {
+	// First register dialogs
+	const char* ns = engine->GetDefaultNamespace();
+	engine->SetDefaultNamespace("");
+	engine->RegisterGlobalFunction(_O("string open_file_dialog(const string &in filters = \"\", const string&in default_location = \"\")"), asFUNCTION(simple_file_open_dialog), asCALL_CDECL);
+	engine->RegisterGlobalFunction(_O("string save_file_dialog(const string &in filters = \"\", const string&in default_location = \"\")"), asFUNCTION(simple_file_save_dialog), asCALL_CDECL);
+	engine->RegisterGlobalFunction(_O("string select_folder_dialog(const string&in default_location = \"\")"), asFUNCTION(simple_folder_select_dialog), asCALL_CDECL);
+	engine->SetDefaultNamespace(ns);
+
 	engine->RegisterGlobalFunction("bool exists(const string &in path)", asFUNCTION(exists), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool is_directory(const string &in path)", asFUNCTION(is_directory), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string get_current_path() property", asFUNCTION(get_current_path), asCALL_CDECL);

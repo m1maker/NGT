@@ -1,4 +1,6 @@
 void main() {
+    show_window("Scanning...", enable_renderer : true);
+    wait(500);
     // Check if any joystick is connected
     file f;
     f.open("JoystickLog.txt", "w");

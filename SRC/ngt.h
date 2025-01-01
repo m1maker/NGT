@@ -108,7 +108,7 @@ bool braille(const string& text);
 
 void stop_speech();
 string screen_reader_detect();
-bool show_window(const string& title, int width = 640, int height = 480, bool enable_renderer = false);
+bool show_window(const string& title, int width = 640, int height = 480, bool enable_renderer = true);
 void* get_window_handle();
 void hide_window();
 void set_window_title(const string&);
@@ -175,7 +175,7 @@ int message_box(const std::string& title, const std::string& text, const std::ve
 
 int message_box_script(const std::string& title, const std::string& text, CScriptArray* buttons, unsigned int flags);
 
-bool alert(const string& title, const string& text, const string& button_name = "`OK");
+bool alert(const string& title, const string& text, const string& button_name = "OK");
 int question(const string& title, const string& text);
 void wait(uint64_t);
 void wait_event();

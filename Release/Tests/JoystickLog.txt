@@ -1,0 +1,1 @@
+Joystick Name: DualSense Wireless ControllerJoystick Path: \\?\HID#{00001124-0000-1000-8000-00805f9b34fb}_VID&0002054c_PID&0ce6#8&13580694&1&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}Number of Axes: 6Number of Buttons: 13Axis 0: 0Axis 1: 0Axis 2: 0Axis 3: 0Axis 4: 0Axis 5: 0

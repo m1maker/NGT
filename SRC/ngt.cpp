@@ -61,7 +61,7 @@ public:
 
 class CSDLObject : public CObject {
 public:
-	CSDLObject() { initialized = false; }
+	CSDLObject() { init(); }
 	void init() {
 		if (initialized)return;
 		SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK);
