@@ -93,16 +93,46 @@ public:
 			delete this;
 		}
 	}
-	CScriptSurface() : ref(1) {}
-	CScriptSurface(int width, int height, SDL_PixelFormat format) :ref(1) {
-		surface = SDL_CreateSurface(width, height, format);
+	// Default constructor
+	CScriptSurface() : surface(nullptr), ref(1) {}
+
+	// Constructor for loading a surface from a BMP file
+	CScriptSurface(const std::string& filename) : ref(1) {
+		load_bmp(filename);
 	}
-	CScriptSurface(int width, int height, SDL_PixelFormat format, void* pixels, int pitch) :ref(1) {
-		surface = SDL_CreateSurfaceFrom(width, height, format, pixels, pitch);
+
+	// Constructor for loading a surface from raw pixel data
+	CScriptSurface(int width, int height, SDL_PixelFormat format, const std::string& pixels, int pitch) : ref(1) {
+		load_from_pixels(width, height, format, pixels, pitch);
 	}
-	CScriptSurface(const std::string& filename) :ref(1) {
+
+	bool load_bmp(const std::string& filename) {
+		close(); // Free existing surface if it exists
 		surface = SDL_LoadBMP(filename.c_str());
+		return surface != nullptr; // Return true if loading succeeded
 	}
+
+	bool load_from_memory(const std::string& data, size_t size) {
+		close(); // Free existing surface if it exists
+		SDL_IOStream* stream = SDL_IOFromMem((void*)data.c_str(), size);
+		surface = SDL_LoadBMP_IO(stream, true);
+		return surface != nullptr; // Return true if loading succeeded
+	}
+
+
+	bool load_from_pixels(int width, int height, SDL_PixelFormat format, const std::string& pixels, int pitch) {
+		close(); // Free existing surface if it exists
+		surface = SDL_CreateSurfaceFrom(width, height, format, (void*)pixels.c_str(), pitch);
+		return surface != nullptr; // Return true if loading succeeded
+	}
+
+	void close() {
+		if (surface) {
+			SDL_DestroySurface(surface);
+			surface = nullptr; // Reset the pointer to avoid dangling references
+		}
+	}
+
 
 	bool set_colorspace(SDL_Colorspace color) {
 		return SDL_SetSurfaceColorspace(surface, color);
@@ -387,7 +417,7 @@ public:
 
 	void Release()const {
 		if (--ref < 1) {
-			TTF_CloseFont(font);
+			if (font)TTF_CloseFont(font);
 			delete this;
 		}
 	}
@@ -395,9 +425,28 @@ public:
 
 
 
-	CScriptFont(const std::string& filename, float ptsize) : ref(1) {
-		font = TTF_OpenFont(filename.c_str(), ptsize);
+	CScriptFont(const std::string& filename = "", float ptsize = 24) : ref(1), font(nullptr) {
+		load(filename);
 	}
+
+	bool load(const std::string& filename, float ptsize = 24) {
+		close();
+		font = TTF_OpenFont(filename.c_str(), ptsize);
+		return font != nullptr;
+	}
+
+	bool load_from_memory(const std::string& data, size_t size, float ptsize = 24) {
+		close();
+		SDL_IOStream* stream = SDL_IOFromMem((void*)data.c_str(), size);
+		font = TTF_OpenFontIO(stream, true, ptsize);
+		return font != nullptr;
+	}
+
+	void close() {
+		if (font)TTF_CloseFont(font);
+		font = nullptr;
+	}
+
 	uint32_t get_generation() const {
 		return TTF_GetFontGeneration(font);
 	}
@@ -612,10 +661,10 @@ SDL_Rect* RectFactory() {
 SDL_FRect* FRectFactory() {
 	return new SDL_FRect;
 }
-CScriptSurface* SurfaceFactory(int width, int height, SDL_PixelFormat format) {
-	return new CScriptSurface(width, height, format);
+CScriptSurface* SurfaceFactory() {
+	return new CScriptSurface();
 }
-CScriptSurface* SurfaceFactory(int width, int height, SDL_PixelFormat format, void* pixels, int pitch) {
+CScriptSurface* SurfaceFactory(int width, int height, SDL_PixelFormat format, const std::string& pixels, int pitch) {
 	return new CScriptSurface(width, height, format, pixels, pitch);
 }
 CScriptSurface* SurfaceFactory(const std::string& filename) {
@@ -892,12 +941,18 @@ void RegisterScriptGraphics(asIScriptEngine* engine) {
 	engine->RegisterObjectMethod("texture", "void set_scale_mode(scalemode mode) const property", asMETHOD(CScriptTexture, set_scale_mode), asCALL_THISCALL);
 	engine->RegisterObjectType("surface", sizeof(CScriptSurface), asOBJ_REF);
 
-	engine->RegisterObjectBehaviour("surface", asBEHAVE_FACTORY, "surface@ g(int width, int height, pixelformat format)", asFUNCTIONPR(SurfaceFactory, (int, int, SDL_PixelFormat), CScriptSurface*), asCALL_CDECL);
-	engine->RegisterObjectBehaviour("surface", asBEHAVE_FACTORY, "surface@ g(int width, int height, pixelformat format, uint64 pixels, int pitch)", asFUNCTIONPR(SurfaceFactory, (int, int, SDL_PixelFormat, void*, int), CScriptSurface*), asCALL_CDECL);
+	engine->RegisterObjectBehaviour("surface", asBEHAVE_FACTORY, "surface@ g()", asFUNCTIONPR(SurfaceFactory, (), CScriptSurface*), asCALL_CDECL);
+	engine->RegisterObjectBehaviour("surface", asBEHAVE_FACTORY, "surface@ g(int width, int height, pixelformat format, const string&in pixels, int pitch)", asFUNCTIONPR(SurfaceFactory, (int, int, SDL_PixelFormat, const std::string&, int), CScriptSurface*), asCALL_CDECL);
 	engine->RegisterObjectBehaviour("surface", asBEHAVE_FACTORY, "surface@ g(const string&in filename)", asFUNCTIONPR(SurfaceFactory, (const std::string&), CScriptSurface*), asCALL_CDECL);
 
 	engine->RegisterObjectBehaviour("surface", asBEHAVE_ADDREF, "void f()", asMETHOD(CScriptSurface, AddRef), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("surface", asBEHAVE_RELEASE, "void f()", asMETHOD(CScriptSurface, Release), asCALL_THISCALL);
+
+	engine->RegisterObjectMethod("surface", "bool load_bmp(const string&in filename)", asMETHOD(CScriptSurface, load_bmp), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "bool load_from_pixels(int width, int height, pixelformat format, const string&in pixels, int pitch)", asMETHOD(CScriptSurface, load_from_pixels), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "bool load_from_memory(const string&in data, size_t size)", asMETHOD(CScriptSurface, load_from_memory), asCALL_THISCALL);
+	engine->RegisterObjectMethod("surface", "void close()", asMETHOD(CScriptSurface, close), asCALL_THISCALL);
+
 	engine->RegisterObjectMethod("surface", "void set_colorspace(int colorspace) const property", asMETHOD(CScriptSurface, set_colorspace), asCALL_THISCALL);
 	engine->RegisterObjectMethod("surface", "int get_colorspace() const property", asMETHOD(CScriptSurface, get_colorspace), asCALL_THISCALL);
 	engine->RegisterObjectMethod("surface", "bool add_alternate_image(surface@ s)", asMETHOD(CScriptSurface, add_alternate_image), asCALL_THISCALL);
@@ -982,10 +1037,14 @@ void RegisterScriptGraphics(asIScriptEngine* engine) {
 
 	engine->RegisterObjectType("font", sizeof(CScriptFont), asOBJ_REF);
 
-	engine->RegisterObjectBehaviour("font", asBEHAVE_FACTORY, "font@ g(const string&in filename, float ptsize)", asFUNCTION(FontFactory), asCALL_CDECL);
+	engine->RegisterObjectBehaviour("font", asBEHAVE_FACTORY, "font@ g(const string&in filename = \"\", float ptsize = 24)", asFUNCTION(FontFactory), asCALL_CDECL);
 
 	engine->RegisterObjectBehaviour("font", asBEHAVE_ADDREF, "void f()", asMETHOD(CScriptFont, AddRef), asCALL_THISCALL);
 	engine->RegisterObjectBehaviour("font", asBEHAVE_RELEASE, "void f()", asMETHOD(CScriptFont, Release), asCALL_THISCALL);
+
+	engine->RegisterObjectMethod("font", "bool load(const string&in filename, float ptsize = 24)", asMETHOD(CScriptFont, load), asCALL_THISCALL);
+	engine->RegisterObjectMethod("font", "bool load_from_memory(const string&in data, size_t size, float ptsize = 24)", asMETHOD(CScriptFont, load_from_memory), asCALL_THISCALL);
+	engine->RegisterObjectMethod("font", "void close()", asMETHOD(CScriptFont, close), asCALL_THISCALL);
 
 	engine->RegisterObjectMethod("font", "uint32 get_generation() const property", asMETHOD(CScriptFont, get_generation), asCALL_THISCALL);
 	engine->RegisterObjectMethod("font", "bool set_size(float ptsize)", asMETHODPR(CScriptFont, set_size, (float), bool), asCALL_THISCALL);
