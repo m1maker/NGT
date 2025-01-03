@@ -1,7 +1,7 @@
 void main(){
 audio_recorder ar;
 ar.start();
-pcm_ring_buffer buffer(2, 44100, 1000000);
+pcm_ring_buffer buffer(2, 44100, 10000000);
 show_window("Test");
 sound s;
 s.load_pcm_buffer(buffer);

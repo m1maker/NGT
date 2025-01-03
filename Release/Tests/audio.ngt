@@ -1,26 +1,24 @@
 #include "../include/audio.as"
-void main(){
+void main()
+{
     int sampleRate = 44100;
-    int freq = 440; // Frequency for sine wave
-    int channels = 1;
-    int samples = sampleRate; // 1 second of audio
-
-    // Generate a sine wave
-    array<float>@ sineWave = generate_sine(freq, channels, sampleRate, samples);
-
-    // Invert the phase of the sine wave
-    array<float>@ invertedSineWave = invert_phase(sineWave);
-
-    // Create an example impulse response (e.g., a simple reverb)
-array<float>@ impulseResponse = generate_sine(1000, channels, 44100, 50);
-    // Apply impulse response to the sine wave
-    array<float>@ convolvedAudio = apply_limiter(apply_impulse_response(sineWave, impulseResponse));
+    int numSamples = sampleRate * 2; // 2 seconds of audio
+    pcm_ring_buffer buffer(size : numSamples);
     sound s;
-pcm_ring_buffer buffer(size: convolvedAudio.length());
-s.load_pcm_buffer(buffer);
-buffer.write(pack_audio(convolvedAudio));
-	s.play_wait();
-	s.close();
+    s.load_pcm_buffer(buffer);
+
+    // Example: Sine wave with a linear bend up.
+	array<float>@ sineBendUp = generate_sine(100, 500, 0.5f, 1, sampleRate*2, numSamples);
+
+    // Example: Sawtooth wave with a linear bend down
+	array<float>@ sawBendDown = generate_sawtooth(880, 440, 0.5f, 2, sampleRate*2, numSamples);
+
+	// Example: Square wave with a linear bend up
+	array<float>@ squareBendUp = generate_square(100, 600, 2.0f, 1, sampleRate, numSamples);
+
+	// Example: Triangle wave with a linear bend up
+    array<float>@ triangleBendDown = generate_triangle(660, 220, 1.5f, 1, sampleRate, numSamples);
+    string packedAudio = pack_audio(sawBendDown);
+    buffer.write(packedAudio);
+    s.play_wait();
 }
-
-

@@ -27,34 +27,62 @@ array<float>@ unpack_audio(const string &in data)
 }
 
 
-array<float>@ mix_audio(const array<float>@ audio1, const array<float>@ audio2, bool avoid_clip = true)
+array<float>@ mix_audio(array<array<float>>@ audioInputs, bool preventClipping = true)
 {
-	uint maxLength = audio1.length() > audio2.length() ? audio1.length() : audio2.length();
+	uint maxLength = 0;
+	for (uint i = 0; i < audioInputs.length(); ++i)
+	{
+		if (audioInputs[i].length() > maxLength)
+		{
+			maxLength = audioInputs[i].length();
+		}
+	}
+
 	array<float> mixedAudio;
 	mixedAudio.resize(maxLength);
 
 	for (uint i = 0; i < maxLength; ++i)
 	{
-		float sample1 = (i < audio1.length()) ? audio1[i] : 0.0f;
-		float sample2 = (i < audio2.length()) ? audio2[i] : 0.0f;
+		float combinedSample = 0.0f;
 
-		mixedAudio[i] = sample1 + sample2;
-		if (avoid_clip)
+		for (uint j = 0; j < audioInputs.length(); ++j)
+		{
+			if (i < audioInputs[j].length())
+			{
+				combinedSample += audioInputs[j][i];
+			}
+		}
+
+		mixedAudio[i] = combinedSample;
+
+		if (preventClipping)
 		{
 			if (mixedAudio[i] > 1.0f) mixedAudio[i] = 1.0f;
 			else if (mixedAudio[i] < -1.0f) mixedAudio[i] = -1.0f;
 		}
 	}
+
 	return mixedAudio;
 }
 
 
-array<float>@ generate_sine(int freq, int channels, int sample_rate, int samples) {
+
+array<float>@ generate_sine(int start_freq, int end_freq, float bend_duration, int channels, int sample_rate, int samples) {
 	array<float> @waveform = array<float>(samples * channels);
-	float increment = (2.0 * 3.14159265 * freq) / sample_rate;
+	float bend_samples = bend_duration * sample_rate;
+	float freq_change_per_sample = float(end_freq - start_freq) / bend_samples;
+	float current_freq = start_freq;
 
 	for (int i = 0; i < samples; ++i) {
+		if (i < bend_samples) {
+			current_freq = start_freq + (freq_change_per_sample * i); // Linear frequency bend
+		} else {
+			current_freq = end_freq;
+		}
+
+		float increment = (2.0 * 3.14159265 * current_freq) / sample_rate;
 		float sample = sin(increment * i);
+
 		for (int ch = 0; ch < channels; ++ch) {
 			waveform[i * channels + ch] = sample;
 		}
@@ -63,13 +91,22 @@ array<float>@ generate_sine(int freq, int channels, int sample_rate, int samples
 	return waveform;
 }
 
-
-array<float>@ generate_square(int freq, int channels, int sample_rate, int samples) {
+array<float>@ generate_square(int start_freq, int end_freq, float bend_duration, int channels, int sample_rate, int samples) {
 	array<float> @waveform = array<float>(samples * channels);
-	float period = sample_rate / freq;
+	float bend_samples = bend_duration * sample_rate;
+	float freq_change_per_sample = float(end_freq - start_freq) / bend_samples;
+	float current_freq = start_freq;
 
 	for (int i = 0; i < samples; ++i) {
+		if (i < bend_samples) {
+			current_freq = start_freq + (freq_change_per_sample * i); // Linear frequency bend
+		} else {
+			current_freq = end_freq;
+		}
+
+		float period = sample_rate / current_freq;
 		float sample = (i % period < period / 2) ? 1.0 : -1.0;
+
 		for (int ch = 0; ch < channels; ++ch) {
 			waveform[i * channels + ch] = sample;
 		}
@@ -78,13 +115,22 @@ array<float>@ generate_square(int freq, int channels, int sample_rate, int sampl
 	return waveform;
 }
 
-
-array<float>@ generate_sawtooth(int freq, int channels, int sample_rate, int samples) {
+array<float>@ generate_sawtooth(int start_freq, int end_freq, float bend_duration, int channels, int sample_rate, int samples) {
 	array<float> @waveform = array<float>(samples * channels);
-	float increment = (2.0 / sample_rate) * freq;
+	float bend_samples = bend_duration * sample_rate;
+	float freq_change_per_sample = float(end_freq - start_freq) / bend_samples;
+	float current_freq = start_freq;
 
 	for (int i = 0; i < samples; ++i) {
+		if (i < bend_samples) {
+			current_freq = start_freq + (freq_change_per_sample * i); // Linear frequency bend
+		} else {
+			current_freq = end_freq;
+		}
+
+		float increment = (2.0 / sample_rate) * current_freq;
 		float sample = (2.0 * (i * increment - floor(0.5 + i * increment))) - 1.0;
+
 		for (int ch = 0; ch < channels; ++ch) {
 			waveform[i * channels + ch] = sample;
 		}
@@ -93,13 +139,22 @@ array<float>@ generate_sawtooth(int freq, int channels, int sample_rate, int sam
 	return waveform;
 }
 
-
-array<float>@ generate_triangle(int freq, int channels, int sample_rate, int samples) {
+array<float>@ generate_triangle(int start_freq, int end_freq, float bend_duration, int channels, int sample_rate, int samples) {
 	array<float> @waveform = array<float>(samples * channels);
-	float increment = (2.0 / sample_rate) * freq;
+	float bend_samples = bend_duration * sample_rate;
+	float freq_change_per_sample = float(end_freq - start_freq) / bend_samples;
+	float current_freq = start_freq;
 
 	for (int i = 0; i < samples; ++i) {
+		if (i < bend_samples) {
+			current_freq = start_freq + (freq_change_per_sample * i); // Linear frequency bend
+		} else {
+			current_freq = end_freq;
+		}
+
+		float increment = (2.0 / sample_rate) * current_freq;
 		float sample = 2.0 * abs(2.0 * ((i * increment) - floor((i * increment) + 0.5))) - 1.0;
+
 		for (int ch = 0; ch < channels; ++ch) {
 			waveform[i * channels + ch] = sample;
 		}
@@ -107,6 +162,8 @@ array<float>@ generate_triangle(int freq, int channels, int sample_rate, int sam
 
 	return waveform;
 }
+
+
 
 array<float>@ generate_noise(int channels, int samples) {
 	array<float> @waveform = array<float>(samples * channels);
@@ -173,4 +230,73 @@ array<float>@ apply_limiter(array<float>@ audio) {
 		else if (audio[i] < -1.0f) audio[i] = -1.0f;
 	}
 	return audio;
+}
+
+array<float>@ clone_audio(const array<float>@ audio) {
+	array<float> @clone = array<float>(audio.length());
+	for (uint i = 0; i < audio.length(); ++i) {
+		clone[i] = audio[i];
+	}
+	return clone;
+}
+
+array<float>@ pan_audio(const array<float>@ audio, float pan, int channels) {
+	if (channels <= 0) return null;
+
+	int numSamples = audio.length() / channels;
+	array<float> @pannedAudio = array<float>(audio.length());
+
+	pan = clamp(pan, -1.0f, 1.0f); // Clamp the pan between -1 and 1.
+
+	if (channels == 1) {
+		// Mono input, duplicate to stereo.
+		for (int i = 0; i < numSamples; ++i)
+		{
+			pannedAudio[i * 2] = audio[i] * (1.0f - pan);
+			pannedAudio[i * 2 + 1] = audio[i] * (1.0f + pan);
+		}
+
+		return pannedAudio;
+	} else if (channels == 2) {
+		// Stereo input.
+		float leftGain = 0.5f * (1.0f - pan); // Avoids making it loud when panning.
+		float rightGain = 0.5f * (1.0f + pan);
+		for (int i = 0; i < numSamples; ++i)
+		{
+			pannedAudio[i * 2] = audio[i * 2] * leftGain;
+			pannedAudio[i * 2 + 1] = audio[i * 2 + 1] * rightGain;
+		}
+
+		return pannedAudio;
+	}
+
+	// For anything else, just return a clone.
+	return clone_audio(audio);
+}
+
+array<float>@ to_stereo(const array<float>@ monoAudio) {
+	if (monoAudio is null) return null;
+
+	int numSamples = monoAudio.length();
+	array<float> @stereoAudio = array<float>(numSamples * 2);
+
+	for (int i = 0; i < numSamples; ++i) {
+		stereoAudio[i * 2] = monoAudio[i];	 // Left channel
+		stereoAudio[i * 2 + 1] = monoAudio[i]; // Right channel
+	}
+
+	return stereoAudio;
+}
+
+array<float>@ to_mono(const array<float>@ stereoAudio) {
+	if (stereoAudio is null || stereoAudio.length() % 2 != 0) return null;
+
+	int numSamples = stereoAudio.length() / 2;
+	array<float> @monoAudio = array<float>(numSamples);
+
+	for (int i = 0; i < numSamples; ++i) {
+		monoAudio[i] = (stereoAudio[i * 2] + stereoAudio[i * 2 + 1]) / 2.0f; // Average left and right channels
+	}
+
+	return monoAudio;
 }

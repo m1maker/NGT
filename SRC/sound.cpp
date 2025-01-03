@@ -1,5 +1,6 @@
 // NGTAUDIO
 #include "scriptmath/scriptmath3d.h"
+#include <unordered_set>
 #define NOMINMAX
 #include "MemoryStream.h"
 #include "ngt.h"
@@ -613,13 +614,87 @@ static IPLContext iplContext;
 static IPLHRTFSettings iplHRTFSettings;
 static IPLHRTF iplHRTF;
 bool g_SoundInitialized = false;
-ma_engine sound_default_mixer;
+class mixer;
+static mixer* output = nullptr;
+class sound;
+class mixer {
+public:
+	ma_engine m_mixer;
+	ma_engine_config m_config;
+	mutable int ref = 0;
+	std::unordered_set<mixer*> mixers;
+	std::unordered_set<sound*> sounds;
+	mixer* parent_mixer;
+	ma_node* output_node; // Node to connect to parent mixer
+	bool is_root = false;
+	mixer(mixer* parent = nullptr, bool root = false) : parent_mixer(parent), is_root(root) {
+		m_config = ma_engine_config_init();
+		m_config.channels = CHANNELS;
+		m_config.sampleRate = SAMPLE_RATE; // Default sample rate
+		m_config.noDevice = MA_TRUE;
+		if (ma_engine_init(&m_config, &m_mixer) != MA_SUCCESS) {
+			throw std::runtime_error("Failed to initialize ma_engine in mixer");
+		}
+		output_node = ma_engine_get_endpoint(&m_mixer);
+		if (parent)
+		{
+			set_mixer(parent);
+		}
+		else if (!root) {
+			set_mixer(output);
+		}
+		ref = 1;
+	}
+
+	~mixer() {
+		if (parent_mixer)
+		{
+			set_mixer(nullptr);
+		}
+		ma_engine_uninit(&m_mixer);
+	}
+
+	void AddRef() const
+	{
+		ref += 1;
+	}
+	void Release() const
+	{
+		if (--ref < 1)
+		{
+			delete this;
+		}
+	}
+
+	void set_mixer(mixer* new_parent) {
+		if (parent_mixer == new_parent)
+			return;
+		if (parent_mixer)
+		{
+			parent_mixer->mixers.erase(this);
+			ma_node_detach_output_bus(output_node, 0);
+		}
+		parent_mixer = new_parent;
+		if (parent_mixer)
+		{
+			parent_mixer->mixers.insert(this);
+			ma_node_attach_output_bus(output_node, 0, parent_mixer->output_node, 0);
+		}
+	}
+
+	inline ma_engine* get_engine() {
+		return &m_mixer;
+	}
+};
+
+static mixer* sound_default_mixer = nullptr;
+
 ma_device sound_mixer_device;
-ma_engine_config engineConfig;
 asUINT period_size = 256;
 static void sound_mixer_device_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount)
 {
-	ma_engine_read_pcm_frames(&sound_default_mixer, pOutput, frameCount, nullptr);
+	if (output)
+		ma_engine_read_pcm_frames(&output->m_mixer, pOutput, frameCount, nullptr);
 	(void)pInput;
 }
 struct AudioDevice
@@ -728,8 +803,6 @@ CScriptArray* get_input_audio_devices()
 }
 
 
-void mixer_start();
-void mixer_stop();
 static ma_device_id* g_InputDevice = nullptr;
 bool set_output_audio_device(asUINT id)
 {
@@ -737,7 +810,6 @@ bool set_output_audio_device(asUINT id)
 		soundsystem_init();
 	if (output_devs.size() == 0)
 		output_devs = GetOutputAudioDevices();
-	mixer_stop(); // Need to reset and uninitialize audio_device
 	ma_device_uninit(&sound_mixer_device);
 	ma_device_config devConfig = ma_device_config_init(ma_device_type_playback);
 	;
@@ -750,7 +822,7 @@ bool set_output_audio_device(asUINT id)
 	devConfig.dataCallback = sound_mixer_device_callback;
 	if (ma_device_init(nullptr, &devConfig, &sound_mixer_device) != MA_SUCCESS)
 		return false;
-	mixer_start();
+	ma_device_start(&sound_mixer_device);
 	return true;
 }
 
@@ -845,7 +917,7 @@ static void ma_steamaudio_binaural_node_process_pcm_frames(ma_node* pNode, const
 	binauralParams.direction.x = pBinauralNode->direction.x;
 	binauralParams.direction.y = pBinauralNode->direction.z;
 	binauralParams.direction.z = pBinauralNode->direction.y;
-	ma_vec3f listener = ma_engine_listener_get_position(&sound_default_mixer, ma_sound_get_listener_index(&pBinauralNode->handle_));
+	ma_vec3f listener = ma_engine_listener_get_position(&output->m_mixer, ma_sound_get_listener_index(&pBinauralNode->handle_));
 	float distance = sqrt((listener.x + binauralParams.direction.x) * (listener.x + binauralParams.direction.x) +
 		(listener.y + binauralParams.direction.y) * (listener.y + binauralParams.direction.y) +
 		(listener.z - binauralParams.direction.z) * (listener.z - binauralParams.direction.z));
@@ -1037,10 +1109,8 @@ bool soundsystem_init()
 {
 	if (g_SoundInitialized == true)
 		return true;
-	engineConfig = ma_engine_config_init();
-	engineConfig.noDevice = MA_TRUE;
-	engineConfig.channels = CHANNELS;
-	engineConfig.sampleRate = SAMPLE_RATE;
+	output = new mixer(nullptr, true);
+	sound_default_mixer = output; // This is in progress now. new mixer(output, false);
 	ma_device_config devConfig = ma_device_config_init(ma_device_type_playback);
 	;
 	devConfig.noClip = MA_TRUE;
@@ -1051,8 +1121,6 @@ bool soundsystem_init()
 	devConfig.dataCallback = sound_mixer_device_callback;
 	if (ma_device_init(nullptr, &devConfig, &sound_mixer_device) != MA_SUCCESS)
 		return false;
-	mixer_start();
-	ma_engine_init(&engineConfig, &sound_default_mixer);
 	MA_ZERO_OBJECT(&iplAudioSettings);
 	iplAudioSettings.samplingRate = SAMPLE_RATE;
 
@@ -1068,6 +1136,7 @@ bool soundsystem_init()
 	iplHRTFSettings.type = IPL_HRTFTYPE_DEFAULT;
 	iplHRTFSettings.volume = 1.0f;
 	ma_result_from_IPLerror(iplHRTFCreate(iplContext, &iplAudioSettings, &iplHRTFSettings, &iplHRTF));
+	ma_device_start(&sound_mixer_device);
 	return true;
 }
 
@@ -1075,20 +1144,16 @@ void soundsystem_free()
 {
 	if (g_SoundInitialized == false)
 		return;
+	if (sound_default_mixer) {
+		delete sound_default_mixer;
+		sound_default_mixer = nullptr;
+	}
 	iplHRTFRelease(&iplHRTF);
 	iplContextRelease(&iplContext);
 	ma_device_uninit(&sound_mixer_device);
-	ma_engine_uninit(&sound_default_mixer);
 	g_SoundInitialized = false;
 }
 
-void mixer_reinit(int channels, int sample_rate);
-void set_audio_period_size(asUINT size)
-{
-	period_size = size;
-	if (g_SoundInitialized)
-		mixer_reinit(CHANNELS, SAMPLE_RATE);
-}
 string sound_path;
 pack* sound_pack = nullptr;
 void set_sound_storage(const string& path)
@@ -1115,202 +1180,13 @@ void set_master_volume(float volume)
 {
 	if (volume > 0 or volume < -100)
 		return;
-	ma_engine_set_gain_db(&sound_default_mixer, volume);
+	if (output) ma_engine_set_volume(&output->m_mixer, ma_volume_linear_to_db(volume));
 }
 float get_master_volume()
 {
-	return ma_engine_get_gain_db(&sound_default_mixer);
-}
-void mixer_start()
-{
-	ma_device_start(&sound_mixer_device);
-}
-void mixer_stop()
-{
-	ma_device_stop(&sound_mixer_device);
-}
-bool mixer_play_sound(const string& filename)
-{
-	if (!g_SoundInitialized)
-	{
-		if (!soundsystem_init())
-		{
-			return false;
-		}
-
-		g_SoundInitialized = true;
-	}
-	string result;
-	if (sound_path != "")
-	{
-		result = sound_path + "/" + filename.c_str();
-	}
-	else
-	{
-		result = filename;
-	}
-
-	ma_result r;
-	r = ma_engine_play_sound(&sound_default_mixer, result.c_str(), nullptr);
-	if (r != MA_SUCCESS)
-		return false;
-	return true;
-}
-void mixer_reinit(int channels = 2, int sample_rate = 44100)
-{
-	CHANNELS = channels;
-	SAMPLE_RATE = sample_rate;
-	if (g_SoundInitialized)
-		soundsystem_free();
-	soundsystem_init();
+	return output ? ma_volume_db_to_linear(ma_engine_get_volume(&output->m_mixer)) : 0.0f;
 }
 bool sound_global_hrtf = false;
-
-std::vector<char> load_audio_from_url(const std::string& url)
-{
-	Poco::URI uri(url);
-	int redirectCount = 0;
-	const std::string userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
-
-	Poco::Net::HTTPClientSession session(uri.getHost(), uri.getPort() == -1 ? (uri.getScheme() == "https" ? 443 : 80) : uri.getPort());
-
-	while (redirectCount < 5)
-	{
-		Poco::Net::HTTPRequest request(Poco::Net::HTTPRequest::HTTP_GET, uri.getPathAndQuery());
-		request.set("User-Agent", userAgent);
-		Poco::Net::HTTPResponse response;
-
-		try
-		{
-			session.sendRequest(request);
-			std::istream& rs = session.receiveResponse(response);
-
-			if (response.getStatus() == Poco::Net::HTTPResponse::HTTP_OK)
-			{
-				std::vector<char> audioData;
-				audioData.reserve(response.getContentLength());
-				audioData.insert(audioData.end(), std::istreambuf_iterator<char>(rs), std::istreambuf_iterator<char>());
-				return audioData;
-			}
-			else if (response.getStatus() == Poco::Net::HTTPResponse::HTTP_FOUND ||
-				response.getStatus() == Poco::Net::HTTPResponse::HTTP_MOVED_PERMANENTLY)
-			{
-				std::string location = response.get("Location");
-				uri = Poco::URI(location);
-				redirectCount++;
-			}
-			else
-			{
-				asIScriptContext* ctx = asGetActiveContext();
-				std::string text = std::to_string(response.getStatus()) + " " + response.getReasonForStatus(response.getStatus());
-				ctx->SetException(text.c_str());
-				return {};
-			}
-		}
-		catch (const Poco::Exception& ex)
-		{
-			asIScriptContext* ctx = asGetActiveContext();
-			ctx->SetException(ex.displayText().c_str());
-			return {};
-		}
-	}
-
-	asIScriptContext* ctx = asGetActiveContext();
-	ctx->SetException("");
-	return {};
-}
-
-typedef struct
-{
-	ma_node_config nodeConfig;
-	ma_uint32 channels; /* The number of channels of the source, which will be the same as the output. Must be 1 or 2. */
-	ma_uint32 sampleRate;
-	float playbackSpeed; /* Playback speed multiplier. */
-} ma_playback_speed_node_config;
-typedef struct
-{
-	ma_node_base baseNode;
-	ma_playback_speed_node_config conf;
-} ma_playback_speed_node;
-
-MA_API ma_playback_speed_node_config ma_playback_speed_node_config_init(ma_uint32 channels, ma_uint32 sampleRate)
-{
-	ma_playback_speed_node_config config;
-
-	MA_ZERO_OBJECT(&config);
-	config.nodeConfig = ma_node_config_init(); /* Input and output channels will be set in ma_reverb_node_init(). */
-	config.channels = channels;
-	config.sampleRate = sampleRate;
-
-	return config;
-}
-
-static void ma_playback_speed_node_process_pcm_frames(ma_node* pNode, const float** ppFramesIn, ma_uint32* pFrameCountIn, float** ppFramesOut, ma_uint32* pFrameCountOut)
-{
-	ma_playback_speed_node* pPlaybackSpeedNode = (ma_playback_speed_node*)pNode;
-
-	float playbackSpeed = pPlaybackSpeedNode->conf.playbackSpeed;
-
-	for (ma_uint32 i = 0; i < *pFrameCountOut; i++)
-	{
-		float t = (float)i / playbackSpeed;
-		int index = (int)t;
-		float fraction = t - index;
-
-		for (ma_uint32 j = 0; j < pPlaybackSpeedNode->conf.channels; j++)
-		{
-			int inputIndex1 = index * pPlaybackSpeedNode->conf.channels + j;
-			int inputIndex2 = (index + 1) * pPlaybackSpeedNode->conf.channels + j;
-			int outputIndex = i * pPlaybackSpeedNode->conf.channels + j;
-
-			*ppFramesOut[outputIndex] = *ppFramesIn[inputIndex1] + fraction * (ppFramesIn[inputIndex2] - ppFramesIn[inputIndex1]);
-		}
-	}
-}
-
-static ma_node_vtable g_ma_playback_speed_node_vtable =
-{
-	ma_playback_speed_node_process_pcm_frames,
-	NULL,
-	1, /* 1 input channel. */
-	1, /* 1 output channel. */
-	MA_NODE_FLAG_CONTINUOUS_PROCESSING };
-MA_API ma_result ma_playback_speed_node_init(ma_node_graph* pNodeGraph, const ma_playback_speed_node_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_playback_speed_node* pPlaybackSpeedNode)
-{
-	ma_result result;
-	ma_node_config baseConfig;
-
-	if (pPlaybackSpeedNode == NULL)
-	{
-		return MA_INVALID_ARGS;
-	}
-
-	MA_ZERO_OBJECT(pPlaybackSpeedNode);
-
-	if (pConfig == NULL)
-	{
-		return MA_INVALID_ARGS;
-	}
-
-	baseConfig = pConfig->nodeConfig;
-	baseConfig.vtable = &g_ma_playback_speed_node_vtable;
-	baseConfig.pInputChannels = &pConfig->channels;
-	baseConfig.pOutputChannels = &pConfig->channels;
-
-	result = ma_node_init(pNodeGraph, &baseConfig, pAllocationCallbacks, &pPlaybackSpeedNode->baseNode);
-	if (result != MA_SUCCESS)
-	{
-		return result;
-	}
-
-	return MA_SUCCESS;
-}
-
-MA_API void ma_playback_speed_node_uninit(ma_playback_speed_node* pPlaybackSpeedNode, const ma_allocation_callbacks* pAllocationCallbacks)
-{
-	/* The base node is always uninitialized first. */
-	ma_node_uninit(pPlaybackSpeedNode, pAllocationCallbacks);
-}
 
 class pcm_ring_buffer {
 public:
@@ -1410,8 +1286,6 @@ public:
 	ma_lpf_node_config lowpassConfig;
 	ma_notch_node notch;
 	ma_notch_node_config notchConfig;
-	ma_playback_speed_node m_playback_speed_node;
-	ma_playback_speed_node_config m_speed_config;
 	ma_steamaudio_binaural_node_config binauralNodeConfig;
 	std::map<std::string, ma_node*> effects;
 	ma_audio_buffer m_buffer;
@@ -1419,6 +1293,7 @@ public:
 	string file;
 	Vector3 source_position;
 	Vector3 listener_position;
+	mixer* current_mixer = nullptr;
 	mutable int ref = 0;
 	sound(const string& filename = "")
 	{
@@ -1427,7 +1302,9 @@ public:
 		{
 			g_SoundInitialized = soundsystem_init();
 		}
-		effects["Default"] = ma_engine_get_endpoint(&sound_default_mixer);
+		current_mixer = sound_default_mixer;
+		set_mixer(current_mixer);
+		effects["Default"] = ma_engine_get_endpoint(&current_mixer->m_mixer);
 		if (filename != "")
 			this->load(filename);
 	}
@@ -1468,7 +1345,7 @@ public:
 			return this->load_from_memory(file, size);
 		}
 		handle_ = new ma_sound;
-		ma_result loading_result = ma_sound_init_from_file(&sound_default_mixer, result.c_str(), 0, NULL, NULL, handle_);
+		ma_result loading_result = ma_sound_init_from_file(&current_mixer->m_mixer, result.c_str(), 0, NULL, NULL, handle_);
 		if (loading_result != MA_SUCCESS)
 		{
 			delete handle_;
@@ -1494,7 +1371,7 @@ public:
 		ma_result r = ma_decoder_init_memory(data.c_str(), stream_size, NULL, &decoder);
 		if (r != MA_SUCCESS)
 			return false;
-		ma_result loading_result = ma_sound_init_from_data_source(&sound_default_mixer, &decoder, 0, 0, handle_);
+		ma_result loading_result = ma_sound_init_from_data_source(&current_mixer->m_mixer, &decoder, 0, 0, handle_);
 		if (loading_result != MA_SUCCESS)
 		{
 			delete handle_;
@@ -1547,7 +1424,7 @@ public:
 		if (result != MA_SUCCESS)
 			return false;
 		buffer_initialized = true;
-		ma_result loading_result = ma_sound_init_from_data_source(&sound_default_mixer, &m_buffer, 0, 0, handle_);
+		ma_result loading_result = ma_sound_init_from_data_source(&current_mixer->m_mixer, &m_buffer, 0, 0, handle_);
 		if (loading_result != MA_SUCCESS)
 		{
 			delete handle_;
@@ -1571,7 +1448,7 @@ public:
 		if (active)
 			this->close();
 		handle_ = new ma_sound;
-		ma_result loading_result = ma_sound_init_from_data_source(&sound_default_mixer, &buffer->rb, 0, 0, handle_);
+		ma_result loading_result = ma_sound_init_from_data_source(&current_mixer->m_mixer, &buffer->rb, 0, 0, handle_);
 		if (loading_result != MA_SUCCESS)
 		{
 			delete handle_;
@@ -1589,60 +1466,26 @@ public:
 		return active;
 	}
 
-	bool stream(const string& filename)
-	{
-		string result;
-		if (sound_path != "")
-		{
-			result = sound_path + "/" + filename.c_str();
-		}
-		else
-		{
-			result = filename;
-		}
-		handle_ = new ma_sound;
-		ma_result loading_result = ma_sound_init_from_file(&sound_default_mixer, result.c_str(), MA_SOUND_FLAG_STREAM, NULL, NULL, handle_);
-		if (loading_result != MA_SUCCESS)
-		{
-			delete handle_;
-			active = false;
-			return false;
-		}
-		active = true;
+
+	void set_mixer(mixer* new_mixer) {
+		if (current_mixer == new_mixer)
+			return;
 		auto last = --effects.end();
-
-		ma_node_attach_output_bus(handle_, 0, last->second, 0);
-
-		file = result;
-		if (sound_global_hrtf)
-			this->set_hrtf(true);
-
-		return true;
-	}
-	bool load_url(const string& url)
-	{
-		handle_ = new ma_sound;
-		vector<char> audio = load_audio_from_url(url.c_str());
-		ma_result init_result = ma_decoder_init_memory(audio.data(), audio.size(), NULL, &decoder);
-		if (init_result != MA_SUCCESS)
+		if (current_mixer)
 		{
-			return false;
+			current_mixer->sounds.erase(this);
+			if (last->second != nullptr)
+				ma_node_detach_output_bus(last->second, 0);
 		}
-		ma_result loading_result = ma_sound_init_from_data_source(&sound_default_mixer, &decoder, 0, 0, handle_);
-		if (loading_result != MA_SUCCESS)
+		current_mixer = new_mixer;
+		if (current_mixer)
 		{
-			delete handle_;
-			active = false;
-			return false;
+			current_mixer->sounds.insert(this);
+			if (last->second != nullptr)
+				ma_node_attach_output_bus(last->second, 0, current_mixer->output_node, 0);
 		}
-		decoderInitialized = true;
-
-		active = true;
-		if (sound_global_hrtf)
-			this->set_hrtf(true);
-
-		return active;
 	}
+
 	const void* push_memory()
 	{
 		if (!active)
@@ -1805,8 +1648,8 @@ public:
 			return;
 		if (fx == "reverb")
 		{
-			reverbNodeConfig = ma_reverb_node_config_init(engineConfig.channels, engineConfig.sampleRate, 100, 100, 100);
-			ma_reverb_node_init(ma_engine_get_node_graph(&sound_default_mixer), &reverbNodeConfig, NULL, &m_reverbNode);
+			reverbNodeConfig = ma_reverb_node_config_init(CHANNELS, SAMPLE_RATE, 100, 100, 100);
+			ma_reverb_node_init(ma_engine_get_node_graph(&current_mixer->m_mixer), &reverbNodeConfig, NULL, &m_reverbNode);
 			auto last = --effects.end();
 			ma_node_attach_output_bus(&m_reverbNode, 0, last->second, 0);
 			ma_node_attach_output_bus(handle_, 0, &m_reverbNode, 0);
@@ -1814,8 +1657,8 @@ public:
 		}
 		if (fx == "vocoder")
 		{
-			vocoderNodeConfig = ma_vocoder_node_config_init(engineConfig.channels, engineConfig.sampleRate);
-			ma_vocoder_node_init(ma_engine_get_node_graph(&sound_default_mixer), &vocoderNodeConfig, NULL, &m_vocoderNode);
+			vocoderNodeConfig = ma_vocoder_node_config_init(CHANNELS, SAMPLE_RATE);
+			ma_vocoder_node_init(ma_engine_get_node_graph(&current_mixer->m_mixer), &vocoderNodeConfig, NULL, &m_vocoderNode);
 			auto last = --effects.end();
 
 			ma_node_attach_output_bus(&m_vocoderNode, 0, last->second, 0);
@@ -1824,8 +1667,8 @@ public:
 		}
 		if (fx == "delay")
 		{
-			delayNodeConfig = ma_delay_node_config_init(engineConfig.channels, engineConfig.sampleRate, (100 * engineConfig.sampleRate) / 1000, 0.5f);
-			ma_delay_node_init(ma_engine_get_node_graph(&sound_default_mixer), &delayNodeConfig, NULL, &m_delayNode);
+			delayNodeConfig = ma_delay_node_config_init(CHANNELS, SAMPLE_RATE, (100 * SAMPLE_RATE) / 1000, 0.5f);
+			ma_delay_node_init(ma_engine_get_node_graph(&current_mixer->m_mixer), &delayNodeConfig, NULL, &m_delayNode);
 			auto last = --effects.end();
 
 			ma_node_attach_output_bus(&m_delayNode, 0, last->second, 0);
@@ -1834,9 +1677,9 @@ public:
 		}
 		if (fx == "ltrim")
 		{
-			trimNodeConfig = ma_ltrim_node_config_init(engineConfig.channels, 0);
+			trimNodeConfig = ma_ltrim_node_config_init(CHANNELS, 0);
 			trimNodeConfig.threshold = 0.3;
-			ma_ltrim_node_init(ma_engine_get_node_graph(&sound_default_mixer), &trimNodeConfig, NULL, &m_trimNode);
+			ma_ltrim_node_init(ma_engine_get_node_graph(&current_mixer->m_mixer), &trimNodeConfig, NULL, &m_trimNode);
 			auto last = --effects.end();
 
 			ma_node_attach_output_bus(&m_trimNode, 0, last->second, 0);
@@ -1845,12 +1688,12 @@ public:
 		}
 		if (fx == "channelsplit")
 		{
-			combinerNodeConfig = ma_channel_combiner_node_config_init(engineConfig.channels);
-			ma_channel_combiner_node_init(ma_engine_get_node_graph(&sound_default_mixer), &combinerNodeConfig, NULL, &m_combinerNode);
-			ma_node_attach_output_bus(&m_combinerNode, 0, ma_engine_get_endpoint(&sound_default_mixer), 0);
+			combinerNodeConfig = ma_channel_combiner_node_config_init(CHANNELS);
+			ma_channel_combiner_node_init(ma_engine_get_node_graph(&current_mixer->m_mixer), &combinerNodeConfig, NULL, &m_combinerNode);
+			ma_node_attach_output_bus(&m_combinerNode, 0, ma_engine_get_endpoint(&current_mixer->m_mixer), 0);
 			effects["combiner"] = &m_combinerNode;
-			separatorNodeConfig = ma_channel_separator_node_config_init(engineConfig.channels);
-			ma_channel_separator_node_init(ma_engine_get_node_graph(&sound_default_mixer), &separatorNodeConfig, NULL, &m_separatorNode);
+			separatorNodeConfig = ma_channel_separator_node_config_init(CHANNELS);
+			ma_channel_separator_node_init(ma_engine_get_node_graph(&current_mixer->m_mixer), &separatorNodeConfig, NULL, &m_separatorNode);
 			MA_ASSERT(ma_node_get_output_bus_count(&m_separatorNode) == ma_node_get_input_bus_count(&m_combinerNode));
 			for (ma_uint32 iChannel = 0; iChannel < ma_node_get_output_bus_count(&m_separatorNode); iChannel += 1)
 			{
@@ -1863,8 +1706,8 @@ public:
 		}
 		if (fx == "highpass")
 		{
-			highpassConfig = ma_hpf_node_config_init(engineConfig.channels, engineConfig.sampleRate, 600, -10);
-			ma_hpf_node_init(ma_engine_get_node_graph(&sound_default_mixer), &highpassConfig, NULL, &highpass);
+			highpassConfig = ma_hpf_node_config_init(CHANNELS, SAMPLE_RATE, 600, -10);
+			ma_hpf_node_init(ma_engine_get_node_graph(&current_mixer->m_mixer), &highpassConfig, NULL, &highpass);
 			auto last = --effects.end();
 
 			ma_node_attach_output_bus(&highpass, 0, last->second, 0);
@@ -1873,8 +1716,8 @@ public:
 		}
 		if (fx == "lowpass")
 		{
-			lowpassConfig = ma_lpf_node_config_init(engineConfig.channels, engineConfig.sampleRate, 600, -10);
-			ma_lpf_node_init(ma_engine_get_node_graph(&sound_default_mixer), &lowpassConfig, NULL, &lowpass);
+			lowpassConfig = ma_lpf_node_config_init(CHANNELS, SAMPLE_RATE, 600, -10);
+			ma_lpf_node_init(ma_engine_get_node_graph(&current_mixer->m_mixer), &lowpassConfig, NULL, &lowpass);
 			auto last = --effects.end();
 
 			ma_node_attach_output_bus(&lowpass, 0, last->second, 0);
@@ -1883,8 +1726,8 @@ public:
 		}
 		if (fx == "notch")
 		{
-			notchConfig = ma_notch_node_config_init(engineConfig.channels, engineConfig.sampleRate, 0, 300);
-			ma_notch_node_init(ma_engine_get_node_graph(&sound_default_mixer), &notchConfig, NULL, &notch);
+			notchConfig = ma_notch_node_config_init(CHANNELS, SAMPLE_RATE, 0, 300);
+			ma_notch_node_init(ma_engine_get_node_graph(&current_mixer->m_mixer), &notchConfig, NULL, &notch);
 			auto last = --effects.end();
 
 			ma_node_attach_output_bus(&notch, 0, last->second, 0);
@@ -1916,7 +1759,7 @@ public:
 		}
 		if (fx == "channelsplit")
 		{
-			combinerNodeConfig = ma_channel_combiner_node_config_init(engineConfig.channels);
+			combinerNodeConfig = ma_channel_combiner_node_config_init(CHANNELS);
 			ma_channel_combiner_node_uninit(&m_combinerNode, NULL);
 			ma_channel_separator_node_uninit(&m_separatorNode, NULL);
 		}
@@ -2063,7 +1906,7 @@ public:
 			binauralNodeConfig = ma_steamaudio_binaural_node_config_init(CHANNELS, iplAudioSettings, iplContext, iplHRTF);
 
 			m_binauralNode.handle_ = *this->handle_;
-			ma_steamaudio_binaural_node_init(ma_engine_get_node_graph(&sound_default_mixer), &binauralNodeConfig, NULL, &m_binauralNode);
+			ma_steamaudio_binaural_node_init(ma_engine_get_node_graph(&current_mixer->m_mixer), &binauralNodeConfig, NULL, &m_binauralNode);
 			/* Connect the output of the delay node to the input of the endpoint. */
 			auto last = --effects.end();
 			ma_node_attach_output_bus(&m_binauralNode, 0, last->second, 0);
@@ -2199,7 +2042,7 @@ public:
 	}
 	float get_speed() const
 	{
-		return m_speed_config.playbackSpeed * 100;
+		return 0.0f;
 	}
 	bool is_active() const
 	{
@@ -2344,7 +2187,6 @@ pcm_ring_buffer* fbuffer(ma_uint32 channels, ma_uint32 sample_rate, ma_uint32 bu
 void register_sound(asIScriptEngine* engine)
 {
 	engine->RegisterFuncdef("void sound_end_callback(const ?&in=null)");
-	engine->RegisterGlobalFunction("void set_audio_period_size(uint)property", asFUNCTION(set_audio_period_size), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void set_sound_storage(const string &in folder_name)property", asFUNCTION(set_sound_storage), asCALL_CDECL);
 
 	engine->RegisterGlobalFunction("string get_sound_storage()property", asFUNCTION(get_sound_storage), asCALL_CDECL);
@@ -2353,10 +2195,6 @@ void register_sound(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("pack@ get_sound_pack()property", asFUNCTION(get_sound_pack), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void set_master_volume(float volume)property", asFUNCTION(set_master_volume), asCALL_CDECL);
 	engine->RegisterGlobalFunction("float get_master_volume()property", asFUNCTION(get_master_volume), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void mixer_start()", asFUNCTION(mixer_start), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void mixer_stop()", asFUNCTION(mixer_stop), asCALL_CDECL);
-	engine->RegisterGlobalFunction("bool mixer_play_sound(const string &in sound_path)", asFUNCTION(mixer_play_sound), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void mixer_reinit(int channels = 2, int sample_rate = 44100)", asFUNCTION(mixer_reinit), asCALL_CDECL);
 	engine->RegisterGlobalFunction("array<string>@ get_output_audio_devices()", asFUNCTION(get_output_audio_devices), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool set_output_audio_device(uint index)", asFUNCTION(set_output_audio_device), asCALL_CDECL);
 
@@ -2382,8 +2220,6 @@ void register_sound(asIScriptEngine* engine)
 	engine->RegisterObjectMethod(_O("sound"), "bool load_pcm(const string&in memory, size_t memory_size = 0, int channels = 0, int sample_rate = 0, int bits_per_sample = 0)const", asMETHOD(sound, load_pcm), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("sound"), "bool load_pcm_buffer(pcm_ring_buffer@ buffer)const", asMETHOD(sound, load_pcm_buffer), asCALL_THISCALL);
 
-	engine->RegisterObjectMethod(_O("sound"), "bool stream(const string &in filename)const", asMETHOD(sound, stream), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "bool load_url(const string &in url)const", asMETHOD(sound, load_url), asCALL_THISCALL);
 
 	engine->RegisterObjectMethod(_O("sound"), "uint64 push_memory()const", asMETHOD(sound, push_memory), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("sound"), "string get_file_path()const property", asMETHOD(sound, get_file_path), asCALL_THISCALL);

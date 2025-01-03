@@ -2,7 +2,7 @@ void main(){
 sound s;
 tts_voice v;
 size_t size;
-string pcm = v.speak_to_memory("S", size);
+string pcm = v.speak_to_memory("S", size, void, void, void);
 show_window("Test");
 v.speak("Are you ready?");
 wait(1500);
