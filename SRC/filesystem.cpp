@@ -4,14 +4,13 @@
 #include "scriptarray/scriptarray.h"
 #include <angelscript.h>
 #include <chrono>
+#include <condition_variable>
 #include <filesystem>
-#include <regex>
+#include <mutex>
+#include <Poco/Glob.h>
+#include <SDL3/SDL.h>
 #include <string>
 #include <vector>
-
-#include <condition_variable>
-#include <mutex>
-#include <SDL3/SDL.h>
 
 std::mutex dialog_mutex;
 std::condition_variable dialog_cv;
@@ -125,37 +124,22 @@ static CDateTime convert_time_point_to_CDateTime(const std::chrono::system_clock
 	);
 }
 
-static std::string convert_wildcard_to_regex(const std::string& pattern) {
-	std::string regexPattern = "^";
-	for (char c : pattern) {
-		if (c == '*') {
-			regexPattern += ".*";
-		}
-		else if (c == '?') {
-			regexPattern += ".";
-		}
-		else if (std::regex_match(std::string(1, c), std::regex("[^a-zA-Z0-9]"))) {
-			regexPattern += "\\" + std::string(1, c); // Escape special characters
-		}
-		else {
-			regexPattern += c;
-		}
+static bool FNMatch(const std::string& file, const std::string& pattern) {
+	try {
+		return Poco::Glob(pattern).match(file);
 	}
-	regexPattern += "$";
-	return regexPattern;
+	catch (...) { return false; }
 }
 
-
-static void list_directory_helper(const std::string& path, std::vector<std::string>& files, std::vector<std::string>& folders, const std::string& pattern = "*") {
-	std::regex regexPattern(convert_wildcard_to_regex(pattern));
+static void list_directory_helper(const std::string& path, std::vector<std::string>& files, std::vector<std::string>& folders, const std::string& file_pattern = "*", const std::string& folder_pattern = "*") {
 	if (fs::is_directory(path)) {
 		for (const auto& entry : fs::directory_iterator(path)) {
 			std::string entryPath = entry.path().string();
-			if (entry.is_directory() && std::regex_match(entryPath, regexPattern)) {
+			if (entry.is_directory() && FNMatch(entryPath, folder_pattern)) {
 				folders.push_back(entryPath);
 			}
 			else {
-				if (std::regex_match(entry.path().filename().string(), regexPattern)) {
+				if (FNMatch(entry.path().filename().string(), file_pattern)) {
 					files.push_back(entryPath);
 				}
 			}
@@ -189,10 +173,10 @@ bool set_current_path(const std::string& path) {
 	return false;
 }
 
-void list_directory(const std::string& path = get_current_path(), CScriptArray* files = nullptr, CScriptArray* folders = nullptr, const std::string& pattern = "*") {
+void list_directory(const std::string& path = get_current_path(), CScriptArray* files = nullptr, CScriptArray* folders = nullptr, const std::string& file_pattern = "*", const std::string& folder_pattern = "*") {
 	std::vector<std::string> files_array;
 	std::vector<std::string> folders_array;
-	list_directory_helper(path, files_array, folders_array, pattern);
+	list_directory_helper(path, files_array, folders_array, file_pattern, folder_pattern);
 	if (files)files->Reserve(files_array.size());
 	if (folders)folders->Reserve(folders_array.size());
 	for (uint64_t i = 0; files && i < files_array.size(); ++i) {
@@ -285,7 +269,7 @@ void RegisterScriptFileSystem(asIScriptEngine* engine) {
 	engine->RegisterGlobalFunction("bool is_directory(const string &in path)", asFUNCTION(is_directory), asCALL_CDECL);
 	engine->RegisterGlobalFunction("string get_current_path() property", asFUNCTION(get_current_path), asCALL_CDECL);
 	engine->RegisterGlobalFunction("void set_current_path(const string &in path) property", asFUNCTION(set_current_path), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void list_directory(const string &in path = current_path, array<string>@ files = null, array<string>@ folders = null, const string &in pattern = '*')", asFUNCTION(list_directory), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void list_directory(const string &in path = current_path, array<string>@ files = null, array<string>@ folders = null, const string &in file_pattern = '*', const string &in folder_pattern = '*')", asFUNCTION(list_directory), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool create_directory(const string &in path)", asFUNCTION(create_directory), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool remove(const string &in path)", asFUNCTION(ScriptRemove), asCALL_CDECL);
 	engine->RegisterGlobalFunction("bool rename(const string &in old, const string &in new)", asFUNCTION(ScriptRename), asCALL_CDECL);

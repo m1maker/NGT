@@ -3,6 +3,7 @@ bool interrupt = true;
 array<int> pressed;
 void main() {
 	show_window("TTSVoice", enable_renderer : true);
+	update_window_freq = 5;
 	v.speak("Press any key. Press f 1 to switch interrupt. Press F2 / F3 to set speech rate.");
 	while(!quit_requested) {
 		wait(5);

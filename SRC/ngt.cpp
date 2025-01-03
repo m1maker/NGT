@@ -191,6 +191,7 @@ static size_t cmp_write_bytes(cmp_ctx_t* ctx, const void* input, size_t len) {
 bool wait_event_requested = false;
 bool g_quitRequested = false;
 
+timer g_windowUpdater;
 class WindowThread : public Poco::Runnable {
 public:
 	Poco::Thread thread;
@@ -1109,7 +1110,6 @@ int question(const string& title, const string& text) {
 }
 
 
-timer g_windowUpdater;
 void wait(uint64_t time) {
 	if (windowRunnable == nullptr || !window_has_renderer || windowRunnable->thread.currentOsTid() != Poco::Thread::currentOsTid()) {
 		Poco::Thread::sleep(time);
@@ -1120,10 +1120,11 @@ void wait(uint64_t time) {
 		if (t.elapsed_millis() > time)break;
 		Poco::Thread::sleep(1);
 		if (windowRunnable != nullptr && g_windowUpdater.elapsed_millis() > update_window_freq) {
-			windowRunnable->monitor();
+			SDL_PumpEvents();
 			g_windowUpdater.restart();
 		}
 	}
+	windowRunnable->monitor();
 }
 void wait_event() {
 	if (windowRunnable == nullptr)return;
