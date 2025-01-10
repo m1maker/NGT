@@ -689,14 +689,24 @@ public:
 
 static mixer* sound_default_mixer = nullptr;
 
-ma_device sound_mixer_device;
-asUINT period_size = 256;
+static ma_device sound_mixer_device;
+static asUINT period_size = 256;
+static std::vector<float> g_OutputData;
+static bool g_RecordOutput = false;
 static void sound_mixer_device_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount)
 {
 	if (output)
 		ma_engine_read_pcm_frames(&output->m_mixer, pOutput, frameCount, nullptr);
+	if (g_RecordOutput) {
+		const float* out = (const float*)pOutput;
+
+		for (ma_uint32 i = 0; i < frameCount * 2; ++i) {
+			g_OutputData.push_back(out[i]);
+		}
+	}
 	(void)pInput;
 }
+
 struct AudioDevice
 {
 	std::string name;
@@ -2113,7 +2123,7 @@ bool get_sound_global_hrtf()
 }
 
 
-void audio_recorder_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount)
+static void audio_recorder_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount)
 {
 	std::vector<float>* data = static_cast<std::vector<float>*>(pDevice->pUserData);
 	const float* in = (const float*)pInput; // Use const float* for input data
@@ -2129,14 +2139,38 @@ void audio_recorder_callback(ma_device* pDevice, void* pOutput, const void* pInp
 class MINIAUDIO_IMPLEMENTATION audio_recorder
 {
 public:
-	std::vector<float> data;
+	std::vector<float>* data = nullptr;
 	ma_device_config deviceConfig;
 	ma_device recording_device;
 	bool m_Started = false;
-
+	mutable std::atomic<int> ref = 0;
+	bool m_RecordOutput = false;
+	void AddRef()const {
+		++ref;
+	}
+	void Release()const {
+		if (--ref < 1) {
+			delete this;
+		}
+	}
+	audio_recorder() : ref(1) {
+	}
+	~audio_recorder() {
+		if (m_Started)
+			this->stop();
+	}
 	void start()
 	{
 		if (m_Started)this->stop();
+		if (m_RecordOutput) {
+			data = &g_OutputData;
+			g_RecordOutput = true;
+			m_Started = true;
+			return;
+		}
+		else {
+			data = new std::vector<float>;
+		}
 		deviceConfig = ma_device_config_init(ma_device_type_capture);
 		if (g_InputDevice != nullptr) {
 			deviceConfig.capture.pDeviceID = g_InputDevice;
@@ -2145,7 +2179,7 @@ public:
 		deviceConfig.capture.channels = 2;
 		deviceConfig.sampleRate = 44100;
 		deviceConfig.dataCallback = audio_recorder_callback;
-		deviceConfig.pUserData = &data;
+		deviceConfig.pUserData = data;
 
 		if (ma_device_init(nullptr, &deviceConfig, &recording_device) != MA_SUCCESS) {
 			m_Started = false;
@@ -2157,28 +2191,43 @@ public:
 	void stop()
 	{
 		if (!m_Started)return;
+		if (m_RecordOutput) {
+			data = nullptr;
+			g_RecordOutput = false;
+			m_Started = false;
+			return;
+		}
 		ma_device_uninit(&recording_device);
 	}
 
 	std::string get_data(size_t& size)
 	{
-		size = data.size();
+		if (!data)return "";
+		size = data->size();
 		std::string result(size * sizeof(float), '\0'); // Resize to hold all bytes
 
 		// Copy float data to string as bytes
-		std::memcpy(&result[0], data.data(), size * sizeof(float));
+		std::memcpy(&result[0], data->data(), size * sizeof(float));
 
 		return result;
 	}
 
 	void clear() {
-		data.clear();
+		if (!data)return;
+		data->clear();
 	}
 };
 
-static void audio_recorder_construct(audio_recorder* self)
-{
-	new(self) audio_recorder();
+audio_recorder* faudio_recorder() {
+	return new audio_recorder();
+}
+
+audio_recorder g_OutputRecorder;
+
+audio_recorder* get_output_audio_recorder() {
+	g_OutputRecorder.m_RecordOutput = true;
+	g_OutputRecorder.AddRef();
+	return &g_OutputRecorder;
 }
 
 sound* fsound(const string& filename) { return new sound(filename); }
@@ -2270,12 +2319,16 @@ void register_sound(asIScriptEngine* engine)
 	engine->RegisterGlobalFunction("void set_spatial_blend_max_distance(float)property", asFUNCTION(set_spatial_blend_max_distance), asCALL_CDECL);
 	engine->RegisterGlobalFunction("float get_spatial_blend_max_distance()property", asFUNCTION(get_spatial_blend_max_distance), asCALL_CDECL);
 
-	engine->RegisterObjectType("audio_recorder", sizeof(audio_recorder), asOBJ_VALUE | asOBJ_POD);
-	engine->RegisterObjectBehaviour("audio_recorder", asBEHAVE_CONSTRUCT, "void f()", asFUNCTION(audio_recorder_construct), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectType("audio_recorder", sizeof(audio_recorder), asOBJ_REF);
+	engine->RegisterObjectBehaviour("audio_recorder", asBEHAVE_FACTORY, "audio_recorder@ s()", asFUNCTION(faudio_recorder), asCALL_CDECL);
+	engine->RegisterObjectBehaviour("audio_recorder", asBEHAVE_ADDREF, "void f()", asMETHOD(audio_recorder, AddRef), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("audio_recorder", asBEHAVE_RELEASE, "void f()", asMETHOD(audio_recorder, Release), asCALL_THISCALL);
 
 	engine->RegisterObjectMethod(_O("audio_recorder"), "void start()const", asMETHOD(audio_recorder, start), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("audio_recorder"), "void stop()const", asMETHOD(audio_recorder, stop), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("audio_recorder"), "string get_data(size_t&out size = void)const", asMETHOD(audio_recorder, get_data), asCALL_THISCALL);
 	engine->RegisterObjectMethod(_O("audio_recorder"), "void clear()const", asMETHOD(audio_recorder, clear), asCALL_THISCALL);
+
+	engine->RegisterGlobalFunction("audio_recorder@ get_output_audio_recorder() property", asFUNCTION(get_output_audio_recorder), asCALL_CDECL);
 
 }

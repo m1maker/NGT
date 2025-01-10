@@ -48,8 +48,7 @@
 #include <Poco/Exception.h>
 #define SDL_MAIN_HANDLED
 
-#define NGT_BYTECODE_ENCRYPTION_KEY "0Z1Eif2JShwWsaAfgw1EfiOwudDAnNg6WdsIuwyTgsJAiw(us)wjHdc87&6w()ErreOiduY"
-
+#define NGT_BYTECODE_ENCRYPTION_KEY "0Z1Eif2JShwWsaAfgw1EfiOwudDAnNg6WdsIuwyTgsJAiw(us)wjHdc87&6w()ErreOiduYRREoEiDKSodoWJritjH;kJ"
 #if defined(_MSC_VER)
 #include <crtdbg.h>   // MSVC debugging routines
 
@@ -327,7 +326,11 @@ void ScriptAssert(bool expr, const std::string& fail_text = "") {
 }
 
 
+#ifdef _WIN32
+__declspec(allocate(".NGT")) class CBytecodeStream : public asIBinaryStream
+#else
 class CBytecodeStream : public asIBinaryStream
+#endif
 {
 public:
 	std::vector<asBYTE> Code;
@@ -980,6 +983,9 @@ protected:
 	}
 	void defineOptions(OptionSet& options)override
 	{
+		if (bytecodeExecute) {
+			return;
+		}
 		Application::defineOptions(options);
 		options.addOption(
 			Option("Help", "h", "Display help information on command line arguments")
@@ -1010,6 +1016,9 @@ protected:
 	}
 	void handleOption(const std::string& name, const std::string& value)override
 	{
+		if (bytecodeExecute) {
+			return;
+		}
 		if (name == "Help") {
 			_helpRequested = true;
 			displayHelp();
@@ -1116,7 +1125,7 @@ protected:
 #else
 			g_Platform = "Linux";
 #endif
-		}
+	}
 
 		if (g_Platform == "Windows") {
 			bundle += ".exe";
@@ -1142,7 +1151,7 @@ protected:
 		file.close();
 		module->Discard();
 
-	}
+}
 	void executeBytecode() {
 		SCRIPT_COMPILED = true;
 		// Execute the script
