@@ -55,14 +55,23 @@ std::string TTSVoice::speak_to_memory(const std::string& text, uint64_t& size, i
 std::vector<std::string> TTSVoice::get_voice_names()
 {
 	std::vector<std::string> names;
-	uint64_t count = SRAL_GetVoiceCountEx(engine);
-	if (count == 0)return{};
-	for (uint64_t i = 0; i < count; ++i) {
-		const char* name = SRAL_GetVoiceNameEx(engine, i);
-		names.push_back(std::string(name));
+	int voice_count;
+	SRAL_GetEngineParameter(engine, VOICE_COUNT, &voice_count);
+	if (voice_count == 0) return{};
+	char* voices[256];
+	for (unsigned int i = 0; i < voice_count; ++i) {
+		voices[i] = (char*)malloc(64);
+	}
+
+	SRAL_GetEngineParameter(engine, VOICE_LIST, voices);
+	names.resize(voice_count);
+	for (unsigned int i = 0; i < voice_count; ++i) {
+		names[i] = std::string(voices[i]);
+		free(voices[i]);
 	}
 	return names;
 }
+
 CScriptArray* TTSVoice::get_voice_names_script() {
 	asIScriptContext* ctx = asGetActiveContext();
 	asIScriptEngine* engine = ctx->GetEngine();
@@ -80,25 +89,29 @@ CScriptArray* TTSVoice::get_voice_names_script() {
 }
 void TTSVoice::set_voice(uint64_t voice_index)
 {
-	SRAL_SetVoiceEx(engine, voice_index);
+	SRAL_SetEngineParameter(engine, VOICE_INDEX, (int*)&voice_index);
 }
 
 int TTSVoice::get_rate() const
 {
-	return SRAL_GetRateEx(engine);
+	int rate;
+	SRAL_GetEngineParameter(engine, SPEECH_RATE, &rate);
+	return rate;
 }
 
 void TTSVoice::set_rate(int new_rate)
 {
-	SRAL_SetRateEx(engine, new_rate);
+	SRAL_SetEngineParameter(engine, SPEECH_RATE, (int*)&new_rate);
 }
 
 int TTSVoice::get_volume() const
 {
-	return SRAL_GetVolumeEx(engine);;
+	int volume;
+	SRAL_GetEngineParameter(engine, SPEECH_VOLUME, &volume);
+	return volume;
 }
 
 void TTSVoice::set_volume(int new_volume)
 {
-	SRAL_SetVolumeEx(engine, new_volume);
+	SRAL_SetEngineParameter(engine, SPEECH_VOLUME, (int*)&new_volume);
 }

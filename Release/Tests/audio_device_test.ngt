@@ -13,7 +13,7 @@ s.play_looped();
 array<string>@ devices=get_output_audio_devices();
 if(devices.length()==0){
 alert("Error", "Your system has not devices!", "Exit");
-exit(-1);
+return;
 }
 wait(500);
 screen_reader::speak("Select audio device by pressing arrow keys. To switch to the selected device, press Enter");
