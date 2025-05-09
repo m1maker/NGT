@@ -152,6 +152,7 @@ using Poco::AutoPtr;
 bool g_shutdown = false; // Consider managing this within application state
 int g_retcode = 0;      // Used by script's potential custom exit, review its necessity
 
+
 static std::string get_exe_path_helper() {
 	return Poco::Util::Application::instance().config().getString("application.dir");
 }
@@ -614,11 +615,12 @@ public:
 
 		asIScriptFunction* func = module->GetFunctionByName("main");
 		if (!func) {
-			std::cerr << "Entry point 'main()' not found in module '" << module->GetName() << "'." << std::endl;
+			scriptEngine->WriteMessage(module->GetName(), 0, 0, asMSGTYPE_ERROR, "Entry point 'main()' not found.");
+			show_message();
 			return -1;
 		}
 
-		// It's good practice to re-initialize global vars if module might be reused,
+		// It's good practice to re-initialize global vars if module might be reused
 		if (module->ResetGlobalVars(nullptr) < 0) { // Pass nullptr for default context
 			scriptEngine->WriteMessage(module->GetName(), 0, 0, asMSGTYPE_ERROR, "Failed to reset global variables.");
 			show_message();
@@ -627,7 +629,8 @@ public:
 
 		asIScriptContext* ctx = scriptEngine->RequestContext();
 		if (!ctx) {
-			std::cerr << "Failed to request script context." << std::endl;
+			scriptEngine->WriteMessage(get_exe_helper().c_str(), 0, 0, asMSGTYPE_ERROR, "Failed to request script context.");
+			show_message();
 			return -1;
 		}
 		ctx->Prepare(func);
@@ -652,14 +655,16 @@ public:
 			}
 		}
 		else if (r == asEXECUTION_EXCEPTION) {
-			alert("NGTRuntimeError", GetExceptionInfo(ctx, true));
+			scriptEngine->WriteMessage(ctx->GetFunction()->GetModuleName(), 0, 0, asMSGTYPE_ERROR, GetExceptionInfo(ctx, true).c_str());
+			show_message();
 			retVal = -1;
 		}
 		else if (r == asEXECUTION_ABORTED) {
 			retVal = g_retcode;
 		}
 		else {
-			std::cerr << "Script execution failed with code: " << r << std::endl;
+			scriptEngine->WriteMessage(ctx->GetFunction()->GetModuleName(), 0, 0, asMSGTYPE_ERROR, std::string("Script execution failed with code: " + std::to_string(r)).c_str());
+			show_message();
 			retVal = -1; // Other error
 		}
 
@@ -725,7 +730,8 @@ public:
 			f << (isConst ? "const " : "") << scriptEngine->GetTypeDeclaration(typeId, true) << " " << name << ";\n";
 		}
 		f.close();
-		std::cout << "API definition written to " << outputPath << std::endl;
+		scriptEngine->WriteMessage(get_exe_helper().c_str(), 0, 0, asMSGTYPE_INFORMATION, std::string("API definition written to " + outputPath).c_str());
+		show_message(true);
 		return 0;
 	}
 };
@@ -741,7 +747,8 @@ asIScriptContext* RequestContextCallback(asIScriptEngine* /*engine*/, void* para
 	else {
 		ctx = scripting->scriptEngine->CreateContext();
 		if (!ctx) {
-			std::cerr << "Failed to create new script context in callback." << std::endl;
+			scripting->scriptEngine->WriteMessage(get_exe_helper().c_str(), 0, 0, asMSGTYPE_ERROR, "Failed to create new script context in callback.");
+			show_message();
 			return nullptr;
 		}
 	}
@@ -910,14 +917,18 @@ protected:
 		helpFormatter.setCommand(commandName());
 		helpFormatter.setUsage("OPTIONS");
 		helpFormatter.setHeader("NGT (New Game Toolkit) - AngelScript Runtime and Compiler");
-		helpFormatter.format(std::cout);
+		std::stringstream ss;
+		helpFormatter.format(ss);
+		m_scripting.scriptEngine->WriteMessage(get_exe_helper().c_str(), 0, 0, asMSGTYPE_INFORMATION, ss.str().c_str());
+		show_message(true);
 	}
 
 	// Action methods
 	int doExecuteEmbeddedBytecode() {
 		std::vector<asBYTE> bytecode;
 		if (!loadBytecodeFromExecutableInternal(bytecode) || bytecode.empty()) {
-			std::cerr << "Failed to load embedded bytecode or bytecode is empty." << std::endl;
+			m_scripting.scriptEngine->WriteMessage(get_exe_helper().c_str(), 0, 0, asMSGTYPE_ERROR, "Failed to load embedded bytecode or bytecode is empty.");
+			show_message();
 			return -1;
 		}
 
@@ -925,7 +936,8 @@ protected:
 		std::string key_material = string_base64_encode(NGT_BYTECODE_ENCRYPTION_KEY);
 		std::vector<asBYTE> decrypted_bytecode = aes_decrypt_vector(bytecode, key_material);
 		if (decrypted_bytecode.empty() && !bytecode.empty()) { // Decryption failed if result is empty but input was not
-			std::cerr << "AES decryption of embedded bytecode failed." << std::endl;
+			m_scripting.scriptEngine->WriteMessage(get_exe_helper().c_str(), 0, 0, asMSGTYPE_ERROR, "AES decryption of embedded bytecode failed.");
+			show_message();
 			return -1;
 		}
 		apply_simple_obfuscation(decrypted_bytecode); // Reverse simple obfuscation
@@ -974,12 +986,14 @@ protected:
 
 		if (!module) {
 			if (bytecode_raw.empty()) {
-				std::cerr << "Compilation failed or produced no bytecode." << std::endl;
+				m_scripting.scriptEngine->WriteMessage(get_exe_helper().c_str(), 0, 0, asMSGTYPE_ERROR, "Compilation failed or produced no bytecode.");
+				show_message();
 				return -1;
 			}
 		}
 		if (bytecode_raw.empty()) {
-			std::cerr << "Compilation produced no bytecode despite module success." << std::endl;
+			m_scripting.scriptEngine->WriteMessage(get_exe_helper().c_str(), 0, 0, asMSGTYPE_ERROR, "Compilation produced no bytecode despite module success.");
+			show_message();
 			if (module) m_scripting.scriptEngine->DiscardModule(module_name.c_str());
 			return -1;
 		}
@@ -990,19 +1004,23 @@ protected:
 		std::vector<asBYTE> bytecode_processed = aes_encrypt_vector(bytecode_raw, key_material);
 
 		if (bytecode_processed.empty() && !bytecode_raw.empty()) {
-			std::cerr << "AES encryption failed." << std::endl;
+			m_scripting.scriptEngine->WriteMessage(get_exe_helper().c_str(), 0, 0, asMSGTYPE_ERROR, "AES encryption failed.");
+			show_message();
 			if (module) m_scripting.scriptEngine->DiscardModule(module_name.c_str());
 			return -1;
 		}
 
 
 		if (!saveBytecodeToExecutableInternal(m_outputFile, bytecode_processed)) {
-			std::cerr << "Failed to save bytecode to executable: " << m_outputFile << std::endl;
+			m_scripting.scriptEngine->WriteMessage(get_exe_helper().c_str(), 0, 0, asMSGTYPE_ERROR, std::string("Failed to save bytecode to executable: " + m_outputFile).c_str());
+			show_message();
 			if (module) m_scripting.scriptEngine->DiscardModule(module_name.c_str());
 			return -1;
 		}
 
-		std::cout << "Script '" << m_scriptFileToProcess << "' compiled to '" << m_outputFile << "' successfully." << std::endl;
+		m_scripting.scriptEngine->WriteMessage(get_exe_helper().c_str(), 0, 0, asMSGTYPE_INFORMATION, std::string("Script '" + m_scriptFileToProcess + "' compiled to '" + m_outputFile + "' successfully.").c_str());
+		show_message(true);
+
 		if (module) m_scripting.scriptEngine->DiscardModule(module_name.c_str()); // Discard module after getting bytecode
 		return 0;
 	}
@@ -1072,7 +1090,8 @@ private:
 			std::filesystem::copy_file(hostExePath, targetPath, std::filesystem::copy_options::overwrite_existing);
 		}
 		catch (const std::filesystem::filesystem_error& e) {
-			std::cerr << "Error copying host executable: " << e.what() << std::endl;
+			m_scripting.scriptEngine->WriteMessage(hostExePath.c_str(), 0, 0, asMSGTYPE_ERROR, std::string("Error copying host executable: " + std::string(e.what())).c_str());
+			show_message();
 			return false;
 		}
 
@@ -1081,26 +1100,30 @@ private:
 		Poco::UnicodeConverter::convert(targetPath, targetPathW);
 		HANDLE hUpdate = BeginUpdateResourceW(targetPathW.c_str(), FALSE);
 		if (hUpdate == nullptr) {
-			std::cerr << "BeginUpdateResource failed: " << GetLastError() << std::endl;
+			m_scripting.scriptEngine->WriteMessage(hostExePath.c_str(), 0, 0, asMSGTYPE_ERROR, std::string("BeginUpdateResource failed: " + std::to_string(GetLastError())).c_str());
+			show_message();
 			return false;
 		}
 		BOOL success = UpdateResourceW(hUpdate, NGT_BYTECODE_RESOURCE_TYPE_W, NGT_BYTECODE_RESOURCE_ID_W,
 			MAKELANGID(LANG_NEUTRAL, SUBLANG_NEUTRAL),
 			(LPVOID)bytecode.data(), (DWORD)bytecode.size());
 		if (!success) {
-			std::cerr << "UpdateResource failed: " << GetLastError() << std::endl;
+			m_scripting.scriptEngine->WriteMessage(hostExePath.c_str(), 0, 0, asMSGTYPE_ERROR, std::string("UpdateResource failed: " + std::to_string(GetLastError())).c_str());
+			show_message();
 			EndUpdateResource(hUpdate, TRUE);
 			return false;
 		}
 		if (!EndUpdateResource(hUpdate, FALSE)) {
-			std::cerr << "EndUpdateResource failed: " << GetLastError() << std::endl;
+			m_scripting.scriptEngine->WriteMessage(hostExePath.c_str(), 0, 0, asMSGTYPE_ERROR, std::string("EndUpdateResource failed: " + std::to_string(GetLastError())).c_str());
+			show_message();
 			return false;
 		}
 		return true;
 #else
 		std::ofstream file(targetPath, std::ios::binary | std::ios::app | std::ios::ate);
 		if (!file.is_open()) {
-			std::cerr << "Failed to open target executable for appending: " << targetPath << std::endl;
+			m_scripting.scriptEngine->WriteMessage(targetPath.c_str(), 0, 0, asMSGTYPE_ERROR, "Failed to open target executable for appending");
+			show_message();
 			return false;
 		}
 		file.write(reinterpret_cast<const char*>(bytecode.data()), bytecode.size());

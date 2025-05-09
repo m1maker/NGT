@@ -6,42 +6,55 @@
 #include "ngt.h"
 #include "obfuscate.h"
 #include "Poco/Exception.h"
-#include "Poco/Net/HTTPClientSession.h"
-#include "Poco/Net/HTTPResponse.h"
-#include "Poco/StreamCopier.h"
-#include "Poco/URI.h"
 #include "scriptarray/scriptarray.h"
 #include "sound.h"
 #include <numeric>
 #include <thread>
+#include <vector>
+#include <string>
+#include <map>
+#include <atomic>
+#include <algorithm> // For std::find, std::min
+#include <stdexcept>
+#include <cstring>
+#include <cmath>     // For sqrt, cos, sin, fabs (though fabs is in cstdlib/cstdlib.h)
+#include <chrono>    // For std::this_thread::sleep_for
+
 using namespace std;
+
 #include "stb_vorbis.h"
 #define MINIAUDIO_IMPLEMENTATION
 #include "miniaudio.h"
-#include <stdint.h> /* Required for uint32_t which is used by STEAMAUDIO_VERSION. That dependency needs to be removed from Steam Audio - use IPLuint32 or "unsigned int" instead! */
-#include <algorithm>
+#include <stdint.h> 
 #include "phonon.h" /* Steam Audio */
-#include "pack.h"
-#define FORMAT ma_format_f32 /* Must be floating point. */
-int SAMPLE_RATE = 44100;
-int CHANNELS = 2;
+#include "pack.h"   // For pack file integration
+
+#define DEFAULT_FORMAT ma_format_f32 
+static int DEFAULT_SAMPLE_RATE = 44100;
+static int DEFAULT_CHANNELS = 2;
+
 #include "fx/freeverb.h"
 #define VERBLIB_IMPLEMENTATION
-#include <map>
 #include "fx/verblib.h"
+
+// Forward declarations
+class mixer;
+class sound;
+class AudioEngine;
+class pcm_ring_buffer;
+
+static AudioEngine* g_audio_engine = nullptr;
+static bool g_SoundInitialized = false;
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-	/*
-	The reverb node has one input and one output.
-	*/
 	typedef struct
 	{
 		ma_node_config nodeConfig;
-		ma_uint32 channels; /* The number of channels of the source, which will be the same as the output. Must be 1 or 2. */
+		ma_uint32 channels;
 		ma_uint32 sampleRate;
 		float roomSize;
 		float damping;
@@ -51,7 +64,7 @@ extern "C"
 		float mode;
 	} ma_reverb_node_config;
 
-	MA_API ma_reverb_node_config ma_reverb_node_config_init(ma_uint32 channels, ma_uint32 sampleRate);
+	MA_API ma_reverb_node_config ma_reverb_node_config_init(ma_uint32 channels, ma_uint32 sampleRate, float dry = verblib_initialdry, float wet = verblib_initialwet, float room_size = verblib_initialroom);
 
 	typedef struct
 	{
@@ -65,13 +78,12 @@ extern "C"
 #ifdef __cplusplus
 }
 #endif
+
 MA_API ma_reverb_node_config ma_reverb_node_config_init(ma_uint32 channels, ma_uint32 sampleRate, float dry, float wet, float room_size)
 {
 	ma_reverb_node_config config;
-
 	MA_ZERO_OBJECT(&config);
-	config.nodeConfig = ma_node_config_init(); /* Input and output channels will be set in ma_reverb_node_init(). */
-	config.channels = channels;
+	config.nodeConfig = ma_node_config_init();
 	config.channels = channels;
 	config.sampleRate = sampleRate;
 	config.roomSize = room_size;
@@ -80,2255 +92,1536 @@ MA_API ma_reverb_node_config ma_reverb_node_config_init(ma_uint32 channels, ma_u
 	config.wetVolume = wet;
 	config.dryVolume = dry;
 	config.mode = verblib_initialmode;
-
 	return config;
 }
 
 static void ma_reverb_node_process_pcm_frames(ma_node* pNode, const float** ppFramesIn, ma_uint32* pFrameCountIn, float** ppFramesOut, ma_uint32* pFrameCountOut)
 {
 	ma_reverb_node* pReverbNode = (ma_reverb_node*)pNode;
-
 	(void)pFrameCountIn;
-
 	verblib_process(&pReverbNode->reverb, ppFramesIn[0], ppFramesOut[0], *pFrameCountOut);
 }
 
 static ma_node_vtable g_ma_reverb_node_vtable =
 {
-	ma_reverb_node_process_pcm_frames,
-	NULL,
-	1, /* 1 input channel. */
-	1, /* 1 output channel. */
-	MA_NODE_FLAG_CONTINUOUS_PROCESSING };
+	ma_reverb_node_process_pcm_frames, NULL, 1, 1, MA_NODE_FLAG_CONTINUOUS_PROCESSING
+};
 
 MA_API ma_result ma_reverb_node_init(ma_node_graph* pNodeGraph, const ma_reverb_node_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_reverb_node* pReverbNode)
 {
 	ma_result result;
 	ma_node_config baseConfig;
-
-	if (pReverbNode == NULL)
-	{
-		return MA_INVALID_ARGS;
-	}
-
+	if (pReverbNode == NULL) return MA_INVALID_ARGS;
 	MA_ZERO_OBJECT(pReverbNode);
-
-	if (pConfig == NULL)
-	{
-		return MA_INVALID_ARGS;
+	if (pConfig == NULL) return MA_INVALID_ARGS;
+	if (verblib_initialize(&pReverbNode->reverb, (unsigned long)pConfig->sampleRate, (unsigned int)pConfig->channels) == 0) {
+		return MA_ERROR;
 	}
-
-	if (verblib_initialize(&pReverbNode->reverb, (unsigned long)pConfig->sampleRate, (unsigned int)pConfig->channels) == 0)
-	{
-		return MA_INVALID_ARGS;
-	}
-
 	baseConfig = pConfig->nodeConfig;
 	baseConfig.vtable = &g_ma_reverb_node_vtable;
 	baseConfig.pInputChannels = &pConfig->channels;
 	baseConfig.pOutputChannels = &pConfig->channels;
-
 	result = ma_node_init(pNodeGraph, &baseConfig, pAllocationCallbacks, &pReverbNode->baseNode);
-	if (result != MA_SUCCESS)
-	{
+	if (result != MA_SUCCESS) {
 		return result;
 	}
-
 	return MA_SUCCESS;
 }
 
 MA_API void ma_reverb_node_uninit(ma_reverb_node* pReverbNode, const ma_allocation_callbacks* pAllocationCallbacks)
 {
-	/* The base node is always uninitialized first. */
-	ma_node_uninit(pReverbNode, pAllocationCallbacks);
+	if (pReverbNode == NULL) return;
+	ma_node_uninit(&pReverbNode->baseNode, pAllocationCallbacks);
 }
 
-/* Include ma_vocoder_node.h after miniaudio.h */
 #define VOCLIB_IMPLEMENTATION
-#include "fx/voclib.h"
+#include "fx/voclib.h" // Ensure path is correct
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
-
-	/*
-	The vocoder node has two inputs and one output. Inputs:
-
-		Input Bus 0: The source/carrier stream.
-		Input Bus 1: The excite/modulator stream.
-
-	The source (input bus 0) and output must have the same channel count, and is restricted to 1 or 2.
-	The excite (input bus 1) is restricted to 1 channel.
-	*/
-	typedef struct
-	{
+	typedef struct {
 		ma_node_config nodeConfig;
-		ma_uint32 channels; /* The number of channels of the source, which will be the same as the output. Must be 1 or 2. The excite bus must always have one channel. */
+		ma_uint32 channels;
 		ma_uint32 sampleRate;
-		ma_uint32 bands;		  /* Defaults to 16. */
-		ma_uint32 filtersPerBand; /* Defaults to 6. */
+		ma_uint32 bands;
+		ma_uint32 filtersPerBand;
 	} ma_vocoder_node_config;
-
 	MA_API ma_vocoder_node_config ma_vocoder_node_config_init(ma_uint32 channels, ma_uint32 sampleRate);
-
-	typedef struct
-	{
+	typedef struct {
 		ma_node_base baseNode;
 		voclib_instance voclib;
 	} ma_vocoder_node;
-
 	MA_API ma_result ma_vocoder_node_init(ma_node_graph* pNodeGraph, const ma_vocoder_node_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_vocoder_node* pVocoderNode);
 	MA_API void ma_vocoder_node_uninit(ma_vocoder_node* pVocoderNode, const ma_allocation_callbacks* pAllocationCallbacks);
-
 #ifdef __cplusplus
 }
 #endif
 
-MA_API ma_vocoder_node_config ma_vocoder_node_config_init(ma_uint32 channels, ma_uint32 sampleRate)
-{
+MA_API ma_vocoder_node_config ma_vocoder_node_config_init(ma_uint32 channels, ma_uint32 sampleRate) {
 	ma_vocoder_node_config config;
-
 	MA_ZERO_OBJECT(&config);
-	config.nodeConfig = ma_node_config_init(); /* Input and output channels will be set in ma_vocoder_node_init(). */
+	config.nodeConfig = ma_node_config_init();
 	config.channels = channels;
 	config.sampleRate = sampleRate;
-	config.bands = 16;
-	config.filtersPerBand = 6;
-
+	config.bands = 16; // Default
+	config.filtersPerBand = 6; // Default
 	return config;
 }
-
-static void ma_vocoder_node_process_pcm_frames(ma_node* pNode, const float** ppFramesIn, ma_uint32* pFrameCountIn, float** ppFramesOut, ma_uint32* pFrameCountOut)
-{
+static void ma_vocoder_node_process_pcm_frames(ma_node* pNode, const float** ppFramesIn, ma_uint32* pFrameCountIn, float** ppFramesOut, ma_uint32* pFrameCountOut) {
 	ma_vocoder_node* pVocoderNode = (ma_vocoder_node*)pNode;
-
 	(void)pFrameCountIn;
-
 	voclib_process(&pVocoderNode->voclib, ppFramesIn[0], ppFramesIn[1], ppFramesOut[0], *pFrameCountOut);
 }
-
-static ma_node_vtable g_ma_vocoder_node_vtable =
-{
-	ma_vocoder_node_process_pcm_frames,
-	NULL,
-	2, /* 2 input channels. */
-	1, /* 1 output channel. */
-	0 };
-
-MA_API ma_result ma_vocoder_node_init(ma_node_graph* pNodeGraph, const ma_vocoder_node_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_vocoder_node* pVocoderNode)
-{
+static ma_node_vtable g_ma_vocoder_node_vtable = {
+	ma_vocoder_node_process_pcm_frames, NULL, 2, 1, 0
+};
+MA_API ma_result ma_vocoder_node_init(ma_node_graph* pNodeGraph, const ma_vocoder_node_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_vocoder_node* pVocoderNode) {
 	ma_result result;
 	ma_node_config baseConfig;
 	ma_uint32 inputChannels[2];
 	ma_uint32 outputChannels[1];
-
-	if (pVocoderNode == NULL)
-	{
-		return MA_INVALID_ARGS;
-	}
-
+	if (pVocoderNode == NULL) return MA_INVALID_ARGS;
 	MA_ZERO_OBJECT(pVocoderNode);
-
-	if (pConfig == NULL)
-	{
-		return MA_INVALID_ARGS;
+	if (pConfig == NULL) return MA_INVALID_ARGS;
+	if (voclib_initialize(&pVocoderNode->voclib, (unsigned char)pConfig->bands, (unsigned char)pConfig->filtersPerBand, (unsigned int)pConfig->sampleRate, (unsigned char)pConfig->channels) == 0) {
+		return MA_ERROR;
 	}
-
-	if (voclib_initialize(&pVocoderNode->voclib, (unsigned char)pConfig->bands, (unsigned char)pConfig->filtersPerBand, (unsigned int)pConfig->sampleRate, (unsigned char)pConfig->channels) == 0)
-	{
-		return MA_INVALID_ARGS;
-	}
-
-	inputChannels[0] = pConfig->channels;  /* Source/carrier. */
-	inputChannels[1] = 1;				   /* Excite/modulator. Must always be single channel. */
-	outputChannels[0] = pConfig->channels; /* Output channels is always the same as the source/carrier. */
-
+	inputChannels[0] = pConfig->channels;
+	inputChannels[1] = 1;
+	outputChannels[0] = pConfig->channels;
 	baseConfig = pConfig->nodeConfig;
 	baseConfig.vtable = &g_ma_vocoder_node_vtable;
 	baseConfig.pInputChannels = inputChannels;
 	baseConfig.pOutputChannels = outputChannels;
-
 	result = ma_node_init(pNodeGraph, &baseConfig, pAllocationCallbacks, &pVocoderNode->baseNode);
-	if (result != MA_SUCCESS)
-	{
+	if (result != MA_SUCCESS) {
 		return result;
 	}
-
 	return MA_SUCCESS;
 }
-
-MA_API void ma_vocoder_node_uninit(ma_vocoder_node* pVocoderNode, const ma_allocation_callbacks* pAllocationCallbacks)
-{
-	/* The base node must always be initialized first. */
-	ma_node_uninit(pVocoderNode, pAllocationCallbacks);
+MA_API void ma_vocoder_node_uninit(ma_vocoder_node* pVocoderNode, const ma_allocation_callbacks* pAllocationCallbacks) {
+	if (pVocoderNode == NULL) return;
+	ma_node_uninit(&pVocoderNode->baseNode, pAllocationCallbacks);
 }
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
-
-	/*
-	The trim node has one input and one output.
-	*/
-	typedef struct
-	{
+	typedef struct {
 		ma_node_config nodeConfig;
 		ma_uint32 channels;
 		float threshold;
 	} ma_ltrim_node_config;
-
 	MA_API ma_ltrim_node_config ma_ltrim_node_config_init(ma_uint32 channels, float threshold);
-
-	typedef struct
-	{
+	typedef struct {
 		ma_node_base baseNode;
 		float threshold;
 		ma_bool32 foundStart;
 	} ma_ltrim_node;
-
 	MA_API ma_result ma_ltrim_node_init(ma_node_graph* pNodeGraph, const ma_ltrim_node_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_ltrim_node* pTrimNode);
 	MA_API void ma_ltrim_node_uninit(ma_ltrim_node* pTrimNode, const ma_allocation_callbacks* pAllocationCallbacks);
-
 #ifdef __cplusplus
 }
 #endif
-MA_API ma_ltrim_node_config ma_ltrim_node_config_init(ma_uint32 channels, float threshold)
-{
+MA_API ma_ltrim_node_config ma_ltrim_node_config_init(ma_uint32 channels, float threshold) {
 	ma_ltrim_node_config config;
-
 	MA_ZERO_OBJECT(&config);
-	config.nodeConfig = ma_node_config_init(); /* Input and output channels will be set in ma_ltrim_node_init(). */
+	config.nodeConfig = ma_node_config_init();
 	config.channels = channels;
 	config.threshold = threshold;
-
 	return config;
 }
-
-static void ma_ltrim_node_process_pcm_frames(ma_node* pNode, const float** ppFramesIn, ma_uint32* pFrameCountIn, float** ppFramesOut, ma_uint32* pFrameCountOut)
-{
+static void ma_ltrim_node_process_pcm_frames(ma_node* pNode, const float** ppFramesIn, ma_uint32* pFrameCountIn, float** ppFramesOut, ma_uint32* pFrameCountOut) {
 	ma_ltrim_node* pTrimNode = (ma_ltrim_node*)pNode;
 	ma_uint32 framesProcessedIn = 0;
 	ma_uint32 framesProcessedOut = 0;
 	ma_uint32 channelCount = ma_node_get_input_channels(pNode, 0);
-
-	/*
-	If we haven't yet found the start, skip over every input sample until we find a frame outside
-	of the threshold.
-	*/
-	if (pTrimNode->foundStart == MA_FALSE)
-	{
-		while (framesProcessedIn < *pFrameCountIn)
-		{
+	if (pTrimNode->foundStart == MA_FALSE) {
+		while (framesProcessedIn < *pFrameCountIn) {
 			ma_uint32 iChannel = 0;
-			for (iChannel = 0; iChannel < channelCount; iChannel += 1)
-			{
+			for (iChannel = 0; iChannel < channelCount; iChannel += 1) {
 				float sample = ppFramesIn[0][framesProcessedIn * channelCount + iChannel];
-				if (sample < -pTrimNode->threshold || sample > pTrimNode->threshold)
-				{
+				if (sample < -pTrimNode->threshold || sample > pTrimNode->threshold) {
 					pTrimNode->foundStart = MA_TRUE;
 					break;
 				}
 			}
-
-			if (pTrimNode->foundStart)
-			{
-				break; /* The start has been found. Get out of this loop and finish off processing. */
-			}
-			else
-			{
-				framesProcessedIn += 1;
-			}
+			if (pTrimNode->foundStart) break;
+			else framesProcessedIn += 1;
 		}
 	}
-
-	/* If there's anything left, just copy it over. */
-	framesProcessedOut = ma_min(*pFrameCountOut, *pFrameCountIn - framesProcessedIn);
-	ma_copy_pcm_frames(ppFramesOut[0], &ppFramesIn[0][framesProcessedIn], framesProcessedOut, ma_format_f32, channelCount);
-
-	framesProcessedIn += framesProcessedOut;
-
-	/* We always "process" every input frame, but we may only done a partial output. */
-	*pFrameCountIn = framesProcessedIn;
+	ma_uint32 framesToCopy = ma_min(*pFrameCountOut, *pFrameCountIn - framesProcessedIn);
+	if (framesToCopy > 0) { // Check if there's anything to copy
+		ma_copy_pcm_frames(ppFramesOut[0], &ppFramesIn[0][framesProcessedIn * channelCount], framesToCopy, DEFAULT_FORMAT, channelCount);
+	}
+	framesProcessedOut = framesToCopy;
+	framesProcessedIn += framesProcessedOut; // Only advance input by what was outputted if different rates
+	*pFrameCountIn = *pFrameCountIn; // Input frames are all "consumed" in terms of decision making
 	*pFrameCountOut = framesProcessedOut;
 }
-
-static ma_node_vtable g_ma_ltrim_node_vtable =
-{
-	ma_ltrim_node_process_pcm_frames,
-	NULL,
-	1, /* 1 input channel. */
-	1, /* 1 output channel. */
-	MA_NODE_FLAG_DIFFERENT_PROCESSING_RATES };
-
-MA_API ma_result ma_ltrim_node_init(ma_node_graph* pNodeGraph, const ma_ltrim_node_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_ltrim_node* pTrimNode)
-{
+static ma_node_vtable g_ma_ltrim_node_vtable = {
+	ma_ltrim_node_process_pcm_frames, NULL, 1, 1, MA_NODE_FLAG_DIFFERENT_PROCESSING_RATES
+};
+MA_API ma_result ma_ltrim_node_init(ma_node_graph* pNodeGraph, const ma_ltrim_node_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_ltrim_node* pTrimNode) {
 	ma_result result;
 	ma_node_config baseConfig;
-
-	if (pTrimNode == NULL)
-	{
-		return MA_INVALID_ARGS;
-	}
-
+	if (pTrimNode == NULL) return MA_INVALID_ARGS;
 	MA_ZERO_OBJECT(pTrimNode);
-
-	if (pConfig == NULL)
-	{
-		return MA_INVALID_ARGS;
-	}
-
+	if (pConfig == NULL) return MA_INVALID_ARGS;
 	pTrimNode->threshold = pConfig->threshold;
 	pTrimNode->foundStart = MA_FALSE;
-
 	baseConfig = pConfig->nodeConfig;
 	baseConfig.vtable = &g_ma_ltrim_node_vtable;
 	baseConfig.pInputChannels = &pConfig->channels;
 	baseConfig.pOutputChannels = &pConfig->channels;
-
 	result = ma_node_init(pNodeGraph, &baseConfig, pAllocationCallbacks, &pTrimNode->baseNode);
-	if (result != MA_SUCCESS)
-	{
-		return result;
-	}
-
-	return MA_SUCCESS;
+	return result;
+}
+MA_API void ma_ltrim_node_uninit(ma_ltrim_node* pTrimNode, const ma_allocation_callbacks* pAllocationCallbacks) {
+	if (pTrimNode == NULL) return;
+	ma_node_uninit(&pTrimNode->baseNode, pAllocationCallbacks);
 }
 
-MA_API void ma_ltrim_node_uninit(ma_ltrim_node* pTrimNode, const ma_allocation_callbacks* pAllocationCallbacks)
-{
-	/* The base node is always uninitialized first. */
-	ma_node_uninit(pTrimNode, pAllocationCallbacks);
-}
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
-
-	typedef struct
-	{
+	typedef struct {
 		ma_node_config nodeConfig;
 		ma_uint32 channels;
 	} ma_channel_combiner_node_config;
-
 	MA_API ma_channel_combiner_node_config ma_channel_combiner_node_config_init(ma_uint32 channels);
-
-	typedef struct
-	{
+	typedef struct {
 		ma_node_base baseNode;
 	} ma_channel_combiner_node;
-
-	MA_API ma_result ma_channel_combiner_node_init(ma_node_graph* pNodeGraph, const ma_channel_combiner_node_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_channel_combiner_node* pSeparatorNode);
-	MA_API void ma_channel_combiner_node_uninit(ma_channel_combiner_node* pSeparatorNode, const ma_allocation_callbacks* pAllocationCallbacks);
-
+	MA_API ma_result ma_channel_combiner_node_init(ma_node_graph* pNodeGraph, const ma_channel_combiner_node_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_channel_combiner_node* pCombinerNode);
+	MA_API void ma_channel_combiner_node_uninit(ma_channel_combiner_node* pCombinerNode, const ma_allocation_callbacks* pAllocationCallbacks);
 #ifdef __cplusplus
 }
 #endif
-MA_API ma_channel_combiner_node_config ma_channel_combiner_node_config_init(ma_uint32 channels)
-{
+MA_API ma_channel_combiner_node_config ma_channel_combiner_node_config_init(ma_uint32 channels) {
 	ma_channel_combiner_node_config config;
-
 	MA_ZERO_OBJECT(&config);
-	config.nodeConfig = ma_node_config_init(); /* Input and output channels will be set in ma_channel_combiner_node_init(). */
+	config.nodeConfig = ma_node_config_init();
 	config.channels = channels;
-
 	return config;
 }
-
-static void ma_channel_combiner_node_process_pcm_frames(ma_node* pNode, const float** ppFramesIn, ma_uint32* pFrameCountIn, float** ppFramesOut, ma_uint32* pFrameCountOut)
-{
-	ma_channel_combiner_node* pCombinerNode = (ma_channel_combiner_node*)pNode;
-
-	(void)pFrameCountIn;
-
-	ma_interleave_pcm_frames(ma_format_f32, ma_node_get_output_channels(pCombinerNode, 0), *pFrameCountOut, (const void**)ppFramesIn, (void*)ppFramesOut[0]);
+static void ma_channel_combiner_node_process_pcm_frames(ma_node* pNode, const float** ppFramesIn, ma_uint32* pFrameCountIn, float** ppFramesOut, ma_uint32* pFrameCountOut) {
+	(void)pFrameCountIn; // All input buses should have same frame count
+	ma_interleave_pcm_frames(DEFAULT_FORMAT, ma_node_get_output_channels(pNode, 0), *pFrameCountOut, (const void**)ppFramesIn, (void*)ppFramesOut[0]);
 }
-
-static ma_node_vtable g_ma_channel_combiner_node_vtable =
-{
-	ma_channel_combiner_node_process_pcm_frames,
-	NULL,
-	MA_NODE_BUS_COUNT_UNKNOWN, /* Input bus count is determined by the channel count and is unknown until the node instance is initialized. */
-	1,						   /* 1 output bus. */
-	0						   /* Default flags. */
+static ma_node_vtable g_ma_channel_combiner_node_vtable = {
+	ma_channel_combiner_node_process_pcm_frames, NULL, MA_NODE_BUS_COUNT_UNKNOWN, 1, 0
 };
-
-MA_API ma_result ma_channel_combiner_node_init(ma_node_graph* pNodeGraph, const ma_channel_combiner_node_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_channel_combiner_node* pCombinerNode)
-{
+MA_API ma_result ma_channel_combiner_node_init(ma_node_graph* pNodeGraph, const ma_channel_combiner_node_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_channel_combiner_node* pCombinerNode) {
 	ma_result result;
 	ma_node_config baseConfig;
 	ma_uint32 inputChannels[MA_MAX_NODE_BUS_COUNT];
 	ma_uint32 outputChannels[1];
 	ma_uint32 iChannel;
-
-	if (pCombinerNode == NULL)
-	{
-		return MA_INVALID_ARGS;
-	}
-
+	if (pCombinerNode == NULL) return MA_INVALID_ARGS;
 	MA_ZERO_OBJECT(pCombinerNode);
-
-	if (pConfig == NULL)
-	{
-		return MA_INVALID_ARGS;
+	if (pConfig == NULL || pConfig->channels == 0 || pConfig->channels > MA_MAX_NODE_BUS_COUNT) return MA_INVALID_ARGS;
+	for (iChannel = 0; iChannel < pConfig->channels; iChannel += 1) {
+		inputChannels[iChannel] = 1; // Each input bus is mono
 	}
-
-	/* All input channels are mono. */
-	for (iChannel = 0; iChannel < pConfig->channels; iChannel += 1)
-	{
-		inputChannels[iChannel] = 1;
-	}
-
-	outputChannels[0] = pConfig->channels;
-
+	outputChannels[0] = pConfig->channels; // Output bus has combined channels
 	baseConfig = pConfig->nodeConfig;
 	baseConfig.vtable = &g_ma_channel_combiner_node_vtable;
-	baseConfig.inputBusCount = pConfig->channels; /* The vtable has an unknown channel count, so must specify it here. */
+	baseConfig.inputBusCount = pConfig->channels; // Set the number of input buses
 	baseConfig.pInputChannels = inputChannels;
 	baseConfig.pOutputChannels = outputChannels;
-
 	result = ma_node_init(pNodeGraph, &baseConfig, pAllocationCallbacks, &pCombinerNode->baseNode);
-	if (result != MA_SUCCESS)
-	{
-		return result;
-	}
-
-	return MA_SUCCESS;
+	return result;
+}
+MA_API void ma_channel_combiner_node_uninit(ma_channel_combiner_node* pCombinerNode, const ma_allocation_callbacks* pAllocationCallbacks) {
+	if (pCombinerNode == NULL) return;
+	ma_node_uninit(&pCombinerNode->baseNode, pAllocationCallbacks);
 }
 
-MA_API void ma_channel_combiner_node_uninit(ma_channel_combiner_node* pCombinerNode, const ma_allocation_callbacks* pAllocationCallbacks)
-{
-	/* The base node is always uninitialized first. */
-	ma_node_uninit(pCombinerNode, pAllocationCallbacks);
-}
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
-
-	typedef struct
-	{
+	typedef struct {
 		ma_node_config nodeConfig;
 		ma_uint32 channels;
 	} ma_channel_separator_node_config;
-
 	MA_API ma_channel_separator_node_config ma_channel_separator_node_config_init(ma_uint32 channels);
-
-	typedef struct
-	{
+	typedef struct {
 		ma_node_base baseNode;
 	} ma_channel_separator_node;
-
 	MA_API ma_result ma_channel_separator_node_init(ma_node_graph* pNodeGraph, const ma_channel_separator_node_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_channel_separator_node* pSeparatorNode);
 	MA_API void ma_channel_separator_node_uninit(ma_channel_separator_node* pSeparatorNode, const ma_allocation_callbacks* pAllocationCallbacks);
-
 #ifdef __cplusplus
 }
 #endif
-MA_API ma_channel_separator_node_config ma_channel_separator_node_config_init(ma_uint32 channels)
-{
+MA_API ma_channel_separator_node_config ma_channel_separator_node_config_init(ma_uint32 channels) {
 	ma_channel_separator_node_config config;
-
 	MA_ZERO_OBJECT(&config);
-	config.nodeConfig = ma_node_config_init(); /* Input and output channels will be set in ma_channel_separator_node_init(). */
+	config.nodeConfig = ma_node_config_init();
 	config.channels = channels;
-
 	return config;
 }
-
-static void ma_channel_separator_node_process_pcm_frames(ma_node* pNode, const float** ppFramesIn, ma_uint32* pFrameCountIn, float** ppFramesOut, ma_uint32* pFrameCountOut)
-{
-	ma_channel_separator_node* pSplitterNode = (ma_channel_separator_node*)pNode;
-
-	(void)pFrameCountIn;
-
-	ma_deinterleave_pcm_frames(ma_format_f32, ma_node_get_input_channels(pSplitterNode, 0), *pFrameCountOut, (const void*)ppFramesIn[0], (void**)ppFramesOut);
+static void ma_channel_separator_node_process_pcm_frames(ma_node* pNode, const float** ppFramesIn, ma_uint32* pFrameCountIn, float** ppFramesOut, ma_uint32* pFrameCountOut) {
+	(void)pFrameCountIn; // Input bus frame count
+	ma_deinterleave_pcm_frames(DEFAULT_FORMAT, ma_node_get_input_channels(pNode, 0), *pFrameCountOut, (const void*)ppFramesIn[0], (void**)ppFramesOut);
 }
-
-static ma_node_vtable g_ma_channel_separator_node_vtable =
-{
-	ma_channel_separator_node_process_pcm_frames,
-	NULL,
-	1,						   /* 1 input bus. */
-	MA_NODE_BUS_COUNT_UNKNOWN, /* Output bus count is determined by the channel count and is unknown until the node instance is initialized. */
-	0						   /* Default flags. */
+static ma_node_vtable g_ma_channel_separator_node_vtable = {
+	ma_channel_separator_node_process_pcm_frames, NULL, 1, MA_NODE_BUS_COUNT_UNKNOWN, 0
 };
-
-MA_API ma_result ma_channel_separator_node_init(ma_node_graph* pNodeGraph, const ma_channel_separator_node_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_channel_separator_node* pSeparatorNode)
-{
+MA_API ma_result ma_channel_separator_node_init(ma_node_graph* pNodeGraph, const ma_channel_separator_node_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_channel_separator_node* pSeparatorNode) {
 	ma_result result;
 	ma_node_config baseConfig;
 	ma_uint32 inputChannels[1];
 	ma_uint32 outputChannels[MA_MAX_NODE_BUS_COUNT];
 	ma_uint32 iChannel;
-
-	if (pSeparatorNode == NULL)
-	{
-		return MA_INVALID_ARGS;
-	}
-
+	if (pSeparatorNode == NULL) return MA_INVALID_ARGS;
 	MA_ZERO_OBJECT(pSeparatorNode);
-
-	if (pConfig == NULL)
-	{
-		return MA_INVALID_ARGS;
+	if (pConfig == NULL || pConfig->channels == 0 || pConfig->channels > MA_MAX_NODE_BUS_COUNT) return MA_INVALID_ARGS;
+	inputChannels[0] = pConfig->channels; // Input bus has specified channels
+	for (iChannel = 0; iChannel < pConfig->channels; iChannel += 1) {
+		outputChannels[iChannel] = 1; // Each output bus is mono
 	}
-
-	if (pConfig->channels > MA_MAX_NODE_BUS_COUNT)
-	{
-		return MA_INVALID_ARGS; /* Channel count cannot exceed the maximum number of buses. */
-	}
-
-	inputChannels[0] = pConfig->channels;
-
-	/* All output channels are mono. */
-	for (iChannel = 0; iChannel < pConfig->channels; iChannel += 1)
-	{
-		outputChannels[iChannel] = 1;
-	}
-
 	baseConfig = pConfig->nodeConfig;
 	baseConfig.vtable = &g_ma_channel_separator_node_vtable;
-	baseConfig.outputBusCount = pConfig->channels; /* The vtable has an unknown channel count, so must specify it here. */
+	baseConfig.outputBusCount = pConfig->channels; // Set the number of output buses
 	baseConfig.pInputChannels = inputChannels;
 	baseConfig.pOutputChannels = outputChannels;
-
 	result = ma_node_init(pNodeGraph, &baseConfig, pAllocationCallbacks, &pSeparatorNode->baseNode);
-	if (result != MA_SUCCESS)
-	{
-		return result;
-	}
-
-	return MA_SUCCESS;
+	return result;
+}
+MA_API void ma_channel_separator_node_uninit(ma_channel_separator_node* pSeparatorNode, const ma_allocation_callbacks* pAllocationCallbacks) {
+	if (pSeparatorNode == NULL) return;
+	ma_node_uninit(&pSeparatorNode->baseNode, pAllocationCallbacks);
 }
 
-MA_API void ma_channel_separator_node_uninit(ma_channel_separator_node* pSeparatorNode, const ma_allocation_callbacks* pAllocationCallbacks)
-{
-	/* The base node is always uninitialized first. */
-	ma_node_uninit(pSeparatorNode, pAllocationCallbacks);
-}
-
-static IPLAudioSettings iplAudioSettings;
-static IPLContextSettings iplContextSettings;
-static IPLContext iplContext;
-static IPLHRTFSettings iplHRTFSettings;
-static IPLHRTF iplHRTF;
-bool g_SoundInitialized = false;
-class mixer;
-static mixer* output = nullptr;
-class sound;
-class mixer {
-public:
-	ma_engine m_mixer;
-	ma_engine_config m_config;
-	mutable int ref = 0;
-	std::unordered_set<mixer*> mixers;
-	std::unordered_set<sound*> sounds;
-	mixer* parent_mixer;
-	ma_node* output_node; // Node to connect to parent mixer
-	bool is_root = false;
-	mixer(mixer* parent = nullptr, bool root = false) : parent_mixer(parent), is_root(root) {
-		m_config = ma_engine_config_init();
-		m_config.channels = CHANNELS;
-		m_config.sampleRate = SAMPLE_RATE; // Default sample rate
-		m_config.noDevice = MA_TRUE;
-		if (ma_engine_init(&m_config, &m_mixer) != MA_SUCCESS) {
-			throw std::runtime_error("Failed to initialize ma_engine in mixer");
-		}
-		output_node = ma_engine_get_endpoint(&m_mixer);
-		if (parent)
-		{
-			set_mixer(parent);
-		}
-		else if (!root) {
-			set_mixer(output);
-		}
-		ref = 1;
-	}
-
-	~mixer() {
-		if (parent_mixer)
-		{
-			set_mixer(nullptr);
-		}
-		ma_engine_uninit(&m_mixer);
-	}
-
-	void AddRef() const
-	{
-		ref += 1;
-	}
-	void Release() const
-	{
-		if (--ref < 1)
-		{
-			delete this;
-		}
-	}
-
-	void set_mixer(mixer* new_parent) {
-		if (parent_mixer == new_parent)
-			return;
-		if (parent_mixer)
-		{
-			parent_mixer->mixers.erase(this);
-			ma_node_detach_output_bus(output_node, 0);
-		}
-		parent_mixer = new_parent;
-		if (parent_mixer)
-		{
-			parent_mixer->mixers.insert(this);
-			ma_node_attach_output_bus(output_node, 0, parent_mixer->output_node, 0);
-		}
-	}
-
-	inline ma_engine* get_engine() {
-		return &m_mixer;
-	}
-};
-
-static mixer* sound_default_mixer = nullptr;
-
-static ma_device sound_mixer_device;
-static asUINT period_size = 256;
-static std::vector<float> g_OutputData;
-static bool g_RecordOutput = false;
-static void sound_mixer_device_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount)
-{
-	if (output)
-		ma_engine_read_pcm_frames(&output->m_mixer, pOutput, frameCount, nullptr);
-	if (g_RecordOutput) {
-		const float* out = (const float*)pOutput;
-
-		for (ma_uint32 i = 0; i < frameCount * 2; ++i) {
-			g_OutputData.push_back(out[i]);
-		}
-	}
-	(void)pInput;
-}
-
-struct AudioDevice
-{
-	std::string name;
-	ma_device_id id;
-};
-static std::vector<AudioDevice> GetOutputAudioDevices()
-{
-	std::vector<AudioDevice> audioDevices;
-	ma_result result;
-	ma_context context;
-	ma_device_info* pPlaybackDeviceInfos;
-	ma_uint32 playbackDeviceCount;
-	ma_uint32 iPlaybackDevice;
-
-	if (ma_context_init(NULL, 0, NULL, &context) != MA_SUCCESS)
-	{
-		return audioDevices;
-		;
-	}
-
-	result = ma_context_get_devices(&context, &pPlaybackDeviceInfos, &playbackDeviceCount, nullptr, nullptr);
-	if (result != MA_SUCCESS)
-	{
-		return audioDevices;
-	}
-	for (iPlaybackDevice = 0; iPlaybackDevice < playbackDeviceCount; ++iPlaybackDevice)
-	{
-		const char* name = pPlaybackDeviceInfos[iPlaybackDevice].name;
-		std::string name_str(name);
-		AudioDevice ad;
-		ad.id = pPlaybackDeviceInfos[iPlaybackDevice].id;
-		ad.name = name;
-		audioDevices.push_back(ad);
-	}
-
-	ma_context_uninit(&context);
-	return audioDevices;
-}
-static std::vector<AudioDevice> GetInputAudioDevices()
-{
-	std::vector<AudioDevice> audioDevices;
-	ma_result result;
-	ma_context context;
-	ma_device_info* pCaptureDeviceInfos;
-	ma_uint32 captureDeviceCount;
-	ma_uint32 iCaptureDevice;
-	if (ma_context_init(NULL, 0, NULL, &context) != MA_SUCCESS) {
-		return audioDevices;;
-	}
-
-	result = ma_context_get_devices(&context, nullptr, nullptr, &pCaptureDeviceInfos, &captureDeviceCount);
-	if (result != MA_SUCCESS) {
-		return audioDevices;
-	}
-	for (iCaptureDevice = 0; iCaptureDevice < captureDeviceCount; ++iCaptureDevice) {
-		const char* name = pCaptureDeviceInfos[iCaptureDevice].name;
-		AudioDevice ad;
-		ad.id = pCaptureDeviceInfos[iCaptureDevice].id;
-		ad.name = name;
-		audioDevices.push_back(ad);
-	}
-	ma_context_uninit(&context);
-	return audioDevices;
-}
-
-std::vector<AudioDevice> output_devs;
-CScriptArray* get_output_audio_devices()
-{
-	if (!g_SoundInitialized)
-		soundsystem_init();
-	asIScriptContext* ctx = asGetActiveContext();
-	asIScriptEngine* engine = ctx->GetEngine();
-	asITypeInfo* arrayType = engine->GetTypeInfoById(engine->GetTypeIdByDecl("array<string>"));
-	CScriptArray* array = CScriptArray::Create(arrayType, (asUINT)0);
-	output_devs = GetOutputAudioDevices();
-	if (output_devs.size() == 0)
-		return array;
-	array->Reserve(output_devs.size());
-	for (asUINT i = 0; i < output_devs.size(); ++i)
-	{
-		array->InsertLast(&output_devs[i].name);
-	}
-	return array;
-}
-
-std::vector<AudioDevice> input_devs;
-CScriptArray* get_input_audio_devices()
-{
-	if (!g_SoundInitialized)
-		soundsystem_init();
-	asIScriptContext* ctx = asGetActiveContext();
-	asIScriptEngine* engine = ctx->GetEngine();
-	asITypeInfo* arrayType = engine->GetTypeInfoById(engine->GetTypeIdByDecl("array<string>"));
-	CScriptArray* array = CScriptArray::Create(arrayType, (asUINT)0);
-	input_devs = GetInputAudioDevices();
-	if (input_devs.size() == 0)
-		return array;
-	array->Reserve(input_devs.size());
-	for (asUINT i = 0; i < input_devs.size(); ++i)
-	{
-		array->InsertLast(&input_devs[i].name);
-	}
-	return array;
-}
-
-
-static ma_device_id* g_InputDevice = nullptr;
-bool set_output_audio_device(asUINT id)
-{
-	if (!g_SoundInitialized)
-		soundsystem_init();
-	if (output_devs.size() == 0)
-		output_devs = GetOutputAudioDevices();
-	ma_device_uninit(&sound_mixer_device);
-	ma_device_config devConfig = ma_device_config_init(ma_device_type_playback);
-	;
-	devConfig.playback.pDeviceID = &output_devs[id].id;
-	devConfig.periodSizeInFrames = period_size;
-	devConfig.playback.channels = CHANNELS;
-	devConfig.playback.format = FORMAT;
-	devConfig.sampleRate = SAMPLE_RATE;
-	devConfig.noClip = MA_TRUE;
-	devConfig.dataCallback = sound_mixer_device_callback;
-	if (ma_device_init(nullptr, &devConfig, &sound_mixer_device) != MA_SUCCESS)
-		return false;
-	ma_device_start(&sound_mixer_device);
-	return true;
-}
-
-
-bool set_input_audio_device(asUINT id)
-{
-	if (!g_SoundInitialized)
-		soundsystem_init();
-	if (input_devs.size() == 0)
-		input_devs = GetInputAudioDevices();
-	g_InputDevice = &input_devs[id].id;
-	return true;
-}
-
-static ma_result ma_result_from_IPLerror(IPLerror error)
-{
-	switch (error)
-	{
-	case IPL_STATUS_SUCCESS:
-		return MA_SUCCESS;
-	case IPL_STATUS_OUTOFMEMORY:
-		return MA_OUT_OF_MEMORY;
-	case IPL_STATUS_INITIALIZATION:
-	case IPL_STATUS_FAILURE:
-	default:
-		return MA_ERROR;
-	}
-}
-
-typedef struct
-{
+// Steam Audio Binaural Node 
+typedef struct {
 	ma_node_config nodeConfig;
 	ma_uint32 channelsIn;
 	IPLAudioSettings iplAudioSettings;
 	IPLContext iplContext;
-	IPLHRTF iplHRTF; /* There is one HRTF object to many binaural effect objects. */
+	IPLHRTF iplHRTF;
 } ma_steamaudio_binaural_node_config;
 
-MA_API ma_steamaudio_binaural_node_config ma_steamaudio_binaural_node_config_init(ma_uint32 channelsIn, IPLAudioSettings iplAudioSettings, IPLContext iplContext, IPLHRTF iplHRTF);
+MA_API ma_steamaudio_binaural_node_config ma_steamaudio_binaural_node_config_init(ma_uint32 channelsIn, const IPLAudioSettings* iplAudioSettings, IPLContext iplContext, IPLHRTF iplHRTF);
 
-typedef struct
-{
+typedef struct {
 	ma_node_base baseNode;
-	IPLAudioSettings iplAudioSettings;
-	IPLContext iplContext;
-	IPLHRTF iplHRTF;
+	IPLAudioSettings iplAudioSettingsInternal;
+	IPLContext iplContextInternal;
+	IPLHRTF iplHRTFInternal;
 	IPLBinauralEffect iplEffect;
-	ma_vec3f direction;
-	float* ppBuffersIn[2];	/* Each buffer is an offset of _pHeap. */
-	float* ppBuffersOut[2]; /* Each buffer is an offset of _pHeap. */
+	IPLVector3 ipl_direction_to_source_;
+	float* ppBuffersIn[MA_MAX_CHANNELS];
+	float* ppBuffersOut[2];
 	void* _pHeap;
-	ma_sound handle_;
+	ma_sound* ma_sound_handle_ref_;
 } ma_steamaudio_binaural_node;
 
 MA_API ma_result ma_steamaudio_binaural_node_init(ma_node_graph* pNodeGraph, const ma_steamaudio_binaural_node_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_steamaudio_binaural_node* pBinauralNode);
 MA_API void ma_steamaudio_binaural_node_uninit(ma_steamaudio_binaural_node* pBinauralNode, const ma_allocation_callbacks* pAllocationCallbacks);
-MA_API ma_result ma_steamaudio_binaural_node_set_direction(ma_steamaudio_binaural_node* pBinauralNode, float x, float y, float z);
+MA_API void ma_steamaudio_binaural_node_set_sound_handle(ma_steamaudio_binaural_node* pBinauralNode, ma_sound* sound_handle);
 
-MA_API ma_steamaudio_binaural_node_config ma_steamaudio_binaural_node_config_init(ma_uint32 channelsIn, IPLAudioSettings iplAudioSettings, IPLContext iplContext, IPLHRTF iplHRTF)
-{
+static asUINT g_period_size_frames = 256;
+static std::vector<float> g_OutputDataBuffer;
+static bool g_RecordOutput = false;
+
+
+class AudioEngine {
+public:
+	ma_device device_;
+	ma_engine engine_;
+	ma_context context_;
+
+	IPLAudioSettings ipl_audio_settings_;
+	IPLContextSettings ipl_context_settings_;
+	IPLContext ipl_context_;
+	IPLHRTFSettings ipl_hrtf_settings_;
+	IPLHRTF ipl_hrtf_;
+	bool initialized_ = false;
+
+	AudioEngine() {
+		MA_ZERO_OBJECT(&device_);
+		MA_ZERO_OBJECT(&engine_);
+		MA_ZERO_OBJECT(&context_);
+		MA_ZERO_OBJECT(&ipl_audio_settings_);
+		MA_ZERO_OBJECT(&ipl_context_settings_);
+		MA_ZERO_OBJECT(&ipl_context_);
+		MA_ZERO_OBJECT(&ipl_hrtf_settings_);
+		MA_ZERO_OBJECT(&ipl_hrtf_);
+	}
+	~AudioEngine() {
+		if (initialized_) uninit();
+	}
+
+	static void device_data_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount) {
+		AudioEngine* audioEngine = (AudioEngine*)pDevice->pUserData;
+		if (audioEngine && audioEngine->initialized_ && audioEngine->get_engine()) {
+			ma_engine_read_pcm_frames(audioEngine->get_engine(), pOutput, frameCount, nullptr);
+			if (g_RecordOutput) {
+				const float* out_samples = (const float*)pOutput;
+				// Assuming DEFAULT_CHANNELS reflects the device's output channels
+				for (ma_uint32 i = 0; i < frameCount * pDevice->playback.channels; ++i) {
+					g_OutputDataBuffer.push_back(out_samples[i]);
+				}
+			}
+		}
+		(void)pInput;
+	}
+
+	bool init() {
+		if (initialized_) return true;
+		ma_result result;
+		result = ma_context_init(NULL, 0, NULL, &context_);
+		if (result != MA_SUCCESS) {
+			return false;
+		}
+		ma_device_config deviceConfig = ma_device_config_init(ma_device_type_playback);
+		deviceConfig.playback.format = DEFAULT_FORMAT;
+		deviceConfig.playback.channels = DEFAULT_CHANNELS;
+		deviceConfig.sampleRate = DEFAULT_SAMPLE_RATE;
+		deviceConfig.dataCallback = AudioEngine::device_data_callback;
+		deviceConfig.pUserData = this;
+		deviceConfig.periodSizeInFrames = g_period_size_frames;
+		deviceConfig.noClip = MA_TRUE;
+		result = ma_device_init(&context_, &deviceConfig, &device_);
+		if (result != MA_SUCCESS) {
+			ma_context_uninit(&context_);
+			return false;
+		}
+		DEFAULT_SAMPLE_RATE = device_.sampleRate; // Update global with actual device rate
+		DEFAULT_CHANNELS = device_.playback.channels; // Update global with actual device channels
+		g_period_size_frames = deviceConfig.periodSizeInFrames;
+
+		ma_engine_config engineConfig = ma_engine_config_init();
+		engineConfig.pDevice = &device_;
+		engineConfig.pContext = &context_;
+		engineConfig.channels = DEFAULT_CHANNELS; // Use actual device channels
+		engineConfig.sampleRate = DEFAULT_SAMPLE_RATE; // Use actual device sample rate
+		engineConfig.periodSizeInFrames = g_period_size_frames; // Use actual device period size
+
+		result = ma_engine_init(&engineConfig, &engine_);
+		if (result != MA_SUCCESS) {
+			ma_device_uninit(&device_);
+			ma_context_uninit(&context_);
+			return false;
+		}
+
+		MA_ZERO_OBJECT(&ipl_audio_settings_);
+		ipl_audio_settings_.samplingRate = DEFAULT_SAMPLE_RATE;
+		ipl_audio_settings_.frameSize = g_period_size_frames;
+		MA_ZERO_OBJECT(&ipl_context_settings_);
+		ipl_context_settings_.version = STEAMAUDIO_VERSION;
+		if (iplContextCreate(&ipl_context_settings_, &ipl_context_) != IPL_STATUS_SUCCESS) {
+			ma_engine_uninit(&engine_); ma_device_uninit(&device_); ma_context_uninit(&context_);
+			return false;
+		}
+		MA_ZERO_OBJECT(&ipl_hrtf_settings_);
+		ipl_hrtf_settings_.type = IPL_HRTFTYPE_DEFAULT;
+		ipl_hrtf_settings_.volume = 1.0f;
+		if (iplHRTFCreate(ipl_context_, &ipl_audio_settings_, &ipl_hrtf_settings_, &ipl_hrtf_) != IPL_STATUS_SUCCESS) {
+			iplContextRelease(&ipl_context_);
+			ma_engine_uninit(&engine_); ma_device_uninit(&device_); ma_context_uninit(&context_);
+			return false;
+		}
+		if (ma_device_start(&device_) != MA_SUCCESS) {
+			iplHRTFRelease(&ipl_hrtf_); iplContextRelease(&ipl_context_);
+			ma_engine_uninit(&engine_); ma_device_uninit(&device_); ma_context_uninit(&context_);
+			return false;
+		}
+		initialized_ = true;
+		return true;
+	}
+
+	void uninit() {
+		if (!initialized_) return;
+		if (ma_device_is_started(&device_)) ma_device_stop(&device_);
+		if (ipl_hrtf_) iplHRTFRelease(&ipl_hrtf_); MA_ZERO_OBJECT(&ipl_hrtf_);
+		if (ipl_context_) iplContextRelease(&ipl_context_); MA_ZERO_OBJECT(&ipl_context_);
+		ma_engine_uninit(&engine_); MA_ZERO_OBJECT(&engine_);
+		ma_device_uninit(&device_); MA_ZERO_OBJECT(&device_);
+		ma_context_uninit(&context_); MA_ZERO_OBJECT(&context_);
+		initialized_ = false;
+	}
+
+	ma_engine* get_engine() { return initialized_ ? &engine_ : nullptr; }
+	ma_device* get_device() { return initialized_ ? &device_ : nullptr; }
+	IPLContext get_ipl_context() { return initialized_ ? ipl_context_ : nullptr; }
+	IPLHRTF get_ipl_hrtf() { return initialized_ ? ipl_hrtf_ : nullptr; }
+	const IPLAudioSettings* get_ipl_audio_settings() { return initialized_ ? &ipl_audio_settings_ : nullptr; }
+	ma_context* get_ma_context() { return initialized_ ? &context_ : nullptr; }
+};
+
+
+MA_API ma_steamaudio_binaural_node_config ma_steamaudio_binaural_node_config_init(ma_uint32 channelsIn, const IPLAudioSettings* iplAudioSettings, IPLContext iplContext, IPLHRTF iplHRTF) {
 	ma_steamaudio_binaural_node_config config;
-
 	MA_ZERO_OBJECT(&config);
 	config.nodeConfig = ma_node_config_init();
 	config.channelsIn = channelsIn;
-	config.iplAudioSettings = iplAudioSettings;
+	if (iplAudioSettings) config.iplAudioSettings = *iplAudioSettings;
 	config.iplContext = iplContext;
 	config.iplHRTF = iplHRTF;
-
 	return config;
 }
 
 float spatial_blend_max_distance = 2.0f;
-void set_spatial_blend_max_distance(float distance)
-{
-	spatial_blend_max_distance = distance;
-}
+void set_spatial_blend_max_distance(float distance) { spatial_blend_max_distance = distance; }
+float get_spatial_blend_max_distance() { return spatial_blend_max_distance; }
 
-float get_spatial_blend_max_distance()
-{
-	return spatial_blend_max_distance;
-}
 
-static void ma_steamaudio_binaural_node_process_pcm_frames(ma_node* pNode, const float** ppFramesIn, ma_uint32* pFrameCountIn, float** ppFramesOut, ma_uint32* pFrameCountOut)
-{
+static void ma_steamaudio_binaural_node_process_pcm_frames(ma_node* pNode, const float** ppFramesIn, ma_uint32* pFrameCountIn, float** ppFramesOut, ma_uint32* pFrameCountOut) {
 	ma_steamaudio_binaural_node* pBinauralNode = (ma_steamaudio_binaural_node*)pNode;
+	if (!pBinauralNode || !pBinauralNode->iplEffect || !pBinauralNode->ma_sound_handle_ref_ || !g_audio_engine || !g_audio_engine->get_engine()) {
+		if (*pFrameCountOut > 0 && ppFramesOut[0]) { // Silence output if not ready
+			ma_silence_pcm_frames(ppFramesOut[0], *pFrameCountOut, DEFAULT_FORMAT, ma_node_get_output_channels(pNode, 0));
+		}
+		return;
+	}
+
 	IPLBinauralEffectParams binauralParams;
 	IPLAudioBuffer inputBufferDesc;
 	IPLAudioBuffer outputBufferDesc;
 	ma_uint32 totalFramesToProcess = *pFrameCountOut;
 	ma_uint32 totalFramesProcessed = 0;
-	binauralParams.direction.x = pBinauralNode->direction.x;
-	binauralParams.direction.y = pBinauralNode->direction.z;
-	binauralParams.direction.z = pBinauralNode->direction.y;
-	ma_vec3f listener = ma_engine_listener_get_position(&output->m_mixer, ma_sound_get_listener_index(&pBinauralNode->handle_));
-	float distance = sqrt((listener.x + binauralParams.direction.x) * (listener.x + binauralParams.direction.x) +
-		(listener.y + binauralParams.direction.y) * (listener.y + binauralParams.direction.y) +
-		(listener.z - binauralParams.direction.z) * (listener.z - binauralParams.direction.z));
-	if (listener.x == binauralParams.direction.x && listener.y == binauralParams.direction.y && listener.z == binauralParams.direction.z)
-	{
-		binauralParams.interpolation = IPL_HRTFINTERPOLATION_NEAREST;
-	}
-	else
-	{
-		binauralParams.interpolation = IPL_HRTFINTERPOLATION_BILINEAR;
-	}
 
-	float normalizedDistance = distance / spatial_blend_max_distance;
-	binauralParams.spatialBlend = min(0.0f + normalizedDistance, 1.0f);
-	if (binauralParams.spatialBlend > 1.0f)
-		binauralParams.spatialBlend = 1.0f;
-	binauralParams.hrtf = pBinauralNode->iplHRTF;
+	ma_vec3f ma_rel_dir = ma_sound_get_direction_to_listener(pBinauralNode->ma_sound_handle_ref_);
+
+	binauralParams.direction.x = ma_rel_dir.x;
+	binauralParams.direction.y = ma_rel_dir.y;
+	binauralParams.direction.z = ma_rel_dir.z;
+
+	float distance = 0.0f;
+	ma_uint32 listenerIndex = ma_sound_get_listener_index(pBinauralNode->ma_sound_handle_ref_);
+	ma_vec3f soundWorldPos = ma_sound_get_position(pBinauralNode->ma_sound_handle_ref_);
+	ma_vec3f listenerWorldPos = ma_engine_listener_get_position(g_audio_engine->get_engine(), listenerIndex);
+	distance = ma_vec3f_len(ma_vec3f_sub(soundWorldPos, listenerWorldPos));
+
+	binauralParams.interpolation = (distance < 0.01f) ? IPL_HRTFINTERPOLATION_NEAREST : IPL_HRTFINTERPOLATION_BILINEAR;
+	float normalizedDistance = (spatial_blend_max_distance > 0.01f) ? (distance / spatial_blend_max_distance) : 0.0f;
+	binauralParams.spatialBlend = ma_min(1.0f, normalizedDistance);
+	binauralParams.hrtf = pBinauralNode->iplHRTFInternal;
 	binauralParams.peakDelays = NULL;
-	inputBufferDesc.numChannels = (IPLint32)ma_node_get_input_channels(pNode, 0);
 
-	/* We'll run this in a loop just in case our deinterleaved buffers are too small. */
-	outputBufferDesc.numSamples = pBinauralNode->iplAudioSettings.frameSize;
+	inputBufferDesc.numChannels = (IPLint32)ma_node_get_input_channels(pNode, 0);
+	outputBufferDesc.numSamples = pBinauralNode->iplAudioSettingsInternal.frameSize;
 	outputBufferDesc.numChannels = 2;
 	outputBufferDesc.data = pBinauralNode->ppBuffersOut;
 
-	while (totalFramesProcessed < totalFramesToProcess)
-	{
-		ma_uint32 framesToProcessThisIteration = totalFramesToProcess - totalFramesProcessed;
-		if (framesToProcessThisIteration > (ma_uint32)pBinauralNode->iplAudioSettings.frameSize)
-		{
-			framesToProcessThisIteration = (ma_uint32)pBinauralNode->iplAudioSettings.frameSize;
-		}
-
-		if (inputBufferDesc.numChannels == 1)
-		{
-			/* Fast path. No need for deinterleaving since it's a mono stream. */
+	while (totalFramesProcessed < totalFramesToProcess) {
+		ma_uint32 framesThisIteration = ma_min(totalFramesToProcess - totalFramesProcessed, (ma_uint32)pBinauralNode->iplAudioSettingsInternal.frameSize);
+		if (inputBufferDesc.numChannels == 1) {
 			pBinauralNode->ppBuffersIn[0] = (float*)ma_offset_pcm_frames_const_ptr_f32(ppFramesIn[0], totalFramesProcessed, 1);
 		}
-		else
-		{
-			/* Slow path. Need to deinterleave the input data. */
-			ma_deinterleave_pcm_frames(ma_format_f32, inputBufferDesc.numChannels, framesToProcessThisIteration, ma_offset_pcm_frames_const_ptr_f32(ppFramesIn[0], totalFramesProcessed, inputBufferDesc.numChannels), (void**)pBinauralNode->ppBuffersIn);
+		else {
+			ma_deinterleave_pcm_frames(DEFAULT_FORMAT, inputBufferDesc.numChannels, framesThisIteration,
+				ma_offset_pcm_frames_const_ptr_f32(ppFramesIn[0], totalFramesProcessed, inputBufferDesc.numChannels),
+				(void**)pBinauralNode->ppBuffersIn);
 		}
-
 		inputBufferDesc.data = pBinauralNode->ppBuffersIn;
-		inputBufferDesc.numSamples = (IPLint32)framesToProcessThisIteration;
-
-		/* Apply the effect. */
+		inputBufferDesc.numSamples = (IPLint32)framesThisIteration;
 		iplBinauralEffectApply(pBinauralNode->iplEffect, &binauralParams, &inputBufferDesc, &outputBufferDesc);
-		// iplDirectEffectApply(pBinauralNode->effect, &params, &inputBufferDesc, &outputBufferDesc);
-
-		/* Interleave straight into the output buffer. */
-		ma_interleave_pcm_frames(ma_format_f32, 2, framesToProcessThisIteration, (const void**)pBinauralNode->ppBuffersOut, ma_offset_pcm_frames_ptr_f32(ppFramesOut[0], totalFramesProcessed, 2));
-
-		/* Advance. */
-		totalFramesProcessed += framesToProcessThisIteration;
+		ma_interleave_pcm_frames(DEFAULT_FORMAT, 2, framesThisIteration,
+			(const void**)pBinauralNode->ppBuffersOut,
+			ma_offset_pcm_frames_ptr_f32(ppFramesOut[0], totalFramesProcessed, 2));
+		totalFramesProcessed += framesThisIteration;
 	}
-
-	(void)pFrameCountIn; /* Unused. */
+	(void)pFrameCountIn;
 }
 
-static ma_node_vtable g_ma_steamaudio_binaural_node_vtable =
-{
-	ma_steamaudio_binaural_node_process_pcm_frames,
-	NULL,
-	1, /* 1 input channel. */
-	1, /* 1 output channel. */
-	0 };
+static ma_node_vtable g_ma_steamaudio_binaural_node_vtable = {
+	ma_steamaudio_binaural_node_process_pcm_frames, NULL, 1, 1, 0
+};
 
-MA_API ma_result ma_steamaudio_binaural_node_init(ma_node_graph* pNodeGraph, const ma_steamaudio_binaural_node_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_steamaudio_binaural_node* pBinauralNode)
-{
+MA_API ma_result ma_steamaudio_binaural_node_init(ma_node_graph* pNodeGraph, const ma_steamaudio_binaural_node_config* pConfig, const ma_allocation_callbacks* pAllocationCallbacks, ma_steamaudio_binaural_node* pBinauralNode) {
 	ma_result result;
 	ma_node_config baseConfig;
 	ma_uint32 channelsIn;
-	ma_uint32 channelsOut;
-	IPLBinauralEffectSettings iplBinauralEffectSettings;
-	IPLDirectEffectSettings effectSettings{};
+	ma_uint32 channelsOut = 2;
+	IPLBinauralEffectSettings iplEffectSettings; // Renamed from iplBinauralEffectSettings
 	size_t heapSizeInBytes;
 
-	if (pBinauralNode == NULL)
-	{
-		return MA_INVALID_ARGS;
-	}
-
+	if (pBinauralNode == NULL) return MA_INVALID_ARGS;
 	MA_ZERO_OBJECT(pBinauralNode);
-
-	if (pConfig == NULL || pConfig->iplAudioSettings.frameSize == 0 || pConfig->iplContext == NULL || pConfig->iplHRTF == NULL)
-	{
-		return MA_INVALID_ARGS;
-	}
-
-	/* Steam Audio only supports mono and stereo input. */
-	if (pConfig->channelsIn < 1 || pConfig->channelsIn > 2)
-	{
-		return MA_INVALID_ARGS;
-	}
-
+	if (pConfig == NULL || pConfig->iplAudioSettings.frameSize == 0 || pConfig->iplContext == NULL || pConfig->iplHRTF == NULL) return MA_INVALID_ARGS;
+	if (pConfig->channelsIn < 1 || pConfig->channelsIn > MA_MAX_CHANNELS) return MA_INVALID_ARGS; // Allow up to MA_MAX_CHANNELS for input flexibility
 	channelsIn = pConfig->channelsIn;
-	channelsOut = 2; /* Always stereo output. */
 
-	baseConfig = ma_node_config_init();
+	baseConfig = pConfig->nodeConfig; // Use passed-in config as base
 	baseConfig.vtable = &g_ma_steamaudio_binaural_node_vtable;
 	baseConfig.pInputChannels = &channelsIn;
 	baseConfig.pOutputChannels = &channelsOut;
 	result = ma_node_init(pNodeGraph, &baseConfig, pAllocationCallbacks, &pBinauralNode->baseNode);
-	if (result != MA_SUCCESS)
-	{
-		return result;
-	}
+	if (result != MA_SUCCESS) return result;
 
-	pBinauralNode->iplAudioSettings = pConfig->iplAudioSettings;
-	pBinauralNode->iplContext = pConfig->iplContext;
-	pBinauralNode->iplHRTF = pConfig->iplHRTF;
+	pBinauralNode->iplAudioSettingsInternal = pConfig->iplAudioSettings;
+	pBinauralNode->iplContextInternal = pConfig->iplContext;
+	pBinauralNode->iplHRTFInternal = pConfig->iplHRTF;
+	pBinauralNode->ma_sound_handle_ref_ = nullptr;
 
-	MA_ZERO_OBJECT(&iplBinauralEffectSettings);
-	iplBinauralEffectSettings.hrtf = pBinauralNode->iplHRTF;
-
-	result = ma_result_from_IPLerror(iplBinauralEffectCreate(pBinauralNode->iplContext, &pBinauralNode->iplAudioSettings, &iplBinauralEffectSettings, &pBinauralNode->iplEffect));
-	if (result != MA_SUCCESS)
-	{
+	MA_ZERO_OBJECT(&iplEffectSettings);
+	iplEffectSettings.hrtf = pBinauralNode->iplHRTFInternal;
+	if (iplBinauralEffectCreate(pBinauralNode->iplContextInternal, &pBinauralNode->iplAudioSettingsInternal, &iplEffectSettings, &pBinauralNode->iplEffect) != IPL_STATUS_SUCCESS) {
 		ma_node_uninit(&pBinauralNode->baseNode, pAllocationCallbacks);
-		return result;
+		return MA_ERROR;
 	}
+
 	heapSizeInBytes = 0;
-
-	/*
-	Unfortunately Steam Audio uses deinterleaved buffers for everything so we'll need to use some
-	intermediary buffers. We'll allocate one big buffer on the heap and then use offsets. We'll
-	use the frame size from the IPLAudioSettings structure as a basis for the size of the buffer.
-	*/
-	heapSizeInBytes += sizeof(float) * channelsOut * pBinauralNode->iplAudioSettings.frameSize; /* Output buffer. */
-	heapSizeInBytes += sizeof(float) * channelsIn * pBinauralNode->iplAudioSettings.frameSize;	/* Input buffer. */
-
+	heapSizeInBytes += sizeof(float) * channelsOut * pBinauralNode->iplAudioSettingsInternal.frameSize;
+	heapSizeInBytes += sizeof(float) * channelsIn * pBinauralNode->iplAudioSettingsInternal.frameSize;
 	pBinauralNode->_pHeap = ma_malloc(heapSizeInBytes, pAllocationCallbacks);
-	if (pBinauralNode->_pHeap == NULL)
-	{
+	if (pBinauralNode->_pHeap == NULL) {
 		iplBinauralEffectRelease(&pBinauralNode->iplEffect);
 		ma_node_uninit(&pBinauralNode->baseNode, pAllocationCallbacks);
 		return MA_OUT_OF_MEMORY;
 	}
-
 	pBinauralNode->ppBuffersOut[0] = (float*)pBinauralNode->_pHeap;
-	pBinauralNode->ppBuffersOut[1] = (float*)ma_offset_ptr(pBinauralNode->_pHeap, sizeof(float) * pBinauralNode->iplAudioSettings.frameSize);
-
-	{
-		ma_uint32 iChannelIn;
-		for (iChannelIn = 0; iChannelIn < channelsIn; iChannelIn += 1)
-		{
-			pBinauralNode->ppBuffersIn[iChannelIn] = (float*)ma_offset_ptr(pBinauralNode->_pHeap, sizeof(float) * pBinauralNode->iplAudioSettings.frameSize * (channelsOut + iChannelIn));
-		}
+	pBinauralNode->ppBuffersOut[1] = (float*)ma_offset_ptr(pBinauralNode->ppBuffersOut[0], sizeof(float) * pBinauralNode->iplAudioSettingsInternal.frameSize);
+	float* input_buffer_start = (float*)ma_offset_ptr(pBinauralNode->ppBuffersOut[1], sizeof(float) * pBinauralNode->iplAudioSettingsInternal.frameSize);
+	for (ma_uint32 i = 0; i < channelsIn; ++i) {
+		pBinauralNode->ppBuffersIn[i] = (float*)ma_offset_ptr(input_buffer_start, sizeof(float) * pBinauralNode->iplAudioSettingsInternal.frameSize * i);
 	}
-
 	return MA_SUCCESS;
 }
 
-MA_API void ma_steamaudio_binaural_node_uninit(ma_steamaudio_binaural_node* pBinauralNode, const ma_allocation_callbacks* pAllocationCallbacks)
-{
-	if (pBinauralNode == NULL)
-	{
-		return;
-	}
-
-	/* The base node is always uninitialized first. */
-	ma_node_uninit(&pBinauralNode->baseNode, pAllocationCallbacks);
-
-	/*
-	The Steam Audio objects are deleted after the base node. This ensures the base node is removed from the graph
-	first to ensure these objects aren't getting used by the audio thread.
-	*/
-	iplBinauralEffectRelease(&pBinauralNode->iplEffect);
+MA_API void ma_steamaudio_binaural_node_uninit(ma_steamaudio_binaural_node* pBinauralNode, const ma_allocation_callbacks* pAllocationCallbacks) {
+	if (pBinauralNode == NULL) return;
+	ma_node_uninit(&pBinauralNode->baseNode, pAllocationCallbacks); // Uninit base first
+	if (pBinauralNode->iplEffect) iplBinauralEffectRelease(&pBinauralNode->iplEffect);
 	ma_free(pBinauralNode->_pHeap, pAllocationCallbacks);
+	MA_ZERO_OBJECT(pBinauralNode);
 }
 
-MA_API ma_result ma_steamaudio_binaural_node_set_direction(ma_steamaudio_binaural_node* pBinauralNode, float x, float y, float z)
-{
-	if (pBinauralNode == NULL)
-	{
-		return MA_INVALID_ARGS;
+MA_API void ma_steamaudio_binaural_node_set_sound_handle(ma_steamaudio_binaural_node* pBinauralNode, ma_sound* sound_handle) {
+	if (pBinauralNode) pBinauralNode->ma_sound_handle_ref_ = sound_handle;
+}
+
+
+static mixer* g_master_mixer = nullptr;
+static mixer* g_default_sound_mixer = nullptr;
+
+struct AudioDevice { std::string name; ma_device_id id; };
+static std::vector<AudioDevice> g_output_audio_devices_cache;
+static std::vector<AudioDevice> g_input_audio_devices_cache;
+static ma_device_id* g_current_input_device_id = nullptr;
+
+bool soundsystem_init() {
+	if (g_SoundInitialized) return true;
+	if (!g_audio_engine) g_audio_engine = new AudioEngine();
+	if (!g_audio_engine->init()) {
+		delete g_audio_engine; g_audio_engine = nullptr; return false;
 	}
-
-	pBinauralNode->direction.x = x;
-	pBinauralNode->direction.y = -y;
-	pBinauralNode->direction.z = z;
-
-	return MA_SUCCESS;
-}
-
-bool soundsystem_init()
-{
-	if (g_SoundInitialized == true)
-		return true;
-	output = new mixer(nullptr, true);
-	sound_default_mixer = output; // This is in progress now. new mixer(output, false);
-	ma_device_config devConfig = ma_device_config_init(ma_device_type_playback);
-	;
-	devConfig.noClip = MA_TRUE;
-	devConfig.periodSizeInFrames = period_size;
-	devConfig.playback.channels = CHANNELS;
-	devConfig.sampleRate = SAMPLE_RATE;
-	devConfig.playback.format = FORMAT;
-	devConfig.dataCallback = sound_mixer_device_callback;
-	if (ma_device_init(nullptr, &devConfig, &sound_mixer_device) != MA_SUCCESS)
+	try {
+		g_master_mixer = new mixer(g_audio_engine, nullptr, true);
+		g_default_sound_mixer = new mixer(g_audio_engine, g_master_mixer);
+	}
+	catch (const std::runtime_error& e) {
+		if (g_master_mixer) delete g_master_mixer;
+		g_audio_engine->uninit(); delete g_audio_engine; g_audio_engine = nullptr;
 		return false;
-	MA_ZERO_OBJECT(&iplAudioSettings);
-	iplAudioSettings.samplingRate = SAMPLE_RATE;
-
-	iplAudioSettings.frameSize = devConfig.periodSizeInFrames;
-
-	/* IPLContext */
-	MA_ZERO_OBJECT(&iplContextSettings);
-	iplContextSettings.version = STEAMAUDIO_VERSION;
-	//    iplContextSettings.flags = IPL_CONTEXTFLAGS_VALIDATION;
-	ma_result_from_IPLerror(iplContextCreate(&iplContextSettings, &iplContext));
-	/* IPLHRTF */
-	MA_ZERO_OBJECT(&iplHRTFSettings);
-	iplHRTFSettings.type = IPL_HRTFTYPE_DEFAULT;
-	iplHRTFSettings.volume = 1.0f;
-	ma_result_from_IPLerror(iplHRTFCreate(iplContext, &iplAudioSettings, &iplHRTFSettings, &iplHRTF));
-	ma_device_start(&sound_mixer_device);
+	}
+	g_SoundInitialized = true;
 	return true;
 }
 
-void soundsystem_free()
-{
-	if (g_SoundInitialized == false)
-		return;
-	if (sound_default_mixer) {
-		delete sound_default_mixer;
-		sound_default_mixer = nullptr;
-	}
-	iplHRTFRelease(&iplHRTF);
-	iplContextRelease(&iplContext);
-	ma_device_uninit(&sound_mixer_device);
+void soundsystem_free() {
+	if (!g_SoundInitialized) return;
+	if (g_default_sound_mixer) { delete g_default_sound_mixer; g_default_sound_mixer = nullptr; }
+	if (g_master_mixer) { delete g_master_mixer; g_master_mixer = nullptr; }
+	if (g_audio_engine) { g_audio_engine->uninit(); delete g_audio_engine; g_audio_engine = nullptr; }
+	g_output_audio_devices_cache.clear();
+	g_input_audio_devices_cache.clear();
+	g_current_input_device_id = nullptr;
 	g_SoundInitialized = false;
 }
 
-string sound_path;
-pack* sound_pack = nullptr;
-void set_sound_storage(const string& path)
-{
-	sound_path = path;
-	sound_pack = nullptr;
+string sound_path_global;
+pack* sound_pack_global = nullptr;
+
+void set_sound_storage(const string& path) {
+	sound_path_global = path; sound_pack_global = nullptr;
 }
-string get_sound_storage()
-{
-	return sound_path;
+string get_sound_storage() { return sound_path_global; }
+void set_sound_pack(pack* p) {
+	if (p == nullptr && sound_pack_global != nullptr) {
+		sound_pack_global = nullptr; sound_path_global = "";  return;
+	}
+	if (p != nullptr) { sound_pack_global = p; sound_path_global = ""; }
 }
-void set_sound_pack(pack* p)
-{
-	if (p == nullptr)
-		return;
-	sound_pack = p;
-	sound_path = "";
+pack* get_sound_pack() { return sound_pack_global; }
+
+void set_master_volume(float volume_db) {
+	if (!g_SoundInitialized || !g_audio_engine || !g_audio_engine->get_engine()) return;
+	if (volume_db > 0.0f) volume_db = 0.0f; // Clamp max
+	if (volume_db < -100.0f) volume_db = -100.0f; // Reasonable min
+	ma_engine_set_volume(g_audio_engine->get_engine(), ma_volume_db_to_linear(volume_db));
 }
-pack* get_sound_pack()
-{
-	return sound_pack;
+float get_master_volume() {
+	if (!g_SoundInitialized || !g_audio_engine || !g_audio_engine->get_engine()) return ma_volume_linear_to_db(0.0f); // Return silence dB
+	return ma_volume_linear_to_db(ma_engine_get_volume(g_audio_engine->get_engine()));
 }
-void set_master_volume(float volume)
-{
-	if (volume > 0 or volume < -100)
-		return;
-	if (output) ma_engine_set_volume(&output->m_mixer, ma_volume_linear_to_db(volume));
+
+bool sound_global_hrtf_enabled = false;
+
+
+class mixer {
+public:
+	ma_sound m_group_sound;
+	bool m_is_group_initialized = false;
+	mutable std::atomic<int> ref;
+	std::unordered_set<mixer*> child_mixers;
+	std::unordered_set<sound*> sounds;
+	mixer* parent_mixer_ptr;
+	AudioEngine* audio_engine_ref_;
+	bool is_root_mixer_ = false;
+
+	mixer(AudioEngine* engine_ref, mixer* parent = nullptr, bool root = false)
+		: parent_mixer_ptr(nullptr), audio_engine_ref_(engine_ref), is_root_mixer_(root), ref(1) {
+		MA_ZERO_OBJECT(&m_group_sound);
+		if (!audio_engine_ref_ || !audio_engine_ref_->get_engine()) {
+			return;
+		}
+		if (!is_root_mixer_) {
+			ma_result res = ma_sound_group_init(audio_engine_ref_->get_engine(), 0, nullptr, &m_group_sound); // Init as a group
+			if (res != MA_SUCCESS) {
+				return;
+			}
+			m_is_group_initialized = true;
+		} // Root mixer uses engine endpoint, no separate m_group_sound needed for its primary role.
+		set_parent_mixer(parent); // Handles attachment
+	}
+	~mixer() {
+		set_parent_mixer(nullptr); // Detach from parent
+		// Child mixers & sounds are not owned by this mixer, their lifetime is managed elsewhere.
+		// They should detach themselves if their parent mixer is destroyed.
+		if (m_is_group_initialized && !is_root_mixer_) {
+			ma_sound_uninit(&m_group_sound);
+		}
+	}
+	void AddRef() const { ref++; }
+	void Release() const { if (--ref == 0) delete this; }
+
+	void set_parent_mixer(mixer* new_parent) {
+		if (parent_mixer_ptr == new_parent || is_root_mixer_) return;
+		ma_node* this_mixer_node = get_input_attachment_node(); // This is what others connect TO. We need our OUTPUT node.
+		ma_node* this_mixer_output_node = is_root_mixer_ ? ma_engine_get_endpoint(audio_engine_ref_->get_engine()) : (ma_node*)&m_group_sound;
+
+
+		if (parent_mixer_ptr) {
+			if (this_mixer_output_node) ma_node_detach_all_output_buses(this_mixer_output_node); // Detach our output
+			parent_mixer_ptr->child_mixers.erase(this);
+		}
+		parent_mixer_ptr = new_parent;
+		if (parent_mixer_ptr) {
+			ma_node* parent_input_node = parent_mixer_ptr->get_input_attachment_node();
+			if (this_mixer_output_node && parent_input_node) {
+				ma_node_attach_output_bus(this_mixer_output_node, 0, parent_input_node, 0);
+			}
+			parent_mixer_ptr->child_mixers.insert(this);
+		}
+		else if (!is_root_mixer_ && g_master_mixer && this != g_master_mixer) { // Default to master if not root
+			ma_node* master_input_node = g_master_mixer->get_input_attachment_node();
+			if (this_mixer_output_node && master_input_node) {
+				ma_node_attach_output_bus(this_mixer_output_node, 0, master_input_node, 0);
+			}
+			g_master_mixer->child_mixers.insert(this);
+			parent_mixer_ptr = g_master_mixer;
+		}
+	}
+	ma_engine* get_engine_ref() { return audio_engine_ref_ ? audio_engine_ref_->get_engine() : nullptr; }
+	ma_node* get_input_attachment_node() { // Node for sounds/children to connect their output to
+		if (is_root_mixer_) return ma_engine_get_endpoint(audio_engine_ref_->get_engine());
+		return m_is_group_initialized ? (ma_node*)&m_group_sound : nullptr;
+	}
+};
+
+static ma_mutex g_device_enum_mutex; // Mutex for device enumeration cache
+
+static void init_device_enum_mutex() {
+	ma_mutex_init(&g_device_enum_mutex);
 }
-float get_master_volume()
-{
-	return output ? ma_volume_db_to_linear(ma_engine_get_volume(&output->m_mixer)) : 0.0f;
+static void uninit_device_enum_mutex() {
+	ma_mutex_uninit(&g_device_enum_mutex);
 }
-bool sound_global_hrtf = false;
+
+// Call init_device_enum_mutex() in soundsystem_init() after engine is up, before first enum
+// Call uninit_device_enum_mutex() in soundsystem_free()
+
+static std::vector<AudioDevice> GetOutputAudioDevicesInternal() {
+	std::vector<AudioDevice> audioDevices;
+	if (!g_audio_engine || !g_audio_engine->get_ma_context()) return audioDevices;
+
+	ma_mutex_lock(&g_device_enum_mutex); // Lock before accessing/modifying cache or enumerating
+	if (!g_output_audio_devices_cache.empty()) { // Use cache if available
+		audioDevices = g_output_audio_devices_cache;
+		ma_mutex_unlock(&g_device_enum_mutex);
+		return audioDevices;
+	}
+	ma_mutex_unlock(&g_device_enum_mutex); // Unlock for enumeration if cache was empty
+
+	struct UserData { std::vector<AudioDevice>* devices_list; };
+	UserData user_data = { &audioDevices }; // Local vector to fill
+	ma_context_enumerate_devices(g_audio_engine->get_ma_context(),
+		[](ma_context*, ma_device_type deviceType, const ma_device_info* pInfo, void* pUserData) -> ma_bool32 {
+			if (deviceType == ma_device_type_playback) {
+				((UserData*)pUserData)->devices_list->push_back({ pInfo->name, pInfo->id });
+			}
+			return MA_TRUE;
+		}, &user_data);
+
+	ma_mutex_lock(&g_device_enum_mutex);
+	g_output_audio_devices_cache = audioDevices; // Update cache
+	ma_mutex_unlock(&g_device_enum_mutex);
+	return audioDevices;
+}
+
+static std::vector<AudioDevice> GetInputAudioDevicesInternal() {
+	std::vector<AudioDevice> audioDevices;
+	if (!g_audio_engine || !g_audio_engine->get_ma_context()) return audioDevices;
+
+	ma_mutex_lock(&g_device_enum_mutex);
+	if (!g_input_audio_devices_cache.empty()) {
+		audioDevices = g_input_audio_devices_cache;
+		ma_mutex_unlock(&g_device_enum_mutex);
+		return audioDevices;
+	}
+	ma_mutex_unlock(&g_device_enum_mutex);
+
+	struct UserData { std::vector<AudioDevice>* devices_list; };
+	UserData user_data = { &audioDevices };
+	ma_context_enumerate_devices(g_audio_engine->get_ma_context(),
+		[](ma_context*, ma_device_type deviceType, const ma_device_info* pInfo, void* pUserData) -> ma_bool32 {
+			if (deviceType == ma_device_type_capture) {
+				((UserData*)pUserData)->devices_list->push_back({ pInfo->name, pInfo->id });
+			}
+			return MA_TRUE;
+		}, &user_data);
+
+	ma_mutex_lock(&g_device_enum_mutex);
+	g_input_audio_devices_cache = audioDevices;
+	ma_mutex_unlock(&g_device_enum_mutex);
+	return audioDevices;
+}
+
+CScriptArray* get_output_audio_devices() {
+	if (!g_SoundInitialized && !soundsystem_init()) { // Init if not already, handle failure
+		return CScriptArray::Create(asGetActiveContext()->GetEngine()->GetTypeInfoByDecl("array<string>"));
+	}
+	if (!g_audio_engine) return CScriptArray::Create(asGetActiveContext()->GetEngine()->GetTypeInfoByDecl("array<string>"));
+	std::vector<AudioDevice> devices = GetOutputAudioDevicesInternal(); // Use internal helper
+	asIScriptContext* ctx = asGetActiveContext();
+	asIScriptEngine* engine = ctx->GetEngine();
+	asITypeInfo* arrayType = engine->GetTypeInfoById(engine->GetTypeIdByDecl("array<string>"));
+	CScriptArray* array = CScriptArray::Create(arrayType, (asUINT)devices.size());
+	for (asUINT i = 0; i < devices.size(); ++i) {
+		array->SetValue(i, &devices[i].name);
+	}
+	return array;
+}
+
+CScriptArray* get_input_audio_devices() {
+	if (!g_SoundInitialized && !soundsystem_init()) {
+		return CScriptArray::Create(asGetActiveContext()->GetEngine()->GetTypeInfoByDecl("array<string>"));
+	}
+	if (!g_audio_engine) return CScriptArray::Create(asGetActiveContext()->GetEngine()->GetTypeInfoByDecl("array<string>"));
+	std::vector<AudioDevice> devices = GetInputAudioDevicesInternal();
+	asIScriptContext* ctx = asGetActiveContext();
+	asIScriptEngine* engine = ctx->GetEngine();
+	asITypeInfo* arrayType = engine->GetTypeInfoById(engine->GetTypeIdByDecl("array<string>"));
+	CScriptArray* array = CScriptArray::Create(arrayType, (asUINT)devices.size());
+	for (asUINT i = 0; i < devices.size(); ++i) {
+		array->SetValue(i, &devices[i].name);
+	}
+	return array;
+}
+
+bool set_output_audio_device(asUINT id_index) {
+	if (!g_SoundInitialized && !soundsystem_init()) return false;
+	if (!g_audio_engine || !g_audio_engine->get_device() || !g_audio_engine->get_ma_context()) return false;
+
+	ma_mutex_lock(&g_device_enum_mutex); // Lock for cache access
+	std::vector<AudioDevice> current_devices = g_output_audio_devices_cache; // Copy cache
+	ma_mutex_unlock(&g_device_enum_mutex);
+
+	if (current_devices.empty()) {
+		current_devices = GetOutputAudioDevicesInternal(); // Populate if empty
+	}
+	if (id_index >= current_devices.size()) return false;
+
+	ma_device_stop(&g_audio_engine->device_); // Stop current device
+	ma_device_uninit(&g_audio_engine->device_);
+
+	ma_device_config devConfig = ma_device_config_init(ma_device_type_playback);
+	devConfig.playback.pDeviceID = &current_devices[id_index].id; // Use ID from (potentially refreshed) list
+	devConfig.playback.format = DEFAULT_FORMAT;
+	devConfig.playback.channels = DEFAULT_CHANNELS; // Engine will use this
+	devConfig.sampleRate = DEFAULT_SAMPLE_RATE; // Engine will use this
+	devConfig.dataCallback = AudioEngine::device_data_callback;
+	devConfig.pUserData = g_audio_engine;
+	devConfig.periodSizeInFrames = g_period_size_frames;
+	devConfig.noClip = MA_TRUE;
+
+	ma_result result = ma_device_init(g_audio_engine->get_ma_context(), &devConfig, &g_audio_engine->device_);
+	if (result != MA_SUCCESS) {
+		return false;
+	}
+	DEFAULT_SAMPLE_RATE = g_audio_engine->device_.sampleRate; // Update globals from new device
+	DEFAULT_CHANNELS = g_audio_engine->device_.playback.channels;
+	g_period_size_frames = g_audio_engine->device_.playback.internalPeriodSizeInFrames;
+
+
+	if (ma_device_start(&g_audio_engine->device_) != MA_SUCCESS) {
+		ma_device_uninit(&g_audio_engine->device_);
+		return false;
+	}
+	ma_mutex_lock(&g_device_enum_mutex);
+	g_output_audio_devices_cache = current_devices; // Update cache with list that was used for ID
+	ma_mutex_unlock(&g_device_enum_mutex);
+	return true;
+}
+
+bool set_input_audio_device(asUINT id_index) {
+	if (!g_SoundInitialized && !soundsystem_init()) return false;
+	std::vector<AudioDevice> current_input_devs = GetInputAudioDevicesInternal(); // Ensure cache is populated
+	if (id_index >= current_input_devs.size()) return false;
+
+	static ma_device_id selected_input_id; // Static to persist
+	selected_input_id = current_input_devs[id_index].id;
+	g_current_input_device_id = &selected_input_id;
+	return true;
+}
+
 
 class pcm_ring_buffer {
 public:
 	ma_pcm_rb rb;
-	pcm_ring_buffer(ma_uint32 channels = 2, ma_uint32 sample_rate = SAMPLE_RATE, ma_uint32 bufferSizeInFrames = 1024)
-		: ref_count(1) {
-		if (ma_pcm_rb_init(ma_format_f32, channels, bufferSizeInFrames, nullptr, nullptr, &rb) != MA_SUCCESS) {
+	ma_uint32 channels_;
+	ma_uint32 sample_rate_;
+	mutable std::atomic<int> ref_count;
+
+	pcm_ring_buffer(ma_uint32 channels = DEFAULT_CHANNELS, ma_uint32 sample_rate = DEFAULT_SAMPLE_RATE, ma_uint32 bufferSizeInFrames = 1024)
+		: channels_(channels), sample_rate_(sample_rate), ref_count(1) {
+		MA_ZERO_OBJECT(&rb);
+		if (ma_pcm_rb_init(DEFAULT_FORMAT, channels_, bufferSizeInFrames, nullptr, nullptr, &rb) != MA_SUCCESS) {
 			throw std::runtime_error("Failed to initialize PCM ring buffer");
 		}
-		ma_pcm_rb_set_sample_rate(&rb, sample_rate);
+		ma_pcm_rb_set_sample_rate(&rb, sample_rate_);
 	}
-
-	~pcm_ring_buffer() {
-		ma_pcm_rb_uninit(&rb);
-	}
-
+	~pcm_ring_buffer() { ma_pcm_rb_uninit(&rb); }
 	void write(const std::string& data) {
 		if (data.empty()) return;
-
-		// Calculate the number of frames based on the size of the input data
-		ma_uint32 sizeInFrames = static_cast<ma_uint32>(data.size() / (sizeof(float) * rb.channels)); // Assuming float samples
+		ma_uint32 frame_size_bytes = ma_get_bytes_per_frame(DEFAULT_FORMAT, channels_);
+		if (frame_size_bytes == 0) return;
+		ma_uint32 sizeInFrames = static_cast<ma_uint32>(data.size() / frame_size_bytes);
+		if (sizeInFrames == 0) return;
 		void* bufferOut = nullptr;
-
-		// Acquire space in the ring buffer
-		if (ma_pcm_rb_acquire_write(&rb, &sizeInFrames, &bufferOut) != MA_SUCCESS) {
+		ma_uint32 framesToWrite = sizeInFrames;
+		if (ma_pcm_rb_acquire_write(&rb, &framesToWrite, &bufferOut) != MA_SUCCESS || framesToWrite == 0) {
 			return;
 		}
-
-		// Copy data into the ring buffer
-		std::memcpy(bufferOut, data.data(), sizeInFrames * sizeof(float) * rb.channels);
-		ma_pcm_rb_commit_write(&rb, sizeInFrames);
+		// Only copy framesToWrite worth of data
+		std::memcpy(bufferOut, data.data(), framesToWrite * frame_size_bytes);
+		ma_pcm_rb_commit_write(&rb, framesToWrite);
 	}
-
-	std::string read(size_t size) {
-		void* bufferOut = nullptr;
-		ma_uint32 sizeInFrames = static_cast<ma_uint32>(size / (sizeof(float) * rb.channels)); // Assuming float samples
-
-		// Acquire space in the ring buffer for reading
-		if (ma_pcm_rb_acquire_read(&rb, &sizeInFrames, &bufferOut) != MA_SUCCESS) {
+	std::string read(size_t size_bytes) {
+		void* bufferIn = nullptr;
+		ma_uint32 frame_size_bytes = ma_get_bytes_per_frame(DEFAULT_FORMAT, channels_);
+		if (frame_size_bytes == 0) return "";
+		ma_uint32 framesToReadRequest = static_cast<ma_uint32>(size_bytes / frame_size_bytes);
+		ma_uint32 framesAvailable = framesToReadRequest;
+		if (ma_pcm_rb_acquire_read(&rb, &framesAvailable, &bufferIn) != MA_SUCCESS || framesAvailable == 0) {
 			return "";
 		}
-
-		// Create a string to hold the read data
-		std::string result(static_cast<char*>(bufferOut), sizeInFrames * sizeof(float) * rb.channels);
-		ma_pcm_rb_commit_read(&rb, sizeInFrames);
-
+		std::string result(static_cast<const char*>(bufferIn), framesAvailable * frame_size_bytes); // Use const char*
+		ma_pcm_rb_commit_read(&rb, framesAvailable);
 		return result;
 	}
-
-	void reset() {
-		ma_pcm_rb_reset(&rb);
-	}
-
-	// Reference counting methods
-	void add_ref() {
-		ref_count++;
-	}
-
-	void release() {
-		if (--ref_count == 0) {
-			delete this;
-		}
-	}
-
-private:
-	std::atomic<int> ref_count; // Atomic for thread safety
+	void reset() { ma_pcm_rb_reset(&rb); }
+	void add_ref() const { ref_count++; } // Mark const
+	void release() const { if (--ref_count == 0) { delete this; } } // Mark const
 };
 
 
-
-
-
-class MINIAUDIO_IMPLEMENTATION sound
-{
+class MINIAUDIO_IMPLEMENTATION sound {
 public:
-	bool is_3d_;
-	bool playing = false, paused = false, active = false;
-	ma_sound* handle_ = nullptr;
-	ma_decoder decoder;
-	bool decoderInitialized = false;
-	ma_steamaudio_binaural_node m_binauralNode; /* The echo effect is achieved using a delay node. */
-	ma_reverb_node m_reverbNode;				/* The reverb node. */
-	ma_reverb_node_config reverbNodeConfig;
-	ma_vocoder_node m_vocoderNode; /* The vocoder node. */
-	ma_vocoder_node_config vocoderNodeConfig;
-	ma_delay_node m_delayNode; /* The delay node. */
-	ma_delay_node_config delayNodeConfig;
-	ma_ltrim_node m_trimNode; /* The trim node. */
-	ma_ltrim_node_config trimNodeConfig;
-	ma_channel_separator_node m_separatorNode; /* The separator node. */
-	ma_channel_combiner_node m_combinerNode;   /* The combiner node. */
-	ma_channel_separator_node_config separatorNodeConfig;
-	ma_channel_combiner_node_config combinerNodeConfig;
-	ma_hpf_node highpass;
-	ma_hpf_node_config highpassConfig;
-	ma_lpf_node lowpass;
-	ma_lpf_node_config lowpassConfig;
-	ma_notch_node notch;
-	ma_notch_node_config notchConfig;
-	ma_steamaudio_binaural_node_config binauralNodeConfig;
-	std::map<std::string, ma_node*> effects;
+	ma_sound handle_;
+	bool handle_initialized_ = false;
+	ma_decoder decoder_;
+	bool decoderInitialized_ = false;
+	ma_steamaudio_binaural_node m_binauralNode;
+	bool m_binauralNodeInitialized = false;
+	ma_reverb_node m_reverbNode; bool m_reverbNodeInitialized = false;
+	ma_vocoder_node m_vocoderNode; bool m_vocoderNodeInitialized = false;
+	ma_delay_node m_delayNode; bool m_delayNodeInitialized = false; // Assuming ma_delay_node is defined
+	ma_ltrim_node m_ltrimNode; bool m_ltrimNodeInitialized = false;
+	ma_channel_separator_node m_separatorNode; bool m_separatorNodeInitialized = false;
+	ma_channel_combiner_node m_combinerNode; bool m_combinerNodeInitialized = false;
+	ma_hpf_node highpass_node_; bool highpass_node_initialized_ = false;
+	ma_lpf_node lowpass_node_; bool lowpass_node_initialized_ = false;
+	ma_notch_node notch_node_; bool notch_node_initialized_ = false;
+	ma_reverb_node_config reverbNodeConfig_;
+	ma_vocoder_node_config vocoderNodeConfig_;
+	ma_delay_node_config delayNodeConfig_;
+	ma_ltrim_node_config trimNodeConfig_;
+	ma_channel_separator_node_config separatorNodeConfig_;
+	ma_channel_combiner_node_config combinerNodeConfig_;
+	ma_hpf_node_config highpass_config_;
+	ma_lpf_node_config lowpass_config_;
+	ma_notch_node_config notch_config_;
+	ma_steamaudio_binaural_node_config binauralNodeConfig_;
+	std::vector<ma_node*> active_effect_nodes_;
 	ma_audio_buffer m_buffer;
-	bool buffer_initialized = false;
-	string file;
-	Vector3 source_position;
-	Vector3 listener_position;
-	mixer* current_mixer = nullptr;
-	mutable int ref = 0;
-	sound(const string& filename = "")
-	{
-		ref = 1;
-		if (!g_SoundInitialized)
-		{
-			g_SoundInitialized = soundsystem_init();
-		}
-		current_mixer = sound_default_mixer;
-		set_mixer(current_mixer);
-		effects["Default"] = ma_engine_get_endpoint(&current_mixer->m_mixer);
-		if (filename != "")
-			this->load(filename);
-	}
-	~sound()
-	{
-		if (active)
-			this->close();
-	}
-	void AddRef() const
-	{
-		ref += 1;
-	}
-	void Release() const
-	{
-		if (--ref < 1)
-		{
-			delete this;
-		}
-	}
+	bool buffer_initialized_ = false;
+	string file_path_;
+	mixer* current_mixer_ptr_;
+	mutable std::atomic<int> ref;
 
-	bool load(const string& filename)
-	{
-		string result;
-		if (sound_path != "")
-		{
-			result = sound_path + "/" + filename.c_str();
-		}
-		else
-		{
-			result = filename;
-		}
-		if (active)
-			this->close();
-		if (sound_pack != nullptr and sound_pack->active())
-		{
-			string file = sound_pack->get_file(filename);
-			size_t size = sound_pack->get_file_size(filename);
-			return this->load_from_memory(file, size);
-		}
-		handle_ = new ma_sound;
-		ma_result loading_result = ma_sound_init_from_file(&current_mixer->m_mixer, result.c_str(), 0, NULL, NULL, handle_);
-		if (loading_result != MA_SUCCESS)
-		{
-			delete handle_;
-			active = false;
-			return false;
-		}
-		active = true;
-		file = result;
-		auto last = --effects.end();
-		if (last->second != nullptr)
-			ma_node_attach_output_bus(handle_, 0, last->second, 0);
-
-		if (sound_global_hrtf)
-			this->set_hrtf(true);
-		ma_sound_set_rolloff(handle_, 2);
-		return true;
-	}
-	bool load_from_memory(const string& data, size_t stream_size)
-	{
-		if (active)
-			this->close();
-		handle_ = new ma_sound;
-		ma_result r = ma_decoder_init_memory(data.c_str(), stream_size, NULL, &decoder);
-		if (r != MA_SUCCESS)
-			return false;
-		ma_result loading_result = ma_sound_init_from_data_source(&current_mixer->m_mixer, &decoder, 0, 0, handle_);
-		if (loading_result != MA_SUCCESS)
-		{
-			delete handle_;
-			active = false;
-			return false;
-		}
-		decoderInitialized = true;
-		active = true;
-		auto last = --effects.end();
-
-		ma_node_attach_output_bus(handle_, 0, last->second, 0);
-
-		if (sound_global_hrtf)
-			this->set_hrtf(true);
-
-		return active;
-	}
-	bool load_pcm(const string& data, size_t size, int channels, int sample_rate, int bits_per_sample)
-	{
-		if (active)
-			this->close();
-		handle_ = new ma_sound;
-		if (buffer_initialized)
-		{
-			ma_audio_buffer_uninit(&m_buffer);
-			buffer_initialized = false;
-		}
-		ma_audio_buffer_config bufferConfig = ma_audio_buffer_config_init(FORMAT, channels, size, (const void*)data.c_str(), nullptr);
-		bufferConfig.sampleRate = sample_rate;
-		bufferConfig.channels = channels;
-		ma_format format = ma_format_unknown;
-		switch (bits_per_sample) {
-		case 8:
-			format = ma_format_u8;
-			break;
-		case 16:
-			format = ma_format_s16;
-			break;
-		case 24:
-			format = ma_format_s24;
-			break;
-		case 32:
-			format = ma_format_f32;
-			break;
-		default:
-			break;
-		}
-		bufferConfig.format = format;
-		ma_result result = ma_audio_buffer_init(&bufferConfig, &m_buffer);
-		if (result != MA_SUCCESS)
-			return false;
-		buffer_initialized = true;
-		ma_result loading_result = ma_sound_init_from_data_source(&current_mixer->m_mixer, &m_buffer, 0, 0, handle_);
-		if (loading_result != MA_SUCCESS)
-		{
-			delete handle_;
-			active = false;
-			return false;
-		}
-		active = true;
-		buffer_initialized = true;
-		auto last = --effects.end();
-
-		ma_node_attach_output_bus(handle_, 0, last->second, 0);
-
-		if (sound_global_hrtf)
-			this->set_hrtf(true);
-
-		return active;
-	}
-
-	bool load_pcm_buffer(pcm_ring_buffer* buffer)
-	{
-		if (active)
-			this->close();
-		handle_ = new ma_sound;
-		ma_result loading_result = ma_sound_init_from_data_source(&current_mixer->m_mixer, &buffer->rb, 0, 0, handle_);
-		if (loading_result != MA_SUCCESS)
-		{
-			delete handle_;
-			active = false;
-			return false;
-		}
-		active = true;
-		auto last = --effects.end();
-
-		ma_node_attach_output_bus(handle_, 0, last->second, 0);
-
-		if (sound_global_hrtf)
-			this->set_hrtf(true);
-
-		return active;
-	}
-
-
-	void set_mixer(mixer* new_mixer) {
-		if (current_mixer == new_mixer)
+	sound(const string& filename = "") : current_mixer_ptr_(nullptr), ref(1) {
+		MA_ZERO_OBJECT(&handle_); MA_ZERO_OBJECT(&decoder_);
+		MA_ZERO_OBJECT(&m_binauralNode); MA_ZERO_OBJECT(&m_reverbNode); /* ... zero others ... */
+		MA_ZERO_OBJECT(&m_buffer);
+		if (!g_SoundInitialized && !soundsystem_init()) {
 			return;
-		auto last = --effects.end();
-		if (current_mixer)
-		{
-			current_mixer->sounds.erase(this);
-			if (last->second != nullptr)
-				ma_node_detach_output_bus(last->second, 0);
 		}
-		current_mixer = new_mixer;
-		if (current_mixer)
-		{
-			current_mixer->sounds.insert(this);
-			if (last->second != nullptr)
-				ma_node_attach_output_bus(last->second, 0, current_mixer->output_node, 0);
+		current_mixer_ptr_ = g_default_sound_mixer;
+		if (current_mixer_ptr_) current_mixer_ptr_->sounds.insert(this);
+		if (!filename.empty()) this->load(filename);
+	}
+	~sound() {
+		if (handle_initialized_) this->close();
+		if (current_mixer_ptr_) current_mixer_ptr_->sounds.erase(this);
+	}
+	void AddRef() const { ref++; }
+	void Release() const { if (--ref == 0) delete this; }
+
+	ma_node* get_mixer_input_node() const {
+		if (current_mixer_ptr_) return current_mixer_ptr_->get_input_attachment_node();
+		if (g_audio_engine && g_audio_engine->get_engine()) return ma_engine_get_endpoint(g_audio_engine->get_engine()); // Fallback
+		return nullptr;
+	}
+	void rebuild_node_attachments() {
+		if (!handle_initialized_ || !g_audio_engine || !g_audio_engine->get_engine()) return;
+		ma_node* current_source_node = (ma_node*)&handle_;
+		ma_node* final_destination_node = get_mixer_input_node();
+		if (!final_destination_node) return;
+		ma_node_detach_all_output_buses(current_source_node); // Detach sound from previous chain
+		for (ma_node* effect_node : active_effect_nodes_) { // Detach all effects too
+			if (effect_node) ma_node_detach_all_output_buses(effect_node);
 		}
-	}
-
-	const void* push_memory()
-	{
-		if (!active)
-			return "";
-		return ma_sound_get_data_source(handle_);
-	}
-	string get_file_path()
-	{
-		return this->file;
-	}
-	void set_faid_time(float volume_beg, float volume_end, float time)
-	{
-		ma_sound_set_fade_in_milliseconds(handle_, volume_beg / 100, volume_end / 100, static_cast<ma_uint64>(time));
-	}
-	bool play()
-	{
-		if (!active)
-			return false;
-		ma_sound_set_looping(handle_, false);
-		ma_sound_start(handle_);
-		this->paused = false;
-		return true;
-	}
-	bool play_looped()
-	{
-		if (!active)
-			return false;
-
-		ma_sound_set_looping(handle_, true);
-		ma_sound_start(handle_);
-		this->paused = false;
-
-		return true;
-	}
-	bool pause()
-	{
-		if (!active)
-			return false;
-		ma_sound_stop(handle_);
-		this->paused = true;
-
-		return true;
-	}
-	bool play_wait()
-	{
-		this->play();
-		while (true)
-		{
-			wait(1);
-			bool ac = sound::is_playing();
-			if (ac == false)
-			{
-				break;
+		// Rebuild chain: sound -> effect1 -> effect2 -> ... -> mixer_input
+		for (ma_node* effect_node : active_effect_nodes_) {
+			if (effect_node) {
+				ma_node_attach_output_bus(current_source_node, 0, effect_node, 0);
+				current_source_node = effect_node;
 			}
 		}
-		return true;
+		ma_node_attach_output_bus(current_source_node, 0, final_destination_node, 0);
 	}
 
-	bool stop()
-	{
-		if (!active)
-			return false;
-		ma_sound_stop(handle_);
-		ma_sound_seek_to_pcm_frame(handle_, 0);
-		return true;
-	}
-	bool close()
-	{
-		if (!is_active())
-			return false;
-		if (effects.find("reverb") != effects.end())
-		{
-			ma_reverb_node_uninit(&m_reverbNode, NULL);
-			effects["reverb"] = nullptr;
-			effects.erase("reverb");
-		}
-		if (effects.find("vocoder") != effects.end())
-		{
-
-			ma_vocoder_node_uninit(&m_vocoderNode, NULL);
-			effects["vocoder"] = nullptr;
-			effects.erase("vocoder");
-		}
-		if (effects.find("delay") != effects.end())
-		{
-			ma_delay_node_uninit(&m_delayNode, NULL);
-			effects["delay"] = nullptr;
-			effects.erase("delay");
-		}
-		if (effects.find("ltrim") != effects.end())
-		{
-			ma_ltrim_node_uninit(&m_trimNode, NULL);
-			effects["ltrim"] = nullptr;
-			effects.erase("ltrim");
-		}
-		if (effects.find("combiner") != effects.end())
-		{
-			ma_channel_combiner_node_uninit(&m_combinerNode, NULL);
-			effects["combiner"] = nullptr;
-			effects.erase("combiner");
-		}
-		if (effects.find("separator") != effects.end())
-		{
-			ma_channel_separator_node_uninit(&m_separatorNode, NULL);
-			effects["separator"] = nullptr;
-			effects.erase("separator");
-		}
-		if (effects.find("highpass") != effects.end())
-		{
-			ma_hpf_node_uninit(&highpass, NULL);
-			effects["highpass"] = nullptr;
-			effects.erase("highpass");
-		}
-		if (effects.find("lowpass") != effects.end())
-		{
-			ma_lpf_node_uninit(&lowpass, NULL);
-			effects["lowpass"] = nullptr;
-			effects.erase("lowpass");
-		}
-		if (effects.find("notch") != effects.end())
-		{
-
-			ma_notch_node_uninit(&notch, NULL);
-			effects["notch"] = nullptr;
-			effects.erase("notch");
-		}
-		this->set_hrtf(false);
-		if (decoderInitialized)
-		{
-			ma_decoder_uninit(&decoder);
-			decoderInitialized = false;
-		}
-		if (buffer_initialized)
-		{
-			ma_audio_buffer_uninit(&m_buffer);
-			buffer_initialized = false;
-		}
-
-		if (handle_ != nullptr)
-		{
-			ma_sound_uninit(handle_);
-			delete handle_;
-		}
-		if (!file.empty())
-			file.clear();
-		source_position.x = 0;
-		source_position.y = 0;
-		source_position.z = 0;
-		listener_position = source_position;
-		handle_ = nullptr;
-		active = false;
-		return true;
-	}
-
-	void set_fx(const string& fx)
-	{
-		if (!active)
-			return;
-		if (effects.find(fx) != effects.end())
-			return;
-		if (fx == "reverb")
-		{
-			reverbNodeConfig = ma_reverb_node_config_init(CHANNELS, SAMPLE_RATE, 100, 100, 100);
-			ma_reverb_node_init(ma_engine_get_node_graph(&current_mixer->m_mixer), &reverbNodeConfig, NULL, &m_reverbNode);
-			auto last = --effects.end();
-			ma_node_attach_output_bus(&m_reverbNode, 0, last->second, 0);
-			ma_node_attach_output_bus(handle_, 0, &m_reverbNode, 0);
-			effects[fx] = &m_reverbNode;
-		}
-		if (fx == "vocoder")
-		{
-			vocoderNodeConfig = ma_vocoder_node_config_init(CHANNELS, SAMPLE_RATE);
-			ma_vocoder_node_init(ma_engine_get_node_graph(&current_mixer->m_mixer), &vocoderNodeConfig, NULL, &m_vocoderNode);
-			auto last = --effects.end();
-
-			ma_node_attach_output_bus(&m_vocoderNode, 0, last->second, 0);
-			ma_node_attach_output_bus(handle_, 0, &m_vocoderNode, 0);
-			effects[fx] = &m_vocoderNode;
-		}
-		if (fx == "delay")
-		{
-			delayNodeConfig = ma_delay_node_config_init(CHANNELS, SAMPLE_RATE, (100 * SAMPLE_RATE) / 1000, 0.5f);
-			ma_delay_node_init(ma_engine_get_node_graph(&current_mixer->m_mixer), &delayNodeConfig, NULL, &m_delayNode);
-			auto last = --effects.end();
-
-			ma_node_attach_output_bus(&m_delayNode, 0, last->second, 0);
-			ma_node_attach_output_bus(handle_, 0, &m_delayNode, 0);
-			effects[fx] = &m_delayNode;
-		}
-		if (fx == "ltrim")
-		{
-			trimNodeConfig = ma_ltrim_node_config_init(CHANNELS, 0);
-			trimNodeConfig.threshold = 0.3;
-			ma_ltrim_node_init(ma_engine_get_node_graph(&current_mixer->m_mixer), &trimNodeConfig, NULL, &m_trimNode);
-			auto last = --effects.end();
-
-			ma_node_attach_output_bus(&m_trimNode, 0, last->second, 0);
-			ma_node_attach_output_bus(handle_, 0, &m_trimNode, 0);
-			effects[fx] = &m_trimNode;
-		}
-		if (fx == "channelsplit")
-		{
-			combinerNodeConfig = ma_channel_combiner_node_config_init(CHANNELS);
-			ma_channel_combiner_node_init(ma_engine_get_node_graph(&current_mixer->m_mixer), &combinerNodeConfig, NULL, &m_combinerNode);
-			ma_node_attach_output_bus(&m_combinerNode, 0, ma_engine_get_endpoint(&current_mixer->m_mixer), 0);
-			effects["combiner"] = &m_combinerNode;
-			separatorNodeConfig = ma_channel_separator_node_config_init(CHANNELS);
-			ma_channel_separator_node_init(ma_engine_get_node_graph(&current_mixer->m_mixer), &separatorNodeConfig, NULL, &m_separatorNode);
-			MA_ASSERT(ma_node_get_output_bus_count(&m_separatorNode) == ma_node_get_input_bus_count(&m_combinerNode));
-			for (ma_uint32 iChannel = 0; iChannel < ma_node_get_output_bus_count(&m_separatorNode); iChannel += 1)
-			{
-				ma_node_attach_output_bus(&m_separatorNode, iChannel, &m_combinerNode, iChannel);
+	bool load(const string& filename) {
+		if (!g_audio_engine || !g_audio_engine->get_engine()) return false;
+		if (handle_initialized_) this->close();
+		string full_path;
+		if (sound_pack_global && sound_pack_global->active()) {
+			string file_content = sound_pack_global->get_file(filename);
+			if (!file_content.empty()) {
+				return this->load_from_memory(file_content, file_content.size());
 			}
-
-			ma_node_attach_output_bus(handle_, 0, &m_separatorNode, 0);
-			effects["separator"] = &m_separatorNode;
-			effects[fx] = &m_separatorNode;
-		}
-		if (fx == "highpass")
-		{
-			highpassConfig = ma_hpf_node_config_init(CHANNELS, SAMPLE_RATE, 600, -10);
-			ma_hpf_node_init(ma_engine_get_node_graph(&current_mixer->m_mixer), &highpassConfig, NULL, &highpass);
-			auto last = --effects.end();
-
-			ma_node_attach_output_bus(&highpass, 0, last->second, 0);
-			ma_node_attach_output_bus(handle_, 0, &highpass, 0);
-			effects[fx] = &highpass;
-		}
-		if (fx == "lowpass")
-		{
-			lowpassConfig = ma_lpf_node_config_init(CHANNELS, SAMPLE_RATE, 600, -10);
-			ma_lpf_node_init(ma_engine_get_node_graph(&current_mixer->m_mixer), &lowpassConfig, NULL, &lowpass);
-			auto last = --effects.end();
-
-			ma_node_attach_output_bus(&lowpass, 0, last->second, 0);
-			ma_node_attach_output_bus(handle_, 0, &lowpass, 0);
-			effects[fx] = &lowpass;
-		}
-		if (fx == "notch")
-		{
-			notchConfig = ma_notch_node_config_init(CHANNELS, SAMPLE_RATE, 0, 300);
-			ma_notch_node_init(ma_engine_get_node_graph(&current_mixer->m_mixer), &notchConfig, NULL, &notch);
-			auto last = --effects.end();
-
-			ma_node_attach_output_bus(&notch, 0, last->second, 0);
-			ma_node_attach_output_bus(handle_, 0, &notch, 0);
-			effects[fx] = &notch;
-		}
-	}
-	void delete_fx(const string& fx)
-	{
-		if (!active)
-			return;
-		if (effects.find(fx) == effects.end())
-			return;
-		if (fx == "reverb")
-		{
-			ma_reverb_node_uninit(&m_reverbNode, NULL);
-		}
-		if (fx == "vocoder")
-		{
-			ma_vocoder_node_uninit(&m_vocoderNode, NULL);
-		}
-		if (fx == "delay")
-		{
-			ma_delay_node_uninit(&m_delayNode, NULL);
-		}
-		if (fx == "ltrim")
-		{
-			ma_ltrim_node_uninit(&m_trimNode, NULL);
-		}
-		if (fx == "channelsplit")
-		{
-			combinerNodeConfig = ma_channel_combiner_node_config_init(CHANNELS);
-			ma_channel_combiner_node_uninit(&m_combinerNode, NULL);
-			ma_channel_separator_node_uninit(&m_separatorNode, NULL);
-		}
-		if (fx == "highpass")
-		{
-			ma_hpf_node_uninit(&highpass, NULL);
-		}
-		if (fx == "lowpass")
-		{
-			ma_lpf_node_uninit(&lowpass, NULL);
-		}
-		if (fx == "notch")
-		{
-			ma_notch_node_uninit(&notch, NULL);
-		}
-		effects[fx] = nullptr;
-		effects.erase(fx);
-
-		auto last = --effects.end();
-
-		ma_node_attach_output_bus(handle_, 0, last->second, 0);
-		if (last->first == "hrtf")
-		{
-			this->set_hrtf(false);
-			this->set_hrtf(true);
-		}
-	}
-	void set_reverb_parameters(float dry, float wet, float room_size, float damping, float mode)
-	{
-		if (!active)
-			return;
-		verblib_set_dry(&m_reverbNode.reverb, dry);
-		verblib_set_wet(&m_reverbNode.reverb, wet);
-		verblib_set_room_size(&m_reverbNode.reverb, room_size);
-		verblib_set_damping(&m_reverbNode.reverb, damping);
-		verblib_set_mode(&m_reverbNode.reverb, mode);
-	}
-	void set_delay_parameters(float dry, float wet, float dcay)
-	{
-		if (!active)
-			return;
-		ma_delay_node_set_dry(&m_delayNode, dry);
-		ma_delay_node_set_wet(&m_delayNode, wet);
-		ma_delay_node_set_decay(&m_delayNode, dcay);
-	}
-	void set_position(float listener_x, float listener_y, float listener_z, float source_x, float source_y, float source_z, double theta, float pan_step, float volume_step, float behind_pitch_decrease, float start_pan, float start_volume, float start_pitch)
-	{
-		if (!active)
-			return;
-		float delta_x = 0;
-		float delta_y = 0;
-		float delta_z = 0;
-		float final_pan = start_pan;
-		float final_volume = start_volume;
-		float final_pitch = start_pitch;
-		float rotational_source_x = source_x;
-		float rotational_source_y = source_y;
-		// First, we calculate the x and y based on the theta the listener is facing.
-		if (theta > 0.0)
-		{
-			rotational_source_x = (cos(theta) * (source_x - listener_x)) - (sin(theta) * (source_y - listener_y)) + listener_x;
-			rotational_source_y = (sin(theta) * (source_x - listener_x)) + (cos(theta) * (source_y - listener_y)) + listener_y;
-			source_x = rotational_source_x;
-			source_y = rotational_source_y;
-		}
-		// Next, we calculate the delta between the listener and the source.
-		if (source_x < listener_x)
-		{
-			delta_x = listener_x - source_x;
-			final_pan -= (delta_x * pan_step);
-			final_volume -= (delta_x * volume_step);
-		}
-		if (source_x > listener_x)
-		{
-			delta_x = source_x - listener_x;
-			final_pan += (delta_x * pan_step);
-			final_volume -= (delta_x * volume_step);
-		}
-		if (source_y < listener_y)
-		{
-			final_pitch -= abs(behind_pitch_decrease);
-			delta_y = listener_y - source_y;
-			final_volume -= (delta_y * volume_step);
-		}
-		if (source_y > listener_y)
-		{
-			delta_y = source_y - listener_y;
-			final_volume -= (delta_y * volume_step);
-		}
-		if (source_z < listener_z)
-		{
-			final_pitch -= abs(behind_pitch_decrease);
-			delta_z = listener_z - source_z;
-			final_volume -= (delta_z * volume_step);
-		}
-		if (source_z > listener_z)
-		{
-			delta_z = source_z - listener_z;
-			final_volume -= (delta_z * volume_step);
-		}
-		// Then we check if the calculated values are out of range, and fix them if that's the case.
-		if (final_pan < -100)
-		{
-			final_pan = -100;
-		}
-		if (final_pan > 100)
-		{
-			final_pan = 100;
-		}
-		if (final_volume < -100)
-		{
-			final_volume = -100;
-		}
-		// Now we set the properties on the sound, provided that they are not already correct.
-		ma_steamaudio_binaural_node_set_direction(&m_binauralNode, source_x - listener_x, source_y - listener_y, source_z - listener_z);
-		if (this->get_pan() != final_pan && !this->get_hrtf())
-			this->set_pan(final_pan);
-		if (this->get_volume() != final_volume)
-			this->set_volume(final_volume);
-		if (this->get_pitch() != final_pitch)
-			this->set_pitch(final_pitch);
-		listener_position.x = listener_x;
-		listener_position.y = listener_y;
-		listener_position.z = listener_z;
-		source_position.x = source_x;
-		source_position.y = source_y;
-		source_position.z = source_z;
-	}
-	void set_position(Vector3& listener, Vector3& source, double theta, float pan_step, float volume_step, float behind_pitch_decrease, float start_pan, float start_volume, float start_pitch)
-	{
-		if (!active)
-			return;
-		this->set_position(listener.x, listener.y, listener.z, source.x, source.y, source.z, theta, pan_step, volume_step, behind_pitch_decrease, start_pan, start_volume, start_pitch);
-	}
-	void set_hrtf(bool hrtf)
-	{
-		if (!active)
-			return;
-		if (hrtf)
-		{
-			if (effects.find("hrtf") != effects.end())
-				return;
-
-			binauralNodeConfig = ma_steamaudio_binaural_node_config_init(CHANNELS, iplAudioSettings, iplContext, iplHRTF);
-
-			m_binauralNode.handle_ = *this->handle_;
-			ma_steamaudio_binaural_node_init(ma_engine_get_node_graph(&current_mixer->m_mixer), &binauralNodeConfig, NULL, &m_binauralNode);
-			/* Connect the output of the delay node to the input of the endpoint. */
-			auto last = --effects.end();
-			ma_node_attach_output_bus(&m_binauralNode, 0, last->second, 0);
-			ma_node_attach_output_bus(handle_, 0, &m_binauralNode, 0);
-			effects["hrtf"] = &m_binauralNode;
-			ma_sound_set_directional_attenuation_factor(handle_, 0);
-		}
-		else
-		{
-			if (effects.find("hrtf") != effects.end())
-			{
-
-				ma_steamaudio_binaural_node_uninit(&m_binauralNode, NULL);
-				effects["hrtf"] = nullptr;
-				effects.erase("hrtf");
-				ma_sound_set_directional_attenuation_factor(handle_, 1);
-
-				auto last = --effects.end();
-
-				ma_node_attach_output_bus(handle_, 0, last->second, 0);
-			}
-		}
-	}
-	bool get_hrtf()
-	{
-		return effects.find("hrtf") != effects.end();
-	}
-	Vector3 get_listener_position()
-	{
-		return listener_position;
-	}
-	Vector3 get_source_position()
-	{
-		return source_position;
-	}
-	void set_volume_step(float volume_step)
-	{
-		if (!active)
-			return;
-		ma_sound_set_rolloff(handle_, volume_step);
-	}
-	void set_pan_step(float pan_step)
-	{
-		if (!active)
-			return;
-		ma_sound_set_directional_attenuation_factor(handle_, pan_step);
-	}
-	void set_pitch_step(float pitch_step)
-	{
-		if (!active)
-			return;
-		ma_sound_set_doppler_factor(handle_, pitch_step);
-	}
-	bool seek(float new_position)
-	{
-		if (!active)
 			return false;
-
-		if (new_position > this->get_length() || new_position <= 0.0f)
-			return false;
-
-		// Convert milliseconds to PCM frames for seeking
-		ma_uint64 pcm_frame = static_cast<ma_uint64>((new_position / 1000.0f) * SAMPLE_RATE);
-		ma_sound_seek_to_pcm_frame(handle_, pcm_frame);
-
-		return true;
-	}
-
-	void set_looping(bool looping)
-	{
-		if (!active)
-			return;
-		ma_sound_set_looping(handle_, looping);
-	}
-	bool get_looping() const
-	{
-		if (!active)
-			return false;
-		return ma_sound_is_looping(handle_);
-	}
-	float get_pan() const
-	{
-		if (!active)
-			return -17435;
-
-		float pan = 0;
-		pan = ma_sound_get_pan(handle_);
-		return pan * 100;
-	}
-
-	void set_pan(float pan)
-	{
-		if (!active)
-			return;
-		ma_sound_set_pan(handle_, pan / 100);
-	}
-
-	float get_volume() const
-	{
-		if (!active)
-			return -17435;
-
-		float volume = 0;
-
-		volume = ma_sound_get_volume(handle_);
-		return ma_volume_linear_to_db(volume);
-	}
-	void set_volume(float volume)
-	{
-		if (!active)
-			return;
-		if (volume > 0 or volume < -100)
-			return;
-		ma_sound_set_volume(handle_, ma_volume_db_to_linear(volume));
-	}
-	float get_pitch() const
-	{
-		if (!active)
-			return -17435;
-		float pitch = 0;
-		pitch = ma_sound_get_pitch(handle_);
-		return pitch * 100;
-	}
-
-	void set_pitch(float pitch)
-	{
-		if (!active)
-			return;
-		ma_sound_set_pitch(handle_, pitch / 100);
-	}
-	void set_speed(float speed)
-	{
-	}
-	float get_speed() const
-	{
-		return 0.0f;
-	}
-	bool is_active() const
-	{
-		return active;
-	}
-
-	bool is_playing() const
-	{
-		if (!active)
-			return false;
-		return ma_sound_is_playing(handle_);
-	}
-
-	bool is_paused() const
-	{
-		if (!active)
-			return false;
-		return this->paused;
-	}
-
-	float get_position()
-	{
-		if (!active)
-			return -17435;
-		ma_uint64 position = 0;
-		ma_sound_get_cursor_in_pcm_frames(handle_, &position);
-		return static_cast<float>(position) / SAMPLE_RATE * 1000.0f;
-	}
-
-	float get_length()
-	{
-		if (!active)
-			return -17435;
-
-		ma_uint64 length = 0;
-		ma_sound_get_length_in_pcm_frames(handle_, &length);
-
-		// Convert PCM frames to milliseconds
-		return static_cast<float>(length) / SAMPLE_RATE * 1000.0f;
-	}
-
-	void set_length(float length = 0.0f)
-	{
-		if (!active)
-			return;
-
-		if (length > this->get_length())
-			return;
-
-		// Convert milliseconds back to PCM frames for setting stop time
-		ma_uint64 pcm_frames = static_cast<ma_uint64>((length / 1000.0f) * SAMPLE_RATE);
-		ma_sound_set_stop_time_in_pcm_frames(handle_, pcm_frames);
-	}
-
-	float get_sample_rate() const
-	{
-		float rate = SAMPLE_RATE;
-		return rate;
-	}
-};
-void set_sound_global_hrtf(bool hrtf)
-{
-	sound_global_hrtf = hrtf;
-}
-bool get_sound_global_hrtf()
-{
-	return sound_global_hrtf;
-}
-
-
-static void audio_recorder_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount)
-{
-	std::vector<float>* data = static_cast<std::vector<float>*>(pDevice->pUserData);
-	const float* in = (const float*)pInput; // Use const float* for input data
-
-	// Process stereo input (2 channels)
-	for (ma_uint32 i = 0; i < frameCount * 2; ++i) {
-		data->push_back(in[i]);
-	}
-
-	(void)pOutput; // Suppress unused variable warning
-}
-
-class MINIAUDIO_IMPLEMENTATION audio_recorder
-{
-public:
-	std::vector<float>* data = nullptr;
-	ma_device_config deviceConfig;
-	ma_device recording_device;
-	bool m_Started = false;
-	mutable std::atomic<int> ref = 0;
-	bool m_RecordOutput = false;
-	void AddRef()const {
-		++ref;
-	}
-	void Release()const {
-		if (--ref < 1) {
-			delete this;
 		}
-	}
-	audio_recorder() : ref(1) {
-	}
-	~audio_recorder() {
-		if (m_Started)
-			this->stop();
-	}
-	void start()
-	{
-		if (m_Started)this->stop();
-		if (m_RecordOutput) {
-			data = &g_OutputData;
-			g_RecordOutput = true;
-			m_Started = true;
-			return;
+		else if (!sound_path_global.empty()) {
+			full_path = sound_path_global + "/" + filename;
 		}
 		else {
-			data = new std::vector<float>;
+			full_path = filename;
 		}
-		deviceConfig = ma_device_config_init(ma_device_type_capture);
-		if (g_InputDevice != nullptr) {
-			deviceConfig.capture.pDeviceID = g_InputDevice;
+		ma_sound_config sound_config = ma_sound_config_init();
+		sound_config.pFilePath = full_path.c_str();
+		sound_config.flags = MA_SOUND_FLAG_NO_SPATIALIZATION; // Start non-spatialized
+		// pInitialAttachment will be handled by rebuild_node_attachments after init
+		ma_result loading_result = ma_sound_init_ex(g_audio_engine->get_engine(), &sound_config, &handle_);
+		if (loading_result != MA_SUCCESS) {
+			return false;
 		}
-		deviceConfig.capture.format = ma_format_f32;
-		deviceConfig.capture.channels = 2;
-		deviceConfig.sampleRate = 44100;
-		deviceConfig.dataCallback = audio_recorder_callback;
-		deviceConfig.pUserData = data;
+		handle_initialized_ = true; file_path_ = full_path;
+		ma_sound_set_attenuation_model(&handle_, ma_attenuation_model_linear);
+		ma_sound_set_rolloff(&handle_, 0.75f);
+		ma_sound_set_directional_attenuation_factor(&handle_, 1.0f);
+		rebuild_node_attachments();
+		if (sound_global_hrtf_enabled) this->set_hrtf(true);
+		return true;
+	}
+	bool load_from_memory(const string& data, size_t stream_size) {
+		if (!g_audio_engine || !g_audio_engine->get_engine() || data.empty()) return false;
+		if (handle_initialized_) this->close();
+		ma_result r = ma_decoder_init_memory(data.data(), stream_size, NULL, &decoder_);
+		if (r != MA_SUCCESS) { return false; }
+		decoderInitialized_ = true;
+		ma_sound_config sound_config = ma_sound_config_init();
+		sound_config.pDataSource = &decoder_;
+		sound_config.flags = MA_SOUND_FLAG_NO_SPATIALIZATION;
+		ma_result loading_result = ma_sound_init_ex(g_audio_engine->get_engine(), &sound_config, &handle_);
+		if (loading_result != MA_SUCCESS) {
+			if (decoderInitialized_) { ma_decoder_uninit(&decoder_); decoderInitialized_ = false; }
+			return false;
+		}
+		handle_initialized_ = true; file_path_.clear();
+		ma_sound_set_attenuation_model(&handle_, ma_attenuation_model_linear);
+		ma_sound_set_rolloff(&handle_, 0.75f);
+		ma_sound_set_directional_attenuation_factor(&handle_, 1.0f);
+		rebuild_node_attachments();
+		if (sound_global_hrtf_enabled) this->set_hrtf(true);
+		return true;
+	}
+	bool load_pcm(const string& data_str, size_t size_bytes, int channels, int sample_rate, int bits_per_sample) {
+		if (!g_audio_engine || !g_audio_engine->get_engine() || data_str.empty()) return false;
+		if (handle_initialized_) this->close();
+		if (buffer_initialized_) { ma_audio_buffer_uninit(&m_buffer); buffer_initialized_ = false; }
+		ma_format pcm_format;
+		switch (bits_per_sample) {
+		case 8: pcm_format = ma_format_u8; break; case 16: pcm_format = ma_format_s16; break;
+		case 24: pcm_format = ma_format_s24; break; case 32: pcm_format = ma_format_f32; break;
+		default: return false;
+		}
+		ma_uint32 frame_size_bytes = ma_get_bytes_per_frame(pcm_format, channels);
+		if (frame_size_bytes == 0) { return false; }
+		ma_uint64 frame_count = size_bytes / frame_size_bytes;
+		if (frame_count == 0) { return false; }
+		ma_audio_buffer_config bufferConfig = ma_audio_buffer_config_init(pcm_format, channels, frame_count, data_str.data(), nullptr);
+		bufferConfig.sampleRate = sample_rate;
+		ma_result result = ma_audio_buffer_init(&bufferConfig, &m_buffer);
+		if (result != MA_SUCCESS) { return false; }
+		buffer_initialized_ = true;
+		ma_sound_config sound_config = ma_sound_config_init();
+		sound_config.pDataSource = &m_buffer;
+		sound_config.flags = MA_SOUND_FLAG_NO_SPATIALIZATION;
+		ma_result loading_result = ma_sound_init_ex(g_audio_engine->get_engine(), &sound_config, &handle_);
+		if (loading_result != MA_SUCCESS) {
+			if (buffer_initialized_) { ma_audio_buffer_uninit(&m_buffer); buffer_initialized_ = false; }
+			return false;
+		}
+		handle_initialized_ = true; file_path_.clear();
+		ma_sound_set_attenuation_model(&handle_, ma_attenuation_model_linear);
+		ma_sound_set_rolloff(&handle_, 0.75f);
+		ma_sound_set_directional_attenuation_factor(&handle_, 1.0f);
+		rebuild_node_attachments();
+		if (sound_global_hrtf_enabled) this->set_hrtf(true);
+		return true;
+	}
+	bool load_pcm_buffer(pcm_ring_buffer* buffer_obj) {
+		if (!g_audio_engine || !g_audio_engine->get_engine() || !buffer_obj) return false;
+		if (handle_initialized_) this->close();
+		ma_sound_config sound_config = ma_sound_config_init();
+		sound_config.pDataSource = &buffer_obj->rb;
+		sound_config.flags = MA_SOUND_FLAG_NO_SPATIALIZATION | MA_SOUND_FLAG_STREAM; // Assume stream for ring buffer
+		ma_result loading_result = ma_sound_init_ex(g_audio_engine->get_engine(), &sound_config, &handle_);
+		if (loading_result != MA_SUCCESS) { return false; }
+		handle_initialized_ = true; file_path_.clear();
+		ma_sound_set_attenuation_model(&handle_, ma_attenuation_model_linear);
+		ma_sound_set_rolloff(&handle_, 0.75f);
+		ma_sound_set_directional_attenuation_factor(&handle_, 1.0f);
+		rebuild_node_attachments();
+		if (sound_global_hrtf_enabled) this->set_hrtf(true);
+		return true;
+	}
 
-		if (ma_device_init(nullptr, &deviceConfig, &recording_device) != MA_SUCCESS) {
-			m_Started = false;
+	void set_mixer(mixer* new_mixer_ptr) {
+		if (current_mixer_ptr_ == new_mixer_ptr) return;
+		if (current_mixer_ptr_) current_mixer_ptr_->sounds.erase(this);
+		current_mixer_ptr_ = new_mixer_ptr ? new_mixer_ptr : g_default_sound_mixer;
+		if (current_mixer_ptr_) current_mixer_ptr_->sounds.insert(this);
+		rebuild_node_attachments();
+	}
+	string get_file_path() const { return file_path_; }
+	void set_fade_time(float volume_beg_db, float volume_end_db, float time_ms) {
+		if (!handle_initialized_) return;
+		float lin_start = (volume_beg_db <= -100.0f) ? ma_sound_get_volume(&handle_) : ma_volume_db_to_linear(volume_beg_db);
+		float lin_end = ma_volume_db_to_linear(volume_end_db);
+		ma_sound_set_fade_in_milliseconds(&handle_, lin_start, lin_end, static_cast<ma_uint64>(time_ms));
+	}
+	bool play() {
+		if (!handle_initialized_) return false;
+		ma_sound_set_looping(&handle_, false);
+		return ma_sound_start(&handle_) == MA_SUCCESS;
+	}
+	bool play_looped() {
+		if (!handle_initialized_) return false;
+		ma_sound_set_looping(&handle_, true);
+		return ma_sound_start(&handle_) == MA_SUCCESS;
+	}
+	bool pause() {
+		if (!handle_initialized_ || !ma_sound_is_playing(&handle_)) return true;
+		return ma_sound_stop(&handle_) == MA_SUCCESS;
+	}
+	bool play_wait() {
+		if (!this->play()) return false;
+		while (is_playing()) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		}
+		return true;
+	}
+	bool stop() {
+		if (!handle_initialized_) return false;
+		ma_sound_stop(&handle_);
+		ma_sound_seek_to_pcm_frame(&handle_, 0);
+		return true;
+	}
+	bool close() {
+		if (!handle_initialized_) return false;
+		if (ma_sound_is_playing(&handle_)) ma_sound_stop(&handle_); // Stop before uninit
+		if (m_binauralNodeInitialized) { ma_steamaudio_binaural_node_uninit(&m_binauralNode, nullptr); m_binauralNodeInitialized = false; }
+		if (m_reverbNodeInitialized) { ma_reverb_node_uninit(&m_reverbNode, nullptr); m_reverbNodeInitialized = false; }
+		active_effect_nodes_.clear();
+		if (decoderInitialized_) { ma_decoder_uninit(&decoder_); decoderInitialized_ = false; }
+		if (buffer_initialized_) { ma_audio_buffer_uninit(&m_buffer); buffer_initialized_ = false; }
+		ma_sound_uninit(&handle_);
+		handle_initialized_ = false;
+		MA_ZERO_OBJECT(&handle_);
+		file_path_.clear();
+		return true;
+	}
+
+	void add_effect_node(ma_node* effect_node_ptr) {
+		if (!effect_node_ptr || !handle_initialized_) return;
+		auto it = std::find(active_effect_nodes_.begin(), active_effect_nodes_.end(), effect_node_ptr);
+		if (it == active_effect_nodes_.end()) {
+			active_effect_nodes_.push_back(effect_node_ptr);
+			rebuild_node_attachments();
+		}
+	}
+	void remove_effect_node(ma_node* effect_node_to_remove) {
+		if (!effect_node_to_remove || !handle_initialized_) return;
+		auto it = std::find(active_effect_nodes_.begin(), active_effect_nodes_.end(), effect_node_to_remove);
+		if (it != active_effect_nodes_.end()) {
+			active_effect_nodes_.erase(it);
+			rebuild_node_attachments();
+			// The caller is responsible for uninitializing the effect_node_to_remove itself
+		}
+	}
+
+	void set_fx(const string& fx_name) {
+		if (!handle_initialized_ || !g_audio_engine || !g_audio_engine->get_engine()) return;
+		if (fx_name == "reverb" && !m_reverbNodeInitialized) {
+			reverbNodeConfig_ = ma_reverb_node_config_init(DEFAULT_CHANNELS, DEFAULT_SAMPLE_RATE);
+			if (ma_reverb_node_init(ma_engine_get_node_graph(g_audio_engine->get_engine()), &reverbNodeConfig_, NULL, &m_reverbNode) == MA_SUCCESS) {
+				m_reverbNodeInitialized = true; add_effect_node((ma_node*)&m_reverbNode);
+			}
+		}
+		else if (fx_name == "hrtf" && !m_binauralNodeInitialized) {
+			set_hrtf(true);
+		}
+	}
+	void delete_fx(const string& fx_name) {
+		if (!handle_initialized_) return;
+		if (fx_name == "reverb" && m_reverbNodeInitialized) {
+			remove_effect_node((ma_node*)&m_reverbNode);
+			ma_reverb_node_uninit(&m_reverbNode, NULL); m_reverbNodeInitialized = false;
+		}
+		else if (fx_name == "hrtf" && m_binauralNodeInitialized) {
+			set_hrtf(false);
+		}
+	}
+	void set_reverb_parameters(float dry, float wet, float room_size, float damping, float mode) {
+		if (!m_reverbNodeInitialized) return;
+		verblib_set_dry(&m_reverbNode.reverb, dry); verblib_set_wet(&m_reverbNode.reverb, wet);
+		verblib_set_room_size(&m_reverbNode.reverb, room_size); verblib_set_damping(&m_reverbNode.reverb, damping);
+		verblib_set_mode(&m_reverbNode.reverb, mode);
+	}
+	void set_delay_parameters(float dry, float wet, float decay_ms) {
+		if (!m_delayNodeInitialized) return;
+	}
+	void set_position_3d(float x, float y, float z) {
+		if (!handle_initialized_) return;
+		ma_sound_set_spatialization_enabled(&handle_, MA_TRUE);
+		ma_sound_set_position(&handle_, x, y, z);
+	}
+	void set_velocity_3d(float vx, float vy, float vz) {
+		if (!handle_initialized_) return;
+		if (!ma_sound_is_spatialization_enabled(&handle_)) ma_sound_set_spatialization_enabled(&handle_, MA_TRUE);
+		ma_sound_set_velocity(&handle_, vx, vy, vz);
+	}
+	void set_direction_3d(float dx, float dy, float dz) {
+		if (!handle_initialized_) return;
+		if (!ma_sound_is_spatialization_enabled(&handle_)) ma_sound_set_spatialization_enabled(&handle_, MA_TRUE);
+		ma_sound_set_direction(&handle_, dx, dy, dz);
+	}
+	void set_hrtf(bool enable_hrtf) {
+		if (!handle_initialized_ || !g_audio_engine || !g_audio_engine->get_engine() || !g_audio_engine->get_ipl_context()) return;
+		if (enable_hrtf) {
+			if (m_binauralNodeInitialized) return;
+			ma_uint32 sound_channels = DEFAULT_CHANNELS;
+			ma_sound_get_data_format(&handle_, nullptr, &sound_channels, nullptr, nullptr, 0);
+
+			binauralNodeConfig_ = ma_steamaudio_binaural_node_config_init(
+				sound_channels,
+				g_audio_engine->get_ipl_audio_settings(),
+				g_audio_engine->get_ipl_context(),
+				g_audio_engine->get_ipl_hrtf()
+			);
+			if (ma_steamaudio_binaural_node_init(ma_engine_get_node_graph(g_audio_engine->get_engine()), &binauralNodeConfig_, NULL, &m_binauralNode) == MA_SUCCESS) {
+				m_binauralNodeInitialized = true;
+				ma_steamaudio_binaural_node_set_sound_handle(&m_binauralNode, &handle_);
+				add_effect_node((ma_node*)&m_binauralNode);
+				ma_sound_set_spatialization_enabled(&handle_, MA_TRUE);
+				ma_sound_set_directional_attenuation_factor(&handle_, 0.0f);
+			}
+		}
+		else {
+			if (!m_binauralNodeInitialized) return;
+			remove_effect_node((ma_node*)&m_binauralNode);
+			ma_steamaudio_binaural_node_uninit(&m_binauralNode, NULL);
+			m_binauralNodeInitialized = false;
+			ma_sound_set_directional_attenuation_factor(&handle_, 1.0f);
+		}
+	}
+	bool get_hrtf() const { return m_binauralNodeInitialized; }
+	void set_rolloff_factor(float factor) {
+		if (!handle_initialized_) return; ma_sound_set_rolloff(&handle_, factor);
+	}
+	void set_directional_attenuation(float factor) {
+		if (!handle_initialized_) return; ma_sound_set_directional_attenuation_factor(&handle_, factor);
+	}
+	void set_doppler_factor(float factor) {
+		if (!handle_initialized_) return; ma_sound_set_doppler_factor(&handle_, factor);
+	}
+	bool seek(float new_position_ms) {
+		if (!handle_initialized_ || new_position_ms < 0.0f) return false;
+		ma_uint32 sr = (g_audio_engine && g_audio_engine->get_engine()) ? g_audio_engine->get_engine()->sampleRate : DEFAULT_SAMPLE_RATE;
+		ma_uint64 pcm_frame = static_cast<ma_uint64>((new_position_ms / 1000.0f) * sr);
+		return ma_sound_seek_to_pcm_frame(&handle_, pcm_frame) == MA_SUCCESS;
+	}
+	void set_looping(bool looping) {
+		if (!handle_initialized_) return; ma_sound_set_looping(&handle_, looping);
+	}
+	bool get_looping() const {
+		if (!handle_initialized_) return false; return ma_sound_is_looping(&handle_);
+	}
+	float get_pan() const {
+		if (!handle_initialized_) return 0.0f; return ma_sound_get_pan(&handle_);
+	}
+	void set_pan(float pan_linear) {
+		if (!handle_initialized_) return; ma_sound_set_pan(&handle_, ma_clamp(pan_linear, -1.0f, 1.0f));
+	}
+	float get_volume() const {
+		if (!handle_initialized_) return ma_volume_linear_to_db(0.0f);
+		return ma_volume_linear_to_db(ma_sound_get_volume(&handle_));
+	}
+	void set_volume(float volume_db) {
+		if (!handle_initialized_) return;
+		ma_sound_set_volume(&handle_, ma_volume_db_to_linear(ma_clamp(volume_db, -100.0f, 0.0f)));
+	}
+	float get_pitch() const {
+		if (!handle_initialized_) return 1.0f; return ma_sound_get_pitch(&handle_);
+	}
+	void set_pitch(float pitch_multiplier) {
+		if (!handle_initialized_ || pitch_multiplier <= 0.0f) return; // Pitch must be > 0
+		ma_sound_set_pitch(&handle_, pitch_multiplier);
+	}
+	bool is_active() const { return handle_initialized_; }
+	bool is_playing() const {
+		if (!handle_initialized_) return false; return ma_sound_is_playing(&handle_);
+	}
+	bool is_paused() const {
+		if (!handle_initialized_) return false;
+		return !ma_sound_is_playing(&handle_) && (get_position() > 0.001f) && !at_end();
+	}
+	bool at_end() const {
+		if (!handle_initialized_) return true; return ma_sound_at_end(&handle_);
+	}
+	float get_position() {
+		if (!handle_initialized_) return 0.0f;
+		ma_uint64 pcm_frame_pos = 0;
+		ma_sound_get_cursor_in_pcm_frames(&handle_, &pcm_frame_pos);
+		ma_uint32 sr = (g_audio_engine && g_audio_engine->get_engine()) ? g_audio_engine->get_engine()->sampleRate : DEFAULT_SAMPLE_RATE;
+		if (sr == 0) return 0.0f; // Avoid division by zero if engine not ready
+		return static_cast<float>(pcm_frame_pos) * 1000.0f / sr;
+	}
+	float get_length() {
+		if (!handle_initialized_) return 0.0f;
+		ma_uint64 pcm_frame_len = 0;
+		ma_sound_get_length_in_pcm_frames(&handle_, &pcm_frame_len);
+		ma_uint32 sr = (g_audio_engine && g_audio_engine->get_engine()) ? g_audio_engine->get_engine()->sampleRate : DEFAULT_SAMPLE_RATE;
+		if (sr == 0) return 0.0f;
+		return static_cast<float>(pcm_frame_len) * 1000.0f / sr;
+	}
+	void set_length(float length_ms = 0.0f) {
+		if (!handle_initialized_) return;
+		if (length_ms <= 0.0f) {
+			ma_sound_set_stop_time_in_pcm_frames(&handle_, 0);
 			return;
 		}
-		ma_device_start(&recording_device);
+		ma_uint32 sr = (g_audio_engine && g_audio_engine->get_engine()) ? g_audio_engine->get_engine()->sampleRate : DEFAULT_SAMPLE_RATE;
+		if (sr == 0) return;
+		ma_uint64 pcm_frames = static_cast<ma_uint64>((length_ms / 1000.0f) * sr);
+		ma_sound_set_stop_time_in_pcm_frames(&handle_, pcm_frames);
 	}
-
-	void stop()
-	{
-		if (!m_Started)return;
-		if (m_RecordOutput) {
-			data = nullptr;
-			g_RecordOutput = false;
-			m_Started = false;
-			return;
+	float get_sample_rate() {
+		if (!handle_initialized_) return static_cast<float>(DEFAULT_SAMPLE_RATE);
+		ma_format format_ignored; ma_uint32 channels_ignored, ds_sample_rate;
+		if (ma_sound_get_data_format(&handle_, &format_ignored, &channels_ignored, &ds_sample_rate, NULL, 0) == MA_SUCCESS) {
+			return static_cast<float>(ds_sample_rate);
 		}
-		ma_device_uninit(&recording_device);
-	}
-
-	std::string get_data(size_t& size)
-	{
-		if (!data)return "";
-		size = data->size();
-		std::string result(size * sizeof(float), '\0'); // Resize to hold all bytes
-
-		// Copy float data to string as bytes
-		std::memcpy(&result[0], data->data(), size * sizeof(float));
-
-		return result;
-	}
-
-	void clear() {
-		if (!data)return;
-		data->clear();
+		return static_cast<float>(DEFAULT_SAMPLE_RATE);
 	}
 };
 
-audio_recorder* faudio_recorder() {
-	return new audio_recorder();
+void set_sound_global_hrtf(bool hrtf) { sound_global_hrtf_enabled = hrtf; }
+bool get_sound_global_hrtf() { return sound_global_hrtf_enabled; }
+
+static void audio_recorder_data_callback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount) {
+	std::vector<float>* data_buffer = static_cast<std::vector<float>*>(pDevice->pUserData);
+	if (!data_buffer || !pInput) return;
+	const float* input_samples = static_cast<const float*>(pInput);
+	size_t samples_to_copy = static_cast<size_t>(frameCount) * pDevice->capture.channels;
+	data_buffer->insert(data_buffer->end(), input_samples, input_samples + samples_to_copy);
+	(void)pOutput;
 }
 
-audio_recorder g_OutputRecorder;
+class MINIAUDIO_IMPLEMENTATION audio_recorder {
+public:
+	std::vector<float> recording_data_buffer_;
+	ma_device_config deviceConfig_;
+	ma_device recording_device_;
+	bool started_ = false;
+	mutable std::atomic<int> ref;
+	bool record_engine_output_ = false;
 
+	audio_recorder() : started_(false), ref(1), record_engine_output_(false) {
+		MA_ZERO_OBJECT(&recording_device_); MA_ZERO_OBJECT(&deviceConfig_);
+	}
+	~audio_recorder() { if (started_) stop(); }
+	void AddRef() const { ref++; }
+	void Release() const { if (--ref == 0) delete this; }
+	void start() {
+		if (started_) stop();
+		recording_data_buffer_.clear();
+		if (record_engine_output_) {
+			g_OutputDataBuffer.clear();
+			g_RecordOutput = true;
+			started_ = true; return;
+		}
+		if (!g_audio_engine || !g_audio_engine->get_ma_context()) {
+			return;
+		}
+		deviceConfig_ = ma_device_config_init(ma_device_type_capture);
+		if (g_current_input_device_id) deviceConfig_.capture.pDeviceID = g_current_input_device_id;
+		deviceConfig_.capture.format = DEFAULT_FORMAT;
+		deviceConfig_.capture.channels = DEFAULT_CHANNELS;
+		deviceConfig_.sampleRate = DEFAULT_SAMPLE_RATE;
+		deviceConfig_.dataCallback = audio_recorder_data_callback;
+		deviceConfig_.pUserData = &recording_data_buffer_;
+		if (ma_device_init(g_audio_engine->get_ma_context(), &deviceConfig_, &recording_device_) != MA_SUCCESS) {
+			started_ = false; return;
+		}
+		if (ma_device_start(&recording_device_) != MA_SUCCESS) {
+			ma_device_uninit(&recording_device_); started_ = false; return;
+		}
+		started_ = true;
+	}
+	void stop() {
+		if (!started_) return;
+		if (record_engine_output_) {
+			g_RecordOutput = false;
+			recording_data_buffer_ = g_OutputDataBuffer;
+			started_ = false; return;
+		}
+		if (ma_device_is_started(&recording_device_)) ma_device_stop(&recording_device_);
+		ma_device_uninit(&recording_device_);
+		MA_ZERO_OBJECT(&recording_device_);
+		started_ = false;
+	}
+	std::string get_data(size_t& out_size_bytes) {
+		const std::vector<float>* source_buf = record_engine_output_ ? &g_OutputDataBuffer : &recording_data_buffer_;
+		if (!source_buf || source_buf->empty()) { out_size_bytes = 0; return ""; }
+		out_size_bytes = source_buf->size() * sizeof(float);
+		std::string result_str(out_size_bytes, '\0');
+		std::memcpy(&result_str[0], source_buf->data(), out_size_bytes);
+		return result_str;
+	}
+	void clear() {
+		if (record_engine_output_) g_OutputDataBuffer.clear();
+		else recording_data_buffer_.clear();
+	}
+};
+
+audio_recorder* faudio_recorder() { return new audio_recorder(); }
 audio_recorder* get_output_audio_recorder() {
-	g_OutputRecorder.m_RecordOutput = true;
-	g_OutputRecorder.AddRef();
-	return &g_OutputRecorder;
+	audio_recorder* recorder = new audio_recorder();
+	recorder->record_engine_output_ = true;
+	return recorder;
+}
+sound* fsound(const string& filename) { return new sound(filename); }
+pcm_ring_buffer* fbuffer(ma_uint32 channels, ma_uint32 sample_rate, ma_uint32 buffer_size) {
+	return new pcm_ring_buffer(channels, sample_rate, buffer_size);
 }
 
-sound* fsound(const string& filename) { return new sound(filename); }
-pcm_ring_buffer* fbuffer(ma_uint32 channels, ma_uint32 sample_rate, ma_uint32 buffer_size = 1024) { return new pcm_ring_buffer(channels, sample_rate, buffer_size); }
-
-void register_sound(asIScriptEngine* engine)
-{
-	engine->RegisterFuncdef("void sound_end_callback(const ?&in=null)");
+void register_sound(asIScriptEngine* engine) {
 	engine->RegisterGlobalFunction("void set_sound_storage(const string &in folder_name)property", asFUNCTION(set_sound_storage), asCALL_CDECL);
-
 	engine->RegisterGlobalFunction("string get_sound_storage()property", asFUNCTION(get_sound_storage), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void set_sound_pack(pack@ pack_handle)property", asFUNCTION(set_sound_pack), asCALL_CDECL);
 
-	engine->RegisterGlobalFunction("pack@ get_sound_pack()property", asFUNCTION(get_sound_pack), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void set_master_volume(float volume)property", asFUNCTION(set_master_volume), asCALL_CDECL);
-	engine->RegisterGlobalFunction("float get_master_volume()property", asFUNCTION(get_master_volume), asCALL_CDECL);
-	engine->RegisterGlobalFunction("array<string>@ get_output_audio_devices()", asFUNCTION(get_output_audio_devices), asCALL_CDECL);
-	engine->RegisterGlobalFunction("bool set_output_audio_device(uint index)", asFUNCTION(set_output_audio_device), asCALL_CDECL);
-
-	engine->RegisterGlobalFunction("array<string>@ get_input_audio_devices()", asFUNCTION(get_input_audio_devices), asCALL_CDECL);
-	engine->RegisterGlobalFunction("bool set_input_audio_device(uint index)", asFUNCTION(set_input_audio_device), asCALL_CDECL);
-
-	engine->RegisterObjectType("pcm_ring_buffer", sizeof(pcm_ring_buffer), asOBJ_REF);
-	engine->RegisterObjectBehaviour("pcm_ring_buffer", asBEHAVE_FACTORY, "pcm_ring_buffer@ buff(uint32 channels = 2, uint32 sample_rate = 44100, uint32 size = 1024)", asFUNCTION(fbuffer), asCALL_CDECL);
-	engine->RegisterObjectBehaviour("pcm_ring_buffer", asBEHAVE_ADDREF, "void f()", asMETHOD(pcm_ring_buffer, add_ref), asCALL_THISCALL);
-	engine->RegisterObjectBehaviour("pcm_ring_buffer", asBEHAVE_RELEASE, "void f()", asMETHOD(pcm_ring_buffer, release), asCALL_THISCALL);
+	// pcm_ring_buffer
+	engine->RegisterObjectType("pcm_ring_buffer", 0, asOBJ_REF);
+	engine->RegisterObjectBehaviour("pcm_ring_buffer", asBEHAVE_FACTORY, "pcm_ring_buffer@ f(uint32 channels = 0, uint32 sample_rate = 0, uint32 size = 1024)", asFUNCTION(fbuffer), asCALL_CDECL); // Default args might need helper
+	engine->RegisterObjectBehaviour("pcm_ring_buffer", asBEHAVE_ADDREF, "void f() const", asMETHOD(pcm_ring_buffer, add_ref), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("pcm_ring_buffer", asBEHAVE_RELEASE, "void f() const", asMETHOD(pcm_ring_buffer, release), asCALL_THISCALL);
 	engine->RegisterObjectMethod("pcm_ring_buffer", "void write(const string &in data)", asMETHOD(pcm_ring_buffer, write), asCALL_THISCALL);
-	engine->RegisterObjectMethod("pcm_ring_buffer", "string read(size_t size)", asMETHOD(pcm_ring_buffer, read), asCALL_THISCALL);
+	engine->RegisterObjectMethod("pcm_ring_buffer", "string read(uint64 size_bytes)", asMETHODPR(pcm_ring_buffer, read, (size_t), std::string), asCALL_THISCALL);
 	engine->RegisterObjectMethod("pcm_ring_buffer", "void reset()", asMETHOD(pcm_ring_buffer, reset), asCALL_THISCALL);
 
+	engine->RegisterObjectType("sound", 0, asOBJ_REF);
+	engine->RegisterObjectBehaviour("sound", asBEHAVE_FACTORY, "sound@ f(const string &in filename = \"\")", asFUNCTION(fsound), asCALL_CDECL);
+	engine->RegisterObjectBehaviour("sound", asBEHAVE_ADDREF, "void f() const", asMETHOD(sound, AddRef), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("sound", asBEHAVE_RELEASE, "void f() const", asMETHOD(sound, Release), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "bool load(const string &in filename)", asMETHOD(sound, load), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "bool load_from_memory(const string&in memory, uint64 memory_size)", asMETHODPR(sound, load_from_memory, (const string&, size_t), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "bool load_pcm(const string&in memory, uint64 memory_size, int channels, int sample_rate, int bits_per_sample)", asMETHODPR(sound, load_pcm, (const string&, size_t, int, int, int), bool), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "bool load_pcm_buffer(pcm_ring_buffer@ buffer)", asMETHOD(sound, load_pcm_buffer), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "string get_file_path() const property", asMETHOD(sound, get_file_path), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "void set_fade_time(float volume_beg_db, float volume_end_db, float time_ms)", asMETHOD(sound, set_fade_time), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "bool play()", asMETHOD(sound, play), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "bool play_looped()", asMETHOD(sound, play_looped), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "bool pause()", asMETHOD(sound, pause), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "bool play_wait()", asMETHOD(sound, play_wait), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "bool stop()", asMETHOD(sound, stop), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "bool close()", asMETHOD(sound, close), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "void set_fx(const string &in effect_name)", asMETHOD(sound, set_fx), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "void delete_fx(const string &in effect_name)", asMETHOD(sound, delete_fx), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "void set_reverb_parameters(float dry, float wet, float room_size, float damping, float mode)", asMETHOD(sound, set_reverb_parameters), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "void set_position_3d(float x, float y, float z)", asMETHOD(sound, set_position_3d), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "void set_hrtf(bool enable_hrtf = true) property", asMETHOD(sound, set_hrtf), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "bool get_hrtf() const property", asMETHOD(sound, get_hrtf), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "bool seek(float pos_ms)", asMETHOD(sound, seek), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "bool get_looping() const property", asMETHOD(sound, get_looping), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "void set_looping(bool looping) property", asMETHOD(sound, set_looping), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "float get_pan() const property", asMETHOD(sound, get_pan), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "void set_pan(float pan_linear) property", asMETHOD(sound, set_pan), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "float get_volume() const property", asMETHOD(sound, get_volume), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "void set_volume(float volume_db) property", asMETHOD(sound, set_volume), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "float get_pitch() const property", asMETHOD(sound, get_pitch), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "void set_pitch(float pitch_multiplier) property", asMETHOD(sound, set_pitch), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "bool get_active() const property", asMETHOD(sound, is_active), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "bool get_playing() const property", asMETHOD(sound, is_playing), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "bool get_paused() const property", asMETHOD(sound, is_paused), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "bool get_at_end() const property", asMETHOD(sound, at_end), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "float get_position() const property", asMETHOD(sound, get_position), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "float get_length() const property", asMETHOD(sound, get_length), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "void set_length(float length_ms = 0.0) property", asMETHOD(sound, set_length), asCALL_THISCALL);
+	engine->RegisterObjectMethod("sound", "float get_sample_rate() const property", asMETHOD(sound, get_sample_rate), asCALL_THISCALL);
 
-
-	engine->RegisterObjectType("sound", sizeof(sound), asOBJ_REF);
-	engine->RegisterObjectBehaviour("sound", asBEHAVE_FACTORY, "sound@ s(const string &in filename = \"\")", asFUNCTION(fsound), asCALL_CDECL);
-	engine->RegisterObjectBehaviour("sound", asBEHAVE_ADDREF, "void f()", asMETHOD(sound, AddRef), asCALL_THISCALL);
-	engine->RegisterObjectBehaviour("sound", asBEHAVE_RELEASE, "void f()", asMETHOD(sound, Release), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "bool load(const string &in filename)const", asMETHOD(sound, load), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "bool load_from_memory(const string&in memory, size_t memory_size = 0)const", asMETHOD(sound, load_from_memory), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "bool load_pcm(const string&in memory, size_t memory_size = 0, int channels = 0, int sample_rate = 0, int bits_per_sample = 0)const", asMETHOD(sound, load_pcm), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "bool load_pcm_buffer(pcm_ring_buffer@ buffer)const", asMETHOD(sound, load_pcm_buffer), asCALL_THISCALL);
-
-
-	engine->RegisterObjectMethod(_O("sound"), "uint64 push_memory()const", asMETHOD(sound, push_memory), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "string get_file_path()const property", asMETHOD(sound, get_file_path), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "void set_faid_time(float volume_beg, float volume_end, float time)const", asMETHOD(sound, set_faid_time), asCALL_THISCALL);
-
-	engine->RegisterObjectMethod(_O("sound"), "bool play()const", asMETHOD(sound, play), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "bool play_looped()const", asMETHOD(sound, play_looped), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "bool pause()const", asMETHOD(sound, pause), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "bool play_wait()const", asMETHOD(sound, play_wait), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "bool stop()const", asMETHOD(sound, stop), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "bool close()const", asMETHOD(sound, close), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "void set_fx(const string &in effect_name, int=0)const", asMETHOD(sound, set_fx), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "void delete_fx(const string &in effect_name, int=0)const", asMETHOD(sound, delete_fx), asCALL_THISCALL);
-
-	engine->RegisterObjectMethod(_O("sound"), "void set_reverb_parameters(float dry, float wet, float room_size, float damping, float mode)const", asMETHOD(sound, set_reverb_parameters), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "void set_delay_parameters(float dry, float wet, float dcay)const", asMETHOD(sound, set_delay_parameters), asCALL_THISCALL);
-
-	engine->RegisterObjectMethod(_O("sound"), "void set_position(float listener_x, float listener_y, float listener_z, float source_x, float source_y, float source_z, double theta = 0.0, float pan_step = 5, float volume_step = 0.5, float behind_pitch_decrease = 0.0, float start_pan = 0, float start_volume = 0, float start_pitch = 0)const", asMETHODPR(sound, set_position, (float listener_x, float listener_y, float listener_z, float source_x, float source_y, float source_z, double theta, float pan_step, float volume_step, float behind_pitch_decrease, float start_pan, float start_volume, float start_pitch), void), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "void set_position(vector&in listener, vector&in source, double theta = 0.0, float pan_step = 5, float volume_step = 0.5, float behind_pitch_decrease = 0.0, float start_pan = 0, float start_volume = 0, float start_pitch = 0)const", asMETHODPR(sound, set_position, (Vector3&, Vector3&, double theta, float pan_step, float volume_step, float behind_pitch_decrease, float start_pan, float start_volume, float start_pitch), void), asCALL_THISCALL);
-
-	engine->RegisterObjectMethod(_O("sound"), "void set_hrtf(bool hrtf = true)const property", asMETHOD(sound, set_hrtf), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "bool get_hrtf()const property", asMETHOD(sound, get_hrtf), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "vector get_listener_position()const property", asMETHOD(sound, get_listener_position), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "vector get_source_position()const property", asMETHOD(sound, get_source_position), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "bool seek(float pos)const", asMETHOD(sound, seek), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "bool get_looping() const property", asMETHOD(sound, get_looping), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "void set_looping(bool)const property", asMETHOD(sound, set_looping), asCALL_THISCALL);
-
-	engine->RegisterObjectMethod(_O("sound"), "float get_pan() const property", asMETHOD(sound, get_pan), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "void set_pan(float)const property", asMETHOD(sound, set_pan), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "float get_volume() const property", asMETHOD(sound, get_volume), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "void set_volume(float)const property", asMETHOD(sound, set_volume), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "float get_pitch() const property", asMETHOD(sound, get_pitch), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "void set_pitch(float)const property", asMETHOD(sound, set_pitch), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "float get_speed() const property", asMETHOD(sound, get_speed), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "void set_speed(float)const property", asMETHOD(sound, set_speed), asCALL_THISCALL);
-
-	engine->RegisterObjectMethod(_O("sound"), "bool get_active() const property", asMETHOD(sound, is_active), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "bool get_playing() const property", asMETHOD(sound, is_playing), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "bool get_paused() const property", asMETHOD(sound, is_paused), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "float get_position() const property", asMETHOD(sound, get_position), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "float get_length() const property", asMETHOD(sound, get_length), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("sound"), "void set_length(float=0.0) const property", asMETHOD(sound, set_length), asCALL_THISCALL);
-
-	engine->RegisterObjectMethod(_O("sound"), "float get_sample_rate() const property", asMETHOD(sound, get_sample_rate), asCALL_THISCALL);
-	engine->RegisterGlobalFunction("void set_sound_global_hrtf(bool)property", asFUNCTION(set_sound_global_hrtf), asCALL_CDECL);
-	engine->RegisterGlobalFunction("bool get_sound_global_hrtf()property", asFUNCTION(get_sound_global_hrtf), asCALL_CDECL);
-	engine->RegisterGlobalFunction("void set_spatial_blend_max_distance(float)property", asFUNCTION(set_spatial_blend_max_distance), asCALL_CDECL);
-	engine->RegisterGlobalFunction("float get_spatial_blend_max_distance()property", asFUNCTION(get_spatial_blend_max_distance), asCALL_CDECL);
-
-	engine->RegisterObjectType("audio_recorder", sizeof(audio_recorder), asOBJ_REF);
-	engine->RegisterObjectBehaviour("audio_recorder", asBEHAVE_FACTORY, "audio_recorder@ s()", asFUNCTION(faudio_recorder), asCALL_CDECL);
-	engine->RegisterObjectBehaviour("audio_recorder", asBEHAVE_ADDREF, "void f()", asMETHOD(audio_recorder, AddRef), asCALL_THISCALL);
-	engine->RegisterObjectBehaviour("audio_recorder", asBEHAVE_RELEASE, "void f()", asMETHOD(audio_recorder, Release), asCALL_THISCALL);
-
-	engine->RegisterObjectMethod(_O("audio_recorder"), "void start()const", asMETHOD(audio_recorder, start), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("audio_recorder"), "void stop()const", asMETHOD(audio_recorder, stop), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("audio_recorder"), "string get_data(size_t&out size = void)const", asMETHOD(audio_recorder, get_data), asCALL_THISCALL);
-	engine->RegisterObjectMethod(_O("audio_recorder"), "void clear()const", asMETHOD(audio_recorder, clear), asCALL_THISCALL);
-
+	engine->RegisterObjectType("audio_recorder", 0, asOBJ_REF);
+	engine->RegisterObjectBehaviour("audio_recorder", asBEHAVE_FACTORY, "audio_recorder@ f()", asFUNCTION(faudio_recorder), asCALL_CDECL);
+	engine->RegisterObjectBehaviour("audio_recorder", asBEHAVE_ADDREF, "void f() const", asMETHOD(audio_recorder, AddRef), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("audio_recorder", asBEHAVE_RELEASE, "void f() const", asMETHOD(audio_recorder, Release), asCALL_THISCALL);
+	engine->RegisterObjectMethod("audio_recorder", "void start()", asMETHOD(audio_recorder, start), asCALL_THISCALL);
+	engine->RegisterObjectMethod("audio_recorder", "void stop()", asMETHOD(audio_recorder, stop), asCALL_THISCALL);
+	engine->RegisterObjectMethod("audio_recorder", "string get_data(uint64 &out size_bytes)", asMETHODPR(audio_recorder, get_data, (size_t&), std::string), asCALL_THISCALL);
+	engine->RegisterObjectMethod("audio_recorder", "void clear()", asMETHOD(audio_recorder, clear), asCALL_THISCALL);
 	engine->RegisterGlobalFunction("audio_recorder@ get_output_audio_recorder() property", asFUNCTION(get_output_audio_recorder), asCALL_CDECL);
 
+	engine->RegisterGlobalFunction("void set_sound_global_hrtf(bool enable) property", asFUNCTION(set_sound_global_hrtf), asCALL_CDECL);
+	engine->RegisterGlobalFunction("bool get_sound_global_hrtf() property", asFUNCTION(get_sound_global_hrtf), asCALL_CDECL);
+	engine->RegisterGlobalFunction("void set_spatial_blend_max_distance(float distance) property", asFUNCTION(set_spatial_blend_max_distance), asCALL_CDECL);
+	engine->RegisterGlobalFunction("float get_spatial_blend_max_distance() property", asFUNCTION(get_spatial_blend_max_distance), asCALL_CDECL);
+
+	engine->RegisterGlobalProperty("const uint default_channels", (void*)&DEFAULT_CHANNELS);
+	engine->RegisterGlobalProperty("const uint default_samplerate", (void*)&DEFAULT_SAMPLE_RATE);
 }
